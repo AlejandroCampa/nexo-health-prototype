@@ -263,6 +263,36 @@
   .dash-sidebar-item:last-child{border-bottom:none;}
   .dash-logout{margin-top:24px;}
   @media(max-width:860px){ .dash-grid{grid-template-columns:1fr;} }
+
+  /* ---- HEALTH HISTORY FORM ---- */
+  .form-section-title{font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:var(--amber-deep);margin:28px 0 14px;}
+  .form-section-title:first-of-type{margin-top:0;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .checkbox-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  .checkbox-item{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;background:var(--white);border:1px solid var(--line);padding:11px 13px;border-radius:10px;cursor:pointer;line-height:1.4;}
+  .checkbox-item input{width:16px;height:16px;flex:none;margin-top:1px;}
+  .flag-box{background:rgba(196,60,60,0.06);border:1px solid rgba(196,60,60,0.25);border-radius:12px;padding:16px 18px;margin-top:12px;}
+  .flag-box p{font-size:12.5px;color:rgba(16,27,45,0.68);margin:8px 0 0;line-height:1.5;}
+  .flag-input{margin-top:10px;width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;}
+  @media(max-width:700px){ .checkbox-grid,.two-col{grid-template-columns:1fr;} }
+
+  /* ---- SCHEDULER ---- */
+  .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;}
+  .slot-btn{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;}
+  .slot-btn:hover{border-color:var(--amber);background:rgba(217,140,43,0.06);}
+  .slot-day{font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(16,27,45,0.5);text-transform:uppercase;}
+  .slot-time{font-family:'Fraunces',serif;font-size:18px;margin-top:4px;color:var(--ink);}
+  @media(max-width:700px){ .slot-grid{grid-template-columns:1fr 1fr;} }
+
+  .ticket-card{background:var(--ink);color:var(--paper-warm);border-radius:16px;padding:26px;text-align:center;margin:16px 0;}
+  .ticket-number{font-family:'IBM Plex Mono',monospace;font-size:26px;letter-spacing:0.05em;color:var(--amber);margin:8px 0;}
+
+  /* ---- VIDEO ROOM ---- */
+  .demo-tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:rgba(217,140,43,0.14);color:var(--amber-deep);padding:4px 10px;border-radius:100px;display:inline-block;margin-bottom:12px;}
+  .video-shell{background:#0B1420;border-radius:16px;overflow:hidden;position:relative;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;}
+  .video-shell video{width:100%;height:100%;object-fit:cover;}
+  .video-waiting{color:rgba(247,245,240,0.6);font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:center;padding:0 20px;}
+  .video-controls{display:flex;gap:12px;justify-content:center;margin-top:18px;}
 </style>
 </head>
 <body>
@@ -523,30 +553,169 @@
     </div>
 
     <div class="dash-grid">
-      <div class="dash-card">
-        <span class="status-pill" id="dash-status-pill">Awaiting physician review</span>
-        <h3>Your protocol</h3>
-        <p style="margin-bottom:18px;">Once a physician reviews your intake, your prescription details will show up here.</p>
-        <div class="dash-protocol-row">
-          <div>
-            <div class="name">Tirzepatide</div>
-            <div class="meta">Goal: <span id="dash-goal">Fat loss</span></div>
-          </div>
-          <div class="meta">Pending review</div>
+      <div class="dash-card" id="stage-card">
+
+        <div class="stage-view" id="stage-need-history">
+          <span class="status-pill">Action needed</span>
+          <h3>Complete your health history</h3>
+          <p style="margin-bottom:16px;">Before you can schedule your interview, we need your medical history, goals, and a quick safety screening. Takes about 5 minutes.</p>
+          <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showHistoryForm()">Start health history</button>
         </div>
+
+        <div class="stage-view" id="stage-need-schedule" style="display:none;">
+          <span class="status-pill status-active">History received</span>
+          <h3>Schedule your NP interview</h3>
+          <p>Every patient completes a required 10-minute interview with a nurse practitioner, under the supervising physician's sign-off, before any prescription is approved.</p>
+          <div class="slot-grid" id="slot-grid"></div>
+        </div>
+
+        <div class="stage-view" id="stage-scheduled" style="display:none;">
+          <span class="status-pill status-active">Interview scheduled</span>
+          <h3>You're booked</h3>
+          <div class="ticket-card">
+            <div class="mono" style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.7;">Ticket number</div>
+            <div class="ticket-number" id="ticket-number-display">—</div>
+            <div class="mono" style="font-size:13px;" id="ticket-datetime-display">—</div>
+          </div>
+          <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showVideoRoom()">Join video visit</button>
+        </div>
+
+        <div class="stage-view" id="stage-awaiting-approval" style="display:none;">
+          <span class="status-pill">Awaiting sign-off</span>
+          <h3>Interview complete</h3>
+          <p>Your NP interview is done. The supervising physician is doing final review — your active protocol will show up here once it's approved.</p>
+        </div>
+
+        <div class="stage-view" id="stage-active" style="display:none;">
+          <span class="status-pill status-active">Active</span>
+          <h3>Your protocol</h3>
+          <div class="dash-protocol-row">
+            <div>
+              <div class="name" id="active-med-name">—</div>
+              <div class="meta" id="active-med-dose">—</div>
+            </div>
+            <div class="meta">Active</div>
+          </div>
+          <p id="active-med-notes" style="margin-top:14px;"></p>
+        </div>
+
       </div>
 
       <div class="dash-card">
         <h3>Getting started</h3>
         <ul class="dash-checklist">
           <li><span class="dash-check-icon done">✓</span> Account created</li>
-          <li><span class="dash-check-icon done">✓</span> Intake submitted</li>
-          <li><span class="dash-check-icon pending">•</span> Physician visit scheduled</li>
-          <li><span class="dash-check-icon pending">•</span> Prescription approved</li>
-          <li><span class="dash-check-icon pending">•</span> First shipment</li>
+          <li><span class="dash-check-icon pending" id="check-history">•</span> Health history submitted</li>
+          <li><span class="dash-check-icon pending" id="check-scheduled">•</span> NP interview scheduled</li>
+          <li><span class="dash-check-icon pending" id="check-interview">•</span> Interview completed</li>
+          <li><span class="dash-check-icon pending" id="check-approved">•</span> Prescription approved</li>
         </ul>
       </div>
     </div>
+
+    <!-- FULL HEALTH HISTORY FORM -->
+    <div id="history-form-wrap" style="display:none;margin-top:22px;">
+      <div class="dash-card">
+        <h3>Health history</h3>
+        <p style="margin-bottom:8px;">Please answer as completely as you can — this goes directly to your care team.</p>
+        <div id="history-form-error"></div>
+        <form id="history-form" onsubmit="return handleHistorySubmit(event)">
+
+          <div class="form-section-title">Primary goal</div>
+          <div class="field">
+            <select id="hh-goal">
+              <option>Fat loss</option>
+              <option>Men's health</option>
+              <option>Recovery / performance</option>
+              <option>Longevity</option>
+            </select>
+          </div>
+
+          <div class="form-section-title">Medical history</div>
+          <div class="checkbox-grid" id="hh-conditions">
+            <label class="checkbox-item"><input type="checkbox" value="Diabetes"> Diabetes</label>
+            <label class="checkbox-item"><input type="checkbox" value="Sleep apnea"> Sleep apnea</label>
+            <label class="checkbox-item"><input type="checkbox" value="Obesity"> Obesity</label>
+            <label class="checkbox-item"><input type="checkbox" value="Hypertension"> High blood pressure</label>
+            <label class="checkbox-item"><input type="checkbox" value="Thyroid disease"> Thyroid disease</label>
+            <label class="checkbox-item"><input type="checkbox" value="Heart disease"> Heart disease</label>
+            <label class="checkbox-item"><input type="checkbox" value="Kidney disease"> Kidney disease</label>
+            <label class="checkbox-item"><input type="checkbox" value="Liver disease"> Liver disease</label>
+            <label class="checkbox-item"><input type="checkbox" value="Pancreatitis"> History of pancreatitis</label>
+            <label class="checkbox-item"><input type="checkbox" value="Depression/Anxiety"> Depression / anxiety</label>
+          </div>
+          <div class="field" style="margin-top:14px;"><label>Other conditions</label><input id="hh-conditions-other" type="text" placeholder="Anything not listed above"></div>
+
+          <div class="form-section-title">Surgical history</div>
+          <div class="field"><input id="hh-surgical" type="text" placeholder="e.g. Gallbladder removal, 2019 — or 'None'"></div>
+
+          <div class="form-section-title">Allergies</div>
+          <div class="field"><input id="hh-allergies" type="text" placeholder="Medications, food, environmental — or 'None'"></div>
+
+          <div class="form-section-title">Toxic habits</div>
+          <div class="two-col">
+            <div class="field"><label>Alcohol use</label>
+              <select id="hh-alcohol"><option>None</option><option>Occasional</option><option>Weekly</option><option>Daily</option></select>
+            </div>
+            <div class="field"><label>Smoking / vaping</label>
+              <select id="hh-smoking"><option>Never</option><option>Former</option><option>Current</option></select>
+            </div>
+          </div>
+          <div class="field"><label>Recreational substances</label><input id="hh-substances" type="text" placeholder="List any, or 'None'"></div>
+
+          <div class="form-section-title">Body markers</div>
+          <div class="two-col">
+            <div class="field"><label>Height (cm)</label><input id="hh-height" type="number" placeholder="170"></div>
+            <div class="field"><label>Weight (kg)</label><input id="hh-weight" type="number" placeholder="80"></div>
+          </div>
+
+          <div class="form-section-title">Family history</div>
+          <div class="checkbox-grid" id="hh-family">
+            <label class="checkbox-item"><input type="checkbox" value="Diabetes"> Diabetes</label>
+            <label class="checkbox-item"><input type="checkbox" value="Heart disease"> Heart disease</label>
+            <label class="checkbox-item"><input type="checkbox" value="Obesity"> Obesity</label>
+            <label class="checkbox-item"><input type="checkbox" value="Cancer (other)"> Cancer (other)</label>
+          </div>
+          <div class="flag-box">
+            <label class="checkbox-item" style="background:transparent;border:none;padding:0;">
+              <input type="checkbox" id="hh-family-endocrine">
+              <span><b>Family history of endocrine cancer</b> (thyroid cancer, MEN syndrome, medullary thyroid carcinoma)</span>
+            </label>
+            <p>This matters — certain weight-loss medications carry specific warnings tied to this family history. If checked, please give detail below.</p>
+            <input id="hh-family-endocrine-detail" class="flag-input" type="text" placeholder="Relationship + type of cancer, if known">
+          </div>
+
+          <div class="form-section-title">Consent</div>
+          <label class="checkbox-item" style="margin-top:4px;">
+            <input type="checkbox" id="hh-consent" required>
+            <span>I confirm this information is accurate to the best of my knowledge and understand it will be reviewed by my care team.</span>
+          </label>
+
+          <button class="btn btn-primary" type="submit" style="margin-top:24px;width:auto;padding:13px 28px;">Submit health history</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- VIDEO ROOM -->
+    <div id="video-room-wrap" style="display:none;margin-top:22px;">
+      <div class="dash-card">
+        <span class="demo-tag">Prototype — local camera preview only, not a live call yet</span>
+        <h3>Video visit</h3>
+        <p style="margin-bottom:18px;">Your NP will join at your scheduled time. Real two-way video needs a service like Twilio or Doxy.me wired in before this goes live.</p>
+        <div class="video-shell" id="video-shell">
+          <div class="video-waiting" id="video-waiting">Waiting for your care team to join...</div>
+        </div>
+        <div class="video-controls">
+          <button class="btn btn-outline" onclick="toggleCamera()">Enable camera</button>
+          <button class="btn btn-outline" onclick="hideVideoRoom()">Leave</button>
+        </div>
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--line);">
+          <span class="demo-tag">Demo only — an NP would do this step in real life</span><br>
+          <button class="btn btn-primary" style="margin-top:10px;width:auto;padding:11px 22px;" onclick="simulateInterviewComplete()">Simulate: mark interview complete</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -768,7 +937,12 @@
   }
 
   // ====== SESSION / DASHBOARD HANDLING ======
+  let currentUser = null;
+  let currentAppointment = null;
+  let localStream = null;
+
   async function showDashboard(user){
+    currentUser = user;
     document.getElementById('marketing-content').classList.add('hidden-for-dashboard');
     document.getElementById('dashboard').classList.add('visible');
     document.getElementById('nav-cta').style.display = 'none';
@@ -776,23 +950,69 @@
     const meta = user.user_metadata || {};
     const displayName = meta.full_name ? meta.full_name.split(' ')[0] : user.email;
     document.getElementById('dash-welcome').textContent = 'Welcome, ' + displayName;
-    if(meta.goal){ document.getElementById('dash-goal').textContent = meta.goal; }
 
-    // If this user signed up with pending intake data attached, save it to the
-    // database now that we have a real authenticated session, then clear the flag.
+    // If this user signed up with pending intake data attached, save it as their
+    // starting health history goal reference, then clear the flag.
     if(meta.pending_intake && supabaseClient){
       try{
-        await supabaseClient.from('intake_forms').insert({
-          user_id: user.id,
-          full_name: meta.full_name || '',
-          email: user.email,
-          goal: meta.goal || '',
-          plan: meta.plan || ''
-        });
         await supabaseClient.auth.updateUser({ data: { pending_intake: false } });
       } catch(err){
-        console.error('Could not save pending intake:', err);
+        console.error('Could not clear pending intake flag:', err);
       }
+    }
+
+    await loadPatientState();
+  }
+
+  async function loadPatientState(){
+    if(!supabaseClient || !currentUser) return;
+
+    document.getElementById('history-form-wrap').style.display = 'none';
+    document.getElementById('video-room-wrap').style.display = 'none';
+
+    const { data: historyRows } = await supabaseClient
+      .from('health_history').select('*').eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false }).limit(1);
+    const history = (historyRows && historyRows[0]) || null;
+
+    const { data: apptRows } = await supabaseClient
+      .from('appointments').select('*').eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false }).limit(1);
+    const appt = (apptRows && apptRows[0]) || null;
+    currentAppointment = appt;
+
+    let stage = 'need-history';
+    if(history && history.approved){
+      stage = 'active';
+    } else if(history && appt && appt.status === 'completed'){
+      stage = 'awaiting-approval';
+    } else if(history && appt && appt.status === 'scheduled'){
+      stage = 'scheduled';
+    } else if(history){
+      stage = 'need-schedule';
+    }
+
+    document.querySelectorAll('.stage-view').forEach(v => v.style.display = 'none');
+    document.getElementById('stage-' + stage).style.display = 'block';
+
+    document.getElementById('check-history').className = 'dash-check-icon ' + (history ? 'done' : 'pending');
+    document.getElementById('check-history').textContent = history ? '✓' : '•';
+    document.getElementById('check-scheduled').className = 'dash-check-icon ' + (appt ? 'done' : 'pending');
+    document.getElementById('check-scheduled').textContent = appt ? '✓' : '•';
+    document.getElementById('check-interview').className = 'dash-check-icon ' + (appt && appt.status !== 'scheduled' ? 'done' : 'pending');
+    document.getElementById('check-interview').textContent = (appt && appt.status !== 'scheduled') ? '✓' : '•';
+    document.getElementById('check-approved').className = 'dash-check-icon ' + (history && history.approved ? 'done' : 'pending');
+    document.getElementById('check-approved').textContent = (history && history.approved) ? '✓' : '•';
+
+    if(stage === 'need-schedule'){ renderSlots(); }
+    if(stage === 'scheduled' && appt){
+      document.getElementById('ticket-number-display').textContent = appt.ticket_number;
+      document.getElementById('ticket-datetime-display').textContent = appt.appointment_date + ' · ' + appt.appointment_time;
+    }
+    if(stage === 'active' && history){
+      document.getElementById('active-med-name').textContent = history.approved_medication || 'Protocol approved';
+      document.getElementById('active-med-dose').textContent = history.approved_dose || '';
+      document.getElementById('active-med-notes').textContent = history.approved_notes || '';
     }
   }
 
@@ -806,6 +1026,155 @@
     if(supabaseClient){ await supabaseClient.auth.signOut(); }
     showMarketing();
   }
+
+  // ====== HEALTH HISTORY FORM ======
+  function showHistoryForm(){
+    document.getElementById('history-form-wrap').style.display = 'block';
+    document.getElementById('history-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function handleHistorySubmit(e){
+    e.preventDefault();
+    const errorBox = document.getElementById('history-form-error');
+    errorBox.innerHTML = '';
+
+    if(!supabaseClient || !currentUser){
+      errorBox.innerHTML = '<div style="background:rgba(196,60,60,0.1);color:#B23A3A;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;">Supabase isn\'t connected — can\'t save this yet.</div>';
+      return false;
+    }
+
+    const conditions = Array.from(document.querySelectorAll('#hh-conditions input:checked')).map(i => i.value);
+    const family = Array.from(document.querySelectorAll('#hh-family input:checked')).map(i => i.value);
+
+    const payload = {
+      user_id: currentUser.id,
+      goal: document.getElementById('hh-goal').value,
+      conditions: conditions,
+      conditions_other: document.getElementById('hh-conditions-other').value,
+      surgical_history: document.getElementById('hh-surgical').value,
+      allergies: document.getElementById('hh-allergies').value,
+      alcohol_use: document.getElementById('hh-alcohol').value,
+      smoking_use: document.getElementById('hh-smoking').value,
+      substance_use: document.getElementById('hh-substances').value,
+      height_cm: document.getElementById('hh-height').value || null,
+      weight_kg: document.getElementById('hh-weight').value || null,
+      family_history: family,
+      family_endocrine_cancer: document.getElementById('hh-family-endocrine').checked,
+      family_endocrine_cancer_detail: document.getElementById('hh-family-endocrine-detail').value,
+      consent: document.getElementById('hh-consent').checked
+    };
+
+    const submitBtn = document.querySelector('#history-form button[type="submit"]');
+    submitBtn.textContent = 'Saving...';
+    submitBtn.disabled = true;
+
+    try{
+      const { error } = await supabaseClient.from('health_history').insert(payload);
+      if(error) throw error;
+      document.getElementById('history-form-wrap').style.display = 'none';
+      await loadPatientState();
+      document.getElementById('stage-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch(err){
+      errorBox.innerHTML = '<div style="background:rgba(196,60,60,0.1);color:#B23A3A;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;">' + (err.message || 'Something went wrong.') + '</div>';
+      submitBtn.textContent = 'Submit health history';
+      submitBtn.disabled = false;
+    }
+
+    return false;
+  }
+
+  // ====== SCHEDULER ======
+  function renderSlots(){
+    const grid = document.getElementById('slot-grid');
+    grid.innerHTML = '';
+    const times = ['9:00 AM', '11:30 AM', '2:00 PM'];
+    let daysAdded = 0;
+    let d = new Date();
+    while(daysAdded < 4){
+      d.setDate(d.getDate() + 1);
+      const day = d.getDay();
+      if(day === 0 || day === 6) continue; // skip weekends
+      daysAdded++;
+      const dateLabel = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+      const dateValue = d.toISOString().slice(0,10);
+      times.forEach(t => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'slot-btn';
+        btn.innerHTML = '<div class="slot-day">' + dateLabel + '</div><div class="slot-time">' + t + '</div>';
+        btn.onclick = () => selectSlot(dateValue, dateLabel, t);
+        grid.appendChild(btn);
+      });
+    }
+  }
+
+  async function selectSlot(dateValue, dateLabel, time){
+    if(!supabaseClient || !currentUser) return;
+    const ticket = 'SH-' + Math.random().toString(36).slice(2,8).toUpperCase();
+    try{
+      const { error } = await supabaseClient.from('appointments').insert({
+        user_id: currentUser.id,
+        ticket_number: ticket,
+        appointment_date: dateValue,
+        appointment_time: time,
+        status: 'scheduled'
+      });
+      if(error) throw error;
+      await loadPatientState();
+    } catch(err){
+      alert('Could not book that slot: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // ====== VIDEO ROOM ======
+  function showVideoRoom(){
+    document.getElementById('video-room-wrap').style.display = 'block';
+    document.getElementById('video-room-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function hideVideoRoom(){
+    document.getElementById('video-room-wrap').style.display = 'none';
+    if(localStream){
+      localStream.getTracks().forEach(t => t.stop());
+      localStream = null;
+    }
+  }
+
+  async function toggleCamera(){
+    const shell = document.getElementById('video-shell');
+    if(localStream){
+      localStream.getTracks().forEach(t => t.stop());
+      localStream = null;
+      shell.innerHTML = '<div class="video-waiting" id="video-waiting">Waiting for your care team to join...</div>';
+      return;
+    }
+    try{
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      shell.innerHTML = '';
+      const video = document.createElement('video');
+      video.autoplay = true;
+      video.muted = true;
+      video.srcObject = localStream;
+      shell.appendChild(video);
+    } catch(err){
+      alert('Could not access your camera: ' + (err.message || 'permission denied'));
+    }
+  }
+
+  async function simulateInterviewComplete(){
+    if(!supabaseClient || !currentAppointment) return;
+    try{
+      const { error } = await supabaseClient.from('appointments')
+        .update({ status: 'completed' })
+        .eq('id', currentAppointment.id);
+      if(error) throw error;
+      hideVideoRoom();
+      await loadPatientState();
+    } catch(err){
+      alert('Could not update: ' + (err.message || 'unknown error'));
+    }
+  }
+
 
   if(supabaseClient){
     supabaseClient.auth.onAuthStateChange((event, session) => {
