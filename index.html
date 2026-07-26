@@ -502,7 +502,7 @@
     <div class="section-head">
       <span class="section-eyebrow">Membership</span>
       <h2>One membership. Ongoing care.</h2>
-      <p>Medication cost is separate and depends on your protocol — membership covers the physician relationship.</p>
+      <p>Medication cost is separate and depends on your protocol — membership covers the physician relationship. Both plans let you request as many prescriptions as you want over time — each one is reviewed and approved individually by your care team, there's no cap on how many you can ask for.</p>
     </div>
     <div class="tiers">
       <div class="tier">
@@ -674,7 +674,44 @@
       </div>
     </div>
 
-    <!-- FULL HEALTH HISTORY FORM -->
+    <!-- STORE: buy approved prescriptions, request new ones -->
+    <div id="store-wrap" style="display:none;margin-top:22px;">
+      <div class="dash-card">
+        <span class="status-pill status-active">Store</span>
+        <h3>Your prescriptions</h3>
+        <p style="margin-bottom:16px;">You can only purchase medications you've been approved for — but there's no limit on how many prescriptions you can request as a member. Every request is reviewed on its own before it becomes purchasable.</p>
+        <div id="store-approved-list"></div>
+
+        <div class="form-section-title">Requests awaiting review</div>
+        <div id="store-pending-list"><p class="np-empty">None right now.</p></div>
+
+        <div class="form-section-title">Request a new prescription</div>
+        <p style="font-size:13px;color:rgba(16,27,45,0.6);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
+        <div class="two-col">
+          <div class="field"><label>Medication of interest</label>
+            <select id="store-request-med">
+              <option value="Tirzepatide">Tirzepatide</option>
+              <option value="Semaglutide">Semaglutide</option>
+              <option value="Tesamorelin">Tesamorelin</option>
+              <option value="Testosterone Cypionate">Testosterone Cypionate</option>
+              <option value="ED Care">ED Care (Sildenafil/Tadalafil)</option>
+              <option value="NAD+ Support">NAD+ Support</option>
+            </select>
+          </div>
+          <div class="field"><label>Goal</label>
+            <select id="store-request-goal">
+              <option>Fat loss</option>
+              <option>Men's health</option>
+              <option>Recovery / performance</option>
+              <option>Longevity</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Anything your care team should know?</label><input id="store-request-notes" type="text" placeholder="Optional"></div>
+        <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="requestNewPrescription()">Submit request</button>
+      </div>
+    </div>
+
     <!-- PREMIUM: ONGOING CARE ACCESS -->
     <div id="premium-care-wrap" style="display:none;margin-top:22px;">
       <div class="dash-grid">
@@ -854,6 +891,8 @@
     <div style="background:var(--paper);border-radius:12px;padding:16px;margin-bottom:16px;font-size:13.5px;line-height:1.7;" id="np-detail-history"></div>
 
     <div id="np-detail-appt" style="margin-bottom:16px;"></div>
+
+    <div id="np-detail-rx-requests" style="margin-bottom:16px;"></div>
 
     <div class="form-section-title">Approve prescription</div>
     <div class="two-col">
@@ -1123,7 +1162,7 @@
         const email = document.getElementById('login-email').value;
         const { error } = await supabaseClient.auth.signInWithOtp({
           email,
-          options: { emailRedirectTo: window.location.href }
+          options: { emailRedirectTo: window.location.origin + window.location.pathname }
         });
         if(error) throw error;
         showSuccess('login', "Check your email", "We sent a secure login link to " + email + ". Click it to log in — no password needed.");
@@ -1141,7 +1180,7 @@
         const { error } = await supabaseClient.auth.signInWithOtp({
           email,
           options: {
-            emailRedirectTo: window.location.href,
+            emailRedirectTo: window.location.origin + window.location.pathname,
             data: { full_name: fullName, goal: goal, plan: plan, pending_intake: true }
           }
         });
@@ -1285,12 +1324,126 @@
       document.getElementById('active-med-notes').textContent = history.approved_notes || '';
     }
 
+    if(history && history.approved){
+      document.getElementById('store-wrap').style.display = 'block';
+      await loadStore(history);
+    } else {
+      document.getElementById('store-wrap').style.display = 'none';
+    }
+
     if(history && history.approved && history.plan === 'Premium'){
       document.getElementById('premium-care-wrap').style.display = 'block';
       await loadMessages();
       await loadPhysicianAppointment();
     } else {
       document.getElementById('premium-care-wrap').style.display = 'none';
+    }
+  }
+
+  // ====== STORE ======
+  async function loadStore(history){
+    if(!supabaseClient || !currentUser) return;
+
+    const { data: rxRows } = await supabaseClient.from('prescriptions')
+      .select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+    const prescriptions = rxRows || [];
+
+    const approvedWrap = document.getElementById('store-approved-list');
+    const pendingWrap = document.getElementById('store-pending-list');
+
+    let approvedHtml = '';
+
+    // The original first prescription lives on health_history, not the new
+    // prescriptions table — show it here too so the store is complete.
+    if(history.approved_medication){
+      approvedHtml += renderStoreItem({
+        medication: history.approved_medication,
+        dose: history.approved_dose,
+        price: history.approved_price,
+        purchased: history.purchased,
+        onBuy: "buyLegacyPrescription()"
+      });
+    }
+
+    const approvedRx = prescriptions.filter(r => r.status === 'approved');
+    approvedRx.forEach(r => {
+      approvedHtml += renderStoreItem({
+        medication: r.medication, dose: r.dose, price: r.price,
+        purchased: r.purchased, onBuy: "buyPrescription('" + r.id + "')"
+      });
+    });
+
+    approvedWrap.innerHTML = approvedHtml || '<p class="np-empty">Nothing approved yet.</p>';
+
+    const pendingRx = prescriptions.filter(r => r.status === 'pending');
+    if(pendingRx.length === 0){
+      pendingWrap.innerHTML = '<p class="np-empty">None right now.</p>';
+    } else {
+      pendingWrap.innerHTML = pendingRx.map(r =>
+        '<div class="np-row" style="cursor:default;"><div><div class="name">' + r.medication + '</div>'
+        + '<div class="meta">Goal: ' + (r.requested_goal || '—') + '</div></div>'
+        + '<div class="meta">Under review</div></div>'
+      ).join('');
+    }
+  }
+
+  function renderStoreItem(item){
+    const priceLabel = item.price ? ('$' + item.price + '/mo') : '—';
+    return '<div class="dash-protocol-row">'
+      + '<div><div class="name">' + item.medication + '</div><div class="meta">' + (item.dose || '') + '</div></div>'
+      + '<div style="text-align:right;">'
+      + '<div class="meta" style="margin-bottom:6px;">' + priceLabel + '</div>'
+      + (item.purchased
+          ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Order placed</span>'
+          : '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Buy</button>')
+      + '</div></div>';
+  }
+
+  async function buyLegacyPrescription(){
+    if(!supabaseClient || !currentHealthHistory) return;
+    try{
+      await supabaseClient.from('health_history')
+        .update({ purchased: true, purchased_at: new Date().toISOString() })
+        .eq('id', currentHealthHistory.id);
+      alert('Order placed. (Prototype — no real payment/shipping wired up yet.)');
+      await loadPatientState();
+    } catch(err){
+      alert('Could not place order: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  async function buyPrescription(id){
+    if(!supabaseClient) return;
+    try{
+      await supabaseClient.from('prescriptions')
+        .update({ purchased: true, purchased_at: new Date().toISOString() })
+        .eq('id', id);
+      alert('Order placed. (Prototype — no real payment/shipping wired up yet.)');
+      await loadPatientState();
+    } catch(err){
+      alert('Could not place order: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  async function requestNewPrescription(){
+    if(!supabaseClient || !currentUser) return;
+    const medication = document.getElementById('store-request-med').value;
+    const goal = document.getElementById('store-request-goal').value;
+    const notes = document.getElementById('store-request-notes').value;
+    try{
+      const { error } = await supabaseClient.from('prescriptions').insert({
+        user_id: currentUser.id,
+        medication: medication,
+        requested_goal: goal,
+        requested_notes: notes,
+        status: 'pending'
+      });
+      if(error) throw error;
+      document.getElementById('store-request-notes').value = '';
+      alert('Request submitted — your care team will review it.');
+      await loadPatientState();
+    } catch(err){
+      alert('Could not submit request: ' + (err.message || 'unknown error'));
     }
   }
 
@@ -1644,10 +1797,43 @@
     document.getElementById('np-approve-dose-mg').value = '2.5';
     updateNPPricePreview();
 
+    const { data: rxRows } = await supabaseClient.from('prescriptions').select('*')
+      .eq('user_id', patient.user_id).eq('status', 'pending').order('created_at', { ascending: true });
+    const rxWrap = document.getElementById('np-detail-rx-requests');
+    if(rxRows && rxRows.length > 0){
+      rxWrap.innerHTML = '<div class="form-section-title">Prescription requests</div>' + rxRows.map(r =>
+        '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
+        + '<div class="meta">Goal: ' + (r.requested_goal || '—') + (r.requested_notes ? ' · "' + r.requested_notes + '"' : '') + '</div></div>'
+        + '<button class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="npApproveNewPrescription(\''+r.id+'\',\''+r.medication+'\')">Approve</button></div>'
+      ).join('');
+    } else {
+      rxWrap.innerHTML = '';
+    }
+
     await loadNPMessages(patient.user_id);
 
     document.getElementById('modal-np-patient').classList.add('open');
     document.body.style.overflow = 'hidden';
+  }
+
+  async function npApproveNewPrescription(rxId, medication){
+    const doseMg = prompt('Weekly dose (mg) for ' + medication + ':', '2.5');
+    if(doseMg === null) return;
+    const price = calcProtocolPrice(medication, doseMg);
+    try{
+      const { error } = await supabaseClient.from('prescriptions').update({
+        status: 'approved',
+        medication: medication,
+        dose: doseMg + ' mg / week',
+        price: price,
+        reviewed_notes: 'Approved by care team.'
+      }).eq('id', rxId);
+      if(error) throw error;
+      closeModal('np-patient');
+      await loadNPData();
+    } catch(err){
+      alert('Could not approve: ' + (err.message || 'unknown error'));
+    }
   }
 
   async function npMarkInterviewComplete(apptId){
@@ -2064,6 +2250,17 @@
       window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
     }
   })();
+
+  // Safety net: Supabase's client normally strips the #access_token=... hash
+  // from the URL itself once it's finished reading it. If that somehow doesn't
+  // happen, force it clean shortly after load — otherwise a stale token can get
+  // baked into the *next* magic-link email's redirect target and cause a
+  // corrupted double-hash URL on the next login attempt.
+  setTimeout(function(){
+    if(window.location.hash && window.location.hash.indexOf('access_token') > -1){
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    }
+  }, 2000);
 
   async function applyPendingPayment(){
     if(!pendingPaymentPlan || !supabaseClient || !currentHealthHistory) return;
