@@ -123,7 +123,7 @@
     border:1px solid var(--line);cursor:pointer;background:var(--paper-warm);transition:all .15s;
   }
   .filter.active{background:var(--ink);color:var(--paper-warm);border-color:var(--ink);}
-  .protocol-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .protocol-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;max-width:640px;margin:0 auto;}
   .vial-card{
     background:var(--white);border-radius:16px;border:1px solid var(--line);
     overflow:hidden;transition:transform .2s ease, box-shadow .2s ease;
@@ -406,9 +406,6 @@
     <div class="protocol-filters">
       <span class="filter active">All</span>
       <span class="filter">Weight management</span>
-      <span class="filter">Men's health</span>
-      <span class="filter">Recovery</span>
-      <span class="filter">Longevity</span>
     </div>
 
     <div class="protocol-grid">
@@ -416,11 +413,12 @@
       <div class="vial-card">
         <div class="vial-label"><span class="cat">Weight management</span><h3>Semaglutide</h3></div>
         <div class="vial-body">
+          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">GLP-1 agonist for fat loss, dosed weekly.</p>
           <div class="vial-spec"><span>Form</span><b>Compounded injectable</b></div>
           <div class="vial-spec"><span>Starting dose</span><b>0.25 mg / wk</b></div>
           <div class="vial-spec"><span>Titration</span><b>Physician-managed</b></div>
           <div class="vial-foot">
-            <div class="price">$249<span> /mo</span></div>
+            <div class="price">$213<span> /mo starting</span></div>
             <span class="rx-badge">Rx only</span>
           </div>
         </div>
@@ -429,24 +427,29 @@
       <div class="vial-card">
         <div class="vial-label"><span class="cat">Weight management</span><h3>Tirzepatide</h3></div>
         <div class="vial-body">
+          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">GLP-1/GIP dual agonist for fat loss, dosed weekly.</p>
           <div class="vial-spec"><span>Form</span><b>Compounded injectable</b></div>
           <div class="vial-spec"><span>Starting dose</span><b>2.5 mg / wk</b></div>
           <div class="vial-spec"><span>Titration</span><b>Physician-managed</b></div>
           <div class="vial-foot">
-            <div class="price">$349<span> /mo</span></div>
+            <div class="price">$242<span> /mo starting</span></div>
             <span class="rx-badge">Rx only</span>
           </div>
         </div>
       </div>
 
+      <!-- Paused for launch: doctor wants to offer only Semaglutide/Tirzepatide
+           for now, targeting obesity first. Uncomment to bring these back —
+           just also add real Stripe links for them in MEDICATION_STRIPE_LINKS.
       <div class="vial-card">
         <div class="vial-label"><span class="cat">Longevity</span><h3>Tesamorelin</h3></div>
         <div class="vial-body">
+          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">Growth hormone-releasing peptide for body composition and recovery.</p>
           <div class="vial-spec"><span>Form</span><b>Compounded injectable</b></div>
           <div class="vial-spec"><span>Vial strength</span><b>10 mg</b></div>
-          <div class="vial-spec"><span>Typical dose</span><b>50 mcg / day, SC</b></div>
+          <div class="vial-spec"><span>Typical dose</span><b>1–2 mg / day, SC</b></div>
           <div class="vial-foot">
-            <div class="price">$289<span> /mo</span></div>
+            <div class="price">$255<span> /mo starting</span></div>
             <span class="rx-badge">Rx only</span>
           </div>
         </div>
@@ -455,24 +458,26 @@
       <div class="vial-card">
         <div class="vial-label"><span class="cat">Men's health</span><h3>Testosterone Cypionate</h3></div>
         <div class="vial-body">
+          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">Testosterone replacement for clinically low levels — energy, libido, muscle.</p>
           <div class="vial-spec"><span>Form</span><b>Injectable, weekly</b></div>
           <div class="vial-spec"><span>Eligibility</span><b>Labs required</b></div>
           <div class="vial-spec"><span>Monitoring</span><b>Quarterly labs</b></div>
           <div class="vial-foot">
-            <div class="price">$149<span> /mo</span></div>
+            <div class="price">$130<span> /mo starting</span></div>
             <span class="rx-badge">Rx only</span>
           </div>
         </div>
       </div>
 
       <div class="vial-card">
-        <div class="vial-label"><span class="cat">Men's health</span><h3>ED Care</h3></div>
+        <div class="vial-label"><span class="cat">Men's health / libido</span><h3>ED Care</h3></div>
         <div class="vial-body">
+          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">Sildenafil or tadalafil for erectile dysfunction, on-demand or daily.</p>
           <div class="vial-spec"><span>Options</span><b>Sildenafil / Tadalafil</b></div>
           <div class="vial-spec"><span>Form</span><b>Oral, on-demand or daily</b></div>
           <div class="vial-spec"><span>Visit</span><b>Async or video</b></div>
           <div class="vial-foot">
-            <div class="price">$39<span> /mo</span></div>
+            <div class="price">$28<span> /mo starting</span></div>
             <span class="rx-badge">Rx only</span>
           </div>
         </div>
@@ -481,15 +486,17 @@
       <div class="vial-card">
         <div class="vial-label"><span class="cat">Recovery</span><h3>NAD+ Support</h3></div>
         <div class="vial-body">
+          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">Subcutaneous NAD+ for energy and recovery support.</p>
           <div class="vial-spec"><span>Form</span><b>Subcutaneous</b></div>
           <div class="vial-spec"><span>Use case</span><b>Recovery & energy</b></div>
           <div class="vial-spec"><span>Pairing</span><b>Add-on to any plan</b></div>
           <div class="vial-foot">
-            <div class="price">$99<span> /mo</span></div>
+            <div class="price">$76<span> /mo starting</span></div>
             <span class="rx-badge">Rx only</span>
           </div>
         </div>
       </div>
+      -->
 
     </div>
 
@@ -690,12 +697,8 @@
         <div class="two-col">
           <div class="field"><label>Medication of interest</label>
             <select id="store-request-med">
-              <option value="Tirzepatide">Tirzepatide</option>
-              <option value="Semaglutide">Semaglutide</option>
-              <option value="Tesamorelin">Tesamorelin</option>
-              <option value="Testosterone Cypionate">Testosterone Cypionate</option>
-              <option value="ED Care">ED Care (Sildenafil/Tadalafil)</option>
-              <option value="NAD+ Support">NAD+ Support</option>
+              <option value="Tirzepatide">Tirzepatide — fat loss</option>
+              <option value="Semaglutide">Semaglutide — fat loss</option>
             </select>
           </div>
           <div class="field"><label>Goal</label>
@@ -900,10 +903,6 @@
         <select id="np-approve-med" onchange="updateNPPricePreview()">
           <option value="Tirzepatide">Tirzepatide</option>
           <option value="Semaglutide">Semaglutide</option>
-          <option value="Tesamorelin">Tesamorelin</option>
-          <option value="Testosterone Cypionate">Testosterone Cypionate</option>
-          <option value="ED Care">ED Care (Sildenafil/Tadalafil)</option>
-          <option value="NAD+ Support">NAD+ Support</option>
         </select>
       </div>
       <div class="field"><label>Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" step="0.1" value="2.5" oninput="updateNPPricePreview()"></div>
@@ -1198,26 +1197,57 @@
   }
 
   // ====== PRICING CALCULATOR ======
-  // Tiers reflect real compounded-pharmacy market pricing (2026): cost scales with
-  // dose because higher mg doses use more active ingredient. Adjust freely once
-  // you have your actual pharmacy's cost sheet.
+  // basePrice + (weekly dose in mg × perMg) for the two medications patients
+  // actually titrate up over time. The other four are flat monthly pricing —
+  // dosing on those isn't something patients adjust the same way.
+  // These numbers are estimates from public market research, not your real
+  // pharmacy's cost sheet — swap in real numbers once you have a contract.
   const MEMBERSHIP_PRICE = { Basic: 79, Premium: 149 };
 
-  const PROTOCOL_PRICE_TIERS = {
-    'Tirzepatide':               [{ max: 5,   price: 279 }, { max: 10,  price: 349 }, { max: 999, price: 449 }],
-    'Semaglutide':                [{ max: 0.5, price: 249 }, { max: 1.0, price: 299 }, { max: 999, price: 349 }],
-    'Tesamorelin':                [{ max: 999, price: 289 }],
-    'Testosterone Cypionate':     [{ max: 999, price: 149 }],
-    'ED Care':                    [{ max: 999, price: 39 }],
-    'NAD+ Support':               [{ max: 999, price: 99 }]
+  const MEDICATION_INFO = {
+    'Tirzepatide': {
+      category: 'Weight management',
+      description: 'GLP-1/GIP dual agonist for fat loss, dosed weekly.',
+      basePrice: 200, perMg: 16.6
+    },
+    'Semaglutide': {
+      category: 'Weight management',
+      description: 'GLP-1 agonist for fat loss, dosed weekly.',
+      basePrice: 200, perMg: 50
+    },
+    'Tesamorelin': {
+      category: 'Longevity',
+      description: 'Growth hormone-releasing peptide, used for body composition and recovery.',
+      basePrice: 220, perMg: 35
+    },
+    'Testosterone Cypionate': {
+      category: "Men's health",
+      description: 'Testosterone replacement therapy for clinically low levels.',
+      basePrice: 80, perMg: 0.5
+    },
+    'ED Care': {
+      category: "Men's health / libido",
+      description: 'Sildenafil or tadalafil for erectile dysfunction, on-demand or daily.',
+      basePrice: 20, perMg: 0.3
+    },
+    'NAD+ Support': {
+      category: 'Recovery',
+      description: 'Subcutaneous NAD+ for energy and recovery support.',
+      basePrice: 60, perMg: 8
+    }
   };
 
   function calcProtocolPrice(medication, doseMg){
-    const tiers = PROTOCOL_PRICE_TIERS[medication];
-    if(!tiers) return 0;
+    const info = MEDICATION_INFO[medication];
+    if(!info) return 0;
     const dose = parseFloat(doseMg) || 0;
-    for(const t of tiers){ if(dose <= t.max) return t.price; }
-    return tiers[tiers.length - 1].price;
+    return Math.round(info.basePrice + (dose * info.perMg));
+  }
+
+  function medicationPricePerMgLabel(medication){
+    const info = MEDICATION_INFO[medication];
+    if(!info || !info.perMg) return null;
+    return '$' + info.perMg.toFixed(1) + '/mg + $' + info.basePrice + ' base';
   }
 
   // ====== SESSION / DASHBOARD HANDLING ======
@@ -1265,6 +1295,11 @@
     if(pendingPaymentPlan && history && !history.paid){
       await applyPendingPayment();
       return; // applyPendingPayment() calls loadPatientState() again with fresh data
+    }
+
+    if(pendingOrder){
+      await applyPendingOrder();
+      return; // applyPendingOrder() calls loadPatientState() again with fresh data
     }
 
     const { data: apptRows } = await supabaseClient
@@ -1361,7 +1396,7 @@
         dose: history.approved_dose,
         price: history.approved_price,
         purchased: history.purchased,
-        onBuy: "buyLegacyPrescription()"
+        onBuy: "goToMedicationCheckout('legacy', null, '" + history.approved_medication + "')"
       });
     }
 
@@ -1369,7 +1404,7 @@
     approvedRx.forEach(r => {
       approvedHtml += renderStoreItem({
         medication: r.medication, dose: r.dose, price: r.price,
-        purchased: r.purchased, onBuy: "buyPrescription('" + r.id + "')"
+        purchased: r.purchased, onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "')"
       });
     });
 
@@ -1394,31 +1429,55 @@
       + '<div style="text-align:right;">'
       + '<div class="meta" style="margin-bottom:6px;">' + priceLabel + '</div>'
       + (item.purchased
-          ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Order placed</span>'
+          ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Order placed with pharmacy</span>'
           : '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Buy</button>')
       + '</div></div>';
   }
 
-  async function buyLegacyPrescription(){
-    if(!supabaseClient || !currentHealthHistory) return;
-    try{
-      await supabaseClient.from('health_history')
-        .update({ purchased: true, purchased_at: new Date().toISOString() })
-        .eq('id', currentHealthHistory.id);
-      alert('Order placed. (Prototype — no real payment/shipping wired up yet.)');
-      await loadPatientState();
-    } catch(err){
-      alert('Could not place order: ' + (err.message || 'unknown error'));
+  // ====== MEDICATION STRIPE PAYMENT LINKS ======
+  // Nuvi Clinic bills the patient directly for medication (the pharmacy then
+  // invoices Nuvi at wholesale/compounding cost — Nuvi keeps the margin).
+  // One Payment Link per medication (set up in Stripe with "Collect
+  // customer's shipping address" turned on). Price varies by dose in
+  // reality, but a Payment Link has one fixed price — known prototype
+  // simplification (see pre-launch-checklist.md); real per-dose pricing
+  // needs a backend creating a Stripe Checkout Session dynamically.
+  const MEDICATION_STRIPE_LINKS = {
+    'Tirzepatide': 'https://buy.stripe.com/test_4gM9AS66vcrb8HN0jL5wI02',
+    'Semaglutide': 'https://buy.stripe.com/test_aFa3cueD1bn71fl8Qh5wI03',
+    'Tesamorelin': 'YOUR_STRIPE_LINK_TESAMORELIN',
+    'Testosterone Cypionate': 'YOUR_STRIPE_LINK_TESTOSTERONE',
+    'ED Care': 'YOUR_STRIPE_LINK_EDCARE',
+    'NAD+ Support': 'YOUR_STRIPE_LINK_NAD'
+  };
+
+  function goToMedicationCheckout(kind, id, medication){
+    const link = MEDICATION_STRIPE_LINKS[medication];
+    if(link && link.indexOf('YOUR_') !== 0){
+      // In Stripe, set this link's "after payment" redirect to:
+      // <site-url>?order_paid=true&rx_kind=<kind>&rx_id=<id or blank for legacy>
+      window.location.href = link;
+    } else {
+      // No real Stripe link set up yet for this medication — fall back to
+      // marking it ordered directly so testing isn't blocked.
+      markOrderedDemo(kind, id);
     }
   }
 
-  async function buyPrescription(id){
+  async function markOrderedDemo(kind, id){
     if(!supabaseClient) return;
     try{
-      await supabaseClient.from('prescriptions')
-        .update({ purchased: true, purchased_at: new Date().toISOString() })
-        .eq('id', id);
-      alert('Order placed. (Prototype — no real payment/shipping wired up yet.)');
+      if(kind === 'legacy'){
+        if(!currentHealthHistory) return;
+        await supabaseClient.from('health_history')
+          .update({ purchased: true, purchased_at: new Date().toISOString() })
+          .eq('id', currentHealthHistory.id);
+      } else {
+        await supabaseClient.from('prescriptions')
+          .update({ purchased: true, purchased_at: new Date().toISOString() })
+          .eq('id', id);
+      }
+      alert('Order placed. (Demo mode — no real Stripe link configured for this medication yet.)');
       await loadPatientState();
     } catch(err){
       alert('Could not place order: ' + (err.message || 'unknown error'));
@@ -1851,8 +1910,9 @@
     const med = document.getElementById('np-approve-med').value;
     const doseMg = document.getElementById('np-approve-dose-mg').value;
     const price = calcProtocolPrice(med, doseMg);
+    const rateLabel = medicationPricePerMgLabel(med);
     document.getElementById('np-price-preview').textContent =
-      med + ' at ' + doseMg + ' mg/week → $' + price + '/mo medication cost';
+      med + ' at ' + doseMg + ' mg/week → $' + price + '/mo' + (rateLabel ? ' (' + rateLabel + ')' : ' (flat rate)');
   }
 
   async function npApprovePrescription(){
@@ -2251,6 +2311,17 @@
     }
   })();
 
+  // Same pattern, but for a medication purchase from the Store returning
+  // from Stripe (shipping address collected by Stripe itself at checkout).
+  let pendingOrder = null;
+  (function checkForOrderReturn(){
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('order_paid') === 'true'){
+      pendingOrder = { kind: params.get('rx_kind') || '', id: params.get('rx_id') || '' };
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    }
+  })();
+
   // Safety net: Supabase's client normally strips the #access_token=... hash
   // from the URL itself once it's finished reading it. If that somehow doesn't
   // happen, force it clean shortly after load — otherwise a stale token can get
@@ -2273,6 +2344,26 @@
       await loadPatientState();
     } catch(err){
       console.error('Could not apply pending payment:', err);
+    }
+  }
+
+  async function applyPendingOrder(){
+    if(!pendingOrder || !supabaseClient) return;
+    const order = pendingOrder;
+    pendingOrder = null; // clear first so we never double-apply
+    try{
+      if(order.kind === 'legacy' && currentHealthHistory){
+        await supabaseClient.from('health_history')
+          .update({ purchased: true, purchased_at: new Date().toISOString() })
+          .eq('id', currentHealthHistory.id);
+      } else if(order.id){
+        await supabaseClient.from('prescriptions')
+          .update({ purchased: true, purchased_at: new Date().toISOString() })
+          .eq('id', order.id);
+      }
+      await loadPatientState();
+    } catch(err){
+      console.error('Could not apply pending order:', err);
     }
   }
 
