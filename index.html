@@ -236,6 +236,17 @@
   /* ---- DASHBOARD ---- */
   #dashboard{display:none;padding:56px 0 88px;}
   #dashboard.visible{display:block;}
+  #np-dashboard{display:none;padding:56px 0 88px;}
+  #np-dashboard.visible{display:block;}
+  .np-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 4px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s;
+  }
+  .np-row:last-child{border-bottom:none;}
+  .np-row:hover{background:var(--paper);}
+  .np-row .name{font-weight:600;font-size:14.5px;}
+  .np-row .meta{font-size:12.5px;color:rgba(16,27,45,0.55);}
+  .np-empty{font-size:13.5px;color:rgba(16,27,45,0.5);padding:8px 4px;}
   .marketing-page.hidden-for-dashboard{display:none;}
   .dash-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:40px;}
   .dash-head h1{font-size:clamp(28px,3.6vw,40px);}
@@ -624,25 +635,7 @@
         <div class="stage-view" id="stage-awaiting-approval" style="display:none;">
           <span class="status-pill">Awaiting sign-off</span>
           <h3>Interview complete</h3>
-          <p style="margin-bottom:16px;">Your NP interview is done. The supervising physician is doing final review — your active protocol will show up here once it's approved.</p>
-          <div style="padding-top:16px;border-top:1px solid var(--line);">
-            <span class="demo-tag">Demo only — an NP enters this from a real clinical panel in real life</span><br>
-            <div class="two-col" style="margin-top:10px;">
-              <div class="field"><label>Medication</label>
-                <select id="demo-approve-med" onchange="updatePricePreview()">
-                  <option value="Tirzepatide">Tirzepatide</option>
-                  <option value="Semaglutide">Semaglutide</option>
-                  <option value="Tesamorelin">Tesamorelin</option>
-                  <option value="Testosterone Cypionate">Testosterone Cypionate</option>
-                  <option value="ED Care">ED Care (Sildenafil/Tadalafil)</option>
-                  <option value="NAD+ Support">NAD+ Support</option>
-                </select>
-              </div>
-              <div class="field"><label>Weekly dose (mg)</label><input id="demo-approve-dose-mg" type="number" step="0.1" value="2.5" oninput="updatePricePreview()"></div>
-            </div>
-            <div id="price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(16,27,45,0.65);margin:6px 0 14px;"></div>
-            <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="simulateApproval()">Simulate: approve prescription</button>
-          </div>
+          <p>Your NP interview is done. The supervising physician is doing final review — your active protocol will show up here once it's approved.</p>
         </div>
 
         <div class="stage-view" id="stage-active" style="display:none;">
@@ -808,15 +801,75 @@
           <button class="btn btn-outline" onclick="toggleCamera()">Enable camera</button>
           <button class="btn btn-outline" onclick="hideVideoRoom()">Leave</button>
         </div>
-        <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--line);">
-          <span class="demo-tag">Demo only — an NP would do this step in real life</span><br>
-          <button class="btn btn-primary" style="margin-top:10px;width:auto;padding:11px 22px;" onclick="simulateInterviewComplete()">Simulate: mark interview complete</button>
-        </div>
       </div>
     </div>
 
   </div>
 </section>
+
+<section id="np-dashboard">
+  <div class="wrap">
+    <div class="dash-head">
+      <div>
+        <h1 id="np-welcome">NP Dashboard</h1>
+        <p>Patients, interviews, and prescriptions awaiting your review.</p>
+      </div>
+      <button class="btn btn-outline dash-logout" onclick="handleLogout()">Log out</button>
+    </div>
+
+    <div class="dash-grid" style="grid-template-columns:1fr;margin-bottom:22px;">
+      <div class="dash-card">
+        <h3 style="margin-bottom:14px;">Today's & upcoming interviews</h3>
+        <div id="np-appointment-list" style="font-size:14px;"></div>
+      </div>
+    </div>
+
+    <div class="dash-grid" style="grid-template-columns:1fr;">
+      <div class="dash-card">
+        <h3 style="margin-bottom:14px;">All patients</h3>
+        <div id="np-patient-list"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NP: PATIENT DETAIL PANEL -->
+<div class="modal-overlay" id="modal-np-patient" onclick="closeOnOverlay(event,'np-patient')">
+  <div class="modal" style="max-width:560px;">
+    <button class="modal-close" onclick="closeModal('np-patient')" aria-label="Close">✕</button>
+    <span class="modal-eyebrow">Patient</span>
+    <h3 id="np-detail-name">—</h3>
+    <p class="modal-sub" id="np-detail-email">—</p>
+
+    <div style="background:var(--paper);border-radius:12px;padding:16px;margin-bottom:16px;font-size:13.5px;line-height:1.7;" id="np-detail-history"></div>
+
+    <div id="np-detail-appt" style="margin-bottom:16px;"></div>
+
+    <div class="form-section-title">Approve prescription</div>
+    <div class="two-col">
+      <div class="field"><label>Medication</label>
+        <select id="np-approve-med" onchange="updateNPPricePreview()">
+          <option value="Tirzepatide">Tirzepatide</option>
+          <option value="Semaglutide">Semaglutide</option>
+          <option value="Tesamorelin">Tesamorelin</option>
+          <option value="Testosterone Cypionate">Testosterone Cypionate</option>
+          <option value="ED Care">ED Care (Sildenafil/Tadalafil)</option>
+          <option value="NAD+ Support">NAD+ Support</option>
+        </select>
+      </div>
+      <div class="field"><label>Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" step="0.1" value="2.5" oninput="updateNPPricePreview()"></div>
+    </div>
+    <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(16,27,45,0.65);margin:6px 0 14px;"></div>
+    <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="npApprovePrescription()">Approve prescription</button>
+
+    <div class="form-section-title">Message patient</div>
+    <div id="np-message-thread" style="max-height:180px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
+    <div style="display:flex;gap:8px;">
+      <input id="np-message-input" type="text" placeholder="Reply as care team..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;">
+      <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="npSendMessage()">Send</button>
+    </div>
+  </div>
+</div>
 
 <footer>
   <div class="wrap">
@@ -845,6 +898,7 @@
     </div>
     <div class="footer-bottom">
       <p>© 2026 Nuvi Clinic. Prototype for internal / partner review — not a live medical service. Placeholder branding, pricing, and formulary pending final legal and clinical review.</p>
+      <a href="javascript:void(0)" onclick="openModal('staff')" style="font-size:12px;color:rgba(16,27,45,0.4);">Staff login</a>
     </div>
   </div>
 </footer>
@@ -889,6 +943,21 @@
 </div>
 
 <!-- COMING SOON MODAL -->
+<div class="modal-overlay" id="modal-staff" onclick="closeOnOverlay(event,'staff')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('staff')" aria-label="Close">✕</button>
+    <span class="modal-eyebrow">Staff</span>
+    <h3>Care team login</h3>
+    <p class="modal-sub">For NP and physician accounts only.</p>
+    <div id="staff-login-error"></div>
+    <form onsubmit="return handleStaffLogin(event)">
+      <div class="field"><label for="staff-username">Username</label><input id="staff-username" type="text" placeholder="drcampa" required></div>
+      <div class="field"><label for="staff-password">Password</label><input id="staff-password" type="password" placeholder="••••••••" required></div>
+      <button class="btn btn-primary" type="submit">Log in</button>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-soon" onclick="closeOnOverlay(event,'soon')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('soon')" aria-label="Close">✕</button>
@@ -1102,14 +1171,6 @@
     return tiers[tiers.length - 1].price;
   }
 
-  function updatePricePreview(){
-    const med = document.getElementById('demo-approve-med').value;
-    const doseMg = document.getElementById('demo-approve-dose-mg').value;
-    const price = calcProtocolPrice(med, doseMg);
-    document.getElementById('price-preview').textContent =
-      med + ' at ' + doseMg + ' mg/week → $' + price + '/mo medication cost (membership billed separately)';
-  }
-
   // ====== SESSION / DASHBOARD HANDLING ======
   let currentUser = null;
   let currentAppointment = null;
@@ -1120,6 +1181,7 @@
     currentUser = user;
     document.getElementById('marketing-content').classList.add('hidden-for-dashboard');
     document.getElementById('dashboard').classList.add('visible');
+    document.getElementById('np-dashboard').classList.remove('visible');
     document.getElementById('nav-cta').style.display = 'none';
 
     const meta = user.user_metadata || {};
@@ -1197,7 +1259,6 @@
       document.getElementById('np-slots-wrap').style.display = 'none';
       renderNPCalendar();
     }
-    if(stage === 'awaiting-approval'){ updatePricePreview(); }
     if(stage === 'scheduled' && appt){
       document.getElementById('ticket-number-display').textContent = appt.ticket_number;
       document.getElementById('ticket-datetime-display').textContent = appt.appointment_date + ' · ' + appt.appointment_time;
@@ -1319,12 +1380,208 @@
   function showMarketing(){
     document.getElementById('marketing-content').classList.remove('hidden-for-dashboard');
     document.getElementById('dashboard').classList.remove('visible');
+    document.getElementById('np-dashboard').classList.remove('visible');
     document.getElementById('nav-cta').style.display = 'flex';
+  }
+
+  async function handleStaffLogin(e){
+    e.preventDefault();
+    const errorBox = document.getElementById('staff-login-error');
+    errorBox.innerHTML = '';
+    if(!supabaseClient){
+      errorBox.innerHTML = '<div style="background:rgba(196,60,60,0.1);color:#B23A3A;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;">Supabase isn\'t connected yet.</div>';
+      return false;
+    }
+    const username = document.getElementById('staff-username').value.trim();
+    const password = document.getElementById('staff-password').value;
+    const email = username.indexOf('@') > -1 ? username : username + '@nuviclinic.local';
+
+    const submitBtn = document.querySelector('#modal-staff button[type="submit"]');
+    submitBtn.textContent = 'Logging in...';
+    submitBtn.disabled = true;
+
+    try{
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if(error) throw error;
+      // onAuthStateChange routes to the NP dashboard automatically once the
+      // staff table lookup confirms this account is staff.
+    } catch(err){
+      submitBtn.textContent = 'Log in';
+      submitBtn.disabled = false;
+      errorBox.innerHTML = '<div style="background:rgba(196,60,60,0.1);color:#B23A3A;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;">' + (err.message || 'Login failed.') + '</div>';
+    }
+    return false;
   }
 
   async function handleLogout(){
     if(supabaseClient){ await supabaseClient.auth.signOut(); }
     showMarketing();
+  }
+
+  // ====== NP DASHBOARD ======
+  let npPatients = [];
+  let npCurrentPatientId = null;
+  let npCurrentPatientUserId = null;
+
+  async function showNPDashboard(user, staffRow){
+    currentUser = user;
+    document.getElementById('marketing-content').classList.add('hidden-for-dashboard');
+    document.getElementById('dashboard').classList.remove('visible');
+    document.getElementById('np-dashboard').classList.add('visible');
+    document.getElementById('nav-cta').style.display = 'none';
+    document.getElementById('np-welcome').textContent = 'Welcome, ' + (staffRow.full_name || user.email);
+    await loadNPData();
+  }
+
+  async function loadNPData(){
+    const { data: patients } = await supabaseClient.from('health_history').select('*').order('created_at', { ascending: false });
+    npPatients = patients || [];
+    renderNPPatientList();
+
+    const { data: appts } = await supabaseClient.from('appointments').select('*')
+      .eq('type', 'np_interview').eq('status', 'scheduled')
+      .order('appointment_date', { ascending: true });
+    renderNPAppointmentList(appts || []);
+  }
+
+  function renderNPPatientList(){
+    const wrap = document.getElementById('np-patient-list');
+    if(npPatients.length === 0){ wrap.innerHTML = '<p class="np-empty">No patients yet.</p>'; return; }
+    wrap.innerHTML = npPatients.map(p => {
+      const status = p.approved ? 'Approved' : (p.paid ? 'Pending review' : 'Not yet paid');
+      return '<div class="np-row" onclick="openNPPatientDetail(\''+p.id+'\')">'
+        + '<div><div class="name">' + (p.full_name || p.email || 'Unknown patient') + '</div>'
+        + '<div class="meta">' + (p.email || '') + ' · Goal: ' + (p.goal || '—') + ' · Plan: ' + (p.plan || '—') + '</div></div>'
+        + '<div class="meta">' + status + '</div></div>';
+    }).join('');
+  }
+
+  function renderNPAppointmentList(appts){
+    const wrap = document.getElementById('np-appointment-list');
+    if(appts.length === 0){ wrap.innerHTML = '<p class="np-empty">No upcoming interviews scheduled.</p>'; return; }
+    wrap.innerHTML = appts.map(a => {
+      const patient = npPatients.find(p => p.user_id === a.user_id);
+      const label = patient ? (patient.full_name || patient.email) : 'Patient';
+      return '<div class="np-row" onclick="openNPPatientDetail(\''+(patient ? patient.id : '')+'\')">'
+        + '<div><div class="name">' + label + '</div><div class="meta">Ticket ' + a.ticket_number + '</div></div>'
+        + '<div class="meta">' + a.appointment_date + ' · ' + a.appointment_time + '</div></div>';
+    }).join('');
+  }
+
+  async function openNPPatientDetail(patientId){
+    if(!patientId) return;
+    const patient = npPatients.find(p => p.id === patientId);
+    if(!patient) return;
+    npCurrentPatientId = patientId;
+    npCurrentPatientUserId = patient.user_id;
+
+    document.getElementById('np-detail-name').textContent = patient.full_name || patient.email || 'Unknown patient';
+    document.getElementById('np-detail-email').textContent = patient.email || '';
+
+    const lines = [
+      'Goal: ' + (patient.goal || '—'),
+      'Conditions: ' + (((patient.conditions||[]).join(', ')) || 'None reported') + (patient.conditions_other ? ' + ' + patient.conditions_other : ''),
+      'Surgical history: ' + (patient.surgical_history || '—'),
+      'Allergies: ' + (patient.allergies || '—'),
+      'Alcohol: ' + (patient.alcohol_use || '—') + ' · Smoking: ' + (patient.smoking_use || '—') + ' · Substances: ' + (patient.substance_use || '—'),
+      'Height / Weight: ' + (patient.height_cm || '—') + ' cm / ' + (patient.weight_kg || '—') + ' kg',
+      'Family history: ' + (((patient.family_history||[]).join(', ')) || 'None reported'),
+      'Family endocrine cancer: ' + (patient.family_endocrine_cancer ? ('⚠️ YES — ' + (patient.family_endocrine_cancer_detail || 'no detail given')) : 'No')
+    ];
+    document.getElementById('np-detail-history').innerHTML = lines.map(l => '<div>'+l+'</div>').join('');
+
+    const { data: apptRows } = await supabaseClient.from('appointments').select('*')
+      .eq('user_id', patient.user_id).eq('type', 'np_interview')
+      .order('created_at', { ascending: false }).limit(1);
+    const appt = (apptRows && apptRows[0]) || null;
+    const apptWrap = document.getElementById('np-detail-appt');
+    if(appt){
+      apptWrap.innerHTML = '<div class="form-section-title">Interview</div>'
+        + '<div style="font-size:13.5px;">Ticket ' + appt.ticket_number + ' — ' + appt.appointment_date + ' ' + appt.appointment_time + ' — status: <b>' + appt.status + '</b></div>'
+        + (appt.status === 'scheduled' ? '<button class="btn btn-outline" style="margin-top:8px;width:auto;padding:8px 16px;" onclick="npMarkInterviewComplete(\''+appt.id+'\')">Mark interview complete</button>' : '');
+    } else {
+      apptWrap.innerHTML = '<div class="form-section-title">Interview</div><p class="np-empty">Not scheduled yet.</p>';
+    }
+
+    document.getElementById('np-approve-med').value = patient.approved_medication || 'Tirzepatide';
+    document.getElementById('np-approve-dose-mg').value = '2.5';
+    updateNPPricePreview();
+
+    await loadNPMessages(patient.user_id);
+
+    document.getElementById('modal-np-patient').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  async function npMarkInterviewComplete(apptId){
+    try{
+      const { error } = await supabaseClient.from('appointments').update({ status: 'completed' }).eq('id', apptId);
+      if(error) throw error;
+      closeModal('np-patient');
+      await loadNPData();
+    } catch(err){
+      alert('Could not update: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  function updateNPPricePreview(){
+    const med = document.getElementById('np-approve-med').value;
+    const doseMg = document.getElementById('np-approve-dose-mg').value;
+    const price = calcProtocolPrice(med, doseMg);
+    document.getElementById('np-price-preview').textContent =
+      med + ' at ' + doseMg + ' mg/week → $' + price + '/mo medication cost';
+  }
+
+  async function npApprovePrescription(){
+    if(!npCurrentPatientId) return;
+    const med = document.getElementById('np-approve-med').value;
+    const doseMg = document.getElementById('np-approve-dose-mg').value;
+    const price = calcProtocolPrice(med, doseMg);
+    try{
+      const { error } = await supabaseClient.from('health_history').update({
+        approved: true,
+        approved_medication: med,
+        approved_dose: doseMg + ' mg / week',
+        approved_price: price,
+        approved_notes: 'Approved by care team.'
+      }).eq('id', npCurrentPatientId);
+      if(error) throw error;
+      closeModal('np-patient');
+      await loadNPData();
+    } catch(err){
+      alert('Could not approve: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  async function loadNPMessages(patientUserId){
+    const { data } = await supabaseClient.from('messages').select('*')
+      .eq('user_id', patientUserId).order('created_at', { ascending: true });
+    const thread = document.getElementById('np-message-thread');
+    thread.innerHTML = '';
+    (data || []).forEach(m => {
+      const row = document.createElement('div');
+      row.style.cssText = 'margin-bottom:8px;text-align:' + (m.sender === 'doctor' ? 'right' : 'left') + ';';
+      const bubble = document.createElement('span');
+      bubble.style.cssText = 'display:inline-block;padding:7px 12px;border-radius:10px;max-width:80%;' +
+        (m.sender === 'doctor' ? 'background:var(--ink);color:var(--paper-warm);' : 'background:var(--paper);color:var(--ink);');
+      bubble.textContent = (m.sender === 'patient' ? 'Patient: ' : '') + m.body;
+      row.appendChild(bubble);
+      thread.appendChild(row);
+    });
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  async function npSendMessage(){
+    const input = document.getElementById('np-message-input');
+    const body = input.value.trim();
+    if(!body || !npCurrentPatientUserId) return;
+    input.value = '';
+    try{
+      await supabaseClient.from('messages').insert({ user_id: npCurrentPatientUserId, sender: 'doctor', body });
+      await loadNPMessages(npCurrentPatientUserId);
+    } catch(err){
+      alert('Could not send: ' + (err.message || 'unknown error'));
+    }
   }
 
   // ====== HEALTH HISTORY FORM ======
@@ -1348,6 +1605,8 @@
 
     const payload = {
       user_id: currentUser.id,
+      full_name: (currentUser.user_metadata && currentUser.user_metadata.full_name) || '',
+      email: currentUser.email,
       goal: document.getElementById('hh-goal').value,
       conditions: conditions,
       conditions_other: document.getElementById('hh-conditions-other').value,
@@ -1412,6 +1671,38 @@
     return slots;
   }
 
+  // ====== NP AVAILABILITY (drives which slots patients can actually book) ======
+  let npAvailabilityCache = null;
+
+  async function loadNPAvailability(){
+    if(npAvailabilityCache) return npAvailabilityCache;
+    const { data } = await supabaseClient.from('np_availability').select('*');
+    npAvailabilityCache = data || [];
+    return npAvailabilityCache;
+  }
+
+  function timesForWindow(startTime, endTime){
+    const [sh, sm] = startTime.split(':').map(Number);
+    const [eh, em] = endTime.split(':').map(Number);
+    const slots = [];
+    let h = sh, m = sm;
+    while(h < eh || (h === eh && m < em)){
+      slots.push(formatSlotTime(h, m));
+      m += NP_SLOT_MINUTES;
+      if(m >= 60){ m -= 60; h++; }
+    }
+    return slots;
+  }
+
+  function getNPForSlot(dateValue, time, availability){
+    const weekday = new Date(dateValue + 'T00:00:00').getDay();
+    const dayWindows = (availability || []).filter(a => a.day_of_week === weekday);
+    for(const w of dayWindows){
+      if(timesForWindow(w.start_time, w.end_time).includes(time)) return w.np_user_id;
+    }
+    return null;
+  }
+
   function calendarShiftMonth(delta){
     calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
     renderNPCalendar();
@@ -1474,6 +1765,12 @@
     slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(16,27,45,0.5);">Checking availability...</p>';
     emptyMsg.style.display = 'none';
 
+    const availability = await loadNPAvailability();
+    const weekday = dateObj.getDay();
+    const dayWindows = availability.filter(a => a.day_of_week === weekday);
+    const npOpenSet = new Set();
+    dayWindows.forEach(w => timesForWindow(w.start_time, w.end_time).forEach(t => npOpenSet.add(t)));
+
     // Check every patient's booked NP interviews for this date, not just the
     // current user's, so slots already taken by someone else never show as open.
     const { data: bookedRows } = await supabaseClient
@@ -1481,7 +1778,9 @@
       .eq('type', 'np_interview').eq('appointment_date', dateValue).neq('status', 'cancelled');
     const bookedTimes = new Set((bookedRows || []).map(r => r.appointment_time));
 
-    const openTimes = allDaySlotTimes().filter(t => !bookedTimes.has(t));
+    // Only offer times that both fall inside an NP's working hours AND aren't
+    // already taken — if no NP is scheduled to work that day, this is empty.
+    const openTimes = allDaySlotTimes().filter(t => npOpenSet.has(t) && !bookedTimes.has(t));
 
     slotGrid.innerHTML = '';
     if(openTimes.length === 0){
@@ -1515,13 +1814,17 @@
         return;
       }
 
+      const availability = await loadNPAvailability();
+      const assignedNP = getNPForSlot(dateValue, time, availability);
+
       const { error } = await supabaseClient.from('appointments').insert({
         user_id: currentUser.id,
         ticket_number: ticket,
         appointment_date: dateValue,
         appointment_time: time,
         status: 'scheduled',
-        type: 'np_interview'
+        type: 'np_interview',
+        np_user_id: assignedNP
       });
       if(error) throw error;
 
@@ -1579,50 +1882,29 @@
     }
   }
 
-  async function simulateInterviewComplete(){
-    if(!supabaseClient || !currentAppointment) return;
+
+  async function routeUserSession(user){
+    document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));
+    document.body.style.overflow = '';
     try{
-      const { error } = await supabaseClient.from('appointments')
-        .update({ status: 'completed' })
-        .eq('id', currentAppointment.id);
-      if(error) throw error;
-      hideVideoRoom();
-      await loadPatientState();
+      const { data: staffRow } = await supabaseClient.from('staff').select('*').eq('user_id', user.id).maybeSingle();
+      if(staffRow){
+        showNPDashboard(user, staffRow);
+      } else {
+        showDashboard(user);
+      }
     } catch(err){
-      alert('Could not update: ' + (err.message || 'unknown error'));
+      // If the staff check itself fails for any reason, fail safe to the
+      // patient dashboard rather than silently granting staff-level access.
+      console.error('Staff check failed, defaulting to patient view:', err);
+      showDashboard(user);
     }
   }
-
-  async function simulateApproval(){
-    if(!supabaseClient || !currentHealthHistory) return;
-    const med = document.getElementById('demo-approve-med').value;
-    const doseMg = document.getElementById('demo-approve-dose-mg').value;
-    const price = calcProtocolPrice(med, doseMg);
-    const doseLabel = doseMg + ' mg / week';
-    try{
-      const { error } = await supabaseClient.from('health_history')
-        .update({
-          approved: true,
-          approved_medication: med,
-          approved_dose: doseLabel,
-          approved_price: price,
-          approved_notes: 'Approved via prototype demo simulation.'
-        })
-        .eq('id', currentHealthHistory.id);
-      if(error) throw error;
-      await loadPatientState();
-    } catch(err){
-      alert('Could not approve: ' + (err.message || 'unknown error'));
-    }
-  }
-
 
   if(supabaseClient){
     supabaseClient.auth.onAuthStateChange((event, session) => {
       if(session && session.user){
-        document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));
-        document.body.style.overflow = '';
-        showDashboard(session.user);
+        routeUserSession(session.user);
       } else {
         showMarketing();
       }
@@ -1630,7 +1912,7 @@
 
     // Catch an already-active session on page load/refresh
     supabaseClient.auth.getSession().then(({ data }) => {
-      if(data.session && data.session.user){ showDashboard(data.session.user); }
+      if(data.session && data.session.user){ routeUserSession(data.session.user); }
     });
   }
 
