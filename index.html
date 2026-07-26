@@ -1250,6 +1250,22 @@
     return '$' + info.perMg.toFixed(1) + '/mg + $' + info.basePrice + ' base';
   }
 
+  // The dose-based calculator above is only an internal estimate — real
+  // billing happens through a fixed-price Stripe Payment Link, so the
+  // patient-facing price must always match what Stripe will actually charge,
+  // not the dynamically calculated number. Keep this in sync with the exact
+  // amount entered in Stripe for each medication.
+  const MEDICATION_CHECKOUT_PRICE = {
+    'Tirzepatide': 300,
+    'Semaglutide': 200
+  };
+
+  function getDisplayPrice(medication, fallbackPrice){
+    return MEDICATION_CHECKOUT_PRICE.hasOwnProperty(medication)
+      ? MEDICATION_CHECKOUT_PRICE[medication]
+      : fallbackPrice;
+  }
+
   // ====== SESSION / DASHBOARD HANDLING ======
   let currentUser = null;
   let currentAppointment = null;
@@ -1349,7 +1365,7 @@
     }
     if(stage === 'active' && history){
       const membershipPrice = MEMBERSHIP_PRICE[history.plan] || 0;
-      const protocolPrice = history.approved_price || 0;
+      const protocolPrice = getDisplayPrice(history.approved_medication, history.approved_price || 0);
       document.getElementById('active-med-name').textContent = history.approved_medication || 'Protocol approved';
       document.getElementById('active-med-dose').textContent = history.approved_dose || '';
       document.getElementById('active-med-price').textContent = '$' + protocolPrice + '/mo';
@@ -1394,7 +1410,7 @@
       approvedHtml += renderStoreItem({
         medication: history.approved_medication,
         dose: history.approved_dose,
-        price: history.approved_price,
+        price: getDisplayPrice(history.approved_medication, history.approved_price),
         purchased: history.purchased,
         onBuy: "goToMedicationCheckout('legacy', null, '" + history.approved_medication + "')"
       });
@@ -1403,7 +1419,7 @@
     const approvedRx = prescriptions.filter(r => r.status === 'approved');
     approvedRx.forEach(r => {
       approvedHtml += renderStoreItem({
-        medication: r.medication, dose: r.dose, price: r.price,
+        medication: r.medication, dose: r.dose, price: getDisplayPrice(r.medication, r.price),
         purchased: r.purchased, onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "')"
       });
     });
