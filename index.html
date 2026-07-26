@@ -488,7 +488,7 @@
           <li>Prescription management</li>
           <li>Standard shipping</li>
         </ul>
-        <a class="btn btn-outline" href="javascript:void(0)" onclick="goToCheckout('Basic')">Choose Basic</a>
+        <a class="btn btn-outline" href="javascript:void(0)" onclick="openModal('intake','Basic')">Choose Basic</a>
       </div>
       <div class="tier featured">
         <div class="tier-badge">Most popular</div>
@@ -501,7 +501,7 @@
           <li>Priority messaging response</li>
           <li>Free expedited shipping</li>
         </ul>
-        <a class="btn btn-primary" href="javascript:void(0)" onclick="goToCheckout('Premium')" style="background:var(--amber);color:var(--ink);">Choose Premium</a>
+        <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake','Premium')" style="background:var(--amber);color:var(--ink);">Choose Premium</a>
       </div>
     </div>
   </div>
@@ -550,6 +550,26 @@
           <h3>Complete your health history</h3>
           <p style="margin-bottom:16px;">Before you can schedule your interview, we need your medical history, goals, and a quick safety screening. Takes about 5 minutes.</p>
           <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showHistoryForm()">Start health history</button>
+        </div>
+
+        <div class="stage-view" id="stage-need-payment" style="display:none;">
+          <span class="status-pill status-active">History received</span>
+          <h3>Choose your plan</h3>
+          <p style="margin-bottom:16px;">Your care team reviews your history once you're enrolled. Pick a plan to continue to your NP interview.</p>
+          <div class="two-col">
+            <div class="dash-card" style="padding:20px;">
+              <div class="tier-name" style="margin-bottom:8px;">Basic</div>
+              <div class="tier-price" style="font-size:28px;">$79<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
+              <p style="margin:10px 0 16px;font-size:13px;">Medical evaluation and peptide prescription.</p>
+              <button class="btn btn-outline" style="width:100%;" onclick="goToCheckout('Basic')">Continue with Basic</button>
+            </div>
+            <div class="dash-card" style="padding:20px;border-color:var(--amber);">
+              <div class="tier-name" style="margin-bottom:8px;">Premium</div>
+              <div class="tier-price" style="font-size:28px;">$149<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
+              <p style="margin:10px 0 16px;font-size:13px;">Everything in Basic, plus direct 1-on-1 visits with the physician.</p>
+              <button class="btn btn-primary" style="width:100%;background:var(--amber);color:var(--ink);" onclick="goToCheckout('Premium')">Continue with Premium</button>
+            </div>
+          </div>
         </div>
 
         <div class="stage-view" id="stage-need-schedule" style="display:none;">
@@ -604,6 +624,7 @@
         <ul class="dash-checklist">
           <li><span class="dash-check-icon done">✓</span> Account created</li>
           <li><span class="dash-check-icon pending" id="check-history">•</span> Health history submitted</li>
+          <li><span class="dash-check-icon pending" id="check-paid">•</span> Plan selected & paid</li>
           <li><span class="dash-check-icon pending" id="check-scheduled">•</span> NP interview scheduled</li>
           <li><span class="dash-check-icon pending" id="check-interview">•</span> Interview completed</li>
           <li><span class="dash-check-icon pending" id="check-approved">•</span> Prescription approved</li>
@@ -835,8 +856,21 @@
     if(link && link.indexOf('YOUR_') !== 0){
       window.location.href = link;
     } else {
-      // Stripe links aren't set up yet — skip straight to intake so testing isn't blocked
-      openModal('intake', plan);
+      // No real Stripe link configured for this plan — mark paid directly so testing isn't blocked
+      markPaidDemo(plan);
+    }
+  }
+
+  async function markPaidDemo(plan){
+    if(!supabaseClient || !currentHealthHistory) return;
+    try{
+      const { error } = await supabaseClient.from('health_history')
+        .update({ paid: true, plan: plan })
+        .eq('id', currentHealthHistory.id);
+      if(error) throw error;
+      await loadPatientState();
+    } catch(err){
+      alert('Could not mark as paid: ' + (err.message || 'unknown error'));
     }
   }
   // ==============================
@@ -1006,6 +1040,11 @@
     const history = (historyRows && historyRows[0]) || null;
     currentHealthHistory = history;
 
+    if(pendingPaymentPlan && history && !history.paid){
+      await applyPendingPayment();
+      return; // applyPendingPayment() calls loadPatientState() again with fresh data
+    }
+
     const { data: apptRows } = await supabaseClient
       .from('appointments').select('*').eq('user_id', currentUser.id)
       .order('created_at', { ascending: false }).limit(1);
@@ -1019,8 +1058,10 @@
       stage = 'awaiting-approval';
     } else if(history && appt && appt.status === 'scheduled'){
       stage = 'scheduled';
-    } else if(history){
+    } else if(history && history.paid){
       stage = 'need-schedule';
+    } else if(history){
+      stage = 'need-payment';
     }
 
     document.querySelectorAll('.stage-view').forEach(v => v.style.display = 'none');
@@ -1028,6 +1069,8 @@
 
     document.getElementById('check-history').className = 'dash-check-icon ' + (history ? 'done' : 'pending');
     document.getElementById('check-history').textContent = history ? '✓' : '•';
+    document.getElementById('check-paid').className = 'dash-check-icon ' + (history && history.paid ? 'done' : 'pending');
+    document.getElementById('check-paid').textContent = (history && history.paid) ? '✓' : '•';
     document.getElementById('check-scheduled').className = 'dash-check-icon ' + (appt ? 'done' : 'pending');
     document.getElementById('check-scheduled').textContent = appt ? '✓' : '•';
     document.getElementById('check-interview').className = 'dash-check-icon ' + (appt && appt.status !== 'scheduled' ? 'done' : 'pending');
@@ -1258,15 +1301,31 @@
     });
   }
 
-  // Catch a return trip from a Stripe Payment Link and continue straight into intake
+  // Catch a return trip from a Stripe Payment Link. This fires after the user is
+  // already logged in (payment now happens mid-flow, after health history), so we
+  // just mark their existing record paid rather than starting a new signup.
+  let pendingPaymentPlan = null;
   (function checkForPaymentReturn(){
     const params = new URLSearchParams(window.location.search);
     if(params.get('paid') === 'true'){
-      const plan = params.get('plan') || '';
+      pendingPaymentPlan = params.get('plan') || '';
       window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
-      setTimeout(() => { openModal('intake', plan); }, 300);
     }
   })();
+
+  async function applyPendingPayment(){
+    if(!pendingPaymentPlan || !supabaseClient || !currentHealthHistory) return;
+    const plan = pendingPaymentPlan;
+    pendingPaymentPlan = null; // clear first so we never double-apply or loop
+    try{
+      await supabaseClient.from('health_history')
+        .update({ paid: true, plan: plan })
+        .eq('id', currentHealthHistory.id);
+      await loadPatientState();
+    } catch(err){
+      console.error('Could not apply pending payment:', err);
+    }
+  }
 
   document.addEventListener('keydown', (e)=>{
     if(e.key === 'Escape'){
