@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Soma Health — Physician-Led Metabolic & Performance Medicine</title>
+<title>Nuvi Clinic — Physician-Led Metabolic & Performance Medicine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root{
     --ink:#101B2D;
@@ -142,7 +143,7 @@
   .protocol-disclaimer{margin-top:30px;font-size:13px;color:rgba(16,27,45,0.5);line-height:1.6;max-width:760px;}
 
   /* ---- MEMBERSHIP ---- */
-  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .tiers{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;max-width:760px;margin:0 auto;}
   .tier{background:var(--paper-warm);border:1px solid var(--line);border-radius:20px;padding:34px 28px;display:flex;flex-direction:column;}
   .tier.featured{background:var(--ink);color:var(--paper-warm);border-color:var(--ink);position:relative;}
   .tier.featured .tier-name{color:var(--amber);}
@@ -299,7 +300,7 @@
 
 <header>
   <nav>
-    <div class="logo"><span class="logo-mark"></span>Soma Health</div>
+    <div class="logo"><span class="logo-mark"></span>Nuvi Clinic</div>
     <div class="navlinks">
       <a href="#how">How it works</a>
       <a href="#protocols">Protocols</a>
@@ -319,7 +320,7 @@
     <div>
       <span class="eyebrow">Physician-led · Puerto Rico licensed</span>
       <h1>Fat loss starts with<br>a real <em>prescription.</em></h1>
-      <p class="lede">Soma Health connects you with a licensed physician for weight management, men's health, and recovery — then delivers your prescription through a licensed compounding pharmacy. No guessing. No gray-market vials.</p>
+      <p class="lede">Nuvi Clinic connects you with a licensed physician for weight management, men's health, and recovery — then delivers your prescription through a licensed compounding pharmacy. No guessing. No gray-market vials.</p>
       <div class="hero-ctas">
         <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake')">Start your visit — $79/mo</a>
         <a class="btn btn-outline" href="#protocols">See protocols</a>
@@ -327,7 +328,7 @@
       <p class="hero-note">Every prescription is reviewed by a physician before it's filled. This is a working prototype for internal review, not a live medical service.</p>
     </div>
     <div class="rx-pad">
-      <div class="rx-pad-head">Soma Health · Clinical Summary</div>
+      <div class="rx-pad-head">Nuvi Clinic · Clinical Summary</div>
       <div class="rx-line"><span>Protocol</span><b>Tirzepatide</b></div>
       <div class="rx-line"><span>Dose</span><b>2.5 mg / week, SC</b></div>
       <div class="rx-line"><span>Goal</span><b>Fat loss</b></div>
@@ -487,7 +488,7 @@
           <li>Prescription management</li>
           <li>Standard shipping</li>
         </ul>
-        <a class="btn btn-outline" href="javascript:void(0)" onclick="openModal('intake','Basic')">Choose Basic</a>
+        <a class="btn btn-outline" href="javascript:void(0)" onclick="goToCheckout('Basic')">Choose Basic</a>
       </div>
       <div class="tier featured">
         <div class="tier-badge">Most popular</div>
@@ -500,18 +501,7 @@
           <li>Priority messaging response</li>
           <li>Free expedited shipping</li>
         </ul>
-        <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake','Premium')" style="background:var(--amber);color:var(--ink);">Choose Premium</a>
-      </div>
-      <div class="tier">
-        <div class="tier-name">Executive</div>
-        <div class="tier-price">$249<span>/mo</span></div>
-        <ul>
-          <li>Everything in Premium</li>
-          <li>Dedicated care coordinator</li>
-          <li>Dietitian & training guidance</li>
-          <li>Full lab panel included</li>
-        </ul>
-        <a class="btn btn-outline" href="javascript:void(0)" onclick="openModal('intake','Executive')">Choose Executive</a>
+        <a class="btn btn-primary" href="javascript:void(0)" onclick="goToCheckout('Premium')" style="background:var(--amber);color:var(--ink);">Choose Premium</a>
       </div>
     </div>
   </div>
@@ -583,7 +573,15 @@
         <div class="stage-view" id="stage-awaiting-approval" style="display:none;">
           <span class="status-pill">Awaiting sign-off</span>
           <h3>Interview complete</h3>
-          <p>Your NP interview is done. The supervising physician is doing final review — your active protocol will show up here once it's approved.</p>
+          <p style="margin-bottom:16px;">Your NP interview is done. The supervising physician is doing final review — your active protocol will show up here once it's approved.</p>
+          <div style="padding-top:16px;border-top:1px solid var(--line);">
+            <span class="demo-tag">Demo only — a physician approves this from Supabase in real life</span><br>
+            <div class="two-col" style="margin-top:10px;">
+              <div class="field"><label>Medication</label><input id="demo-approve-med" type="text" placeholder="Tirzepatide" value="Tirzepatide"></div>
+              <div class="field"><label>Dose</label><input id="demo-approve-dose" type="text" placeholder="2.5 mg / week" value="2.5 mg / week"></div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:6px;width:auto;padding:11px 22px;" onclick="simulateApproval()">Simulate: approve prescription</button>
+          </div>
         </div>
 
         <div class="stage-view" id="stage-active" style="display:none;">
@@ -722,7 +720,7 @@
 <footer>
   <div class="wrap">
     <div class="footer-top">
-      <div class="logo"><span class="logo-mark"></span>Soma Health</div>
+      <div class="logo"><span class="logo-mark"></span>Nuvi Clinic</div>
       <div class="footer-cols">
         <div class="footer-col">
           <h5>Care</h5>
@@ -745,7 +743,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>© 2026 Soma Health. Prototype for internal / partner review — not a live medical service. Placeholder branding, pricing, and formulary pending final legal and clinical review.</p>
+      <p>© 2026 Nuvi Clinic. Prototype for internal / partner review — not a live medical service. Placeholder branding, pricing, and formulary pending final legal and clinical review.</p>
     </div>
   </div>
 </footer>
@@ -754,7 +752,7 @@
 <div class="modal-overlay" id="modal-login" onclick="closeOnOverlay(event,'login')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('login')" aria-label="Close">✕</button>
-    <div class="modal-icon-row"><span class="logo-mark"></span><span style="font-family:'Fraunces',serif;font-size:18px;font-weight:600;">Soma Health</span></div>
+    <div class="modal-icon-row"><span class="logo-mark"></span><span style="font-family:'Fraunces',serif;font-size:18px;font-weight:600;">Nuvi Clinic</span></div>
     <h3>Welcome back</h3>
     <p class="modal-sub">Enter your email and we'll send you a secure login link — no password needed.</p>
     <form onsubmit="return handleFormSubmit(event,'login')">
@@ -810,6 +808,37 @@
   const supabaseClient = (SUPABASE_URL.startsWith('http'))
     ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
+  // ==============================
+
+  // ====== EMAILJS CONFIG (for ticket confirmation emails) ======
+  // 1. Sign up at emailjs.com (free tier: 200 emails/mo)
+  // 2. Email Services -> connect an email account -> copy the Service ID
+  // 3. Email Templates -> create one using variables: {{to_email}} {{ticket_number}} {{appointment_date}} {{appointment_time}} -> copy the Template ID
+  // 4. Account -> General -> copy the Public Key
+  const EMAILJS_PUBLIC_KEY = 'YOUR_EMAILJS_PUBLIC_KEY';
+  const EMAILJS_SERVICE_ID = 'YOUR_EMAILJS_SERVICE_ID';
+  const EMAILJS_TEMPLATE_ID = 'YOUR_EMAILJS_TEMPLATE_ID';
+  const emailjsReady = EMAILJS_PUBLIC_KEY.indexOf('YOUR_') !== 0;
+  if(emailjsReady && window.emailjs){ emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }); }
+  // ==============================
+
+  // ====== STRIPE PAYMENT LINKS (test mode) ======
+  // Paste the 3 Payment Link URLs from your Stripe dashboard here.
+  // Each link's "after payment" redirect should point back to this page with
+  // ?paid=true&plan=Basic (or Premium / Executive) already set up.
+  const STRIPE_LINKS = {
+    Basic: 'https://buy.stripe.com/test_eVqcN4fH59eZcY3giJ5wI00',
+    Premium: 'https://buy.stripe.com/test_7sY8wO7azbn77DJ3vX5wI01'
+  };
+  function goToCheckout(plan){
+    const link = STRIPE_LINKS[plan];
+    if(link && link.indexOf('YOUR_') !== 0){
+      window.location.href = link;
+    } else {
+      // Stripe links aren't set up yet — skip straight to intake so testing isn't blocked
+      openModal('intake', plan);
+    }
+  }
   // ==============================
 
   document.querySelectorAll('.filter').forEach(f=>{
@@ -939,6 +968,7 @@
   // ====== SESSION / DASHBOARD HANDLING ======
   let currentUser = null;
   let currentAppointment = null;
+  let currentHealthHistory = null;
   let localStream = null;
 
   async function showDashboard(user){
@@ -974,6 +1004,7 @@
       .from('health_history').select('*').eq('user_id', currentUser.id)
       .order('created_at', { ascending: false }).limit(1);
     const history = (historyRows && historyRows[0]) || null;
+    currentHealthHistory = history;
 
     const { data: apptRows } = await supabaseClient
       .from('appointments').select('*').eq('user_id', currentUser.id)
@@ -1120,6 +1151,20 @@
         status: 'scheduled'
       });
       if(error) throw error;
+
+      if(emailjsReady && window.emailjs){
+        try{
+          await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            to_email: currentUser.email,
+            ticket_number: ticket,
+            appointment_date: dateLabel,
+            appointment_time: time
+          });
+        } catch(emailErr){
+          console.error('Confirmation email failed to send (booking still succeeded):', emailErr);
+        }
+      }
+
       await loadPatientState();
     } catch(err){
       alert('Could not book that slot: ' + (err.message || 'unknown error'));
@@ -1175,6 +1220,26 @@
     }
   }
 
+  async function simulateApproval(){
+    if(!supabaseClient || !currentHealthHistory) return;
+    const med = document.getElementById('demo-approve-med').value || 'Protocol approved';
+    const dose = document.getElementById('demo-approve-dose').value || '';
+    try{
+      const { error } = await supabaseClient.from('health_history')
+        .update({
+          approved: true,
+          approved_medication: med,
+          approved_dose: dose,
+          approved_notes: 'Approved via prototype demo simulation.'
+        })
+        .eq('id', currentHealthHistory.id);
+      if(error) throw error;
+      await loadPatientState();
+    } catch(err){
+      alert('Could not approve: ' + (err.message || 'unknown error'));
+    }
+  }
+
 
   if(supabaseClient){
     supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -1192,6 +1257,16 @@
       if(data.session && data.session.user){ showDashboard(data.session.user); }
     });
   }
+
+  // Catch a return trip from a Stripe Payment Link and continue straight into intake
+  (function checkForPaymentReturn(){
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('paid') === 'true'){
+      const plan = params.get('plan') || '';
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+      setTimeout(() => { openModal('intake', plan); }, 300);
+    }
+  })();
 
   document.addEventListener('keydown', (e)=>{
     if(e.key === 'Escape'){
