@@ -1257,7 +1257,7 @@
   // amount entered in Stripe for each medication.
   const MEDICATION_CHECKOUT_PRICE = {
     'Tirzepatide': 300,
-    'Semaglutide': 200
+    'Semaglutide': 250
   };
 
   function getDisplayPrice(medication, fallbackPrice){
@@ -1872,18 +1872,41 @@
     document.getElementById('np-approve-dose-mg').value = '2.5';
     updateNPPricePreview();
 
-    const { data: rxRows } = await supabaseClient.from('prescriptions').select('*')
-      .eq('user_id', patient.user_id).eq('status', 'pending').order('created_at', { ascending: true });
+    const { data: allRx } = await supabaseClient.from('prescriptions').select('*')
+      .eq('user_id', patient.user_id).order('created_at', { ascending: true });
     const rxWrap = document.getElementById('np-detail-rx-requests');
-    if(rxRows && rxRows.length > 0){
-      rxWrap.innerHTML = '<div class="form-section-title">Prescription requests</div>' + rxRows.map(r =>
-        '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
-        + '<div class="meta">Goal: ' + (r.requested_goal || '—') + (r.requested_notes ? ' · "' + r.requested_notes + '"' : '') + '</div></div>'
-        + '<button class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="npApproveNewPrescription(\''+r.id+'\',\''+r.medication+'\')">Approve</button></div>'
-      ).join('');
-    } else {
-      rxWrap.innerHTML = '';
+
+    let rxHtml = '<div class="form-section-title">Prescriptions</div>';
+
+    // The original first prescription lives on health_history, not the
+    // prescriptions table — show it here too so staff sees the full picture.
+    if(patient.approved_medication){
+      rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + patient.approved_medication + '</div>'
+        + '<div class="meta">' + (patient.approved_dose || '') + ' · original prescription</div></div>'
+        + '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Approved</span></div>';
     }
+
+    (allRx || []).forEach(r => {
+      if(r.status === 'approved'){
+        rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
+          + '<div class="meta">' + (r.dose || '') + ' · Goal: ' + (r.requested_goal || '—') + '</div></div>'
+          + '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Approved</span></div>';
+      } else if(r.status === 'pending'){
+        rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
+          + '<div class="meta">Goal: ' + (r.requested_goal || '—') + (r.requested_notes ? ' · "' + r.requested_notes + '"' : '') + '</div></div>'
+          + '<button class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="npApproveNewPrescription(\''+r.id+'\',\''+r.medication+'\')">Approve</button></div>';
+      } else {
+        rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
+          + '<div class="meta">Goal: ' + (r.requested_goal || '—') + '</div></div>'
+          + '<span class="meta">' + r.status + '</span></div>';
+      }
+    });
+
+    if(!patient.approved_medication && (!allRx || allRx.length === 0)){
+      rxHtml += '<p class="np-empty">No prescriptions yet.</p>';
+    }
+
+    rxWrap.innerHTML = rxHtml;
 
     await loadNPMessages(patient.user_id);
 
