@@ -1284,8 +1284,6 @@
     let d = new Date();
     while(daysAdded < 3){
       d.setDate(d.getDate() + 1);
-      const day = d.getDay();
-      if(day === 0 || day === 6) continue;
       daysAdded++;
       const dateLabel = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
       const dateValue = d.toISOString().slice(0,10);
