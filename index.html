@@ -572,7 +572,10 @@
         <h1 id="dash-welcome">Welcome</h1>
         <p>Here's where things stand with your care.</p>
       </div>
-      <button class="btn btn-outline dash-logout" onclick="handleLogout()">Log out</button>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <a href="javascript:void(0)" onclick="openSettingsModal()" style="font-size:13px;color:rgba(16,27,45,0.5);">Settings</a>
+        <button class="btn btn-outline dash-logout" onclick="handleLogout()">Log out</button>
+      </div>
     </div>
 
     <div class="dash-grid">
@@ -1006,6 +1009,57 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-cancel-rx" onclick="closeOnOverlay(event,'cancel-rx')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('cancel-rx')" aria-label="Close">✕</button>
+    <span class="modal-eyebrow">Cancel medication</span>
+    <h3 id="cancel-rx-med-name">Cancel this prescription?</h3>
+    <p class="modal-sub">This stops it from showing as active on your account. It does <b>not</b> automatically cancel any recurring charge — contact us if you've already been billed and need that stopped too.</p>
+    <form onsubmit="return submitCancelRx(event)">
+      <div class="field"><label for="cancel-rx-reason">Reason</label>
+        <select id="cancel-rx-reason">
+          <option>Side effects</option>
+          <option>Too expensive</option>
+          <option>No longer needed</option>
+          <option>Switching to a different medication</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label for="cancel-rx-notes">Anything else we should know? (optional)</label><input id="cancel-rx-notes" type="text" placeholder="Optional"></div>
+      <button class="btn btn-primary" type="submit" style="background:#B23A3A;">Confirm cancellation</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-settings" onclick="closeOnOverlay(event,'settings')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('settings')" aria-label="Close">✕</button>
+    <span class="modal-eyebrow">Settings</span>
+    <h3>Account</h3>
+    <div style="background:var(--paper);border-radius:12px;padding:16px;margin-bottom:20px;font-size:13.5px;line-height:1.8;">
+      <div>Email: <b id="settings-email">—</b></div>
+      <div>Plan: <b id="settings-plan">—</b></div>
+      <div>Status: <b id="settings-status">—</b></div>
+    </div>
+    <div id="settings-cancelled-notice" style="display:none;background:rgba(196,60,60,0.08);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#B23A3A;"></div>
+    <div id="settings-cancel-section">
+      <div class="form-section-title">Cancel membership</div>
+      <p style="font-size:13px;color:rgba(16,27,45,0.6);margin-bottom:12px;">This does <b>not</b> automatically cancel any recurring charge in Stripe — contact us to confirm billing has stopped too.</p>
+      <div class="field"><label for="cancel-membership-reason">Reason</label>
+        <select id="cancel-membership-reason">
+          <option>Too expensive</option>
+          <option>Not what I expected</option>
+          <option>Achieved my goal</option>
+          <option>Switching providers</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label for="cancel-membership-notes">Anything else we should know? (optional)</label><input id="cancel-membership-notes" type="text" placeholder="Optional"></div>
+      <button class="btn btn-outline" style="border-color:#B23A3A;color:#B23A3A;" onclick="submitCancelMembership()">Cancel my membership</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-soon" onclick="closeOnOverlay(event,'soon')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('soon')" aria-label="Close">✕</button>
@@ -1382,7 +1436,7 @@
       document.getElementById('store-wrap').style.display = 'none';
     }
 
-    if(history && history.approved && history.plan === 'Premium'){
+    if(history && history.approved && history.plan === 'Premium' && !history.membership_cancelled){
       document.getElementById('premium-care-wrap').style.display = 'block';
       await loadMessages();
       await loadPhysicianAppointment();
@@ -1412,7 +1466,11 @@
         dose: history.approved_dose,
         price: getDisplayPrice(history.approved_medication, history.approved_price),
         purchased: history.purchased,
-        onBuy: "goToMedicationCheckout('legacy', null, '" + history.approved_medication + "')"
+        cancelled: history.cancelled,
+        cancelReason: history.cancel_reason,
+        onBuy: "goToMedicationCheckout('legacy', null, '" + history.approved_medication + "')",
+        onSkip: "markOrderedDemo('legacy', null)",
+        onCancel: "openCancelRxModal('legacy', null, '" + history.approved_medication + "')"
       });
     }
 
@@ -1420,7 +1478,12 @@
     approvedRx.forEach(r => {
       approvedHtml += renderStoreItem({
         medication: r.medication, dose: r.dose, price: getDisplayPrice(r.medication, r.price),
-        purchased: r.purchased, onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "')"
+        purchased: r.purchased,
+        cancelled: r.cancelled,
+        cancelReason: r.cancel_reason,
+        onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "')",
+        onSkip: "markOrderedDemo('prescription', '" + r.id + "')",
+        onCancel: "openCancelRxModal('prescription', '" + r.id + "', '" + r.medication + "')"
       });
     });
 
@@ -1440,13 +1503,28 @@
 
   function renderStoreItem(item){
     const priceLabel = item.price ? ('$' + item.price + '/mo') : '—';
+
+    if(item.cancelled){
+      return '<div class="dash-protocol-row">'
+        + '<div><div class="name">' + item.medication + '</div><div class="meta">Cancelled' + (item.cancelReason ? ' — ' + item.cancelReason : '') + '</div></div>'
+        + '<span class="rx-badge" style="background:rgba(196,60,60,0.1);color:#B23A3A;">Cancelled</span></div>';
+    }
+
+    let actionHtml;
+    if(item.purchased){
+      actionHtml = '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Order placed with pharmacy</span>'
+        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(16,27,45,0.45);">Cancel</a>';
+    } else {
+      actionHtml = '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Buy</button>'
+        + '<br><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;margin-top:6px;" onclick="' + item.onSkip + '">Skip payment (testing)</button>'
+        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(16,27,45,0.45);">Cancel</a>';
+    }
+
     return '<div class="dash-protocol-row">'
       + '<div><div class="name">' + item.medication + '</div><div class="meta">' + (item.dose || '') + '</div></div>'
       + '<div style="text-align:right;">'
       + '<div class="meta" style="margin-bottom:6px;">' + priceLabel + '</div>'
-      + (item.purchased
-          ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Order placed with pharmacy</span>'
-          : '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Buy</button>')
+      + actionHtml
       + '</div></div>';
   }
 
@@ -1493,10 +1571,86 @@
           .update({ purchased: true, purchased_at: new Date().toISOString() })
           .eq('id', id);
       }
-      alert('Order placed. (Demo mode — no real Stripe link configured for this medication yet.)');
+      alert('Order placed. (Skipped real Stripe checkout for testing.)');
       await loadPatientState();
     } catch(err){
       alert('Could not place order: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // ====== CANCEL A MEDICATION ======
+  let cancelRxContext = null;
+
+  function openCancelRxModal(kind, id, medication){
+    cancelRxContext = { kind, id };
+    document.getElementById('cancel-rx-med-name').textContent = 'Cancel ' + medication + '?';
+    document.getElementById('cancel-rx-reason').value = 'Side effects';
+    document.getElementById('cancel-rx-notes').value = '';
+    openModal('cancel-rx');
+  }
+
+  async function submitCancelRx(e){
+    e.preventDefault();
+    if(!cancelRxContext || !supabaseClient) return false;
+    const reason = document.getElementById('cancel-rx-reason').value;
+    const notes = document.getElementById('cancel-rx-notes').value;
+    const fullReason = notes ? (reason + ' — ' + notes) : reason;
+    try{
+      if(cancelRxContext.kind === 'legacy'){
+        if(!currentHealthHistory) return false;
+        await supabaseClient.from('health_history')
+          .update({ cancelled: true, cancelled_at: new Date().toISOString(), cancel_reason: fullReason })
+          .eq('id', currentHealthHistory.id);
+      } else {
+        await supabaseClient.from('prescriptions')
+          .update({ cancelled: true, cancelled_at: new Date().toISOString(), cancel_reason: fullReason })
+          .eq('id', cancelRxContext.id);
+      }
+      closeModal('cancel-rx');
+      await loadPatientState();
+    } catch(err){
+      alert('Could not cancel: ' + (err.message || 'unknown error'));
+    }
+    return false;
+  }
+
+  // ====== SETTINGS / CANCEL MEMBERSHIP ======
+  function openSettingsModal(){
+    if(!currentUser) return;
+    document.getElementById('settings-email').textContent = currentUser.email;
+    const history = currentHealthHistory;
+    document.getElementById('settings-plan').textContent = (history && history.plan) || 'Not selected yet';
+
+    const cancelledNotice = document.getElementById('settings-cancelled-notice');
+    const cancelSection = document.getElementById('settings-cancel-section');
+    if(history && history.membership_cancelled){
+      document.getElementById('settings-status').textContent = 'Cancelled';
+      cancelledNotice.style.display = 'block';
+      cancelledNotice.textContent = 'Your membership is cancelled' + (history.membership_cancel_reason ? ' (' + history.membership_cancel_reason + ')' : '') + '. Contact us if you still see charges.';
+      cancelSection.style.display = 'none';
+    } else {
+      document.getElementById('settings-status').textContent = (history && history.paid) ? 'Active' : 'Not started';
+      cancelledNotice.style.display = 'none';
+      cancelSection.style.display = (history && history.paid) ? 'block' : 'none';
+    }
+
+    openModal('settings');
+  }
+
+  async function submitCancelMembership(){
+    if(!supabaseClient || !currentHealthHistory) return;
+    const reason = document.getElementById('cancel-membership-reason').value;
+    const notes = document.getElementById('cancel-membership-notes').value;
+    const fullReason = notes ? (reason + ' — ' + notes) : reason;
+    if(!confirm('Cancel your membership? This does not automatically stop any Stripe charge already scheduled.')) return;
+    try{
+      await supabaseClient.from('health_history')
+        .update({ membership_cancelled: true, membership_cancelled_at: new Date().toISOString(), membership_cancel_reason: fullReason })
+        .eq('id', currentHealthHistory.id);
+      closeModal('settings');
+      await loadPatientState();
+    } catch(err){
+      alert('Could not cancel membership: ' + (err.message || 'unknown error'));
     }
   }
 
