@@ -1101,16 +1101,18 @@
     currentAppointment = appt;
 
     let stage = 'need-history';
-    if(history && history.approved){
-      stage = 'active';
-    } else if(history && appt && appt.status === 'completed'){
-      stage = 'awaiting-approval';
-    } else if(history && appt && appt.status === 'scheduled'){
-      stage = 'scheduled';
-    } else if(history && history.paid){
-      stage = 'need-schedule';
-    } else if(history){
+    if(!history){
+      stage = 'need-history';
+    } else if(!history.paid){
       stage = 'need-payment';
+    } else if(history.approved){
+      stage = 'active';
+    } else if(appt && appt.status === 'completed'){
+      stage = 'awaiting-approval';
+    } else if(appt && appt.status === 'scheduled'){
+      stage = 'scheduled';
+    } else {
+      stage = 'need-schedule';
     }
 
     document.querySelectorAll('.stage-view').forEach(v => v.style.display = 'none');
