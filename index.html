@@ -693,13 +693,23 @@
         <div class="dash-card">
           <span class="status-pill status-active">Premium perk</span>
           <h3>1-on-1 physician visit</h3>
-          <p style="margin-bottom:14px;">Schedule direct time with the supervising physician, separate from your NP interview.</p>
-          <div id="physician-slot-grid" class="slot-grid" style="grid-template-columns:1fr 1fr;"></div>
-          <div id="physician-appt-confirmed" style="display:none;">
-            <div class="ticket-card">
-              <div class="mono" style="font-size:11px;text-transform:uppercase;opacity:0.7;">Physician visit</div>
-              <div class="ticket-number" id="physician-ticket-display">—</div>
-              <div class="mono" style="font-size:13px;" id="physician-datetime-display">—</div>
+          <p style="margin-bottom:14px;">Schedule direct time with the supervising physician, separate from your NP interview. 30 minutes, up to 2 visits per calendar month.</p>
+
+          <div id="physician-appt-list" style="margin-bottom:14px;"></div>
+
+          <div id="physician-calendar-wrap">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <button type="button" class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:12px;" onclick="physicianCalendarShiftMonth(-1)">←</button>
+              <div id="physician-calendar-month-label" style="font-family:'Fraunces',serif;font-size:15px;"></div>
+              <button type="button" class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:12px;" onclick="physicianCalendarShiftMonth(1)">→</button>
+            </div>
+            <div class="cal-weekday-row" id="physician-calendar-weekdays"></div>
+            <div class="cal-grid" id="physician-calendar"></div>
+            <div id="physician-slots-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
+              <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(16,27,45,0.6);margin-bottom:8px;text-transform:uppercase;"></div>
+              <div class="slot-grid" id="physician-slot-grid" style="grid-template-columns:1fr 1fr;"></div>
+              <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(16,27,45,0.5);">No open times that day.</p>
+              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(16,27,45,0.6);">You've used both physician visits for this month — you can book again starting next month.</p>
             </div>
           </div>
         </div>
@@ -1319,51 +1329,177 @@
   }
 
   // ====== PREMIUM: 1-ON-1 PHYSICIAN SCHEDULING ======
+  // ====== PREMIUM: 1-ON-1 PHYSICIAN SCHEDULING ======
+  const PHYSICIAN_SLOT_MINUTES = 30;
+  const PHYSICIAN_DAY_START_HOUR = 9;
+  const PHYSICIAN_DAY_END_HOUR = 17; // 5:00 PM
+  const PHYSICIAN_BOOKING_WINDOW_DAYS = 60;
+  const PHYSICIAN_MAX_VISITS_PER_MONTH = 2;
+
+  let physicianCalendarViewDate = new Date();
+  let physicianCalendarSelectedDate = null;
+  let physicianExistingAppts = [];
+
+  function allPhysicianSlotTimes(){
+    const slots = [];
+    for(let h = PHYSICIAN_DAY_START_HOUR; h < PHYSICIAN_DAY_END_HOUR; h++){
+      for(let m = 0; m < 60; m += PHYSICIAN_SLOT_MINUTES){
+        slots.push(formatSlotTime(h, m));
+      }
+    }
+    return slots;
+  }
+
   async function loadPhysicianAppointment(){
     if(!supabaseClient || !currentUser) return;
     const { data } = await supabaseClient.from('appointments').select('*')
-      .eq('user_id', currentUser.id).eq('type', 'physician_visit')
-      .order('created_at', { ascending: false }).limit(1);
-    const appt = (data && data[0]) || null;
-    if(appt){
-      document.getElementById('physician-slot-grid').style.display = 'none';
-      document.getElementById('physician-appt-confirmed').style.display = 'block';
-      document.getElementById('physician-ticket-display').textContent = appt.ticket_number;
-      document.getElementById('physician-datetime-display').textContent = appt.appointment_date + ' · ' + appt.appointment_time;
-    } else {
-      document.getElementById('physician-slot-grid').style.display = 'grid';
-      document.getElementById('physician-appt-confirmed').style.display = 'none';
-      renderPhysicianSlots();
+      .eq('user_id', currentUser.id).eq('type', 'physician_visit').neq('status', 'cancelled')
+      .order('appointment_date', { ascending: true });
+    physicianExistingAppts = data || [];
+    renderPhysicianApptList();
+
+    physicianCalendarViewDate = new Date();
+    physicianCalendarSelectedDate = null;
+    document.getElementById('physician-slots-wrap').style.display = 'none';
+    renderPhysicianCalendar();
+  }
+
+  function renderPhysicianApptList(){
+    const wrap = document.getElementById('physician-appt-list');
+    if(physicianExistingAppts.length === 0){
+      wrap.innerHTML = '';
+      return;
+    }
+    wrap.innerHTML = physicianExistingAppts.map(a =>
+      '<div class="ticket-card" style="margin-bottom:10px;">'
+      + '<div class="mono" style="font-size:11px;text-transform:uppercase;opacity:0.7;">Physician visit</div>'
+      + '<div class="ticket-number" style="font-size:20px;">' + a.ticket_number + '</div>'
+      + '<div class="mono" style="font-size:13px;">' + a.appointment_date + ' · ' + a.appointment_time + ' — ' + a.status + '</div>'
+      + '</div>'
+    ).join('');
+  }
+
+  function physicianCalendarShiftMonth(delta){
+    physicianCalendarViewDate.setMonth(physicianCalendarViewDate.getMonth() + delta);
+    renderPhysicianCalendar();
+  }
+
+  function renderPhysicianCalendar(){
+    const monthLabel = document.getElementById('physician-calendar-month-label');
+    const weekdayRow = document.getElementById('physician-calendar-weekdays');
+    const grid = document.getElementById('physician-calendar');
+    if(!grid) return;
+
+    weekdayRow.innerHTML = ['S','M','T','W','T','F','S'].map(d => '<span>'+d+'</span>').join('');
+    monthLabel.textContent = physicianCalendarViewDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + PHYSICIAN_BOOKING_WINDOW_DAYS);
+
+    const year = physicianCalendarViewDate.getFullYear();
+    const month = physicianCalendarViewDate.getMonth();
+    const firstOfMonth = new Date(year, month, 1);
+    const startOffset = firstOfMonth.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    grid.innerHTML = '';
+    for(let i = 0; i < startOffset; i++){
+      const empty = document.createElement('div');
+      empty.className = 'cal-day empty';
+      grid.appendChild(empty);
+    }
+
+    for(let day = 1; day <= daysInMonth; day++){
+      const d = new Date(year, month, day);
+      const isPast = d < today;
+      const isTooFar = d > maxDate;
+      const isToday = d.getTime() === today.getTime();
+      const dateValue = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+
+      const cell = document.createElement('div');
+      cell.textContent = day;
+      const disabled = isPast || isTooFar;
+      cell.className = 'cal-day ' + (disabled ? 'disabled' : 'available') + (isToday ? ' today' : '') + (physicianCalendarSelectedDate === dateValue ? ' selected' : '');
+      if(!disabled){
+        cell.onclick = () => selectPhysicianCalendarDate(dateValue, d);
+      }
+      grid.appendChild(cell);
     }
   }
 
-  function renderPhysicianSlots(){
-    const grid = document.getElementById('physician-slot-grid');
-    grid.innerHTML = '';
-    const times = ['10:00 AM', '3:00 PM'];
-    let daysAdded = 0;
-    let d = new Date();
-    while(daysAdded < 3){
-      d.setDate(d.getDate() + 1);
-      daysAdded++;
-      const dateLabel = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-      const dateValue = d.toISOString().slice(0,10);
-      times.forEach(t => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'slot-btn';
-        btn.innerHTML = '<div class="slot-day">' + dateLabel + '</div><div class="slot-time">' + t + '</div>';
-        btn.onclick = () => selectPhysicianSlot(dateValue, t);
-        grid.appendChild(btn);
-      });
+  function physicianVisitsInMonth(dateValue){
+    const targetMonth = dateValue.slice(0, 7); // 'YYYY-MM'
+    return physicianExistingAppts.filter(a => a.appointment_date.slice(0,7) === targetMonth).length;
+  }
+
+  async function selectPhysicianCalendarDate(dateValue, dateObj){
+    physicianCalendarSelectedDate = dateValue;
+    renderPhysicianCalendar();
+
+    const slotsWrap = document.getElementById('physician-slots-wrap');
+    const slotGrid = document.getElementById('physician-slot-grid');
+    const emptyMsg = document.getElementById('physician-slots-empty');
+    const limitMsg = document.getElementById('physician-limit-msg');
+    const dateLabel = document.getElementById('physician-slots-date-label');
+
+    dateLabel.textContent = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    slotsWrap.style.display = 'block';
+    emptyMsg.style.display = 'none';
+    limitMsg.style.display = 'none';
+    slotGrid.innerHTML = '';
+
+    if(physicianVisitsInMonth(dateValue) >= PHYSICIAN_MAX_VISITS_PER_MONTH){
+      limitMsg.style.display = 'block';
+      return;
     }
+
+    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(16,27,45,0.5);">Checking availability...</p>';
+
+    const { data: bookedRows } = await supabaseClient
+      .from('appointments').select('appointment_time')
+      .eq('type', 'physician_visit').eq('appointment_date', dateValue).neq('status', 'cancelled');
+    const bookedTimes = new Set((bookedRows || []).map(r => r.appointment_time));
+
+    const openTimes = allPhysicianSlotTimes().filter(t => !bookedTimes.has(t));
+
+    slotGrid.innerHTML = '';
+    if(openTimes.length === 0){
+      emptyMsg.style.display = 'block';
+      return;
+    }
+    openTimes.forEach(t => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slot-btn';
+      btn.innerHTML = '<div class="slot-time" style="font-size:14px;">' + t + '</div>';
+      btn.onclick = () => selectPhysicianSlot(dateValue, t);
+      slotGrid.appendChild(btn);
+    });
   }
 
   async function selectPhysicianSlot(dateValue, time){
     if(!supabaseClient || !currentUser) return;
+
+    if(physicianVisitsInMonth(dateValue) >= PHYSICIAN_MAX_VISITS_PER_MONTH){
+      alert("You've already used both physician visits for that month.");
+      return;
+    }
+
     const ticket = 'DR-' + Math.random().toString(36).slice(2,8).toUpperCase();
     try{
-      await supabaseClient.from('appointments').insert({
+      // Re-check right before booking — closes the race-condition window
+      // between two premium patients booking the same slot simultaneously.
+      const { data: conflictCheck } = await supabaseClient
+        .from('appointments').select('id')
+        .eq('type', 'physician_visit').eq('appointment_date', dateValue).eq('appointment_time', time)
+        .neq('status', 'cancelled');
+      if(conflictCheck && conflictCheck.length > 0){
+        alert('That time was just booked — please pick another.');
+        selectPhysicianCalendarDate(dateValue, new Date(dateValue + 'T00:00:00'));
+        return;
+      }
+
+      const { error } = await supabaseClient.from('appointments').insert({
         user_id: currentUser.id,
         ticket_number: ticket,
         appointment_date: dateValue,
@@ -1371,6 +1507,7 @@
         status: 'scheduled',
         type: 'physician_visit'
       });
+      if(error) throw error;
       await loadPhysicianAppointment();
     } catch(err){
       alert('Could not book that slot: ' + (err.message || 'unknown error'));
