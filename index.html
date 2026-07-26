@@ -570,6 +570,11 @@
               <button class="btn btn-primary" style="width:100%;background:var(--amber);color:var(--ink);" onclick="goToCheckout('Premium')">Continue with Premium</button>
             </div>
           </div>
+          <p class="demo-tag" style="margin-top:16px;">Demo only — skips real Stripe checkout for faster testing</p>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="markPaidDemo('Basic')">Skip: mark paid (Basic)</button>
+            <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="markPaidDemo('Premium')">Skip: mark paid (Premium)</button>
+          </div>
         </div>
 
         <div class="stage-view" id="stage-need-schedule" style="display:none;">
@@ -651,6 +656,37 @@
     </div>
 
     <!-- FULL HEALTH HISTORY FORM -->
+    <!-- PREMIUM: ONGOING CARE ACCESS -->
+    <div id="premium-care-wrap" style="display:none;margin-top:22px;">
+      <div class="dash-grid">
+        <div class="dash-card">
+          <span class="status-pill status-active">Premium perk</span>
+          <h3>Message your doctor</h3>
+          <p style="margin-bottom:14px;">Premium includes direct messaging with your supervising physician.</p>
+          <div id="message-thread" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
+          <div style="display:flex;gap:8px;">
+            <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;">
+            <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="sendMessage()">Send</button>
+          </div>
+          <p class="demo-tag" style="margin-top:12px;">Demo — this is real text-based messaging (saved to the database), not real SMS/phone yet. Doctor replies are added manually in Supabase for now.</p>
+        </div>
+
+        <div class="dash-card">
+          <span class="status-pill status-active">Premium perk</span>
+          <h3>1-on-1 physician visit</h3>
+          <p style="margin-bottom:14px;">Schedule direct time with the supervising physician, separate from your NP interview.</p>
+          <div id="physician-slot-grid" class="slot-grid" style="grid-template-columns:1fr 1fr;"></div>
+          <div id="physician-appt-confirmed" style="display:none;">
+            <div class="ticket-card">
+              <div class="mono" style="font-size:11px;text-transform:uppercase;opacity:0.7;">Physician visit</div>
+              <div class="ticket-number" id="physician-ticket-display">—</div>
+              <div class="mono" style="font-size:13px;" id="physician-datetime-display">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="history-form-wrap" style="display:none;margin-top:22px;">
       <div class="dash-card">
         <h3>Health history</h3>
@@ -1095,7 +1131,7 @@
     }
 
     const { data: apptRows } = await supabaseClient
-      .from('appointments').select('*').eq('user_id', currentUser.id)
+      .from('appointments').select('*').eq('user_id', currentUser.id).eq('type', 'np_interview')
       .order('created_at', { ascending: false }).limit(1);
     const appt = (apptRows && apptRows[0]) || null;
     currentAppointment = appt;
@@ -1145,6 +1181,109 @@
       document.getElementById('active-plan-price').textContent = '$' + membershipPrice + '/mo';
       document.getElementById('active-total-price').textContent = '$' + (membershipPrice + protocolPrice) + '/mo';
       document.getElementById('active-med-notes').textContent = history.approved_notes || '';
+    }
+
+    if(history && history.paid && history.plan === 'Premium'){
+      document.getElementById('premium-care-wrap').style.display = 'block';
+      await loadMessages();
+      await loadPhysicianAppointment();
+    } else {
+      document.getElementById('premium-care-wrap').style.display = 'none';
+    }
+  }
+
+  // ====== PREMIUM: DOCTOR MESSAGING ======
+  async function loadMessages(){
+    if(!supabaseClient || !currentUser) return;
+    const { data } = await supabaseClient.from('messages').select('*')
+      .eq('user_id', currentUser.id).order('created_at', { ascending: true });
+    const thread = document.getElementById('message-thread');
+    thread.innerHTML = '';
+    (data || []).forEach(m => {
+      const row = document.createElement('div');
+      row.style.cssText = 'margin-bottom:8px;text-align:' + (m.sender === 'patient' ? 'right' : 'left') + ';';
+      const bubble = document.createElement('span');
+      bubble.style.cssText = 'display:inline-block;padding:7px 12px;border-radius:10px;max-width:80%;' +
+        (m.sender === 'patient' ? 'background:var(--ink);color:var(--paper-warm);' : 'background:var(--paper);color:var(--ink);');
+      bubble.textContent = (m.sender === 'doctor' ? 'Dr. — ' : '') + m.body;
+      row.appendChild(bubble);
+      thread.appendChild(row);
+    });
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  async function sendMessage(){
+    if(!supabaseClient || !currentUser) return;
+    const input = document.getElementById('message-input');
+    const body = input.value.trim();
+    if(!body) return;
+    input.value = '';
+    try{
+      await supabaseClient.from('messages').insert({ user_id: currentUser.id, sender: 'patient', body });
+      await loadMessages();
+    } catch(err){
+      alert('Could not send message: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // ====== PREMIUM: 1-ON-1 PHYSICIAN SCHEDULING ======
+  async function loadPhysicianAppointment(){
+    if(!supabaseClient || !currentUser) return;
+    const { data } = await supabaseClient.from('appointments').select('*')
+      .eq('user_id', currentUser.id).eq('type', 'physician_visit')
+      .order('created_at', { ascending: false }).limit(1);
+    const appt = (data && data[0]) || null;
+    if(appt){
+      document.getElementById('physician-slot-grid').style.display = 'none';
+      document.getElementById('physician-appt-confirmed').style.display = 'block';
+      document.getElementById('physician-ticket-display').textContent = appt.ticket_number;
+      document.getElementById('physician-datetime-display').textContent = appt.appointment_date + ' · ' + appt.appointment_time;
+    } else {
+      document.getElementById('physician-slot-grid').style.display = 'grid';
+      document.getElementById('physician-appt-confirmed').style.display = 'none';
+      renderPhysicianSlots();
+    }
+  }
+
+  function renderPhysicianSlots(){
+    const grid = document.getElementById('physician-slot-grid');
+    grid.innerHTML = '';
+    const times = ['10:00 AM', '3:00 PM'];
+    let daysAdded = 0;
+    let d = new Date();
+    while(daysAdded < 3){
+      d.setDate(d.getDate() + 1);
+      const day = d.getDay();
+      if(day === 0 || day === 6) continue;
+      daysAdded++;
+      const dateLabel = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+      const dateValue = d.toISOString().slice(0,10);
+      times.forEach(t => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'slot-btn';
+        btn.innerHTML = '<div class="slot-day">' + dateLabel + '</div><div class="slot-time">' + t + '</div>';
+        btn.onclick = () => selectPhysicianSlot(dateValue, t);
+        grid.appendChild(btn);
+      });
+    }
+  }
+
+  async function selectPhysicianSlot(dateValue, time){
+    if(!supabaseClient || !currentUser) return;
+    const ticket = 'DR-' + Math.random().toString(36).slice(2,8).toUpperCase();
+    try{
+      await supabaseClient.from('appointments').insert({
+        user_id: currentUser.id,
+        ticket_number: ticket,
+        appointment_date: dateValue,
+        appointment_time: time,
+        status: 'scheduled',
+        type: 'physician_visit'
+      });
+      await loadPhysicianAppointment();
+    } catch(err){
+      alert('Could not book that slot: ' + (err.message || 'unknown error'));
     }
   }
 
@@ -1249,7 +1388,8 @@
         ticket_number: ticket,
         appointment_date: dateValue,
         appointment_time: time,
-        status: 'scheduled'
+        status: 'scheduled',
+        type: 'np_interview'
       });
       if(error) throw error;
 
