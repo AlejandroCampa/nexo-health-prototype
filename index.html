@@ -651,13 +651,7 @@
         <div class="stage-view" id="stage-active" style="display:none;">
           <span class="status-pill status-active">Active</span>
           <h3>Your protocol</h3>
-          <div class="dash-protocol-row">
-            <div>
-              <div class="name" id="active-med-name">—</div>
-              <div class="meta" id="active-med-dose">—</div>
-            </div>
-            <div class="meta" id="active-med-price">—</div>
-          </div>
+          <div id="active-med-list"></div>
           <div class="dash-protocol-row">
             <div class="name" style="font-weight:500;">Membership (<span id="active-plan-name">—</span>)</div>
             <div class="meta" id="active-plan-price">—</div>
@@ -1419,13 +1413,33 @@
     }
     if(stage === 'active' && history){
       const membershipPrice = MEMBERSHIP_PRICE[history.plan] || 0;
-      const protocolPrice = getDisplayPrice(history.approved_medication, history.approved_price || 0);
-      document.getElementById('active-med-name').textContent = history.approved_medication || 'Protocol approved';
-      document.getElementById('active-med-dose').textContent = history.approved_dose || '';
-      document.getElementById('active-med-price').textContent = '$' + protocolPrice + '/mo';
+      let totalMedPrice = 0;
+      let medListHtml = '';
+
+      // The original prescription (health_history), if still active
+      if(history.approved_medication && !history.cancelled){
+        const p = getDisplayPrice(history.approved_medication, history.approved_price || 0);
+        totalMedPrice += p;
+        medListHtml += '<div class="dash-protocol-row"><div><div class="name">' + history.approved_medication + '</div>'
+          + '<div class="meta">' + (history.approved_dose || '') + '</div></div>'
+          + '<div class="meta">$' + p + '/mo</div></div>';
+      }
+
+      // Any additional approved, non-cancelled prescriptions
+      const { data: extraRx } = await supabaseClient.from('prescriptions')
+        .select('*').eq('user_id', currentUser.id).eq('status', 'approved').eq('cancelled', false);
+      (extraRx || []).forEach(r => {
+        const p = getDisplayPrice(r.medication, r.price || 0);
+        totalMedPrice += p;
+        medListHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
+          + '<div class="meta">' + (r.dose || '') + '</div></div>'
+          + '<div class="meta">$' + p + '/mo</div></div>';
+      });
+
+      document.getElementById('active-med-list').innerHTML = medListHtml || '<p class="np-empty">No active prescriptions.</p>';
       document.getElementById('active-plan-name').textContent = history.plan || '—';
       document.getElementById('active-plan-price').textContent = '$' + membershipPrice + '/mo';
-      document.getElementById('active-total-price').textContent = '$' + (membershipPrice + protocolPrice) + '/mo';
+      document.getElementById('active-total-price').textContent = '$' + (membershipPrice + totalMedPrice) + '/mo';
       document.getElementById('active-med-notes').textContent = history.approved_notes || '';
     }
 
