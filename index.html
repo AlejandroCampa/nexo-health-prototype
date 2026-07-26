@@ -595,7 +595,7 @@
         <div class="stage-view" id="stage-need-schedule" style="display:none;">
           <span class="status-pill status-active">History received</span>
           <h3>Schedule your NP interview</h3>
-          <p style="margin-bottom:18px;">Every patient completes a required 15-minute interview with a nurse practitioner, under the supervising physician's sign-off, before any prescription is approved. Appointments run 8:00 AM – 7:00 PM, weekdays.</p>
+          <p style="margin-bottom:18px;">Every patient completes a required 15-minute interview with a nurse practitioner, under the supervising physician's sign-off, before any prescription is approved. Appointments run 8:00 AM – 7:00 PM, every day.</p>
           <div id="np-calendar-nav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
             <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(-1)">←</button>
             <div id="np-calendar-month-label" style="font-family:'Fraunces',serif;font-size:16px;"></div>
@@ -1446,7 +1446,6 @@
 
     for(let day = 1; day <= daysInMonth; day++){
       const d = new Date(year, month, day);
-      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
       const isPast = d < today;
       const isTooFar = d > maxDate;
       const isToday = d.getTime() === today.getTime();
@@ -1454,7 +1453,7 @@
 
       const cell = document.createElement('div');
       cell.textContent = day;
-      const disabled = isWeekend || isPast || isTooFar;
+      const disabled = isPast || isTooFar;
       cell.className = 'cal-day ' + (disabled ? 'disabled' : 'available') + (isToday ? ' today' : '') + (calendarSelectedDate === dateValue ? ' selected' : '');
       if(!disabled){
         cell.onclick = () => selectCalendarDate(dateValue, d);
