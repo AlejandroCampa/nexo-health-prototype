@@ -828,23 +828,13 @@
   <div class="modal">
     <button class="modal-close" onclick="closeModal('login')" aria-label="Close">✕</button>
     <div class="modal-icon-row"><span class="logo-mark"></span><span style="font-family:'Fraunces',serif;font-size:18px;font-weight:600;">Nuvi Clinic</span></div>
-    <div id="login-step-email">
-      <h3>Welcome back</h3>
-      <p class="modal-sub">Enter your email and we'll send you a one-time code — no password needed.</p>
-      <form onsubmit="return handleFormSubmit(event,'login')">
-        <div class="field"><label for="login-email">Email</label><input id="login-email" type="email" placeholder="you@email.com" required></div>
-        <button class="btn btn-primary" type="submit">Send code</button>
-      </form>
-      <span class="modal-foot-link">No account yet? <a href="javascript:void(0)" onclick="closeModal('login');openModal('intake')">Start your visit</a></span>
-    </div>
-    <div id="login-step-code" style="display:none;">
-      <h3>Enter your code</h3>
-      <p class="modal-sub">We sent a 6-digit code to <span id="login-code-email"></span>. It expires in a few minutes.</p>
-      <form onsubmit="return handleCodeSubmit(event,'login')">
-        <div class="field"><label for="login-code">Code</label><input id="login-code" type="text" inputmode="numeric" placeholder="e.g. 74834164" maxlength="12" required></div>
-        <button class="btn btn-primary" type="submit">Verify & log in</button>
-      </form>
-    </div>
+    <h3>Welcome back</h3>
+    <p class="modal-sub">Enter your email and we'll send you a secure login link — no password needed.</p>
+    <form onsubmit="return handleFormSubmit(event,'login')">
+      <div class="field"><label for="login-email">Email</label><input id="login-email" type="email" placeholder="you@email.com" required></div>
+      <button class="btn btn-primary" type="submit">Send login link</button>
+    </form>
+    <span class="modal-foot-link">No account yet? <a href="javascript:void(0)" onclick="closeModal('login');openModal('intake')">Start your visit</a></span>
   </div>
 </div>
 
@@ -852,34 +842,23 @@
 <div class="modal-overlay" id="modal-intake" onclick="closeOnOverlay(event,'intake')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('intake')" aria-label="Close">✕</button>
-    <div id="intake-step-form">
-      <span class="modal-eyebrow">Start your visit</span>
-      <h3 id="intake-title">Let's get your intake started</h3>
-      <p class="modal-sub" id="intake-sub">Takes about 5 minutes. A physician reviews your answers before your visit.</p>
-      <div id="intake-plan-tag-wrap"></div>
-      <form onsubmit="return handleFormSubmit(event,'intake')">
-        <div class="field"><label for="intake-name">Full name</label><input id="intake-name" type="text" placeholder="Jane Rivera" required></div>
-        <div class="field"><label for="intake-email">Email</label><input id="intake-email" type="email" placeholder="you@email.com" required></div>
-        <div class="field"><label for="intake-goal">Primary goal</label>
-          <select id="intake-goal">
-            <option>Fat loss</option>
-            <option>Men's health</option>
-            <option>Recovery / performance</option>
-            <option>Longevity</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" type="submit" style="background:var(--amber);color:var(--ink);">Send verification code</button>
-      </form>
-    </div>
-    <div id="intake-step-code" style="display:none;">
-      <span class="modal-eyebrow">Almost there</span>
-      <h3>Enter your code</h3>
-      <p class="modal-sub">We sent a 6-digit code to <span id="intake-code-email"></span>. It expires in a few minutes.</p>
-      <form onsubmit="return handleCodeSubmit(event,'intake')">
-        <div class="field"><label for="intake-code">Code</label><input id="intake-code" type="text" inputmode="numeric" placeholder="e.g. 74834164" maxlength="12" required></div>
-        <button class="btn btn-primary" type="submit" style="background:var(--amber);color:var(--ink);">Verify & continue</button>
-      </form>
-    </div>
+    <span class="modal-eyebrow">Start your visit</span>
+    <h3 id="intake-title">Let's get your intake started</h3>
+    <p class="modal-sub" id="intake-sub">Takes about 5 minutes. A physician reviews your answers before your visit.</p>
+    <div id="intake-plan-tag-wrap"></div>
+    <form onsubmit="return handleFormSubmit(event,'intake')">
+      <div class="field"><label for="intake-name">Full name</label><input id="intake-name" type="text" placeholder="Jane Rivera" required></div>
+      <div class="field"><label for="intake-email">Email</label><input id="intake-email" type="email" placeholder="you@email.com" required></div>
+      <div class="field"><label for="intake-goal">Primary goal</label>
+        <select id="intake-goal">
+          <option>Fat loss</option>
+          <option>Men's health</option>
+          <option>Recovery / performance</option>
+          <option>Longevity</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" type="submit" style="background:var(--amber);color:var(--ink);">Continue to intake form</button>
+    </form>
   </div>
 </div>
 
@@ -962,14 +941,7 @@
   function openModal(name, plan){
     document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));
 
-    if(name === 'login'){
-      document.getElementById('login-step-email').style.display = 'block';
-      document.getElementById('login-step-code').style.display = 'none';
-    }
-
     if(name === 'intake'){
-      document.getElementById('intake-step-form').style.display = 'block';
-      document.getElementById('intake-step-code').style.display = 'none';
       const tagWrap = document.getElementById('intake-plan-tag-wrap');
       const title = document.getElementById('intake-title');
       const sub = document.getElementById('intake-sub');
@@ -998,6 +970,9 @@
   }
 
   function closeOnOverlay(e, name){
+    // Login/intake are excluded — an accidental outside-click shouldn't discard
+    // a code the person is mid-way through entering. Use the X button instead.
+    if(name === 'login' || name === 'intake') return;
     if(e.target.id === 'modal-'+name){ closeModal(name); }
   }
 
@@ -1033,7 +1008,7 @@
       return false;
     }
 
-    const submitBtn = document.querySelector('#' + (name==='login' ? 'login-step-email' : 'intake-step-form') + ' button[type="submit"]');
+    const submitBtn = document.querySelector('#modal-'+name+' button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.textContent = 'Please wait...';
     submitBtn.disabled = true;
@@ -1043,12 +1018,10 @@
         const email = document.getElementById('login-email').value;
         const { error } = await supabaseClient.auth.signInWithOtp({
           email,
-          options: { shouldCreateUser: false }
+          options: { emailRedirectTo: window.location.href }
         });
         if(error) throw error;
-        document.getElementById('login-code-email').textContent = email;
-        document.getElementById('login-step-email').style.display = 'none';
-        document.getElementById('login-step-code').style.display = 'block';
+        showSuccess('login', "Check your email", "We sent a secure login link to " + email + ". Click it to log in — no password needed.");
       }
 
       if(name === 'intake'){
@@ -1057,48 +1030,24 @@
         const goal = document.getElementById('intake-goal').value;
         const plan = document.getElementById('intake-plan-value') ? document.getElementById('intake-plan-value').value : '';
 
-        // Carries the intake answers in user metadata so they're already attached
-        // once the code is verified and the account/session is created.
+        // Magic link signup: creates the account if it doesn't exist yet, and carries
+        // the intake answers in user metadata so they're already attached once the
+        // person clicks through and lands back here with a real session.
         const { error } = await supabaseClient.auth.signInWithOtp({
           email,
           options: {
+            emailRedirectTo: window.location.href,
             data: { full_name: fullName, goal: goal, plan: plan, pending_intake: true }
           }
         });
         if(error) throw error;
-        document.getElementById('intake-code-email').textContent = email;
-        document.getElementById('intake-step-form').style.display = 'none';
-        document.getElementById('intake-step-code').style.display = 'block';
+
+        showSuccess('intake', "Check your email", "We sent a login link to " + email + ". Click it to finish creating your account — your intake answers are saved and waiting. Use the newest email if you have more than one in your inbox — links are single-use and expire.");
       }
     } catch(err){
       submitBtn.textContent = originalText;
       submitBtn.disabled = false;
       showFormError(name, err.message || 'Something went wrong. Please try again.');
-    }
-
-    return false;
-  }
-
-  async function handleCodeSubmit(e, name){
-    e.preventDefault();
-    const email = name === 'login'
-      ? document.getElementById('login-code-email').textContent
-      : document.getElementById('intake-code-email').textContent;
-    const code = document.getElementById(name + '-code').value.trim();
-
-    const submitBtn = document.querySelector('#' + (name==='login' ? 'login-step-code' : 'intake-step-code') + ' button[type="submit"]');
-    const originalText = submitBtn.textContent;
-    submitBtn.textContent = 'Verifying...';
-    submitBtn.disabled = true;
-
-    try{
-      const { error } = await supabaseClient.auth.verifyOtp({ email, token: code, type: 'email' });
-      if(error) throw error;
-      // onAuthStateChange picks up the new session and shows the dashboard automatically
-    } catch(err){
-      submitBtn.textContent = originalText;
-      submitBtn.disabled = false;
-      alert('Could not verify: ' + (err.message || 'unknown error') + '. Check the code and try again, or close this and request a new one.');
     }
 
     return false;
