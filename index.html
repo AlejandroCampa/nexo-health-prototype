@@ -916,15 +916,17 @@
   }
 
   async function markPaidDemo(plan){
-    if(!supabaseClient || !currentHealthHistory) return;
+    if(!supabaseClient){ alert('Debug: supabaseClient is not connected.'); return; }
+    if(!currentHealthHistory){ alert('Debug: currentHealthHistory is empty — the page may not have loaded your health history record yet. Try refreshing the dashboard.'); return; }
     try{
       const { error } = await supabaseClient.from('health_history')
         .update({ paid: true, plan: plan })
         .eq('id', currentHealthHistory.id);
       if(error) throw error;
+      alert('Success — marked as paid (' + plan + '). Reloading your dashboard now.');
       await loadPatientState();
     } catch(err){
-      alert('Could not mark as paid: ' + (err.message || 'unknown error'));
+      alert('Could not mark as paid: ' + (err.message || JSON.stringify(err) || 'unknown error'));
     }
   }
   // ==============================
