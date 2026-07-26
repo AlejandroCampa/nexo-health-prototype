@@ -294,6 +294,21 @@
   .video-shell video{width:100%;height:100%;object-fit:cover;}
   .video-waiting{color:rgba(247,245,240,0.6);font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:center;padding:0 20px;}
   .video-controls{display:flex;gap:12px;justify-content:center;margin-top:18px;}
+
+  /* ---- CALENDAR ---- */
+  .cal-weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
+  .cal-weekday-row span{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:rgba(16,27,45,0.45);text-transform:uppercase;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-day{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    border-radius:9px;font-size:13px;cursor:pointer;border:1px solid var(--line);
+    background:var(--white);transition:all .12s;
+  }
+  .cal-day.empty{border:none;background:transparent;cursor:default;}
+  .cal-day.disabled{opacity:0.28;cursor:default;background:var(--paper);}
+  .cal-day.available:hover{border-color:var(--amber);background:rgba(217,140,43,0.08);}
+  .cal-day.selected{background:var(--ink);color:var(--paper-warm);border-color:var(--ink);}
+  .cal-day.today{border-color:var(--amber);font-weight:600;}
 </style>
 </head>
 <body>
@@ -580,8 +595,19 @@
         <div class="stage-view" id="stage-need-schedule" style="display:none;">
           <span class="status-pill status-active">History received</span>
           <h3>Schedule your NP interview</h3>
-          <p>Every patient completes a required 10-minute interview with a nurse practitioner, under the supervising physician's sign-off, before any prescription is approved.</p>
-          <div class="slot-grid" id="slot-grid"></div>
+          <p style="margin-bottom:18px;">Every patient completes a required 15-minute interview with a nurse practitioner, under the supervising physician's sign-off, before any prescription is approved. Appointments run 8:00 AM – 7:00 PM, weekdays.</p>
+          <div id="np-calendar-nav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(-1)">←</button>
+            <div id="np-calendar-month-label" style="font-family:'Fraunces',serif;font-size:16px;"></div>
+            <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(1)">→</button>
+          </div>
+          <div class="cal-weekday-row" id="np-calendar-weekdays"></div>
+          <div class="cal-grid" id="np-calendar"></div>
+          <div id="np-slots-wrap" style="display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--line);">
+            <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(16,27,45,0.6);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
+            <div class="slot-grid" id="np-slot-grid"></div>
+            <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(16,27,45,0.55);">No open times that day — try another date.</p>
+          </div>
         </div>
 
         <div class="stage-view" id="stage-scheduled" style="display:none;">
@@ -1165,7 +1191,12 @@
     document.getElementById('check-approved').className = 'dash-check-icon ' + (history && history.approved ? 'done' : 'pending');
     document.getElementById('check-approved').textContent = (history && history.approved) ? '✓' : '•';
 
-    if(stage === 'need-schedule'){ renderSlots(); }
+    if(stage === 'need-schedule'){
+      calendarViewDate = new Date();
+      calendarSelectedDate = null;
+      document.getElementById('np-slots-wrap').style.display = 'none';
+      renderNPCalendar();
+    }
     if(stage === 'awaiting-approval'){ updatePricePreview(); }
     if(stage === 'scheduled' && appt){
       document.getElementById('ticket-number-display').textContent = appt.ticket_number;
@@ -1183,7 +1214,7 @@
       document.getElementById('active-med-notes').textContent = history.approved_notes || '';
     }
 
-    if(history && history.paid && history.plan === 'Premium'){
+    if(history && history.approved && history.plan === 'Premium'){
       document.getElementById('premium-care-wrap').style.display = 'block';
       await loadMessages();
       await loadPhysicianAppointment();
@@ -1355,34 +1386,138 @@
   }
 
   // ====== SCHEDULER ======
-  function renderSlots(){
-    const grid = document.getElementById('slot-grid');
-    grid.innerHTML = '';
-    const times = ['9:00 AM', '11:30 AM', '2:00 PM'];
-    let daysAdded = 0;
-    let d = new Date();
-    while(daysAdded < 4){
-      d.setDate(d.getDate() + 1);
-      const day = d.getDay();
-      if(day === 0 || day === 6) continue; // skip weekends
-      daysAdded++;
-      const dateLabel = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-      const dateValue = d.toISOString().slice(0,10);
-      times.forEach(t => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'slot-btn';
-        btn.innerHTML = '<div class="slot-day">' + dateLabel + '</div><div class="slot-time">' + t + '</div>';
-        btn.onclick = () => selectSlot(dateValue, dateLabel, t);
-        grid.appendChild(btn);
-      });
+  // ====== NP INTERVIEW CALENDAR ======
+  // 15-minute slots, 8:00 AM - 7:00 PM, weekdays only, up to 60 days out.
+  // Availability is checked against ALL patients' booked appointments (not just
+  // the current user's) so two people can never double-book the same slot.
+  let calendarViewDate = new Date();
+  let calendarSelectedDate = null;
+  const NP_DAY_START_HOUR = 8;
+  const NP_DAY_END_HOUR = 19; // 7:00 PM
+  const NP_SLOT_MINUTES = 15;
+  const NP_BOOKING_WINDOW_DAYS = 60;
+
+  function formatSlotTime(hour, minute){
+    const period = hour >= 12 ? 'PM' : 'AM';
+    let h = hour % 12; if(h === 0) h = 12;
+    const m = minute.toString().padStart(2, '0');
+    return h + ':' + m + ' ' + period;
+  }
+
+  function allDaySlotTimes(){
+    const slots = [];
+    for(let h = NP_DAY_START_HOUR; h < NP_DAY_END_HOUR; h++){
+      for(let m = 0; m < 60; m += NP_SLOT_MINUTES){
+        slots.push(formatSlotTime(h, m));
+      }
     }
+    return slots;
+  }
+
+  function calendarShiftMonth(delta){
+    calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
+    renderNPCalendar();
+  }
+
+  function renderNPCalendar(){
+    const monthLabel = document.getElementById('np-calendar-month-label');
+    const weekdayRow = document.getElementById('np-calendar-weekdays');
+    const grid = document.getElementById('np-calendar');
+    if(!grid) return;
+
+    weekdayRow.innerHTML = ['S','M','T','W','T','F','S'].map(d => '<span>'+d+'</span>').join('');
+    monthLabel.textContent = calendarViewDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + NP_BOOKING_WINDOW_DAYS);
+
+    const year = calendarViewDate.getFullYear();
+    const month = calendarViewDate.getMonth();
+    const firstOfMonth = new Date(year, month, 1);
+    const startOffset = firstOfMonth.getDay(); // 0=Sun
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    grid.innerHTML = '';
+    for(let i = 0; i < startOffset; i++){
+      const empty = document.createElement('div');
+      empty.className = 'cal-day empty';
+      grid.appendChild(empty);
+    }
+
+    for(let day = 1; day <= daysInMonth; day++){
+      const d = new Date(year, month, day);
+      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+      const isPast = d < today;
+      const isTooFar = d > maxDate;
+      const isToday = d.getTime() === today.getTime();
+      const dateValue = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+
+      const cell = document.createElement('div');
+      cell.textContent = day;
+      const disabled = isWeekend || isPast || isTooFar;
+      cell.className = 'cal-day ' + (disabled ? 'disabled' : 'available') + (isToday ? ' today' : '') + (calendarSelectedDate === dateValue ? ' selected' : '');
+      if(!disabled){
+        cell.onclick = () => selectCalendarDate(dateValue, d);
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  async function selectCalendarDate(dateValue, dateObj){
+    calendarSelectedDate = dateValue;
+    renderNPCalendar();
+
+    const slotsWrap = document.getElementById('np-slots-wrap');
+    const slotGrid = document.getElementById('np-slot-grid');
+    const emptyMsg = document.getElementById('np-slots-empty');
+    const dateLabel = document.getElementById('np-slots-date-label');
+
+    dateLabel.textContent = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    slotsWrap.style.display = 'block';
+    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(16,27,45,0.5);">Checking availability...</p>';
+    emptyMsg.style.display = 'none';
+
+    // Check every patient's booked NP interviews for this date, not just the
+    // current user's, so slots already taken by someone else never show as open.
+    const { data: bookedRows } = await supabaseClient
+      .from('appointments').select('appointment_time')
+      .eq('type', 'np_interview').eq('appointment_date', dateValue).neq('status', 'cancelled');
+    const bookedTimes = new Set((bookedRows || []).map(r => r.appointment_time));
+
+    const openTimes = allDaySlotTimes().filter(t => !bookedTimes.has(t));
+
+    slotGrid.innerHTML = '';
+    if(openTimes.length === 0){
+      emptyMsg.style.display = 'block';
+      return;
+    }
+    openTimes.forEach(t => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slot-btn';
+      btn.innerHTML = '<div class="slot-time" style="font-size:15px;">' + t + '</div>';
+      btn.onclick = () => selectSlot(dateValue, dateLabel.textContent, t);
+      slotGrid.appendChild(btn);
+    });
   }
 
   async function selectSlot(dateValue, dateLabel, time){
     if(!supabaseClient || !currentUser) return;
     const ticket = 'SH-' + Math.random().toString(36).slice(2,8).toUpperCase();
     try{
+      // Re-check right before booking to close the race-condition window where
+      // two patients could both click the same open slot within moments of
+      // each other (last-write-wins isn't good enough for real appointments).
+      const { data: conflictCheck } = await supabaseClient
+        .from('appointments').select('id')
+        .eq('type', 'np_interview').eq('appointment_date', dateValue).eq('appointment_time', time)
+        .neq('status', 'cancelled');
+      if(conflictCheck && conflictCheck.length > 0){
+        alert('That time was just booked by someone else — please pick another.');
+        selectCalendarDate(dateValue, new Date(dateValue + 'T00:00:00'));
+        return;
+      }
+
       const { error } = await supabaseClient.from('appointments').insert({
         user_id: currentUser.id,
         ticket_number: ticket,
