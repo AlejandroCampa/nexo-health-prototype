@@ -838,16 +838,18 @@
     <!-- VIDEO ROOM -->
     <div id="video-room-wrap" style="display:none;margin-top:22px;">
       <div class="dash-card">
-        <span class="demo-tag">Prototype — local camera preview only, not a live call yet</span>
         <h3>Video visit</h3>
-        <p style="margin-bottom:18px;">Your NP will join at your scheduled time. Real two-way video needs a service like Twilio or Doxy.me wired in before this goes live.</p>
-        <div class="video-shell" id="video-shell">
-          <div class="video-waiting" id="video-waiting">Waiting for your care team to join...</div>
+        <p style="margin-bottom:18px;">Live video with your NP or physician. Uses your browser's camera and microphone directly — nothing to install.</p>
+        <div class="video-shell" id="video-shell" style="position:relative;">
+          <video id="video-remote" autoplay playsinline style="width:100%;height:100%;object-fit:cover;background:#0B1420;"></video>
+          <video id="video-local" autoplay playsinline muted style="position:absolute;bottom:14px;right:14px;width:120px;height:90px;border-radius:8px;object-fit:cover;background:#0B1420;border:2px solid rgba(247,245,240,0.3);"></video>
+          <div class="video-waiting" id="video-status" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">Click "Join meeting" to connect.</div>
         </div>
         <div class="video-controls">
-          <button class="btn btn-outline" onclick="toggleCamera()">Enable camera</button>
-          <button class="btn btn-outline" onclick="hideVideoRoom()">Leave</button>
+          <button class="btn btn-primary" id="video-join-btn" onclick="joinVideoCall(currentAppointment ? currentAppointment.ticket_number : '', 'patient', 'video-local', 'video-remote', 'video-status')">Join meeting</button>
+          <button class="btn btn-outline" onclick="leaveVideoCall('video-local','video-remote','video-status');hideVideoRoom()">Leave</button>
         </div>
+        <p style="margin-top:14px;font-size:12px;color:rgba(16,27,45,0.45);">Video connects browser-to-browser. On most home and mobile networks this works instantly — a small number of very restrictive corporate/school networks may need extra setup to connect.</p>
       </div>
     </div>
 
@@ -891,6 +893,15 @@
     <div style="background:var(--paper);border-radius:12px;padding:16px;margin-bottom:16px;font-size:13.5px;line-height:1.7;" id="np-detail-history"></div>
 
     <div id="np-detail-appt" style="margin-bottom:16px;"></div>
+
+    <div id="np-video-wrap" style="display:none;margin-bottom:16px;">
+      <div class="video-shell" id="np-video-shell" style="position:relative;height:220px;">
+        <video id="np-video-remote" autoplay playsinline style="width:100%;height:100%;object-fit:cover;background:#0B1420;"></video>
+        <video id="np-video-local" autoplay playsinline muted style="position:absolute;bottom:10px;right:10px;width:90px;height:68px;border-radius:6px;object-fit:cover;background:#0B1420;border:2px solid rgba(247,245,240,0.3);"></video>
+        <div class="video-waiting" id="np-video-status" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;">Connecting...</div>
+      </div>
+      <button class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:12.5px;margin-top:8px;" onclick="leaveVideoCall('np-video-local','np-video-remote','np-video-status');document.getElementById('np-video-wrap').style.display='none';">Leave call</button>
+    </div>
 
     <div id="np-detail-rx-requests" style="margin-bottom:16px;"></div>
 
@@ -1318,7 +1329,6 @@
   let currentUser = null;
   let currentAppointment = null;
   let currentHealthHistory = null;
-  let localStream = null;
 
   async function showDashboard(user){
     currentUser = user;
@@ -1955,6 +1965,7 @@
   let npPatients = [];
   let npCurrentPatientId = null;
   let npCurrentPatientUserId = null;
+  let npDetailCurrentTicket = null;
 
   async function showNPDashboard(user, staffRow){
     currentUser = user;
@@ -2028,10 +2039,15 @@
       .order('created_at', { ascending: false }).limit(1);
     const appt = (apptRows && apptRows[0]) || null;
     const apptWrap = document.getElementById('np-detail-appt');
+    npDetailCurrentTicket = appt ? appt.ticket_number : null;
+    document.getElementById('np-video-wrap').style.display = 'none';
     if(appt){
       apptWrap.innerHTML = '<div class="form-section-title">Interview</div>'
         + '<div style="font-size:13.5px;">Ticket ' + appt.ticket_number + ' — ' + appt.appointment_date + ' ' + appt.appointment_time + ' — status: <b>' + appt.status + '</b></div>'
-        + (appt.status === 'scheduled' ? '<button class="btn btn-outline" style="margin-top:8px;width:auto;padding:8px 16px;" onclick="npMarkInterviewComplete(\''+appt.id+'\')">Mark interview complete</button>' : '');
+        + '<div style="display:flex;gap:8px;margin-top:8px;">'
+        + '<button class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:13px;" onclick="document.getElementById(\'np-video-wrap\').style.display=\'block\';joinVideoCall(\''+appt.ticket_number+'\',\'staff\',\'np-video-local\',\'np-video-remote\',\'np-video-status\')">Join meeting</button>'
+        + (appt.status === 'scheduled' ? '<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npMarkInterviewComplete(\''+appt.id+'\')">Mark interview complete</button>' : '')
+        + '</div>';
     } else {
       apptWrap.innerHTML = '<div class="form-section-title">Interview</div><p class="np-empty">Not scheduled yet.</p>';
     }
@@ -2437,7 +2453,7 @@
     }
   }
 
-  // ====== VIDEO ROOM ======
+  // ====== VIDEO ROOM (real two-way video via WebRTC, signaled through Supabase Realtime) ======
   function showVideoRoom(){
     document.getElementById('video-room-wrap').style.display = 'block';
     document.getElementById('video-room-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2445,31 +2461,129 @@
 
   function hideVideoRoom(){
     document.getElementById('video-room-wrap').style.display = 'none';
-    if(localStream){
-      localStream.getTracks().forEach(t => t.stop());
-      localStream = null;
-    }
   }
 
-  async function toggleCamera(){
-    const shell = document.getElementById('video-shell');
-    if(localStream){
-      localStream.getTracks().forEach(t => t.stop());
-      localStream = null;
-      shell.innerHTML = '<div class="video-waiting" id="video-waiting">Waiting for your care team to join...</div>';
+  // Free public STUN servers only — no TURN relay. Connects instantly on the
+  // vast majority of home/mobile/office networks. A small number of very
+  // restrictive corporate/school networks (symmetric NAT) may fail to
+  // connect without a paid TURN relay — see pre-launch-checklist.md.
+  const RTC_ICE_SERVERS = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' }
+  ];
+
+  let rtcPeerConnection = null;
+  let rtcLocalStream = null;
+  let rtcChannel = null;
+  let rtcRole = null;
+  let rtcSubscribeAnnounced = false;
+  let rtcAckSent = false;
+  let rtcOfferSent = false;
+
+  async function joinVideoCall(ticketNumber, role, localVideoElId, remoteVideoElId, statusElId){
+    if(!ticketNumber){
+      alert('No appointment found to connect this call to yet.');
       return;
     }
-    try{
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      shell.innerHTML = '';
-      const video = document.createElement('video');
-      video.autoplay = true;
-      video.muted = true;
-      video.srcObject = localStream;
-      shell.appendChild(video);
-    } catch(err){
-      alert('Could not access your camera: ' + (err.message || 'permission denied'));
+    if(!supabaseClient){
+      alert('Not connected to Supabase.');
+      return;
     }
+    // Reset any previous call state before starting a fresh one
+    leaveVideoCall(localVideoElId, remoteVideoElId, statusElId);
+    rtcRole = role;
+    rtcSubscribeAnnounced = false;
+    rtcAckSent = false;
+    rtcOfferSent = false;
+
+    const statusEl = document.getElementById(statusElId);
+    statusEl.textContent = 'Requesting camera access...';
+
+    try{
+      rtcLocalStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    } catch(err){
+      statusEl.textContent = 'Could not access camera/mic: ' + (err.message || 'permission denied');
+      return;
+    }
+
+    const localVideo = document.getElementById(localVideoElId);
+    localVideo.srcObject = rtcLocalStream;
+
+    rtcPeerConnection = new RTCPeerConnection({ iceServers: RTC_ICE_SERVERS });
+    rtcLocalStream.getTracks().forEach(track => rtcPeerConnection.addTrack(track, rtcLocalStream));
+
+    rtcPeerConnection.ontrack = (event) => {
+      document.getElementById(remoteVideoElId).srcObject = event.streams[0];
+      statusEl.textContent = 'Connected';
+      statusEl.style.display = 'none';
+    };
+
+    rtcPeerConnection.onconnectionstatechange = () => {
+      if(!rtcPeerConnection) return;
+      const state = rtcPeerConnection.connectionState;
+      if(state === 'disconnected' || state === 'failed'){
+        statusEl.style.display = 'flex';
+        statusEl.textContent = 'Connection lost — try leaving and rejoining.';
+      }
+    };
+
+    rtcChannel = supabaseClient.channel('video-room-' + ticketNumber, { config: { broadcast: { self: false } } });
+
+    rtcPeerConnection.onicecandidate = (event) => {
+      if(event.candidate && rtcChannel){
+        rtcChannel.send({ type: 'broadcast', event: 'ice-candidate', payload: { candidate: event.candidate, from: role } });
+      }
+    };
+
+    rtcChannel
+      .on('broadcast', { event: 'peer-joined' }, async ({ payload }) => {
+        if(!payload || payload.from === role || !rtcPeerConnection) return;
+        statusEl.textContent = 'Other person is here — connecting...';
+        if(!rtcAckSent){
+          rtcAckSent = true;
+          rtcChannel.send({ type: 'broadcast', event: 'peer-joined', payload: { from: role } });
+        }
+        if(role === 'patient' && !rtcOfferSent){
+          rtcOfferSent = true;
+          const offer = await rtcPeerConnection.createOffer();
+          await rtcPeerConnection.setLocalDescription(offer);
+          rtcChannel.send({ type: 'broadcast', event: 'offer', payload: { sdp: offer, from: role } });
+        }
+      })
+      .on('broadcast', { event: 'offer' }, async ({ payload }) => {
+        if(!payload || payload.from === role || !rtcPeerConnection) return;
+        await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        const answer = await rtcPeerConnection.createAnswer();
+        await rtcPeerConnection.setLocalDescription(answer);
+        rtcChannel.send({ type: 'broadcast', event: 'answer', payload: { sdp: answer, from: role } });
+      })
+      .on('broadcast', { event: 'answer' }, async ({ payload }) => {
+        if(!payload || payload.from === role || !rtcPeerConnection) return;
+        await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+      })
+      .on('broadcast', { event: 'ice-candidate' }, async ({ payload }) => {
+        if(!payload || payload.from === role || !rtcPeerConnection) return;
+        try{ await rtcPeerConnection.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch(e){ /* benign if call already ended */ }
+      })
+      .subscribe((status) => {
+        if(status === 'SUBSCRIBED' && !rtcSubscribeAnnounced){
+          rtcSubscribeAnnounced = true;
+          statusEl.textContent = 'Waiting for the other person to join...';
+          rtcChannel.send({ type: 'broadcast', event: 'peer-joined', payload: { from: role } });
+        }
+      });
+  }
+
+  function leaveVideoCall(localVideoElId, remoteVideoElId, statusElId){
+    if(rtcPeerConnection){ rtcPeerConnection.close(); rtcPeerConnection = null; }
+    if(rtcLocalStream){ rtcLocalStream.getTracks().forEach(t => t.stop()); rtcLocalStream = null; }
+    if(rtcChannel && supabaseClient){ supabaseClient.removeChannel(rtcChannel); rtcChannel = null; }
+    const localEl = document.getElementById(localVideoElId);
+    const remoteEl = document.getElementById(remoteVideoElId);
+    const statusEl = document.getElementById(statusElId);
+    if(localEl) localEl.srcObject = null;
+    if(remoteEl) remoteEl.srcObject = null;
+    if(statusEl){ statusEl.style.display = 'flex'; statusEl.textContent = 'Click "Join meeting" to connect.'; }
   }
 
 
