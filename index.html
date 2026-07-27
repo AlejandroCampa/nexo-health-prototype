@@ -804,8 +804,15 @@
 
           <div class="form-section-title">Body markers</div>
           <div class="two-col">
-            <div class="field"><label>Height (cm)</label><input id="hh-height" type="number" placeholder="170"></div>
-            <div class="field"><label>Weight (kg)</label><input id="hh-weight" type="number" placeholder="80"></div>
+            <div class="field"><label>Height</label>
+              <div style="display:flex;gap:8px;">
+                <input id="hh-height-ft" type="number" placeholder="5" style="width:70px;">
+                <span style="align-self:center;font-size:13px;color:rgba(16,27,45,0.5);">ft</span>
+                <input id="hh-height-in" type="number" placeholder="9" style="width:70px;">
+                <span style="align-self:center;font-size:13px;color:rgba(16,27,45,0.5);">in</span>
+              </div>
+            </div>
+            <div class="field"><label>Weight (lbs)</label><input id="hh-weight" type="number" placeholder="180"></div>
           </div>
 
           <div class="form-section-title">Family history</div>
@@ -2028,7 +2035,7 @@
       'Surgical history: ' + (patient.surgical_history || '—'),
       'Allergies: ' + (patient.allergies || '—'),
       'Alcohol: ' + (patient.alcohol_use || '—') + ' · Smoking: ' + (patient.smoking_use || '—') + ' · Substances: ' + (patient.substance_use || '—'),
-      'Height / Weight: ' + (patient.height_cm || '—') + ' cm / ' + (patient.weight_kg || '—') + ' kg',
+      'Height / Weight: ' + (patient.height_ft ? (patient.height_ft + "'" + (patient.height_in || 0) + '"') : '—') + ' / ' + (patient.weight_lbs || '—') + ' lbs',
       'Family history: ' + (((patient.family_history||[]).join(', ')) || 'None reported'),
       'Family endocrine cancer: ' + (patient.family_endocrine_cancer ? ('⚠️ YES — ' + (patient.family_endocrine_cancer_detail || 'no detail given')) : 'No')
     ];
@@ -2221,8 +2228,9 @@
       alcohol_use: document.getElementById('hh-alcohol').value,
       smoking_use: document.getElementById('hh-smoking').value,
       substance_use: document.getElementById('hh-substances').value,
-      height_cm: document.getElementById('hh-height').value || null,
-      weight_kg: document.getElementById('hh-weight').value || null,
+      height_ft: document.getElementById('hh-height-ft').value || null,
+      height_in: document.getElementById('hh-height-in').value || null,
+      weight_lbs: document.getElementById('hh-weight').value || null,
       family_history: family,
       family_endocrine_cancer: document.getElementById('hh-family-endocrine').checked,
       family_endocrine_cancer_detail: document.getElementById('hh-family-endocrine-detail').value,
