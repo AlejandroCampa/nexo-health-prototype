@@ -5,35 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nuvi Clinic — Physician-Led Metabolic & Performance Medicine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root{
-    --ink:#17356B;
-    --paper:#F1F4F7;
-    --paper-warm:#F9FAFB;
-    --amber:#D98C2B;
-    --amber-deep:#B36F1A;
+    --ink:#3A2222;
+    --paper:#F3E9E4;
+    --paper-warm:#FBF4F0;
+    --amber:#C1453D;
+    --amber-deep:#96332A;
     --sage:#4F7A64;
-    --line:rgba(23,54,107,0.12);
+    --line:rgba(58,34,34,0.12);
     --white:#FFFFFF;
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{
     margin:0;
-    background-color:var(--paper);
-    background-image:
-      linear-gradient(rgba(23,54,107,0.055) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(23,54,107,0.055) 1px, transparent 1px);
-    background-size:28px 28px;
+    background:var(--paper);
     color:var(--ink);
-    font-family:'IBM Plex Sans',sans-serif;
+    font-family:'Inter',sans-serif;
     -webkit-font-smoothing:antialiased;
   }
   h1,h2,h3,.display{
-    font-family:'Space Grotesk',sans-serif;
+    font-family:'Instrument Serif',serif;
     font-weight:500;
     letter-spacing:-0.01em;
     margin:0;
@@ -53,7 +49,7 @@
     border-bottom:1px solid var(--line);
   }
   nav{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;max-width:1180px;margin:0 auto;}
-  .logo{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;}
+  .logo{display:flex;align-items:center;gap:10px;font-family:'Instrument Serif',serif;font-size:20px;font-weight:600;}
   .logo-mark{width:26px;height:26px;border-radius:50%;background:var(--ink);position:relative;flex:none;}
   .logo-mark::after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--amber);}
   .navlinks{display:flex;gap:32px;font-size:14.5px;font-weight:500;}
@@ -62,12 +58,12 @@
   .navcta{display:flex;align-items:center;gap:18px;}
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    padding:11px 22px;border-radius:3px;font-size:14.5px;font-weight:600;
+    padding:11px 22px;border-radius:100px;font-size:14.5px;font-weight:600;
     cursor:pointer;border:1px solid transparent;transition:transform .15s ease, background .2s;
-    white-space:nowrap;letter-spacing:0.01em;
+    white-space:nowrap;
   }
   .btn-primary{background:var(--ink);color:var(--paper-warm);}
-  .btn-primary:hover{transform:translateY(-1px);background:#1c2c45;}
+  .btn-primary:hover{transform:translateY(-1px);background:#4A2C2C;}
   .btn-outline{border-color:var(--ink);color:var(--ink);}
   .btn-outline:hover{background:var(--ink);color:var(--paper-warm);}
   .menu-toggle{display:none;background:none;border:none;cursor:pointer;}
@@ -84,26 +80,26 @@
   .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--amber);}
   .hero h1{font-size:clamp(40px,5.2vw,68px);line-height:1.03;font-weight:500;}
   .hero h1 em{font-style:normal;color:var(--amber-deep);}
-  .hero p.lede{font-size:18px;line-height:1.6;color:rgba(23,54,107,0.72);max-width:480px;margin:24px 0 34px;}
+  .hero p.lede{font-size:18px;line-height:1.6;color:rgba(58,34,34,0.72);max-width:480px;margin:24px 0 34px;}
   .hero-ctas{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
-  .hero-note{margin-top:18px;font-size:13px;color:rgba(23,54,107,0.55);}
+  .hero-note{margin-top:18px;font-size:13px;color:rgba(58,34,34,0.55);}
 
   /* prescription pad visual */
   .rx-pad{
     background:var(--white);border:1px solid var(--line);border-radius:18px;
-    padding:28px;box-shadow:0 30px 60px -30px rgba(23,54,107,0.35);
+    padding:28px;box-shadow:0 30px 60px -30px rgba(58,34,34,0.35);
     transform:rotate(1.3deg);position:relative;
   }
   .rx-pad::before{
     content:"Rx";
-    position:absolute;top:24px;right:26px;font-family:'Space Grotesk',sans-serif;font-size:34px;color:var(--amber);opacity:0.9;
+    position:absolute;top:24px;right:26px;font-family:'Instrument Serif',serif;font-size:34px;color:var(--amber);opacity:0.9;
   }
-  .rx-pad-head{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:rgba(23,54,107,0.45);margin-bottom:18px;}
+  .rx-pad-head{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:rgba(58,34,34,0.45);margin-bottom:18px;}
   .rx-line{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px dashed var(--line);font-family:'IBM Plex Mono',monospace;font-size:13.5px;}
   .rx-line:last-of-type{border-bottom:none;}
   .rx-line b{font-weight:600;}
   .rx-sig{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
-  .rx-sig-name{font-family:'Space Grotesk',sans-serif;font-style:italic;font-size:17px;}
+  .rx-sig-name{font-family:'Instrument Serif',serif;font-style:italic;font-size:17px;}
   .rx-stamp{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--sage);border:1px solid var(--sage);padding:4px 8px;border-radius:6px;transform:rotate(-4deg);}
 
   /* ---- SECTION HEADERS ---- */
@@ -111,14 +107,14 @@
   .section-head{max-width:640px;margin-bottom:56px;}
   .section-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--amber-deep);margin-bottom:14px;display:block;}
   .section-head h2{font-size:clamp(28px,3.4vw,42px);line-height:1.1;}
-  .section-head p{font-size:16.5px;color:rgba(23,54,107,0.68);margin-top:16px;line-height:1.6;}
+  .section-head p{font-size:16.5px;color:rgba(58,34,34,0.68);margin-top:16px;line-height:1.6;}
 
   /* ---- HOW IT WORKS ---- */
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:20px;overflow:hidden;}
   .step{background:var(--paper-warm);padding:38px 32px;}
   .step-num{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--amber-deep);margin-bottom:22px;}
   .step h3{font-size:21px;margin-bottom:10px;}
-  .step p{font-size:14.5px;color:rgba(23,54,107,0.65);line-height:1.55;margin:0;}
+  .step p{font-size:14.5px;color:rgba(58,34,34,0.65);line-height:1.55;margin:0;}
 
   /* ---- PROTOCOLS / STORE ---- */
   .protocol-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:36px;}
@@ -129,37 +125,34 @@
   .filter.active{background:var(--ink);color:var(--paper-warm);border-color:var(--ink);}
   .protocol-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;max-width:640px;margin:0 auto;}
   .vial-card{
-    background:var(--white);border-radius:2px;border:1px solid var(--line);
-    overflow:hidden;transition:transform .2s ease, box-shadow .2s ease;position:relative;
+    background:var(--white);border-radius:16px;border:1px solid var(--line);
+    overflow:hidden;transition:transform .2s ease, box-shadow .2s ease;
   }
-  .vial-card::before,.vial-card::after{content:"";position:absolute;width:12px;height:12px;pointer-events:none;z-index:2;}
-  .vial-card::before{top:-1px;left:-1px;border-top:2px solid var(--ink);border-left:2px solid var(--ink);}
-  .vial-card::after{bottom:-1px;right:-1px;border-bottom:2px solid var(--ink);border-right:2px solid var(--ink);}
-  .vial-card:hover{transform:translateY(-4px);box-shadow:0 24px 40px -24px rgba(23,54,107,0.3);}
+  .vial-card:hover{transform:translateY(-4px);box-shadow:0 24px 40px -24px rgba(58,34,34,0.3);}
   .vial-label{background:var(--amber);color:var(--ink);padding:16px 20px;position:relative;}
   .vial-label .cat{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.07em;opacity:0.75;}
-  .vial-label h3{font-family:'Space Grotesk',sans-serif;font-size:22px;margin-top:4px;}
+  .vial-label h3{font-family:'Instrument Serif',serif;font-size:22px;margin-top:4px;}
   .vial-body{padding:20px;}
-  .vial-spec{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:8px 0;border-bottom:1px solid var(--line);color:rgba(23,54,107,0.65);}
+  .vial-spec{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:8px 0;border-bottom:1px solid var(--line);color:rgba(58,34,34,0.65);}
   .vial-spec:last-of-type{border-bottom:none;}
   .vial-spec b{color:var(--ink);font-weight:600;}
   .vial-foot{display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding-top:16px;border-top:1px solid var(--line);}
-  .price{font-family:'Space Grotesk',sans-serif;font-size:20px;}
-  .price span{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(23,54,107,0.5);}
+  .price{font-family:'Instrument Serif',serif;font-size:20px;}
+  .price span{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(58,34,34,0.5);}
   .rx-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;background:rgba(79,122,100,0.12);color:var(--sage);padding:5px 9px;border-radius:6px;}
-  .protocol-disclaimer{margin-top:30px;font-size:13px;color:rgba(23,54,107,0.5);line-height:1.6;max-width:760px;}
-  .fda-disclaimer{margin-top:36px;padding:18px 22px;background:var(--paper-warm);border:1px solid var(--line);border-radius:14px;font-size:13px;color:rgba(23,54,107,0.65);line-height:1.6;max-width:760px;}
+  .protocol-disclaimer{margin-top:30px;font-size:13px;color:rgba(58,34,34,0.5);line-height:1.6;max-width:760px;}
+  .fda-disclaimer{margin-top:36px;padding:18px 22px;background:var(--paper-warm);border:1px solid var(--line);border-radius:14px;font-size:13px;color:rgba(58,34,34,0.65);line-height:1.6;max-width:760px;}
 
   /* ---- FAQ ---- */
   .faq-item{border-bottom:1px solid var(--line);}
   .faq-item:first-child{border-top:1px solid var(--line);}
   .faq-q{display:flex;align-items:center;justify-content:space-between;padding:22px 4px;cursor:pointer;gap:20px;}
-  .faq-q h4{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:500;}
+  .faq-q h4{font-family:'Instrument Serif',serif;font-size:18px;font-weight:500;}
   .faq-q .plus{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--amber-deep);flex:none;transition:transform .2s;}
   .faq-item.open .faq-q .plus{transform:rotate(45deg);}
   .faq-a{max-height:0;overflow:hidden;transition:max-height .25s ease;}
   .faq-item.open .faq-a{max-height:400px;}
-  .faq-a p{font-size:14.5px;color:rgba(23,54,107,0.68);line-height:1.7;padding:0 4px 22px;max-width:720px;}
+  .faq-a p{font-size:14.5px;color:rgba(58,34,34,0.68);line-height:1.7;padding:0 4px 22px;max-width:720px;}
 
   /* ---- MEMBERSHIP ---- */
   .tiers{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;max-width:760px;margin:0 auto;}
@@ -168,8 +161,8 @@
   .tier.featured .tier-name{color:var(--amber);}
   .tier-badge{position:absolute;top:-13px;right:28px;background:var(--amber);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 12px;border-radius:100px;font-weight:600;}
   .tier-name{font-family:'IBM Plex Mono',monospace;font-size:13px;text-transform:uppercase;letter-spacing:0.06em;color:var(--amber-deep);margin-bottom:14px;}
-  .tier-price{font-family:'Space Grotesk',sans-serif;font-size:40px;margin-bottom:4px;}
-  .tier-price span{font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:500;opacity:0.6;}
+  .tier-price{font-family:'Instrument Serif',serif;font-size:40px;margin-bottom:4px;}
+  .tier-price span{font-family:'Inter',sans-serif;font-size:14px;font-weight:500;opacity:0.6;}
   .tier ul{list-style:none;padding:0;margin:24px 0 28px;flex:1;}
   .tier li{display:flex;gap:10px;padding:8px 0;font-size:14px;line-height:1.5;}
   .tier li::before{content:"✓";color:var(--sage);font-weight:700;flex:none;}
@@ -179,19 +172,19 @@
   .trust{background:var(--ink);color:var(--paper-warm);padding:56px 0;}
   .trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;}
   .trust-item{border-left:1px solid rgba(247,245,240,0.2);padding-left:20px;}
-  .trust-item h4{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:500;margin-bottom:6px;}
+  .trust-item h4{font-family:'Instrument Serif',serif;font-size:18px;font-weight:500;margin-bottom:6px;}
   .trust-item p{margin:0;font-size:13px;color:rgba(247,245,240,0.65);line-height:1.5;}
 
   /* ---- FOOTER ---- */
   footer{padding:56px 0 32px;}
   .footer-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:32px;padding-bottom:36px;border-bottom:1px solid var(--line);}
   .footer-cols{display:flex;gap:64px;flex-wrap:wrap;}
-  .footer-col h5{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(23,54,107,0.5);margin-bottom:14px;}
+  .footer-col h5{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(58,34,34,0.5);margin-bottom:14px;}
   .footer-col a{display:block;font-size:14px;padding:5px 0;opacity:0.8;}
   .footer-col a:hover{opacity:1;}
   .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:24px;flex-wrap:wrap;gap:12px;}
-  .footer-bottom p{margin:0;font-size:12.5px;color:rgba(23,54,107,0.5);max-width:680px;line-height:1.6;}
-  .footer-legal-note{font-size:12px;color:rgba(23,54,107,0.42);margin-top:18px;line-height:1.6;max-width:900px;}
+  .footer-bottom p{margin:0;font-size:12.5px;color:rgba(58,34,34,0.5);max-width:680px;line-height:1.6;}
+  .footer-legal-note{font-size:12px;color:rgba(58,34,34,0.42);margin-top:18px;line-height:1.6;max-width:900px;}
 
   @media(max-width:920px){
     .navlinks{display:none;}
@@ -212,14 +205,14 @@
 
   /* ---- MODALS ---- */
   .modal-overlay{
-    position:fixed;inset:0;background:rgba(23,54,107,0.55);
+    position:fixed;inset:0;background:rgba(58,34,34,0.55);
     display:none;align-items:center;justify-content:center;
     padding:24px;z-index:200;backdrop-filter:blur(3px);
   }
   .modal-overlay.open{display:flex;}
   .modal{
     background:var(--paper-warm);border-radius:20px;max-width:420px;width:100%;
-    padding:32px;position:relative;box-shadow:0 40px 80px -30px rgba(23,54,107,0.5);
+    padding:32px;position:relative;box-shadow:0 40px 80px -30px rgba(58,34,34,0.5);
     max-height:88vh;overflow-y:auto;
   }
   .modal-close{
@@ -228,17 +221,17 @@
     display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--ink);
   }
   .modal-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--amber-deep);margin-bottom:10px;display:block;}
-  .modal h3{font-family:'Space Grotesk',sans-serif;font-size:26px;margin-bottom:8px;}
-  .modal p.modal-sub{font-size:14px;color:rgba(23,54,107,0.65);line-height:1.5;margin:0 0 22px;}
+  .modal h3{font-family:'Instrument Serif',serif;font-size:26px;margin-bottom:8px;}
+  .modal p.modal-sub{font-size:14px;color:rgba(58,34,34,0.65);line-height:1.5;margin:0 0 22px;}
   .field{margin-bottom:16px;}
-  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:rgba(23,54,107,0.75);}
+  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:rgba(58,34,34,0.75);}
   .field input, .field select{
     width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--line);
-    background:var(--white);font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;color:var(--ink);
+    background:var(--white);font-family:'Inter',sans-serif;font-size:14.5px;color:var(--ink);
   }
   .field input:focus, .field select:focus{outline:2px solid var(--amber);outline-offset:1px;}
   .modal .btn{width:100%;margin-top:6px;}
-  .modal-foot-link{display:block;text-align:center;margin-top:16px;font-size:13px;color:rgba(23,54,107,0.6);}
+  .modal-foot-link{display:block;text-align:center;margin-top:16px;font-size:13px;color:rgba(58,34,34,0.6);}
   .modal-foot-link a{color:var(--amber-deep);font-weight:600;}
   .modal-icon-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
   .modal-icon-row .logo-mark{width:34px;height:34px;}
@@ -264,19 +257,16 @@
   .np-row:last-child{border-bottom:none;}
   .np-row:hover{background:var(--paper);}
   .np-row .name{font-weight:600;font-size:14.5px;}
-  .np-row .meta{font-size:12.5px;color:rgba(23,54,107,0.55);}
-  .np-empty{font-size:13.5px;color:rgba(23,54,107,0.5);padding:8px 4px;}
+  .np-row .meta{font-size:12.5px;color:rgba(58,34,34,0.55);}
+  .np-empty{font-size:13.5px;color:rgba(58,34,34,0.5);padding:8px 4px;}
   .marketing-page.hidden-for-dashboard{display:none;}
   .dash-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:40px;}
   .dash-head h1{font-size:clamp(28px,3.6vw,40px);}
-  .dash-head p{margin-top:8px;color:rgba(23,54,107,0.65);font-size:15px;}
+  .dash-head p{margin-top:8px;color:rgba(58,34,34,0.65);font-size:15px;}
   .dash-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:22px;align-items:start;}
-  .dash-card{background:var(--white);border:1px solid var(--line);border-radius:2px;padding:28px;position:relative;}
-  .dash-card::before,.dash-card::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none;}
-  .dash-card::before{top:-1px;left:-1px;border-top:2px solid var(--amber);border-left:2px solid var(--amber);}
-  .dash-card::after{bottom:-1px;right:-1px;border-bottom:2px solid var(--amber);border-right:2px solid var(--amber);}
-  .dash-card h3{font-family:'Space Grotesk',sans-serif;font-size:19px;margin-bottom:6px;}
-  .dash-card p{font-size:14px;color:rgba(23,54,107,0.62);line-height:1.55;margin:0;}
+  .dash-card{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:28px;}
+  .dash-card h3{font-family:'Instrument Serif',serif;font-size:19px;margin-bottom:6px;}
+  .dash-card p{font-size:14px;color:rgba(58,34,34,0.62);line-height:1.55;margin:0;}
   .status-pill{
     display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;
     font-size:11.5px;text-transform:uppercase;letter-spacing:0.05em;
@@ -287,7 +277,7 @@
   .dash-protocol-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px dashed var(--line);}
   .dash-protocol-row:last-child{border-bottom:none;}
   .dash-protocol-row .name{font-weight:600;font-size:14.5px;}
-  .dash-protocol-row .meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(23,54,107,0.5);}
+  .dash-protocol-row .meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(58,34,34,0.5);}
   .dash-checklist{list-style:none;padding:0;margin:16px 0 0;}
   .dash-checklist li{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13.5px;}
   .dash-check-icon{width:18px;height:18px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;}
@@ -306,16 +296,16 @@
   .checkbox-item{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;background:var(--white);border:1px solid var(--line);padding:11px 13px;border-radius:10px;cursor:pointer;line-height:1.4;}
   .checkbox-item input{width:16px;height:16px;flex:none;margin-top:1px;}
   .flag-box{background:rgba(196,60,60,0.06);border:1px solid rgba(196,60,60,0.25);border-radius:12px;padding:16px 18px;margin-top:12px;}
-  .flag-box p{font-size:12.5px;color:rgba(23,54,107,0.68);margin:8px 0 0;line-height:1.5;}
-  .flag-input{margin-top:10px;width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'IBM Plex Sans',sans-serif;font-size:14px;}
+  .flag-box p{font-size:12.5px;color:rgba(58,34,34,0.68);margin:8px 0 0;line-height:1.5;}
+  .flag-input{margin-top:10px;width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;}
   @media(max-width:700px){ .checkbox-grid,.two-col{grid-template-columns:1fr;} }
 
   /* ---- SCHEDULER ---- */
   .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;}
-  .slot-btn{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left;cursor:pointer;transition:all .15s;font-family:'IBM Plex Sans',sans-serif;}
+  .slot-btn{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;}
   .slot-btn:hover{border-color:var(--amber);background:rgba(217,140,43,0.06);}
-  .slot-day{font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(23,54,107,0.5);text-transform:uppercase;}
-  .slot-time{font-family:'Space Grotesk',sans-serif;font-size:18px;margin-top:4px;color:var(--ink);}
+  .slot-day{font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(58,34,34,0.5);text-transform:uppercase;}
+  .slot-time{font-family:'Instrument Serif',serif;font-size:18px;margin-top:4px;color:var(--ink);}
   @media(max-width:700px){ .slot-grid{grid-template-columns:1fr 1fr;} }
 
   .ticket-card{background:var(--ink);color:var(--paper-warm);border-radius:16px;padding:26px;text-align:center;margin:16px 0;}
@@ -330,7 +320,7 @@
 
   /* ---- CALENDAR ---- */
   .cal-weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
-  .cal-weekday-row span{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:rgba(23,54,107,0.45);text-transform:uppercase;}
+  .cal-weekday-row span{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:rgba(58,34,34,0.45);text-transform:uppercase;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
   .cal-day{
     aspect-ratio:1;display:flex;align-items:center;justify-content:center;
@@ -417,6 +407,33 @@
         <div class="step-num">03</div>
         <h3>Prescription & delivery</h3>
         <p>Approved prescriptions route directly to our 503A pharmacy partner and ship to your door with dosing instructions from your physician.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="timeline" style="background:var(--paper-warm);">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">What to expect</span>
+      <h2>Give it three months.</h2>
+      <p>Dose increases gradually, on a physician-set schedule — not all at once. Most patients need at least 3 months of consistent treatment before seeing their full results. This isn't a quick-fix product, and we'd rather tell you that upfront than have you stop right before it starts working.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">Month 1</div>
+        <h3>Starting dose</h3>
+        <p>Treatment begins at a low starting dose while your body adjusts. Early changes are often subtle — this month is about tolerance, not results.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Month 2</div>
+        <h3>Titrating up</h3>
+        <p>Your physician increases your dose based on how you're responding. This is usually when patients start noticing real changes in appetite and weight.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Month 3+</div>
+        <h3>Full effect</h3>
+        <p>By now most patients are at or near a therapeutic dose. This is where consistent, ongoing progress happens — and why membership is monthly, not one-and-done.</p>
       </div>
     </div>
   </div>
@@ -521,7 +538,7 @@
         <p>Here's where things stand with your care.</p>
       </div>
       <div style="display:flex;align-items:center;gap:16px;">
-        <a href="javascript:void(0)" onclick="openSettingsModal()" style="font-size:13px;color:rgba(23,54,107,0.5);">Settings</a>
+        <a href="javascript:void(0)" onclick="openSettingsModal()" style="font-size:13px;color:rgba(58,34,34,0.5);">Settings</a>
         <button class="btn btn-outline dash-logout" onclick="handleLogout()">Log out</button>
       </div>
     </div>
@@ -540,7 +557,7 @@
           <span class="status-pill" style="background:rgba(196,60,60,0.1);color:#B23A3A;">Membership cancelled</span>
           <h3>Your membership is cancelled</h3>
           <p id="membership-cancelled-reason" style="margin-bottom:18px;"></p>
-          <p style="font-size:13px;color:rgba(23,54,107,0.55);margin-bottom:18px;">Cancelling here stops your access on our side — if you were charged after cancelling, contact us directly and we'll help sort out billing with Stripe.</p>
+          <p style="font-size:13px;color:rgba(58,34,34,0.55);margin-bottom:18px;">Cancelling here stops your access on our side — if you were charged after cancelling, contact us directly and we'll help sort out billing with Stripe.</p>
           <button class="btn btn-primary" style="width:auto;padding:13px 28px;" onclick="resubscribeMembership()">Resubscribe</button>
         </div>
 
@@ -551,13 +568,13 @@
           <div class="two-col">
             <div class="dash-card" style="padding:20px;">
               <div class="tier-name" style="margin-bottom:8px;">Basic</div>
-              <div class="tier-price" style="font-size:28px;">$79<span style="font-family:'IBM Plex Sans',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
+              <div class="tier-price" style="font-size:28px;">$79<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
               <p style="margin:10px 0 16px;font-size:13px;">Medical evaluation and peptide prescription.</p>
               <button class="btn btn-outline" style="width:100%;" onclick="goToCheckout('Basic')">Continue with Basic</button>
             </div>
             <div class="dash-card" style="padding:20px;border-color:var(--amber);">
               <div class="tier-name" style="margin-bottom:8px;">Premium</div>
-              <div class="tier-price" style="font-size:28px;">$149<span style="font-family:'IBM Plex Sans',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
+              <div class="tier-price" style="font-size:28px;">$149<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
               <p style="margin:10px 0 16px;font-size:13px;">Everything in Basic, plus direct 1-on-1 visits with the physician.</p>
               <button class="btn btn-primary" style="width:100%;background:var(--amber);color:var(--ink);" onclick="goToCheckout('Premium')">Continue with Premium</button>
             </div>
@@ -575,15 +592,15 @@
           <p style="margin-bottom:18px;">Every patient completes a required 15-minute interview with a nurse practitioner, under the supervising physician's sign-off, before any prescription is approved. Appointments run 8:00 AM – 7:00 PM, every day.</p>
           <div id="np-calendar-nav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
             <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(-1)">←</button>
-            <div id="np-calendar-month-label" style="font-family:'Space Grotesk',sans-serif;font-size:16px;"></div>
+            <div id="np-calendar-month-label" style="font-family:'Instrument Serif',serif;font-size:16px;"></div>
             <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(1)">→</button>
           </div>
           <div class="cal-weekday-row" id="np-calendar-weekdays"></div>
           <div class="cal-grid" id="np-calendar"></div>
           <div id="np-slots-wrap" style="display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--line);">
-            <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(23,54,107,0.6);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
+            <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(58,34,34,0.6);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
             <div class="slot-grid" id="np-slot-grid"></div>
-            <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(23,54,107,0.55);">No open times that day — try another date.</p>
+            <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(58,34,34,0.55);">No open times that day — try another date.</p>
           </div>
         </div>
 
@@ -613,10 +630,10 @@
             <div class="meta" id="active-plan-price">—</div>
           </div>
           <div class="dash-protocol-row" style="border-top:1px solid var(--ink);margin-top:4px;">
-            <div class="name" style="font-family:'Space Grotesk',sans-serif;font-size:17px;">Total monthly</div>
-            <div class="name" id="active-total-price" style="font-family:'Space Grotesk',sans-serif;font-size:17px;">—</div>
+            <div class="name" style="font-family:'Instrument Serif',serif;font-size:17px;">Total monthly</div>
+            <div class="name" id="active-total-price" style="font-family:'Instrument Serif',serif;font-size:17px;">—</div>
           </div>
-          <p id="active-med-notes" style="margin-top:14px;font-size:13px;color:rgba(23,54,107,0.55);"></p>
+          <p id="active-med-notes" style="margin-top:14px;font-size:13px;color:rgba(58,34,34,0.55);"></p>
         </div>
 
       </div>
@@ -634,6 +651,30 @@
       </div>
     </div>
 
+    <!-- WEIGHT GOAL & TRACKER: all members, Basic and Premium alike -->
+    <div id="weight-tracker-wrap" style="display:none;margin-top:22px;">
+      <div class="dash-card">
+        <span class="status-pill status-active">Progress</span>
+        <h3>Weight goal & tracker</h3>
+        <p style="margin-bottom:18px;">Log your weight weekly to see real progress over time — this is for you, your care team can see it too.</p>
+
+        <div class="two-col" style="align-items:flex-end;margin-bottom:20px;">
+          <div class="field"><label>Target weight (lbs)</label><input id="target-weight-input" type="number" step="0.1" placeholder="e.g. 180"></div>
+          <button class="btn btn-outline" style="width:auto;padding:11px 20px;" onclick="saveTargetWeight()">Save goal</button>
+        </div>
+
+        <div id="weight-chart-wrap" style="margin-bottom:20px;"></div>
+
+        <div class="form-section-title">Log this week's weight</div>
+        <div class="two-col" style="align-items:flex-end;">
+          <div class="field"><label>Weight (lbs)</label><input id="log-weight-input" type="number" step="0.1" placeholder="e.g. 195"></div>
+          <button class="btn btn-primary" style="width:auto;padding:11px 20px;" onclick="logWeight()">Log weight</button>
+        </div>
+
+        <div id="weight-log-list" style="margin-top:20px;"></div>
+      </div>
+    </div>
+
     <!-- STORE: buy approved prescriptions, request new ones -->
     <div id="store-wrap" style="display:none;margin-top:22px;">
       <div class="dash-card">
@@ -646,7 +687,7 @@
         <div id="store-pending-list"><p class="np-empty">None right now.</p></div>
 
         <div class="form-section-title">Request a new prescription</div>
-        <p style="font-size:13px;color:rgba(23,54,107,0.6);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
+        <p style="font-size:13px;color:rgba(58,34,34,0.6);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
         <div class="two-col">
           <div class="field"><label>Medication of interest</label>
             <select id="store-request-med"></select>
@@ -674,7 +715,7 @@
           <p style="margin-bottom:14px;">Premium includes direct messaging with your supervising physician.</p>
           <div id="message-thread" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
           <div style="display:flex;gap:8px;">
-            <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'IBM Plex Sans',sans-serif;font-size:14px;">
+            <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;">
             <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="sendMessage()">Send</button>
           </div>
           <p class="demo-tag" style="margin-top:12px;">Demo — this is real text-based messaging (saved to the database), not real SMS/phone yet. Doctor replies are added manually in Supabase for now.</p>
@@ -690,16 +731,16 @@
           <div id="physician-calendar-wrap">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
               <button type="button" class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:12px;" onclick="physicianCalendarShiftMonth(-1)">←</button>
-              <div id="physician-calendar-month-label" style="font-family:'Space Grotesk',sans-serif;font-size:15px;"></div>
+              <div id="physician-calendar-month-label" style="font-family:'Instrument Serif',serif;font-size:15px;"></div>
               <button type="button" class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:12px;" onclick="physicianCalendarShiftMonth(1)">→</button>
             </div>
             <div class="cal-weekday-row" id="physician-calendar-weekdays"></div>
             <div class="cal-grid" id="physician-calendar"></div>
             <div id="physician-slots-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
-              <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(23,54,107,0.6);margin-bottom:8px;text-transform:uppercase;"></div>
+              <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(58,34,34,0.6);margin-bottom:8px;text-transform:uppercase;"></div>
               <div class="slot-grid" id="physician-slot-grid" style="grid-template-columns:1fr 1fr;"></div>
-              <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(23,54,107,0.5);">No open times that day.</p>
-              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(23,54,107,0.6);">You've used both physician visits for this month — you can book again starting next month.</p>
+              <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(58,34,34,0.5);">No open times that day.</p>
+              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(58,34,34,0.6);">You've used both physician visits for this month — you can book again starting next month.</p>
             </div>
           </div>
         </div>
@@ -760,9 +801,9 @@
             <div class="field"><label>Height</label>
               <div style="display:flex;gap:8px;">
                 <input id="hh-height-ft" type="number" placeholder="5" style="width:70px;">
-                <span style="align-self:center;font-size:13px;color:rgba(23,54,107,0.5);">ft</span>
+                <span style="align-self:center;font-size:13px;color:rgba(58,34,34,0.5);">ft</span>
                 <input id="hh-height-in" type="number" placeholder="9" style="width:70px;">
-                <span style="align-self:center;font-size:13px;color:rgba(23,54,107,0.5);">in</span>
+                <span style="align-self:center;font-size:13px;color:rgba(58,34,34,0.5);">in</span>
               </div>
             </div>
             <div class="field"><label>Weight (lbs)</label><input id="hh-weight" type="number" placeholder="180"></div>
@@ -809,7 +850,7 @@
           <button class="btn btn-primary" id="video-join-btn" onclick="joinVideoCall(currentAppointment ? currentAppointment.ticket_number : '', 'patient', 'video-local', 'video-remote', 'video-status')">Join meeting</button>
           <button class="btn btn-outline" onclick="leaveVideoCall('video-local','video-remote','video-status');hideVideoRoom()">Leave</button>
         </div>
-        <p style="margin-top:14px;font-size:12px;color:rgba(23,54,107,0.45);">Video connects browser-to-browser. On most home and mobile networks this works instantly — a small number of very restrictive corporate/school networks may need extra setup to connect.</p>
+        <p style="margin-top:14px;font-size:12px;color:rgba(58,34,34,0.45);">Video connects browser-to-browser. On most home and mobile networks this works instantly — a small number of very restrictive corporate/school networks may need extra setup to connect.</p>
       </div>
     </div>
 
@@ -872,13 +913,13 @@
       </div>
       <div class="field"><label>Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" step="0.1" value="2.5" oninput="updateNPPricePreview()"></div>
     </div>
-    <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(23,54,107,0.65);margin:6px 0 14px;"></div>
+    <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(58,34,34,0.65);margin:6px 0 14px;"></div>
     <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="npApprovePrescription()">Approve prescription</button>
 
     <div class="form-section-title">Message patient</div>
     <div id="np-message-thread" style="max-height:180px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
     <div style="display:flex;gap:8px;">
-      <input id="np-message-input" type="text" placeholder="Reply as care team..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'IBM Plex Sans',sans-serif;font-size:14px;">
+      <input id="np-message-input" type="text" placeholder="Reply as care team..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;">
       <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="npSendMessage()">Send</button>
     </div>
   </div>
@@ -912,7 +953,7 @@
     </div>
     <div class="footer-bottom">
       <p>© 2026 Nuvi Clinic. Prototype for internal / partner review — not a live medical service. Placeholder branding, pricing, and formulary pending final legal and clinical review.</p>
-      <a href="javascript:void(0)" onclick="openModal('staff')" style="font-size:12px;color:rgba(23,54,107,0.4);">Staff login</a>
+      <a href="javascript:void(0)" onclick="openModal('staff')" style="font-size:12px;color:rgba(58,34,34,0.4);">Staff login</a>
     </div>
   </div>
 </footer>
@@ -921,7 +962,7 @@
 <div class="modal-overlay" id="modal-login" onclick="closeOnOverlay(event,'login')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('login')" aria-label="Close">✕</button>
-    <div class="modal-icon-row"><span class="logo-mark"></span><span style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;">Nuvi Clinic</span></div>
+    <div class="modal-icon-row"><span class="logo-mark"></span><span style="font-family:'Instrument Serif',serif;font-size:18px;font-weight:600;">Nuvi Clinic</span></div>
     <h3>Welcome back</h3>
     <p class="modal-sub">Enter your email and we'll send you a secure login link — no password needed.</p>
     <form onsubmit="return handleFormSubmit(event,'login')">
@@ -1007,7 +1048,7 @@
     <div id="settings-cancelled-notice" style="display:none;background:rgba(196,60,60,0.08);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#B23A3A;"></div>
     <div id="settings-cancel-section">
       <div class="form-section-title">Cancel membership</div>
-      <p style="font-size:13px;color:rgba(23,54,107,0.6);margin-bottom:12px;">This does <b>not</b> automatically cancel any recurring charge in Stripe — contact us to confirm billing has stopped too.</p>
+      <p style="font-size:13px;color:rgba(58,34,34,0.6);margin-bottom:12px;">This does <b>not</b> automatically cancel any recurring charge in Stripe — contact us to confirm billing has stopped too.</p>
       <div class="field"><label for="cancel-membership-reason">Reason</label>
         <select id="cancel-membership-reason">
           <option>Too expensive</option>
@@ -1328,7 +1369,7 @@
       return '<div class="vial-card">'
         + '<div class="vial-label"><span class="cat">' + info.category + '</span><h3>' + name + '</h3></div>'
         + '<div class="vial-body">'
-        + '<p style="font-size:13px;color:rgba(23,54,107,0.6);margin:0 0 12px;">' + info.description + '</p>'
+        + '<p style="font-size:13px;color:rgba(58,34,34,0.6);margin:0 0 12px;">' + info.description + '</p>'
         + '<div class="vial-spec"><span>Form</span><b>' + info.form + '</b></div>'
         + '<div class="vial-spec"><span>Starting dose</span><b>' + info.startingDose + '</b></div>'
         + '<div class="vial-spec"><span>Titration</span><b>Physician-managed</b></div>'
@@ -1514,6 +1555,13 @@
       document.getElementById('active-med-notes').textContent = history.approved_notes || '';
     }
 
+    if(history && history.paid && !history.membership_cancelled){
+      document.getElementById('weight-tracker-wrap').style.display = 'block';
+      await loadWeightTracker(history);
+    } else {
+      document.getElementById('weight-tracker-wrap').style.display = 'none';
+    }
+
     if(history && history.approved){
       document.getElementById('store-wrap').style.display = 'block';
       await loadStore(history);
@@ -1531,6 +1579,103 @@
   }
 
   // ====== STORE ======
+  // ====== WEIGHT GOAL & TRACKER ======
+  async function loadWeightTracker(history){
+    if(!supabaseClient || !currentUser) return;
+
+    document.getElementById('target-weight-input').value = history.target_weight_lbs || '';
+
+    const { data: logs } = await supabaseClient.from('weight_logs')
+      .select('*').eq('user_id', currentUser.id).order('logged_date', { ascending: true });
+    const entries = logs || [];
+
+    renderWeightChart(entries, history.target_weight_lbs);
+
+    const listWrap = document.getElementById('weight-log-list');
+    if(entries.length === 0){
+      listWrap.innerHTML = '<p class="np-empty">No weigh-ins logged yet.</p>';
+    } else {
+      const recent = entries.slice().reverse().slice(0, 8);
+      listWrap.innerHTML = '<div class="form-section-title">Recent entries</div>' + recent.map(e =>
+        '<div class="dash-protocol-row"><div class="name">' + e.logged_date + '</div><div class="meta">' + e.weight_lbs + ' lbs</div></div>'
+      ).join('');
+    }
+  }
+
+  function renderWeightChart(entries, targetWeight){
+    const wrap = document.getElementById('weight-chart-wrap');
+    if(entries.length < 2){
+      wrap.innerHTML = '<p class="np-empty">Log at least 2 weigh-ins to see your trend chart.</p>';
+      return;
+    }
+
+    const W = 600, H = 220, PAD = 34;
+    const weights = entries.map(e => parseFloat(e.weight_lbs));
+    let allValues = weights.slice();
+    if(targetWeight) allValues.push(parseFloat(targetWeight));
+    let minW = Math.min(...allValues) - 3;
+    let maxW = Math.max(...allValues) + 3;
+    if(maxW === minW) maxW += 5;
+
+    const xStep = (W - PAD * 2) / (entries.length - 1);
+    const yFor = (w) => H - PAD - ((w - minW) / (maxW - minW)) * (H - PAD * 2);
+    const xFor = (i) => PAD + i * xStep;
+
+    const points = entries.map((e, i) => xFor(i) + ',' + yFor(parseFloat(e.weight_lbs)));
+    const circles = entries.map((e, i) =>
+      '<circle cx="' + xFor(i) + '" cy="' + yFor(parseFloat(e.weight_lbs)) + '" r="4" fill="var(--amber)" />'
+    ).join('');
+
+    let targetLine = '';
+    if(targetWeight){
+      const ty = yFor(parseFloat(targetWeight));
+      targetLine = '<line x1="' + PAD + '" y1="' + ty + '" x2="' + (W - PAD) + '" y2="' + ty + '" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="5,5" opacity="0.4" />'
+        + '<text x="' + (W - PAD) + '" y="' + (ty - 6) + '" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--ink)" opacity="0.55">Goal: ' + targetWeight + ' lbs</text>';
+    }
+
+    const firstLabel = entries[0].logged_date;
+    const lastLabel = entries[entries.length - 1].logged_date;
+
+    wrap.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;background:var(--paper);border-radius:12px;">'
+      + targetLine
+      + '<polyline points="' + points.join(' ') + '" fill="none" stroke="var(--ink)" stroke-width="2.5" />'
+      + circles
+      + '<text x="' + PAD + '" y="' + (H - 8) + '" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--ink)" opacity="0.5">' + firstLabel + '</text>'
+      + '<text x="' + (W - PAD) + '" y="' + (H - 8) + '" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--ink)" opacity="0.5">' + lastLabel + '</text>'
+      + '</svg>';
+  }
+
+  async function saveTargetWeight(){
+    if(!supabaseClient || !currentHealthHistory) return;
+    const val = document.getElementById('target-weight-input').value;
+    if(!val) return;
+    try{
+      await supabaseClient.from('health_history')
+        .update({ target_weight_lbs: val })
+        .eq('id', currentHealthHistory.id);
+      await loadPatientState();
+    } catch(err){
+      alert('Could not save goal: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  async function logWeight(){
+    if(!supabaseClient || !currentUser) return;
+    const val = document.getElementById('log-weight-input').value;
+    if(!val){ alert('Enter a weight first.'); return; }
+    try{
+      await supabaseClient.from('weight_logs').insert({
+        user_id: currentUser.id,
+        weight_lbs: val,
+        logged_date: new Date().toISOString().slice(0,10)
+      });
+      document.getElementById('log-weight-input').value = '';
+      await loadPatientState();
+    } catch(err){
+      alert('Could not log weight: ' + (err.message || 'unknown error'));
+    }
+  }
+
   async function loadStore(history){
     if(!supabaseClient || !currentUser) return;
 
@@ -1598,11 +1743,11 @@
     let actionHtml;
     if(item.purchased){
       actionHtml = '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Order placed with pharmacy</span>'
-        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(23,54,107,0.45);">Cancel</a>';
+        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(58,34,34,0.45);">Cancel</a>';
     } else {
       actionHtml = '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Buy</button>'
         + '<br><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;margin-top:6px;" onclick="' + item.onSkip + '">Skip payment (testing)</button>'
-        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(23,54,107,0.45);">Cancel</a>';
+        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(58,34,34,0.45);">Cancel</a>';
     }
 
     return '<div class="dash-protocol-row">'
@@ -1932,7 +2077,7 @@
       return;
     }
 
-    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(23,54,107,0.5);">Checking availability...</p>';
+    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(58,34,34,0.5);">Checking availability...</p>';
 
     const { data: bookedRows } = await supabaseClient
       .from('appointments').select('appointment_time')
@@ -2442,7 +2587,7 @@
 
     dateLabel.textContent = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     slotsWrap.style.display = 'block';
-    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(23,54,107,0.5);">Checking availability...</p>';
+    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(58,34,34,0.5);">Checking availability...</p>';
     emptyMsg.style.display = 'none';
 
     const availability = await loadNPAvailability();
