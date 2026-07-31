@@ -5,31 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nuvi Clinic — Physician-Led Metabolic & Performance Medicine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root{
-    --ink:#101B2D;
-    --paper:#EFF2F4;
-    --paper-warm:#F7F5F0;
+    --ink:#17356B;
+    --paper:#F1F4F7;
+    --paper-warm:#F9FAFB;
     --amber:#D98C2B;
     --amber-deep:#B36F1A;
     --sage:#4F7A64;
-    --line:rgba(16,27,45,0.12);
+    --line:rgba(23,54,107,0.12);
     --white:#FFFFFF;
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{
     margin:0;
-    background:var(--paper);
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(rgba(23,54,107,0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(23,54,107,0.055) 1px, transparent 1px);
+    background-size:28px 28px;
     color:var(--ink);
-    font-family:'Inter',sans-serif;
+    font-family:'IBM Plex Sans',sans-serif;
     -webkit-font-smoothing:antialiased;
   }
   h1,h2,h3,.display{
-    font-family:'Fraunces',serif;
+    font-family:'Space Grotesk',sans-serif;
     font-weight:500;
     letter-spacing:-0.01em;
     margin:0;
@@ -43,13 +47,13 @@
 
   /* ---- NAV ---- */
   header{
-    position:sticky;top:0;z-index:50;
-    background:rgba(239,242,244,0.86);
+    position:sticky;top:38px;z-index:50;
+    background:rgba(241,244,247,0.86);
     backdrop-filter:blur(10px);
     border-bottom:1px solid var(--line);
   }
   nav{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;max-width:1180px;margin:0 auto;}
-  .logo{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-size:20px;font-weight:600;}
+  .logo{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;}
   .logo-mark{width:26px;height:26px;border-radius:50%;background:var(--ink);position:relative;flex:none;}
   .logo-mark::after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--amber);}
   .navlinks{display:flex;gap:32px;font-size:14.5px;font-weight:500;}
@@ -58,9 +62,9 @@
   .navcta{display:flex;align-items:center;gap:18px;}
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    padding:11px 22px;border-radius:100px;font-size:14.5px;font-weight:600;
+    padding:11px 22px;border-radius:3px;font-size:14.5px;font-weight:600;
     cursor:pointer;border:1px solid transparent;transition:transform .15s ease, background .2s;
-    white-space:nowrap;
+    white-space:nowrap;letter-spacing:0.01em;
   }
   .btn-primary{background:var(--ink);color:var(--paper-warm);}
   .btn-primary:hover{transform:translateY(-1px);background:#1c2c45;}
@@ -80,26 +84,26 @@
   .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--amber);}
   .hero h1{font-size:clamp(40px,5.2vw,68px);line-height:1.03;font-weight:500;}
   .hero h1 em{font-style:normal;color:var(--amber-deep);}
-  .hero p.lede{font-size:18px;line-height:1.6;color:rgba(16,27,45,0.72);max-width:480px;margin:24px 0 34px;}
+  .hero p.lede{font-size:18px;line-height:1.6;color:rgba(23,54,107,0.72);max-width:480px;margin:24px 0 34px;}
   .hero-ctas{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
-  .hero-note{margin-top:18px;font-size:13px;color:rgba(16,27,45,0.55);}
+  .hero-note{margin-top:18px;font-size:13px;color:rgba(23,54,107,0.55);}
 
   /* prescription pad visual */
   .rx-pad{
     background:var(--white);border:1px solid var(--line);border-radius:18px;
-    padding:28px;box-shadow:0 30px 60px -30px rgba(16,27,45,0.35);
+    padding:28px;box-shadow:0 30px 60px -30px rgba(23,54,107,0.35);
     transform:rotate(1.3deg);position:relative;
   }
   .rx-pad::before{
     content:"Rx";
-    position:absolute;top:24px;right:26px;font-family:'Fraunces',serif;font-size:34px;color:var(--amber);opacity:0.9;
+    position:absolute;top:24px;right:26px;font-family:'Space Grotesk',sans-serif;font-size:34px;color:var(--amber);opacity:0.9;
   }
-  .rx-pad-head{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:rgba(16,27,45,0.45);margin-bottom:18px;}
+  .rx-pad-head{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:rgba(23,54,107,0.45);margin-bottom:18px;}
   .rx-line{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px dashed var(--line);font-family:'IBM Plex Mono',monospace;font-size:13.5px;}
   .rx-line:last-of-type{border-bottom:none;}
   .rx-line b{font-weight:600;}
   .rx-sig{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
-  .rx-sig-name{font-family:'Fraunces',serif;font-style:italic;font-size:17px;}
+  .rx-sig-name{font-family:'Space Grotesk',sans-serif;font-style:italic;font-size:17px;}
   .rx-stamp{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--sage);border:1px solid var(--sage);padding:4px 8px;border-radius:6px;transform:rotate(-4deg);}
 
   /* ---- SECTION HEADERS ---- */
@@ -107,14 +111,14 @@
   .section-head{max-width:640px;margin-bottom:56px;}
   .section-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--amber-deep);margin-bottom:14px;display:block;}
   .section-head h2{font-size:clamp(28px,3.4vw,42px);line-height:1.1;}
-  .section-head p{font-size:16.5px;color:rgba(16,27,45,0.68);margin-top:16px;line-height:1.6;}
+  .section-head p{font-size:16.5px;color:rgba(23,54,107,0.68);margin-top:16px;line-height:1.6;}
 
   /* ---- HOW IT WORKS ---- */
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:20px;overflow:hidden;}
   .step{background:var(--paper-warm);padding:38px 32px;}
   .step-num{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--amber-deep);margin-bottom:22px;}
   .step h3{font-size:21px;margin-bottom:10px;}
-  .step p{font-size:14.5px;color:rgba(16,27,45,0.65);line-height:1.55;margin:0;}
+  .step p{font-size:14.5px;color:rgba(23,54,107,0.65);line-height:1.55;margin:0;}
 
   /* ---- PROTOCOLS / STORE ---- */
   .protocol-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:36px;}
@@ -125,22 +129,37 @@
   .filter.active{background:var(--ink);color:var(--paper-warm);border-color:var(--ink);}
   .protocol-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;max-width:640px;margin:0 auto;}
   .vial-card{
-    background:var(--white);border-radius:16px;border:1px solid var(--line);
-    overflow:hidden;transition:transform .2s ease, box-shadow .2s ease;
+    background:var(--white);border-radius:2px;border:1px solid var(--line);
+    overflow:hidden;transition:transform .2s ease, box-shadow .2s ease;position:relative;
   }
-  .vial-card:hover{transform:translateY(-4px);box-shadow:0 24px 40px -24px rgba(16,27,45,0.3);}
+  .vial-card::before,.vial-card::after{content:"";position:absolute;width:12px;height:12px;pointer-events:none;z-index:2;}
+  .vial-card::before{top:-1px;left:-1px;border-top:2px solid var(--ink);border-left:2px solid var(--ink);}
+  .vial-card::after{bottom:-1px;right:-1px;border-bottom:2px solid var(--ink);border-right:2px solid var(--ink);}
+  .vial-card:hover{transform:translateY(-4px);box-shadow:0 24px 40px -24px rgba(23,54,107,0.3);}
   .vial-label{background:var(--amber);color:var(--ink);padding:16px 20px;position:relative;}
   .vial-label .cat{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.07em;opacity:0.75;}
-  .vial-label h3{font-family:'Fraunces',serif;font-size:22px;margin-top:4px;}
+  .vial-label h3{font-family:'Space Grotesk',sans-serif;font-size:22px;margin-top:4px;}
   .vial-body{padding:20px;}
-  .vial-spec{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:8px 0;border-bottom:1px solid var(--line);color:rgba(16,27,45,0.65);}
+  .vial-spec{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:8px 0;border-bottom:1px solid var(--line);color:rgba(23,54,107,0.65);}
   .vial-spec:last-of-type{border-bottom:none;}
   .vial-spec b{color:var(--ink);font-weight:600;}
   .vial-foot{display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding-top:16px;border-top:1px solid var(--line);}
-  .price{font-family:'Fraunces',serif;font-size:20px;}
-  .price span{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(16,27,45,0.5);}
+  .price{font-family:'Space Grotesk',sans-serif;font-size:20px;}
+  .price span{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(23,54,107,0.5);}
   .rx-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;background:rgba(79,122,100,0.12);color:var(--sage);padding:5px 9px;border-radius:6px;}
-  .protocol-disclaimer{margin-top:30px;font-size:13px;color:rgba(16,27,45,0.5);line-height:1.6;max-width:760px;}
+  .protocol-disclaimer{margin-top:30px;font-size:13px;color:rgba(23,54,107,0.5);line-height:1.6;max-width:760px;}
+  .fda-disclaimer{margin-top:36px;padding:18px 22px;background:var(--paper-warm);border:1px solid var(--line);border-radius:14px;font-size:13px;color:rgba(23,54,107,0.65);line-height:1.6;max-width:760px;}
+
+  /* ---- FAQ ---- */
+  .faq-item{border-bottom:1px solid var(--line);}
+  .faq-item:first-child{border-top:1px solid var(--line);}
+  .faq-q{display:flex;align-items:center;justify-content:space-between;padding:22px 4px;cursor:pointer;gap:20px;}
+  .faq-q h4{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:500;}
+  .faq-q .plus{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--amber-deep);flex:none;transition:transform .2s;}
+  .faq-item.open .faq-q .plus{transform:rotate(45deg);}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+  .faq-item.open .faq-a{max-height:400px;}
+  .faq-a p{font-size:14.5px;color:rgba(23,54,107,0.68);line-height:1.7;padding:0 4px 22px;max-width:720px;}
 
   /* ---- MEMBERSHIP ---- */
   .tiers{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;max-width:760px;margin:0 auto;}
@@ -149,8 +168,8 @@
   .tier.featured .tier-name{color:var(--amber);}
   .tier-badge{position:absolute;top:-13px;right:28px;background:var(--amber);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 12px;border-radius:100px;font-weight:600;}
   .tier-name{font-family:'IBM Plex Mono',monospace;font-size:13px;text-transform:uppercase;letter-spacing:0.06em;color:var(--amber-deep);margin-bottom:14px;}
-  .tier-price{font-family:'Fraunces',serif;font-size:40px;margin-bottom:4px;}
-  .tier-price span{font-family:'Inter',sans-serif;font-size:14px;font-weight:500;opacity:0.6;}
+  .tier-price{font-family:'Space Grotesk',sans-serif;font-size:40px;margin-bottom:4px;}
+  .tier-price span{font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:500;opacity:0.6;}
   .tier ul{list-style:none;padding:0;margin:24px 0 28px;flex:1;}
   .tier li{display:flex;gap:10px;padding:8px 0;font-size:14px;line-height:1.5;}
   .tier li::before{content:"✓";color:var(--sage);font-weight:700;flex:none;}
@@ -160,19 +179,19 @@
   .trust{background:var(--ink);color:var(--paper-warm);padding:56px 0;}
   .trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;}
   .trust-item{border-left:1px solid rgba(247,245,240,0.2);padding-left:20px;}
-  .trust-item h4{font-family:'Fraunces',serif;font-size:18px;font-weight:500;margin-bottom:6px;}
+  .trust-item h4{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:500;margin-bottom:6px;}
   .trust-item p{margin:0;font-size:13px;color:rgba(247,245,240,0.65);line-height:1.5;}
 
   /* ---- FOOTER ---- */
   footer{padding:56px 0 32px;}
   .footer-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:32px;padding-bottom:36px;border-bottom:1px solid var(--line);}
   .footer-cols{display:flex;gap:64px;flex-wrap:wrap;}
-  .footer-col h5{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(16,27,45,0.5);margin-bottom:14px;}
+  .footer-col h5{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(23,54,107,0.5);margin-bottom:14px;}
   .footer-col a{display:block;font-size:14px;padding:5px 0;opacity:0.8;}
   .footer-col a:hover{opacity:1;}
   .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:24px;flex-wrap:wrap;gap:12px;}
-  .footer-bottom p{margin:0;font-size:12.5px;color:rgba(16,27,45,0.5);max-width:680px;line-height:1.6;}
-  .footer-legal-note{font-size:12px;color:rgba(16,27,45,0.42);margin-top:18px;line-height:1.6;max-width:900px;}
+  .footer-bottom p{margin:0;font-size:12.5px;color:rgba(23,54,107,0.5);max-width:680px;line-height:1.6;}
+  .footer-legal-note{font-size:12px;color:rgba(23,54,107,0.42);margin-top:18px;line-height:1.6;max-width:900px;}
 
   @media(max-width:920px){
     .navlinks{display:none;}
@@ -193,14 +212,14 @@
 
   /* ---- MODALS ---- */
   .modal-overlay{
-    position:fixed;inset:0;background:rgba(16,27,45,0.55);
+    position:fixed;inset:0;background:rgba(23,54,107,0.55);
     display:none;align-items:center;justify-content:center;
     padding:24px;z-index:200;backdrop-filter:blur(3px);
   }
   .modal-overlay.open{display:flex;}
   .modal{
     background:var(--paper-warm);border-radius:20px;max-width:420px;width:100%;
-    padding:32px;position:relative;box-shadow:0 40px 80px -30px rgba(16,27,45,0.5);
+    padding:32px;position:relative;box-shadow:0 40px 80px -30px rgba(23,54,107,0.5);
     max-height:88vh;overflow-y:auto;
   }
   .modal-close{
@@ -209,17 +228,17 @@
     display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--ink);
   }
   .modal-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--amber-deep);margin-bottom:10px;display:block;}
-  .modal h3{font-family:'Fraunces',serif;font-size:26px;margin-bottom:8px;}
-  .modal p.modal-sub{font-size:14px;color:rgba(16,27,45,0.65);line-height:1.5;margin:0 0 22px;}
+  .modal h3{font-family:'Space Grotesk',sans-serif;font-size:26px;margin-bottom:8px;}
+  .modal p.modal-sub{font-size:14px;color:rgba(23,54,107,0.65);line-height:1.5;margin:0 0 22px;}
   .field{margin-bottom:16px;}
-  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:rgba(16,27,45,0.75);}
+  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:rgba(23,54,107,0.75);}
   .field input, .field select{
     width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--line);
-    background:var(--white);font-family:'Inter',sans-serif;font-size:14.5px;color:var(--ink);
+    background:var(--white);font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;color:var(--ink);
   }
   .field input:focus, .field select:focus{outline:2px solid var(--amber);outline-offset:1px;}
   .modal .btn{width:100%;margin-top:6px;}
-  .modal-foot-link{display:block;text-align:center;margin-top:16px;font-size:13px;color:rgba(16,27,45,0.6);}
+  .modal-foot-link{display:block;text-align:center;margin-top:16px;font-size:13px;color:rgba(23,54,107,0.6);}
   .modal-foot-link a{color:var(--amber-deep);font-weight:600;}
   .modal-icon-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
   .modal-icon-row .logo-mark{width:34px;height:34px;}
@@ -245,16 +264,19 @@
   .np-row:last-child{border-bottom:none;}
   .np-row:hover{background:var(--paper);}
   .np-row .name{font-weight:600;font-size:14.5px;}
-  .np-row .meta{font-size:12.5px;color:rgba(16,27,45,0.55);}
-  .np-empty{font-size:13.5px;color:rgba(16,27,45,0.5);padding:8px 4px;}
+  .np-row .meta{font-size:12.5px;color:rgba(23,54,107,0.55);}
+  .np-empty{font-size:13.5px;color:rgba(23,54,107,0.5);padding:8px 4px;}
   .marketing-page.hidden-for-dashboard{display:none;}
   .dash-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:40px;}
   .dash-head h1{font-size:clamp(28px,3.6vw,40px);}
-  .dash-head p{margin-top:8px;color:rgba(16,27,45,0.65);font-size:15px;}
+  .dash-head p{margin-top:8px;color:rgba(23,54,107,0.65);font-size:15px;}
   .dash-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:22px;align-items:start;}
-  .dash-card{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:28px;}
-  .dash-card h3{font-family:'Fraunces',serif;font-size:19px;margin-bottom:6px;}
-  .dash-card p{font-size:14px;color:rgba(16,27,45,0.62);line-height:1.55;margin:0;}
+  .dash-card{background:var(--white);border:1px solid var(--line);border-radius:2px;padding:28px;position:relative;}
+  .dash-card::before,.dash-card::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none;}
+  .dash-card::before{top:-1px;left:-1px;border-top:2px solid var(--amber);border-left:2px solid var(--amber);}
+  .dash-card::after{bottom:-1px;right:-1px;border-bottom:2px solid var(--amber);border-right:2px solid var(--amber);}
+  .dash-card h3{font-family:'Space Grotesk',sans-serif;font-size:19px;margin-bottom:6px;}
+  .dash-card p{font-size:14px;color:rgba(23,54,107,0.62);line-height:1.55;margin:0;}
   .status-pill{
     display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;
     font-size:11.5px;text-transform:uppercase;letter-spacing:0.05em;
@@ -265,7 +287,7 @@
   .dash-protocol-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px dashed var(--line);}
   .dash-protocol-row:last-child{border-bottom:none;}
   .dash-protocol-row .name{font-weight:600;font-size:14.5px;}
-  .dash-protocol-row .meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(16,27,45,0.5);}
+  .dash-protocol-row .meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(23,54,107,0.5);}
   .dash-checklist{list-style:none;padding:0;margin:16px 0 0;}
   .dash-checklist li{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13.5px;}
   .dash-check-icon{width:18px;height:18px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;}
@@ -284,16 +306,16 @@
   .checkbox-item{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;background:var(--white);border:1px solid var(--line);padding:11px 13px;border-radius:10px;cursor:pointer;line-height:1.4;}
   .checkbox-item input{width:16px;height:16px;flex:none;margin-top:1px;}
   .flag-box{background:rgba(196,60,60,0.06);border:1px solid rgba(196,60,60,0.25);border-radius:12px;padding:16px 18px;margin-top:12px;}
-  .flag-box p{font-size:12.5px;color:rgba(16,27,45,0.68);margin:8px 0 0;line-height:1.5;}
-  .flag-input{margin-top:10px;width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;}
+  .flag-box p{font-size:12.5px;color:rgba(23,54,107,0.68);margin:8px 0 0;line-height:1.5;}
+  .flag-input{margin-top:10px;width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'IBM Plex Sans',sans-serif;font-size:14px;}
   @media(max-width:700px){ .checkbox-grid,.two-col{grid-template-columns:1fr;} }
 
   /* ---- SCHEDULER ---- */
   .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;}
-  .slot-btn{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;}
+  .slot-btn{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left;cursor:pointer;transition:all .15s;font-family:'IBM Plex Sans',sans-serif;}
   .slot-btn:hover{border-color:var(--amber);background:rgba(217,140,43,0.06);}
-  .slot-day{font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(16,27,45,0.5);text-transform:uppercase;}
-  .slot-time{font-family:'Fraunces',serif;font-size:18px;margin-top:4px;color:var(--ink);}
+  .slot-day{font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(23,54,107,0.5);text-transform:uppercase;}
+  .slot-time{font-family:'Space Grotesk',sans-serif;font-size:18px;margin-top:4px;color:var(--ink);}
   @media(max-width:700px){ .slot-grid{grid-template-columns:1fr 1fr;} }
 
   .ticket-card{background:var(--ink);color:var(--paper-warm);border-radius:16px;padding:26px;text-align:center;margin:16px 0;}
@@ -308,7 +330,7 @@
 
   /* ---- CALENDAR ---- */
   .cal-weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
-  .cal-weekday-row span{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:rgba(16,27,45,0.45);text-transform:uppercase;}
+  .cal-weekday-row span{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:rgba(23,54,107,0.45);text-transform:uppercase;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
   .cal-day{
     aspect-ratio:1;display:flex;align-items:center;justify-content:center;
@@ -324,12 +346,17 @@
 </head>
 <body>
 
+<div style="position:sticky;top:0;z-index:210;height:38px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:#B23A3A;color:#FFFFFF;text-align:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;letter-spacing:0.03em;">
+  ⚠ TESTING — THIS SITE IS NOT FINISHED. NOT A LIVE MEDICAL SERVICE YET.
+</div>
+
 <header>
   <nav>
     <div class="logo"><span class="logo-mark"></span>Nuvi Clinic</div>
     <div class="navlinks">
       <a href="#how">How it works</a>
-      <a href="#protocols">Protocols</a>
+      <a href="#protocols">Medications</a>
+      <a href="#faq">FAQ</a>
       <a href="#membership">Membership</a>
       <a href="#trust">Providers</a>
     </div>
@@ -398,109 +425,30 @@
 <section class="section" id="protocols">
   <div class="wrap">
     <div class="section-head">
-      <span class="section-eyebrow">Protocols</span>
+      <span class="section-eyebrow">Medications</span>
       <h2>What we treat — and what we prescribe for it.</h2>
-      <p>Nothing here is available without a physician visit. This is a reference of what's on the formulary, not a storefront — there's no inventory, only prescriptions.</p>
+      <p>Everything here is available to browse whether or not you're a member. Nothing ships without a physician visit and an individual prescription — this is a formulary, not a storefront.</p>
     </div>
 
-    <div class="protocol-filters">
-      <span class="filter active">All</span>
-      <span class="filter">Weight management</span>
+    <div class="protocol-filters" id="catalog-filters"></div>
+
+    <div class="protocol-grid" id="catalog-grid"></div>
+
+    <div class="fda-disclaimer">
+      <b>A note on compounded medications:</b> compounded medications are not FDA-approved or evaluated by the FDA for safety, effectiveness, or quality the way manufactured brand-name drugs are. They're prepared by a licensed compounding pharmacy under an individual prescription from your physician. Your care team can answer questions about what's right for you.
     </div>
-
-    <div class="protocol-grid">
-
-      <div class="vial-card">
-        <div class="vial-label"><span class="cat">Weight management</span><h3>Semaglutide</h3></div>
-        <div class="vial-body">
-          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">GLP-1 agonist for fat loss, dosed weekly.</p>
-          <div class="vial-spec"><span>Form</span><b>Compounded injectable</b></div>
-          <div class="vial-spec"><span>Starting dose</span><b>0.25 mg / wk</b></div>
-          <div class="vial-spec"><span>Titration</span><b>Physician-managed</b></div>
-          <div class="vial-foot">
-            <div class="price">$213<span> /mo starting</span></div>
-            <span class="rx-badge">Rx only</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="vial-card">
-        <div class="vial-label"><span class="cat">Weight management</span><h3>Tirzepatide</h3></div>
-        <div class="vial-body">
-          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">GLP-1/GIP dual agonist for fat loss, dosed weekly.</p>
-          <div class="vial-spec"><span>Form</span><b>Compounded injectable</b></div>
-          <div class="vial-spec"><span>Starting dose</span><b>2.5 mg / wk</b></div>
-          <div class="vial-spec"><span>Titration</span><b>Physician-managed</b></div>
-          <div class="vial-foot">
-            <div class="price">$242<span> /mo starting</span></div>
-            <span class="rx-badge">Rx only</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Paused for launch: doctor wants to offer only Semaglutide/Tirzepatide
-           for now, targeting obesity first. Uncomment to bring these back —
-           just also add real Stripe links for them in MEDICATION_STRIPE_LINKS.
-      <div class="vial-card">
-        <div class="vial-label"><span class="cat">Longevity</span><h3>Tesamorelin</h3></div>
-        <div class="vial-body">
-          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">Growth hormone-releasing peptide for body composition and recovery.</p>
-          <div class="vial-spec"><span>Form</span><b>Compounded injectable</b></div>
-          <div class="vial-spec"><span>Vial strength</span><b>10 mg</b></div>
-          <div class="vial-spec"><span>Typical dose</span><b>1–2 mg / day, SC</b></div>
-          <div class="vial-foot">
-            <div class="price">$255<span> /mo starting</span></div>
-            <span class="rx-badge">Rx only</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="vial-card">
-        <div class="vial-label"><span class="cat">Men's health</span><h3>Testosterone Cypionate</h3></div>
-        <div class="vial-body">
-          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">Testosterone replacement for clinically low levels — energy, libido, muscle.</p>
-          <div class="vial-spec"><span>Form</span><b>Injectable, weekly</b></div>
-          <div class="vial-spec"><span>Eligibility</span><b>Labs required</b></div>
-          <div class="vial-spec"><span>Monitoring</span><b>Quarterly labs</b></div>
-          <div class="vial-foot">
-            <div class="price">$130<span> /mo starting</span></div>
-            <span class="rx-badge">Rx only</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="vial-card">
-        <div class="vial-label"><span class="cat">Men's health / libido</span><h3>ED Care</h3></div>
-        <div class="vial-body">
-          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">Sildenafil or tadalafil for erectile dysfunction, on-demand or daily.</p>
-          <div class="vial-spec"><span>Options</span><b>Sildenafil / Tadalafil</b></div>
-          <div class="vial-spec"><span>Form</span><b>Oral, on-demand or daily</b></div>
-          <div class="vial-spec"><span>Visit</span><b>Async or video</b></div>
-          <div class="vial-foot">
-            <div class="price">$28<span> /mo starting</span></div>
-            <span class="rx-badge">Rx only</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="vial-card">
-        <div class="vial-label"><span class="cat">Recovery</span><h3>NAD+ Support</h3></div>
-        <div class="vial-body">
-          <p style="font-size:13px;color:rgba(16,27,45,0.6);margin:0 0 12px;">Subcutaneous NAD+ for energy and recovery support.</p>
-          <div class="vial-spec"><span>Form</span><b>Subcutaneous</b></div>
-          <div class="vial-spec"><span>Use case</span><b>Recovery & energy</b></div>
-          <div class="vial-spec"><span>Pairing</span><b>Add-on to any plan</b></div>
-          <div class="vial-foot">
-            <div class="price">$76<span> /mo starting</span></div>
-            <span class="rx-badge">Rx only</span>
-          </div>
-        </div>
-      </div>
-      -->
-
-    </div>
-
     <p class="protocol-disclaimer">Prototype content — dosing shown for internal proposal purposes only. Final formulary, pricing, and clinical protocols to be set by the supervising physician and 503A pharmacy partner in accordance with Puerto Rico and DEA/FDA compounding regulations.</p>
+  </div>
+</section>
+
+<section class="section" id="faq" style="background:var(--paper-warm);">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">FAQ</span>
+      <h2>Everything you need to know.</h2>
+      <p>The real questions people ask before starting — no login required to read any of this.</p>
+    </div>
+    <div id="faq-list"></div>
   </div>
 </section>
 
@@ -573,7 +521,7 @@
         <p>Here's where things stand with your care.</p>
       </div>
       <div style="display:flex;align-items:center;gap:16px;">
-        <a href="javascript:void(0)" onclick="openSettingsModal()" style="font-size:13px;color:rgba(16,27,45,0.5);">Settings</a>
+        <a href="javascript:void(0)" onclick="openSettingsModal()" style="font-size:13px;color:rgba(23,54,107,0.5);">Settings</a>
         <button class="btn btn-outline dash-logout" onclick="handleLogout()">Log out</button>
       </div>
     </div>
@@ -588,6 +536,14 @@
           <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showHistoryForm()">Start health history</button>
         </div>
 
+        <div class="stage-view" id="stage-membership-cancelled" style="display:none;">
+          <span class="status-pill" style="background:rgba(196,60,60,0.1);color:#B23A3A;">Membership cancelled</span>
+          <h3>Your membership is cancelled</h3>
+          <p id="membership-cancelled-reason" style="margin-bottom:18px;"></p>
+          <p style="font-size:13px;color:rgba(23,54,107,0.55);margin-bottom:18px;">Cancelling here stops your access on our side — if you were charged after cancelling, contact us directly and we'll help sort out billing with Stripe.</p>
+          <button class="btn btn-primary" style="width:auto;padding:13px 28px;" onclick="resubscribeMembership()">Resubscribe</button>
+        </div>
+
         <div class="stage-view" id="stage-need-payment" style="display:none;">
           <span class="status-pill status-active">History received</span>
           <h3>Choose your plan</h3>
@@ -595,13 +551,13 @@
           <div class="two-col">
             <div class="dash-card" style="padding:20px;">
               <div class="tier-name" style="margin-bottom:8px;">Basic</div>
-              <div class="tier-price" style="font-size:28px;">$79<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
+              <div class="tier-price" style="font-size:28px;">$79<span style="font-family:'IBM Plex Sans',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
               <p style="margin:10px 0 16px;font-size:13px;">Medical evaluation and peptide prescription.</p>
               <button class="btn btn-outline" style="width:100%;" onclick="goToCheckout('Basic')">Continue with Basic</button>
             </div>
             <div class="dash-card" style="padding:20px;border-color:var(--amber);">
               <div class="tier-name" style="margin-bottom:8px;">Premium</div>
-              <div class="tier-price" style="font-size:28px;">$149<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
+              <div class="tier-price" style="font-size:28px;">$149<span style="font-family:'IBM Plex Sans',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
               <p style="margin:10px 0 16px;font-size:13px;">Everything in Basic, plus direct 1-on-1 visits with the physician.</p>
               <button class="btn btn-primary" style="width:100%;background:var(--amber);color:var(--ink);" onclick="goToCheckout('Premium')">Continue with Premium</button>
             </div>
@@ -619,15 +575,15 @@
           <p style="margin-bottom:18px;">Every patient completes a required 15-minute interview with a nurse practitioner, under the supervising physician's sign-off, before any prescription is approved. Appointments run 8:00 AM – 7:00 PM, every day.</p>
           <div id="np-calendar-nav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
             <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(-1)">←</button>
-            <div id="np-calendar-month-label" style="font-family:'Fraunces',serif;font-size:16px;"></div>
+            <div id="np-calendar-month-label" style="font-family:'Space Grotesk',sans-serif;font-size:16px;"></div>
             <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(1)">→</button>
           </div>
           <div class="cal-weekday-row" id="np-calendar-weekdays"></div>
           <div class="cal-grid" id="np-calendar"></div>
           <div id="np-slots-wrap" style="display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--line);">
-            <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(16,27,45,0.6);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
+            <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(23,54,107,0.6);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
             <div class="slot-grid" id="np-slot-grid"></div>
-            <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(16,27,45,0.55);">No open times that day — try another date.</p>
+            <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(23,54,107,0.55);">No open times that day — try another date.</p>
           </div>
         </div>
 
@@ -657,10 +613,10 @@
             <div class="meta" id="active-plan-price">—</div>
           </div>
           <div class="dash-protocol-row" style="border-top:1px solid var(--ink);margin-top:4px;">
-            <div class="name" style="font-family:'Fraunces',serif;font-size:17px;">Total monthly</div>
-            <div class="name" id="active-total-price" style="font-family:'Fraunces',serif;font-size:17px;">—</div>
+            <div class="name" style="font-family:'Space Grotesk',sans-serif;font-size:17px;">Total monthly</div>
+            <div class="name" id="active-total-price" style="font-family:'Space Grotesk',sans-serif;font-size:17px;">—</div>
           </div>
-          <p id="active-med-notes" style="margin-top:14px;font-size:13px;color:rgba(16,27,45,0.55);"></p>
+          <p id="active-med-notes" style="margin-top:14px;font-size:13px;color:rgba(23,54,107,0.55);"></p>
         </div>
 
       </div>
@@ -690,13 +646,10 @@
         <div id="store-pending-list"><p class="np-empty">None right now.</p></div>
 
         <div class="form-section-title">Request a new prescription</div>
-        <p style="font-size:13px;color:rgba(16,27,45,0.6);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
+        <p style="font-size:13px;color:rgba(23,54,107,0.6);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
         <div class="two-col">
           <div class="field"><label>Medication of interest</label>
-            <select id="store-request-med">
-              <option value="Tirzepatide">Tirzepatide — fat loss</option>
-              <option value="Semaglutide">Semaglutide — fat loss</option>
-            </select>
+            <select id="store-request-med"></select>
           </div>
           <div class="field"><label>Goal</label>
             <select id="store-request-goal">
@@ -721,7 +674,7 @@
           <p style="margin-bottom:14px;">Premium includes direct messaging with your supervising physician.</p>
           <div id="message-thread" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
           <div style="display:flex;gap:8px;">
-            <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;">
+            <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'IBM Plex Sans',sans-serif;font-size:14px;">
             <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="sendMessage()">Send</button>
           </div>
           <p class="demo-tag" style="margin-top:12px;">Demo — this is real text-based messaging (saved to the database), not real SMS/phone yet. Doctor replies are added manually in Supabase for now.</p>
@@ -737,16 +690,16 @@
           <div id="physician-calendar-wrap">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
               <button type="button" class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:12px;" onclick="physicianCalendarShiftMonth(-1)">←</button>
-              <div id="physician-calendar-month-label" style="font-family:'Fraunces',serif;font-size:15px;"></div>
+              <div id="physician-calendar-month-label" style="font-family:'Space Grotesk',sans-serif;font-size:15px;"></div>
               <button type="button" class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:12px;" onclick="physicianCalendarShiftMonth(1)">→</button>
             </div>
             <div class="cal-weekday-row" id="physician-calendar-weekdays"></div>
             <div class="cal-grid" id="physician-calendar"></div>
             <div id="physician-slots-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
-              <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(16,27,45,0.6);margin-bottom:8px;text-transform:uppercase;"></div>
+              <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(23,54,107,0.6);margin-bottom:8px;text-transform:uppercase;"></div>
               <div class="slot-grid" id="physician-slot-grid" style="grid-template-columns:1fr 1fr;"></div>
-              <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(16,27,45,0.5);">No open times that day.</p>
-              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(16,27,45,0.6);">You've used both physician visits for this month — you can book again starting next month.</p>
+              <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(23,54,107,0.5);">No open times that day.</p>
+              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(23,54,107,0.6);">You've used both physician visits for this month — you can book again starting next month.</p>
             </div>
           </div>
         </div>
@@ -807,9 +760,9 @@
             <div class="field"><label>Height</label>
               <div style="display:flex;gap:8px;">
                 <input id="hh-height-ft" type="number" placeholder="5" style="width:70px;">
-                <span style="align-self:center;font-size:13px;color:rgba(16,27,45,0.5);">ft</span>
+                <span style="align-self:center;font-size:13px;color:rgba(23,54,107,0.5);">ft</span>
                 <input id="hh-height-in" type="number" placeholder="9" style="width:70px;">
-                <span style="align-self:center;font-size:13px;color:rgba(16,27,45,0.5);">in</span>
+                <span style="align-self:center;font-size:13px;color:rgba(23,54,107,0.5);">in</span>
               </div>
             </div>
             <div class="field"><label>Weight (lbs)</label><input id="hh-weight" type="number" placeholder="180"></div>
@@ -856,7 +809,7 @@
           <button class="btn btn-primary" id="video-join-btn" onclick="joinVideoCall(currentAppointment ? currentAppointment.ticket_number : '', 'patient', 'video-local', 'video-remote', 'video-status')">Join meeting</button>
           <button class="btn btn-outline" onclick="leaveVideoCall('video-local','video-remote','video-status');hideVideoRoom()">Leave</button>
         </div>
-        <p style="margin-top:14px;font-size:12px;color:rgba(16,27,45,0.45);">Video connects browser-to-browser. On most home and mobile networks this works instantly — a small number of very restrictive corporate/school networks may need extra setup to connect.</p>
+        <p style="margin-top:14px;font-size:12px;color:rgba(23,54,107,0.45);">Video connects browser-to-browser. On most home and mobile networks this works instantly — a small number of very restrictive corporate/school networks may need extra setup to connect.</p>
       </div>
     </div>
 
@@ -907,7 +860,7 @@
         <video id="np-video-local" autoplay playsinline muted style="position:absolute;bottom:10px;right:10px;width:90px;height:68px;border-radius:6px;object-fit:cover;background:#0B1420;border:2px solid rgba(247,245,240,0.3);"></video>
         <div class="video-waiting" id="np-video-status" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;">Connecting...</div>
       </div>
-      <button class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:12.5px;margin-top:8px;" onclick="leaveVideoCall('np-video-local','np-video-remote','np-video-status');document.getElementById('np-video-wrap').style.display='none';">Leave call</button>
+      <button class="btn btn-primary" style="width:100%;padding:12px 14px;font-size:14px;margin-top:10px;background:#B23A3A;" onclick="leaveVideoCall('np-video-local','np-video-remote','np-video-status');document.getElementById('np-video-wrap').style.display='none';">✕ End meeting</button>
     </div>
 
     <div id="np-detail-rx-requests" style="margin-bottom:16px;"></div>
@@ -915,20 +868,17 @@
     <div class="form-section-title">Approve prescription</div>
     <div class="two-col">
       <div class="field"><label>Medication</label>
-        <select id="np-approve-med" onchange="updateNPPricePreview()">
-          <option value="Tirzepatide">Tirzepatide</option>
-          <option value="Semaglutide">Semaglutide</option>
-        </select>
+        <select id="np-approve-med" onchange="updateNPPricePreview()"></select>
       </div>
       <div class="field"><label>Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" step="0.1" value="2.5" oninput="updateNPPricePreview()"></div>
     </div>
-    <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(16,27,45,0.65);margin:6px 0 14px;"></div>
+    <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(23,54,107,0.65);margin:6px 0 14px;"></div>
     <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="npApprovePrescription()">Approve prescription</button>
 
     <div class="form-section-title">Message patient</div>
     <div id="np-message-thread" style="max-height:180px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
     <div style="display:flex;gap:8px;">
-      <input id="np-message-input" type="text" placeholder="Reply as care team..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;">
+      <input id="np-message-input" type="text" placeholder="Reply as care team..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'IBM Plex Sans',sans-serif;font-size:14px;">
       <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="npSendMessage()">Send</button>
     </div>
   </div>
@@ -941,7 +891,8 @@
       <div class="footer-cols">
         <div class="footer-col">
           <h5>Care</h5>
-          <a href="#protocols">Protocols</a>
+          <a href="#protocols">Medications</a>
+          <a href="#faq">FAQ</a>
           <a href="#membership">Membership</a>
           <a href="#how">How it works</a>
         </div>
@@ -961,7 +912,7 @@
     </div>
     <div class="footer-bottom">
       <p>© 2026 Nuvi Clinic. Prototype for internal / partner review — not a live medical service. Placeholder branding, pricing, and formulary pending final legal and clinical review.</p>
-      <a href="javascript:void(0)" onclick="openModal('staff')" style="font-size:12px;color:rgba(16,27,45,0.4);">Staff login</a>
+      <a href="javascript:void(0)" onclick="openModal('staff')" style="font-size:12px;color:rgba(23,54,107,0.4);">Staff login</a>
     </div>
   </div>
 </footer>
@@ -970,7 +921,7 @@
 <div class="modal-overlay" id="modal-login" onclick="closeOnOverlay(event,'login')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('login')" aria-label="Close">✕</button>
-    <div class="modal-icon-row"><span class="logo-mark"></span><span style="font-family:'Fraunces',serif;font-size:18px;font-weight:600;">Nuvi Clinic</span></div>
+    <div class="modal-icon-row"><span class="logo-mark"></span><span style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;">Nuvi Clinic</span></div>
     <h3>Welcome back</h3>
     <p class="modal-sub">Enter your email and we'll send you a secure login link — no password needed.</p>
     <form onsubmit="return handleFormSubmit(event,'login')">
@@ -1056,7 +1007,7 @@
     <div id="settings-cancelled-notice" style="display:none;background:rgba(196,60,60,0.08);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#B23A3A;"></div>
     <div id="settings-cancel-section">
       <div class="form-section-title">Cancel membership</div>
-      <p style="font-size:13px;color:rgba(16,27,45,0.6);margin-bottom:12px;">This does <b>not</b> automatically cancel any recurring charge in Stripe — contact us to confirm billing has stopped too.</p>
+      <p style="font-size:13px;color:rgba(23,54,107,0.6);margin-bottom:12px;">This does <b>not</b> automatically cancel any recurring charge in Stripe — contact us to confirm billing has stopped too.</p>
       <div class="field"><label for="cancel-membership-reason">Reason</label>
         <select id="cancel-membership-reason">
           <option>Too expensive</option>
@@ -1140,12 +1091,12 @@
   }
   // ==============================
 
-  document.querySelectorAll('.filter').forEach(f=>{
-    f.addEventListener('click',()=>{
-      document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));
-      f.classList.add('active');
-    });
-  });
+  // Public content — renders immediately, no login required, and stays in
+  // sync automatically with MEDICATION_INFO above.
+  renderCatalog('All');
+  renderFAQ();
+  populateMedicationDropdown('store-request-med', false);
+  populateMedicationDropdown('np-approve-med', true);
 
   function openModal(name, plan){
     document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));
@@ -1176,6 +1127,16 @@
   function closeModal(name){
     document.getElementById('modal-'+name).classList.remove('open');
     document.body.style.overflow = '';
+    // Safety net: if the NP closes the patient panel without explicitly
+    // clicking "End meeting" first, make sure the camera/mic/connection
+    // actually stop instead of silently running in the background.
+    if(name === 'np-patient'){
+      const videoWrap = document.getElementById('np-video-wrap');
+      if(videoWrap && videoWrap.style.display !== 'none'){
+        leaveVideoCall('np-video-local', 'np-video-remote', 'np-video-status');
+        videoWrap.style.display = 'none';
+      }
+    }
   }
 
   function closeOnOverlay(e, name){
@@ -1270,36 +1231,47 @@
   // pharmacy's cost sheet — swap in real numbers once you have a contract.
   const MEMBERSHIP_PRICE = { Basic: 79, Premium: 149 };
 
+  // Single source of truth for every medication — powers the NP approval
+  // dropdown, the patient Store, AND the public logged-out catalog below.
+  // To add a medication in the future: add one entry here with launched:true
+  // (and a real Stripe link in MEDICATION_STRIPE_LINKS once ready) — nothing
+  // else in the codebase needs to change.
   const MEDICATION_INFO = {
     'Tirzepatide': {
       category: 'Weight management',
       description: 'GLP-1/GIP dual agonist for fat loss, dosed weekly.',
-      basePrice: 200, perMg: 16.6
+      basePrice: 200, perMg: 16.6,
+      launched: true, form: 'Compounded injectable', startingDose: '2.5 mg / wk', startingDoseMg: 2.5
     },
     'Semaglutide': {
       category: 'Weight management',
       description: 'GLP-1 agonist for fat loss, dosed weekly.',
-      basePrice: 200, perMg: 50
+      basePrice: 200, perMg: 50,
+      launched: true, form: 'Compounded injectable', startingDose: '0.25 mg / wk', startingDoseMg: 0.25
     },
     'Tesamorelin': {
       category: 'Longevity',
       description: 'Growth hormone-releasing peptide, used for body composition and recovery.',
-      basePrice: 220, perMg: 35
+      basePrice: 220, perMg: 35,
+      launched: false, form: 'Compounded injectable', startingDose: '1-2 mg / day', startingDoseMg: 1
     },
     'Testosterone Cypionate': {
       category: "Men's health",
       description: 'Testosterone replacement therapy for clinically low levels.',
-      basePrice: 80, perMg: 0.5
+      basePrice: 80, perMg: 0.5,
+      launched: false, form: 'Injectable, weekly', startingDose: '100 mg / wk', startingDoseMg: 100
     },
     'ED Care': {
       category: "Men's health / libido",
       description: 'Sildenafil or tadalafil for erectile dysfunction, on-demand or daily.',
-      basePrice: 20, perMg: 0.3
+      basePrice: 20, perMg: 0.3,
+      launched: false, form: 'Oral', startingDose: '25 mg', startingDoseMg: 25
     },
     'NAD+ Support': {
       category: 'Recovery',
       description: 'Subcutaneous NAD+ for energy and recovery support.',
-      basePrice: 60, perMg: 8
+      basePrice: 60, perMg: 8,
+      launched: false, form: 'Subcutaneous', startingDose: '2 mg', startingDoseMg: 2
     }
   };
 
@@ -1314,6 +1286,81 @@
     const info = MEDICATION_INFO[medication];
     if(!info || !info.perMg) return null;
     return '$' + info.perMg.toFixed(1) + '/mg + $' + info.basePrice + ' base';
+  }
+
+  // ====== DATA-DRIVEN UI: dropdowns, public catalog, FAQ ======
+  // Fills a <select> from MEDICATION_INFO. Staff get every medication (even
+  // ones not yet publicly launched); patients only ever see launched ones.
+  function populateMedicationDropdown(selectId, includeUnlaunched){
+    const select = document.getElementById(selectId);
+    if(!select) return;
+    select.innerHTML = '';
+    Object.keys(MEDICATION_INFO).forEach(name => {
+      const info = MEDICATION_INFO[name];
+      if(!info.launched && !includeUnlaunched) return;
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name + (includeUnlaunched && !info.launched ? ' (not yet launched)' : '');
+      select.appendChild(opt);
+    });
+  }
+
+  // Public, logged-out medication catalog — reads straight from
+  // MEDICATION_INFO, so launching a new medication later is just flipping
+  // launched:true on its entry, nothing here needs to change.
+  function renderCatalog(activeCategory){
+    const grid = document.getElementById('catalog-grid');
+    const filtersWrap = document.getElementById('catalog-filters');
+    if(!grid) return;
+
+    const launched = Object.keys(MEDICATION_INFO).filter(name => MEDICATION_INFO[name].launched);
+    const categories = ['All', ...new Set(launched.map(name => MEDICATION_INFO[name].category))];
+
+    filtersWrap.innerHTML = categories.map(cat =>
+      '<span class="filter' + (cat === (activeCategory || 'All') ? ' active' : '') + '" onclick="renderCatalog(\'' + cat.replace(/'/g,"\\'") + '\')">' + cat + '</span>'
+    ).join('');
+
+    const shown = launched.filter(name => (activeCategory || 'All') === 'All' || MEDICATION_INFO[name].category === activeCategory);
+
+    grid.innerHTML = shown.map(name => {
+      const info = MEDICATION_INFO[name];
+      const startingPrice = calcProtocolPrice(name, info.startingDoseMg);
+      return '<div class="vial-card">'
+        + '<div class="vial-label"><span class="cat">' + info.category + '</span><h3>' + name + '</h3></div>'
+        + '<div class="vial-body">'
+        + '<p style="font-size:13px;color:rgba(23,54,107,0.6);margin:0 0 12px;">' + info.description + '</p>'
+        + '<div class="vial-spec"><span>Form</span><b>' + info.form + '</b></div>'
+        + '<div class="vial-spec"><span>Starting dose</span><b>' + info.startingDose + '</b></div>'
+        + '<div class="vial-spec"><span>Titration</span><b>Physician-managed</b></div>'
+        + '<div class="vial-foot"><div class="price">$' + startingPrice + '<span> /mo starting</span></div><span class="rx-badge">Rx only</span></div>'
+        + '</div></div>';
+    }).join('');
+  }
+
+  const FAQ_ITEMS = [
+    { q: "How does this actually work?", a: "You start a free intake and submit your health history. Once that's reviewed, you pick a membership plan and complete a short interview with a nurse practitioner, under a supervising physician's sign-off. If approved, your prescription is compounded by a licensed pharmacy and shipped to you — no in-person visit required." },
+    { q: "Is this available outside Puerto Rico?", a: "Right now we're licensed and focused on Puerto Rico. Expanding to additional states requires physician licensure and compliance with each state's telemedicine rules individually, so it happens one state at a time rather than all at once." },
+    { q: "What does \"compounded medication\" mean, and is it FDA-approved?", a: "Compounded medications are prepared by a licensed pharmacy under an individual prescription from your physician, rather than manufactured by a large pharmaceutical company. They are not FDA-approved or evaluated the same way brand-name manufactured drugs are. Your care team can walk you through what that means for your specific treatment." },
+    { q: "How much does this actually cost?", a: "Two separate charges: your membership ($79/mo Basic or $149/mo Premium) covers access to your care team, and medication is billed separately based on what's prescribed — priced transparently per milligram, not a flat guess. You'll see the exact number before anything ships." },
+    { q: "Can I ask for a different medication later?", a: "Yes — there's no cap on how many prescriptions you can request as a member. Each one is reviewed individually by your care team before it's approved, the same way your first one was." },
+    { q: "How do I cancel?", a: "From your account Settings, anytime. You'll be asked for a quick reason, and cancelling takes effect immediately on our side. If you're on a recurring charge, let us know directly so we can make sure billing actually stops too." },
+    { q: "Do I need insurance?", a: "No — this is a cash-pay model, membership plus medication cost, no insurance billing involved." },
+    { q: "How fast can I actually get started?", a: "Health history takes about 5 minutes. NP interviews are usually available within a few days, and the interview itself is 15 minutes." }
+  ];
+
+  function renderFAQ(){
+    const wrap = document.getElementById('faq-list');
+    if(!wrap) return;
+    wrap.innerHTML = FAQ_ITEMS.map((item, i) =>
+      '<div class="faq-item" id="faq-item-' + i + '">'
+      + '<div class="faq-q" onclick="toggleFAQ(' + i + ')"><h4>' + item.q + '</h4><span class="plus">+</span></div>'
+      + '<div class="faq-a"><p>' + item.a + '</p></div>'
+      + '</div>'
+    ).join('');
+  }
+
+  function toggleFAQ(i){
+    document.getElementById('faq-item-' + i).classList.toggle('open');
   }
 
   // The dose-based calculator above is only an internal estimate — real
@@ -1392,6 +1439,8 @@
     let stage = 'need-history';
     if(!history){
       stage = 'need-history';
+    } else if(history.membership_cancelled){
+      stage = 'membership-cancelled';
     } else if(!history.paid){
       stage = 'need-payment';
     } else if(history.approved){
@@ -1406,6 +1455,11 @@
 
     document.querySelectorAll('.stage-view').forEach(v => v.style.display = 'none');
     document.getElementById('stage-' + stage).style.display = 'block';
+
+    if(stage === 'membership-cancelled'){
+      document.getElementById('membership-cancelled-reason').textContent =
+        history.membership_cancel_reason ? ('Reason given: ' + history.membership_cancel_reason) : '';
+    }
 
     document.getElementById('check-history').className = 'dash-check-icon ' + (history ? 'done' : 'pending');
     document.getElementById('check-history').textContent = history ? '✓' : '•';
@@ -1544,11 +1598,11 @@
     let actionHtml;
     if(item.purchased){
       actionHtml = '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Order placed with pharmacy</span>'
-        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(16,27,45,0.45);">Cancel</a>';
+        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(23,54,107,0.45);">Cancel</a>';
     } else {
       actionHtml = '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Buy</button>'
         + '<br><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;margin-top:6px;" onclick="' + item.onSkip + '">Skip payment (testing)</button>'
-        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(16,27,45,0.45);">Cancel</a>';
+        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(23,54,107,0.45);">Cancel</a>';
     }
 
     return '<div class="dash-protocol-row">'
@@ -1682,6 +1736,18 @@
       await loadPatientState();
     } catch(err){
       alert('Could not cancel membership: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  async function resubscribeMembership(){
+    if(!supabaseClient || !currentHealthHistory) return;
+    try{
+      await supabaseClient.from('health_history')
+        .update({ membership_cancelled: false, membership_cancelled_at: null, membership_cancel_reason: null })
+        .eq('id', currentHealthHistory.id);
+      await loadPatientState();
+    } catch(err){
+      alert('Could not resubscribe: ' + (err.message || 'unknown error'));
     }
   }
 
@@ -1866,7 +1932,7 @@
       return;
     }
 
-    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(16,27,45,0.5);">Checking availability...</p>';
+    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(23,54,107,0.5);">Checking availability...</p>';
 
     const { data: bookedRows } = await supabaseClient
       .from('appointments').select('appointment_time')
@@ -2376,7 +2442,7 @@
 
     dateLabel.textContent = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     slotsWrap.style.display = 'block';
-    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(16,27,45,0.5);">Checking availability...</p>';
+    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(23,54,107,0.5);">Checking availability...</p>';
     emptyMsg.style.display = 'none';
 
     const availability = await loadNPAvailability();
