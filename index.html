@@ -1045,6 +1045,19 @@
       <div>Plan: <b id="settings-plan">—</b></div>
       <div>Status: <b id="settings-status">—</b></div>
     </div>
+
+    <div class="form-section-title">Shipping & identity</div>
+    <p style="font-size:13px;color:rgba(58,34,34,0.6);margin-bottom:12px;">Required before any medication can be prescribed and shipped — the pharmacy needs this to fulfill your prescription.</p>
+    <div class="field"><label for="settings-dob">Date of birth</label><input id="settings-dob" type="date"></div>
+    <div class="field"><label for="settings-address1">Shipping address</label><input id="settings-address1" type="text" placeholder="Street address"></div>
+    <div class="field"><label for="settings-address2">Apt / Suite (optional)</label><input id="settings-address2" type="text" placeholder="Optional"></div>
+    <div class="two-col">
+      <div class="field"><label for="settings-city">City</label><input id="settings-city" type="text"></div>
+      <div class="field"><label for="settings-state">State / Territory</label><input id="settings-state" type="text" placeholder="e.g. PR"></div>
+    </div>
+    <div class="field"><label for="settings-zip">ZIP code</label><input id="settings-zip" type="text"></div>
+    <button class="btn btn-outline" style="width:auto;padding:10px 20px;margin-bottom:24px;" onclick="saveShippingInfo()">Save</button>
+
     <div id="settings-cancelled-notice" style="display:none;background:rgba(196,60,60,0.08);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#B23A3A;"></div>
     <div id="settings-cancel-section">
       <div class="form-section-title">Cancel membership</div>
@@ -1851,6 +1864,13 @@
     const history = currentHealthHistory;
     document.getElementById('settings-plan').textContent = (history && history.plan) || 'Not selected yet';
 
+    document.getElementById('settings-dob').value = (history && history.date_of_birth) || '';
+    document.getElementById('settings-address1').value = (history && history.shipping_address1) || '';
+    document.getElementById('settings-address2').value = (history && history.shipping_address2) || '';
+    document.getElementById('settings-city').value = (history && history.shipping_city) || '';
+    document.getElementById('settings-state').value = (history && history.shipping_state) || '';
+    document.getElementById('settings-zip').value = (history && history.shipping_zip) || '';
+
     const cancelledNotice = document.getElementById('settings-cancelled-notice');
     const cancelSection = document.getElementById('settings-cancel-section');
     if(history && history.membership_cancelled){
@@ -1865,6 +1885,27 @@
     }
 
     openModal('settings');
+  }
+
+  async function saveShippingInfo(){
+    if(!supabaseClient || !currentHealthHistory){
+      alert('Complete your health history first — shipping info is saved to that record.');
+      return;
+    }
+    try{
+      await supabaseClient.from('health_history').update({
+        date_of_birth: document.getElementById('settings-dob').value || null,
+        shipping_address1: document.getElementById('settings-address1').value,
+        shipping_address2: document.getElementById('settings-address2').value,
+        shipping_city: document.getElementById('settings-city').value,
+        shipping_state: document.getElementById('settings-state').value,
+        shipping_zip: document.getElementById('settings-zip').value
+      }).eq('id', currentHealthHistory.id);
+      alert('Saved.');
+      await loadPatientState();
+    } catch(err){
+      alert('Could not save: ' + (err.message || 'unknown error'));
+    }
   }
 
   async function submitCancelMembership(){
@@ -2240,7 +2281,12 @@
     document.getElementById('np-detail-name').textContent = patient.full_name || patient.email || 'Unknown patient';
     document.getElementById('np-detail-email').textContent = patient.email || '';
 
+    const shippingLine = (patient.shipping_address1)
+      ? (patient.shipping_address1 + (patient.shipping_address2 ? ', ' + patient.shipping_address2 : '') + ', ' + (patient.shipping_city||'') + ', ' + (patient.shipping_state||'') + ' ' + (patient.shipping_zip||''))
+      : 'Not entered yet — ask patient to fill in Settings before submitting to pharmacy';
+
     const lines = [
+      'DOB: ' + (patient.date_of_birth || '—') + '  ·  Shipping: ' + shippingLine,
       'Goal: ' + (patient.goal || '—'),
       'Conditions: ' + (((patient.conditions||[]).join(', ')) || 'None reported') + (patient.conditions_other ? ' + ' + patient.conditions_other : ''),
       'Surgical history: ' + (patient.surgical_history || '—'),
@@ -2283,16 +2329,26 @@
     // The original first prescription lives on health_history, not the
     // prescriptions table — show it here too so staff sees the full picture.
     if(patient.approved_medication){
+      const sent = patient.submitted_to_pharmacy;
       rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + patient.approved_medication + '</div>'
         + '<div class="meta">' + (patient.approved_dose || '') + ' · original prescription</div></div>'
-        + '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Approved</span></div>';
+        + '<div style="text-align:right;">'
+        + (sent
+            ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Sent to pharmacy</span>'
+            : '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);margin-right:6px;">Approved</span><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;" onclick="markSentToPharmacy(\'legacy\',null)">Mark sent</button>')
+        + '</div></div>';
     }
 
     (allRx || []).forEach(r => {
       if(r.status === 'approved'){
+        const sent = r.submitted_to_pharmacy;
         rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
           + '<div class="meta">' + (r.dose || '') + ' · Goal: ' + (r.requested_goal || '—') + '</div></div>'
-          + '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Approved</span></div>';
+          + '<div style="text-align:right;">'
+          + (sent
+              ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Sent to pharmacy</span>'
+              : '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);margin-right:6px;">Approved</span><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;" onclick="markSentToPharmacy(\'prescription\',\''+r.id+'\')">Mark sent</button>')
+          + '</div></div>';
       } else if(r.status === 'pending'){
         rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
           + '<div class="meta">Goal: ' + (r.requested_goal || '—') + (r.requested_notes ? ' · "' + r.requested_notes + '"' : '') + '</div></div>'
@@ -2333,6 +2389,28 @@
       await loadNPData();
     } catch(err){
       alert('Could not approve: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // Tracks whether staff has manually entered this prescription into
+  // LifeFile's portal — our app doesn't submit it automatically (no API
+  // access yet), this is just an honest record of "this was actually sent."
+  async function markSentToPharmacy(kind, id){
+    if(!confirm('Confirm you\'ve manually entered this prescription into LifeFile?')) return;
+    try{
+      if(kind === 'legacy'){
+        if(!npCurrentPatientId) return;
+        await supabaseClient.from('health_history')
+          .update({ submitted_to_pharmacy: true, submitted_to_pharmacy_at: new Date().toISOString() })
+          .eq('id', npCurrentPatientId);
+      } else {
+        await supabaseClient.from('prescriptions')
+          .update({ submitted_to_pharmacy: true, submitted_to_pharmacy_at: new Date().toISOString() })
+          .eq('id', id);
+      }
+      await openNPPatientDetail(npCurrentPatientId);
+    } catch(err){
+      alert('Could not update: ' + (err.message || 'unknown error'));
     }
   }
 
