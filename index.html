@@ -2254,7 +2254,7 @@
     if(bar) bar.style.width = ((hhCurrentStep / HH_TOTAL_STEPS) * 100) + '%';
 
     const wrap = document.getElementById('history-form-wrap');
-    if(wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if(wrap && wrap.scrollIntoView) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function hhStep(delta){ hhShowStep(hhCurrentStep + delta); }
@@ -3116,7 +3116,10 @@
   // ====== HEALTH HISTORY FORM ======
   function showHistoryForm(){
     document.getElementById('history-form-wrap').style.display = 'block';
-    document.getElementById('history-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Must initialise the step navigation here too — this is the path a
+    // first-time patient takes, and without it the Back/Next buttons are
+    // never wired up or positioned.
+    hhShowStep(1);
   }
 
   async function handleHistorySubmit(e){
