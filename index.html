@@ -600,6 +600,11 @@
             </div>
           </div>
 
+          <div id="test-skip-membership" style="display:none;gap:10px;margin-top:16px;">
+            <p style="font-size:11.5px;font-family:'IBM Plex Mono',monospace;color:#B23A3A;margin-bottom:8px;">TEST MODE — skips real payment</p>
+            <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="markPaidDemo('Basic')">Skip: mark paid (Basic)</button>
+            <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="markPaidDemo('Premium')">Skip: mark paid (Premium)</button>
+          </div>
         </div>
 
         <div class="stage-view" id="stage-need-schedule" style="display:none;">
@@ -847,7 +852,10 @@
             <span>I confirm this information is accurate to the best of my knowledge and understand it will be reviewed by my care team.</span>
           </label>
 
-          <button class="btn btn-primary" type="submit" style="margin-top:24px;width:auto;padding:13px 28px;">Submit health history</button>
+          <div style="display:flex;gap:12px;align-items:center;margin-top:24px;flex-wrap:wrap;">
+            <button class="btn btn-primary" type="submit" style="width:auto;padding:13px 28px;">Submit health history</button>
+            <button class="btn btn-outline" type="button" style="width:auto;padding:12px 24px;" onclick="cancelHealthHistoryEdit()">Cancel</button>
+          </div>
         </form>
       </div>
     </div>
@@ -1234,7 +1242,8 @@
 
     <div class="form-section-title">My medical information</div>
     <div id="settings-medical-info" style="background:var(--paper-warm);border-radius:12px;padding:16px;margin-bottom:8px;font-size:13px;line-height:1.8;"></div>
-    <p style="font-size:12px;color:rgba(31,62,65,0.5);margin-bottom:22px;">To correct anything here, message your care team — medical records are updated by your provider.</p>
+    <p style="font-size:12px;color:rgba(31,62,65,0.5);margin-bottom:10px;">If something here is wrong, you can correct it yourself. Your care team sees the updated version.</p>
+    <button class="btn btn-outline" style="width:auto;padding:10px 20px;margin-bottom:24px;" onclick="openHealthHistoryForEdit()">Review / edit my health history</button>
 
     <div class="form-section-title">Password</div>
     <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:12px;">You normally log in with an email link, but you can set a password here if you prefer.</p>
@@ -1330,6 +1339,36 @@
     Basic: 'https://buy.stripe.com/test_eVqcN4fH59eZcY3giJ5wI00',
     Premium: 'https://buy.stripe.com/test_7sY8wO7azbn77DJ3vX5wI01'
   };
+  // ---- TEST-ONLY helpers (only reachable when ?test=1) ----
+  async function markPaidDemo(plan){
+    if(!TEST_MODE) return;
+    if(!supabaseClient || !currentHealthHistory){ alert('Health history not loaded yet — refresh and try again.'); return; }
+    try{
+      await supabaseClient.from('health_history')
+        .update({ paid: true, plan: plan, paid_at: new Date().toISOString() })
+        .eq('id', currentHealthHistory.id);
+      await loadPatientState();
+    } catch(err){ alert('Could not mark paid: ' + (err.message || 'unknown error')); }
+  }
+
+  async function markOrderedDemo(kind, id){
+    if(!TEST_MODE) return;
+    if(!supabaseClient) return;
+    try{
+      if(kind === 'legacy'){
+        if(!currentHealthHistory) return;
+        await supabaseClient.from('health_history')
+          .update({ purchased: true, purchased_at: new Date().toISOString() })
+          .eq('id', currentHealthHistory.id);
+      } else {
+        await supabaseClient.from('prescriptions')
+          .update({ purchased: true, purchased_at: new Date().toISOString() })
+          .eq('id', id);
+      }
+      await loadPatientState();
+    } catch(err){ alert('Could not mark ordered: ' + (err.message || 'unknown error')); }
+  }
+
   function goToCheckout(plan){
     const link = STRIPE_LINKS[plan];
     if(link && link.indexOf('YOUR_') !== 0){
@@ -1906,6 +1945,7 @@
         cancelled: history.cancelled,
         cancelReason: history.cancel_reason,
         onBuy: "goToMedicationCheckout('legacy', null, '" + history.approved_medication + "')",
+        onSkip: "markOrderedDemo('legacy', null)",
         onCancel: "openCancelRxModal('legacy', null, '" + history.approved_medication + "')"
       });
     }
@@ -1918,6 +1958,7 @@
         cancelled: r.cancelled,
         cancelReason: r.cancel_reason,
         onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "')",
+        onSkip: "markOrderedDemo('prescription', '" + r.id + "')",
         onCancel: "openCancelRxModal('prescription', '" + r.id + "', '" + r.medication + "')"
       });
     });
@@ -1951,6 +1992,7 @@
         + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(31,62,65,0.45);">Cancel</a>';
     } else {
       actionHtml = '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Buy</button>'
+        + (TEST_MODE ? '<br><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;margin-top:6px;" onclick="' + item.onSkip + '">Skip payment (TEST)</button>' : '')
         + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(31,62,65,0.45);">Cancel</a>';
     }
 
@@ -2166,6 +2208,55 @@
     } catch(err){
       alert('Could not clock out: ' + (err.message || 'unknown error'));
     }
+  }
+
+  function cancelHealthHistoryEdit(){
+    // Only allow backing out if they already have a history on file — otherwise
+    // there's nothing to go back to and hiding the form would strand them.
+    if(currentHealthHistory && currentHealthHistory.id){
+      document.getElementById('history-form-wrap').style.display = 'none';
+      document.getElementById('stage-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      alert('Please complete your health history to continue — your care team needs it before anything can be prescribed.');
+    }
+  }
+
+  // ====== EDIT / REVIEW HEALTH HISTORY ======
+  // Reopens the same form the patient originally filled in, pre-populated with
+  // what's on file, so a wrong answer can be corrected rather than living in
+  // their chart forever.
+  function openHealthHistoryForEdit(){
+    const h = currentHealthHistory;
+    if(h){
+      const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = (val === null || val === undefined) ? '' : val; };
+      setVal('hh-goal', h.goal);
+      setVal('hh-conditions-other', h.conditions_other);
+      setVal('hh-surgical', h.surgical_history);
+      setVal('hh-allergies', h.allergies);
+      setVal('hh-alcohol', h.alcohol_use);
+      setVal('hh-smoking', h.smoking_use);
+      setVal('hh-substances', h.substance_use);
+      setVal('hh-height-ft', h.height_ft);
+      setVal('hh-height-in', h.height_in);
+      setVal('hh-weight', h.weight_lbs);
+      setVal('hh-family-endocrine-detail', h.family_endocrine_cancer_detail);
+
+      const conds = h.conditions || [];
+      document.querySelectorAll('#hh-conditions input').forEach(i => { i.checked = conds.indexOf(i.value) > -1; });
+      const fam = h.family_history || [];
+      document.querySelectorAll('#hh-family input').forEach(i => { i.checked = fam.indexOf(i.value) > -1; });
+
+      const endo = document.getElementById('hh-family-endocrine');
+      if(endo) endo.checked = !!h.family_endocrine_cancer;
+      const consent = document.getElementById('hh-consent');
+      if(consent) consent.checked = !!h.consent;
+
+      const btn = document.querySelector('#history-form button[type="submit"]');
+      if(btn){ btn.textContent = 'Save changes'; btn.disabled = false; }
+    }
+    closeModal('settings');
+    document.getElementById('history-form-wrap').style.display = 'block';
+    document.getElementById('history-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function openSettingsModal(){
@@ -3018,7 +3109,16 @@
     submitBtn.disabled = true;
 
     try{
-      const { error } = await supabaseClient.from('health_history').insert(payload);
+      // If this patient already has a health history record, update it in place
+      // rather than inserting a second one — otherwise correcting a typo would
+      // create a duplicate record and the care team wouldn't know which is current.
+      let error;
+      if(currentHealthHistory && currentHealthHistory.id){
+        ({ error } = await supabaseClient.from('health_history')
+          .update(payload).eq('id', currentHealthHistory.id));
+      } else {
+        ({ error } = await supabaseClient.from('health_history').insert(payload));
+      }
       if(error) throw error;
       document.getElementById('history-form-wrap').style.display = 'none';
       await loadPatientState();
@@ -3395,6 +3495,10 @@
   //   https://nuviclinic.com/?debug=1
   // Everything still logs to the browser console either way.
   const AUTH_DEBUG_ON = new URLSearchParams(window.location.search).get('debug') === '1';
+  // TEST MODE — add ?test=1 to the URL to expose skip-payment buttons for
+  // walking the full flow without real charges. Off by default, so a real
+  // patient can never reach them even by accident.
+  const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
   const AUTH_DEBUG_LINES = [];
   function authDebug(msg){
     const stamp = new Date().toISOString().substr(11,12);
@@ -3567,6 +3671,10 @@
   populateMedicationDropdown('store-request-med', false);
   populateMedicationDropdown('np-approve-med', true);
   routeInfoPages();
+  if(TEST_MODE){
+    const t = document.getElementById('test-skip-membership');
+    if(t) t.style.display = 'block';
+  }
 </script>
 
 </body>
