@@ -385,7 +385,7 @@
       <h1>Fat loss starts with<br>a real <em>prescription.</em></h1>
       <p class="lede">Nuvi Clinic connects you with a licensed physician for weight management, men's health, and recovery — then delivers your prescription through a licensed compounding pharmacy. No guessing. No gray-market vials.</p>
       <div class="hero-ctas">
-        <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake')">Start your visit — $79/mo</a>
+        <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake')">Start your visit — $70/mo</a>
         <a class="btn btn-outline" href="#protocols">See protocols</a>
       </div>
       <p class="hero-note">Every prescription is reviewed by a licensed physician before it's filled. No insurance required.</p>
@@ -499,7 +499,7 @@
     <div class="tiers">
       <div class="tier">
         <div class="tier-name">Basic</div>
-        <div class="tier-price">$79<span>/mo</span></div>
+        <div class="tier-price">$70<span>/mo</span></div>
         <ul>
           <li>Unlimited messaging with your care team</li>
           <li>Quarterly physician visits</li>
@@ -511,7 +511,7 @@
       <div class="tier featured">
         <div class="tier-badge">Most popular</div>
         <div class="tier-name">Premium</div>
-        <div class="tier-price">$149<span>/mo</span></div>
+        <div class="tier-price">$150<span>/mo</span></div>
         <ul>
           <li>Everything in Basic</li>
           <li>Monthly physician visits</li>
@@ -590,13 +590,13 @@
           <div class="two-col">
             <div class="dash-card" style="padding:20px;">
               <div class="tier-name" style="margin-bottom:8px;">Basic</div>
-              <div class="tier-price" style="font-size:28px;">$79<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
+              <div class="tier-price" style="font-size:28px;">$70<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
               <p style="margin:10px 0 16px;font-size:13px;">Medical evaluation and peptide prescription.</p>
               <button class="btn btn-outline" style="width:100%;" onclick="goToCheckout('Basic')">Continue with Basic</button>
             </div>
             <div class="dash-card" style="padding:20px;border-color:var(--amber);">
               <div class="tier-name" style="margin-bottom:8px;">Premium</div>
-              <div class="tier-price" style="font-size:28px;">$149<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
+              <div class="tier-price" style="font-size:28px;">$150<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
               <p style="margin:10px 0 16px;font-size:13px;">Everything in Basic, plus direct 1-on-1 visits with the physician.</p>
               <button class="btn btn-primary" style="width:100%;background:var(--amber);color:var(--ink);" onclick="goToCheckout('Premium')">Continue with Premium</button>
             </div>
@@ -712,17 +712,21 @@
         <div class="form-section-title">Request a new prescription</div>
         <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
         <div class="two-col">
-          <div class="field"><label>Medication of interest</label>
-            <select id="store-request-med"></select>
+          <div class="field"><label>Category</label>
+            <select id="store-request-cat" onchange="onRequestCategoryChange()"></select>
           </div>
-          <div class="field"><label>Goal</label>
-            <select id="store-request-goal">
-              <option>Fat loss</option>
-              <option>Men's health</option>
-              <option>Recovery / performance</option>
-              <option>Longevity</option>
-            </select>
+          <div class="field"><label>Medication</label>
+            <select id="store-request-med" onchange="onRequestMedChange()"></select>
           </div>
+        </div>
+        <div id="store-request-detail" style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;"></div>
+        <div class="field"><label>Goal</label>
+          <select id="store-request-goal">
+            <option>Fat loss</option>
+            <option>Men's health</option>
+            <option>Recovery / performance</option>
+            <option>Longevity</option>
+          </select>
         </div>
         <div class="field"><label>Anything your care team should know?</label><input id="store-request-notes" type="text" placeholder="Optional"></div>
         <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="requestNewPrescription()">Submit request</button>
@@ -1602,41 +1606,48 @@
   const MEDICATION_INFO = {
     'Tirzepatide': {
       category: 'Weight management',
-      description: 'GLP-1/GIP dual agonist for fat loss, dosed weekly.',
-      basePrice: 200, perMg: 16.6, unit: 'mg',
-      launched: true, form: 'Compounded injectable', startingDose: '2.5 mg / wk', startingDoseMg: 2.5
+      description: 'Dual GLP-1/GIP agonist. The most effective option we offer for fat loss, dosed once weekly and titrated up slowly.',
+      basePrice: 130, perMg: 20, unit: 'mg',
+      launched: true, form: 'Compounded injectable, weekly', startingDose: '2.5 mg / wk', startingDoseMg: 2.5
     },
     'Semaglutide': {
       category: 'Weight management',
-      description: 'GLP-1 agonist for fat loss, dosed weekly.',
-      basePrice: 200, perMg: 50, unit: 'mg',
-      launched: true, form: 'Compounded injectable', startingDose: '0.25 mg / wk', startingDoseMg: 0.25
+      description: 'GLP-1 agonist for appetite control and fat loss. Weekly injection, titrated gradually to limit side effects.',
+      basePrice: 140, perMg: 40, unit: 'mg',
+      launched: true, form: 'Compounded injectable, weekly', startingDose: '0.25 mg / wk', startingDoseMg: 0.25
     },
     'Tesamorelin': {
-      category: 'Longevity',
-      description: 'Growth hormone-releasing peptide, used for body composition and recovery.',
-      basePrice: 220, perMg: 0.035, unit: 'mcg',
-      launched: false, form: 'Compounded injectable', startingDose: '500 mcg / day', startingDoseMg: 500
+      category: 'Longevity & recovery',
+      description: 'Growth hormone-releasing peptide studied for visceral fat reduction and body composition. Daily dosing.',
+      basePrice: 155, perMg: 0.088, unit: 'mcg',
+      launched: true, form: 'Compounded injectable, daily', startingDose: '500 mcg / day', startingDoseMg: 500
+    },
+    'Sermorelin': {
+      category: 'Longevity & recovery',
+      description: 'Growth hormone-releasing peptide used to support sleep quality, recovery and lean mass. Daily dosing, typically at night.',
+      basePrice: 130, perMg: 0.13, unit: 'mcg',
+      launched: true, form: 'Compounded injectable, daily', startingDose: '300 mcg / day', startingDoseMg: 300
+    },
+    'NAD+ Support': {
+      category: 'Longevity & recovery',
+      description: 'NAD+ for cellular energy and recovery support. Subcutaneous dosing.',
+      basePrice: 60, perMg: 8, unit: 'mg',
+      launched: false, form: 'Subcutaneous', startingDose: '2 mg', startingDoseMg: 2
     },
     'Testosterone Cypionate': {
       category: "Men's health",
-      description: 'Testosterone replacement therapy for clinically low levels.',
+      description: 'Testosterone replacement therapy for clinically low levels, confirmed by lab work before starting.',
       basePrice: 80, perMg: 0.5, unit: 'mg',
       launched: false, form: 'Injectable, weekly', startingDose: '100 mg / wk', startingDoseMg: 100
     },
     'ED Care': {
-      category: "Men's health / libido",
-      description: 'Sildenafil or tadalafil for erectile dysfunction, on-demand or daily.',
+      category: "Men's health",
+      description: 'Sildenafil or tadalafil for erectile dysfunction, taken on demand or as a low daily dose.',
       basePrice: 20, perMg: 0.3, unit: 'mg',
       launched: false, form: 'Oral', startingDose: '25 mg', startingDoseMg: 25
-    },
-    'NAD+ Support': {
-      category: 'Recovery',
-      description: 'Subcutaneous NAD+ for energy and recovery support.',
-      basePrice: 60, perMg: 8, unit: 'mg',
-      launched: false, form: 'Subcutaneous', startingDose: '2 mg', startingDoseMg: 2
     }
   };
+
 
   // Dose units differ by medication — peptides like Tesamorelin are supplied
   // in micrograms, GLP-1s in milligrams. Showing "mg" for everything invites a
@@ -1675,6 +1686,59 @@
       select.appendChild(opt);
     });
   }
+  // ====== CATEGORY -> MEDICATION PICKER (patient request flow) ======
+  // Browsing by category with a real description beats a flat list of names —
+  // a patient shouldn't have to already know what "Tesamorelin" is to ask about it.
+  function getRequestableCategories(){
+    const cats = [];
+    Object.keys(MEDICATION_INFO).forEach(name => {
+      const cat = MEDICATION_INFO[name].category;
+      if(cats.indexOf(cat) === -1) cats.push(cat);
+    });
+    return cats;
+  }
+
+  function populateRequestCategories(){
+    const catSel = document.getElementById('store-request-cat');
+    if(!catSel) return;
+    catSel.innerHTML = getRequestableCategories().map(c => '<option>' + c + '</option>').join('');
+    onRequestCategoryChange();
+  }
+
+  function onRequestCategoryChange(){
+    const catSel = document.getElementById('store-request-cat');
+    const medSel = document.getElementById('store-request-med');
+    if(!catSel || !medSel) return;
+    const cat = catSel.value;
+    const meds = Object.keys(MEDICATION_INFO).filter(n => MEDICATION_INFO[n].category === cat);
+    medSel.innerHTML = meds.map(n => '<option>' + n + '</option>').join('');
+    onRequestMedChange();
+  }
+
+  function onRequestMedChange(){
+    const medSel = document.getElementById('store-request-med');
+    const box = document.getElementById('store-request-detail');
+    if(!medSel || !box) return;
+    const name = medSel.value;
+    const m = MEDICATION_INFO[name];
+    if(!m){ box.innerHTML = ''; return; }
+
+    const price = calcProtocolPrice(name, m.startingDoseMg);
+    const availability = m.launched
+      ? '<span style="color:var(--sage);">Available now</span>'
+      : '<span style="color:var(--amber-deep);">Not yet offered — you can still register interest</span>';
+
+    box.innerHTML =
+        '<div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:16px;font-weight:600;margin-bottom:6px;">' + name + '</div>'
+      + '<p style="font-size:13.5px;line-height:1.65;margin-bottom:10px;">' + m.description + '</p>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:rgba(31,62,65,0.6);line-height:1.8;">'
+      + m.form + '<br>'
+      + 'Typical starting dose: ' + m.startingDose + '<br>'
+      + 'From $' + price + '/month at starting dose'
+      + '</div>'
+      + '<div style="font-size:12.5px;margin-top:10px;">' + availability + '</div>';
+  }
+
 
   // Public, logged-out medication catalog — reads straight from
   // MEDICATION_INFO, so launching a new medication later is just flipping
@@ -1712,7 +1776,7 @@
     { q: "How does this actually work?", a: "You start a free intake and submit your health history. Once that's reviewed, you pick a membership plan and complete a short interview with a nurse practitioner, under a supervising physician's sign-off. If approved, your prescription is compounded by a licensed pharmacy and shipped to you — no in-person visit required." },
     { q: "Is this available outside Puerto Rico?", a: "Right now we're licensed and focused on Puerto Rico. Expanding to additional states requires physician licensure and compliance with each state's telemedicine rules individually, so it happens one state at a time rather than all at once." },
     { q: "What does \"compounded medication\" mean, and is it FDA-approved?", a: "Compounded medications are prepared by a licensed pharmacy under an individual prescription from your physician, rather than manufactured by a large pharmaceutical company. They are not FDA-approved or evaluated the same way brand-name manufactured drugs are. Your care team can walk you through what that means for your specific treatment." },
-    { q: "How much does this actually cost?", a: "Two separate charges: your membership ($79/mo Basic or $149/mo Premium) covers access to your care team, and medication is billed separately based on what's prescribed — priced transparently per milligram, not a flat guess. You'll see the exact number before anything ships." },
+    { q: "How much does this actually cost?", a: "Two separate charges: your membership ($70/mo Basic or $150/mo Premium) covers access to your care team, and medication is billed separately based on what's prescribed — priced transparently per milligram, not a flat guess. You'll see the exact number before anything ships." },
     { q: "Can I ask for a different medication later?", a: "Yes — there's no cap on how many prescriptions you can request as a member. Each one is reviewed individually by your care team before it's approved, the same way your first one was." },
     { q: "Is there a minimum commitment?", a: "Yes — the first 3 months. Weight management medication is titrated gradually, and most people don't see their full result until around month three, so we ask members to commit to that initial period rather than month-to-month. The one exception: if your provider determines treatment isn't clinically appropriate for you, you're not held to it — your care team handles that directly." },
     { q: "How do I cancel?", a: "After your initial 3-month commitment, you can cancel anytime from your account Settings. You'll be asked for a quick reason, and it takes effect immediately on our side. If you're on a recurring charge, let us know directly so we can make sure billing actually stops too." },
@@ -1740,9 +1804,13 @@
   // patient-facing price must always match what Stripe will actually charge,
   // not the dynamically calculated number. Keep this in sync with the exact
   // amount entered in Stripe for each medication.
+  // MUST match the actual amount on each Stripe Payment Link. If these drift
+  // apart, the patient sees one price and gets charged another.
   const MEDICATION_CHECKOUT_PRICE = {
-    'Tirzepatide': 300,
-    'Semaglutide': 250
+    'Tirzepatide': 180,
+    'Semaglutide': 150,
+    'Tesamorelin': 199,
+    'Sermorelin': 169
   };
 
   function getDisplayPrice(medication, fallbackPrice){
@@ -2106,12 +2174,11 @@
   // simplification (see pre-launch-checklist.md); real per-dose pricing
   // needs a backend creating a Stripe Checkout Session dynamically.
   const MEDICATION_STRIPE_LINKS = {
-    'Tirzepatide': 'https://buy.stripe.com/test_4gM9AS66vcrb8HN0jL5wI02',
-    'Semaglutide': 'https://buy.stripe.com/test_aFa3cueD1bn71fl8Qh5wI03',
-    'Tesamorelin': 'YOUR_STRIPE_LINK_TESAMORELIN',
-    'Testosterone Cypionate': 'YOUR_STRIPE_LINK_TESTOSTERONE',
-    'ED Care': 'YOUR_STRIPE_LINK_EDCARE',
-    'NAD+ Support': 'YOUR_STRIPE_LINK_NAD'
+    // LIVE Payment Links — replace each with the real link from Stripe live mode.
+    'Tirzepatide': 'YOUR_LIVE_LINK_TIRZEPATIDE',
+    'Semaglutide': 'YOUR_LIVE_LINK_SEMAGLUTIDE',
+    'Tesamorelin': 'YOUR_LIVE_LINK_TESAMORELIN',
+    'Sermorelin': 'YOUR_LIVE_LINK_SERMORELIN'
   };
 
   // A prescription cannot be shipped without a complete address, so this is a
@@ -3907,7 +3974,7 @@
   // entire script and silently breaks auth, routing and everything else.
   renderCatalog('All');
   renderFAQ();
-  populateMedicationDropdown('store-request-med', false);
+  populateRequestCategories();
   populateMedicationDropdown('np-approve-med', true);
   routeInfoPages();
   if(TEST_MODE){
