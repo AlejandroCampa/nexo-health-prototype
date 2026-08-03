@@ -870,45 +870,21 @@
             <input id="hh-family-endocrine-detail" class="flag-input" type="text" placeholder="Relationship + type of cancer, if known">
           </div>
 
-          <div class="form-section-title">Consent & attestation</div>
-          <p style="font-size:13px;color:rgba(31,62,65,0.7);margin-bottom:14px;">Please read each of these. They matter — your provider makes real clinical decisions based on what you've told us.</p>
+          <div class="form-section-title">Almost done</div>
 
           <div class="consent-box">
             <label class="checkbox-item" style="background:transparent;border:none;padding:0;align-items:flex-start;">
               <input type="checkbox" id="hh-consent-accuracy" required>
-              <span><b>My information is true and complete.</b> I have answered every question honestly and have not left out any medical condition, medication, allergy, surgery, substance use, or family history — including anything I might find embarrassing or think is unimportant. I understand my provider relies on this to decide what is safe to prescribe, and that <b>leaving something out could lead to serious harm, including permanent injury or death.</b> I accept responsibility for the accuracy of what I've provided, and I will tell my care team promptly if anything changes.</span>
-            </label>
-          </div>
-
-          <div class="consent-box">
-            <label class="checkbox-item" style="background:transparent;border:none;padding:0;align-items:flex-start;">
-              <input type="checkbox" id="hh-consent-telehealth" required>
-              <span><b>I consent to telehealth care.</b> I understand my care will be delivered remotely, that no in-person physical examination will be performed, and that this limits what my provider can assess. I understand my provider may determine that telehealth is not appropriate for me and may decline to prescribe.</span>
-            </label>
-          </div>
-
-          <div class="consent-box">
-            <label class="checkbox-item" style="background:transparent;border:none;padding:0;align-items:flex-start;">
-              <input type="checkbox" id="hh-consent-compounded" required>
-              <span><b>I understand compounded medications are not FDA-approved.</b> Medications prepared by a compounding pharmacy are not reviewed by the FDA for safety, effectiveness, or quality the way manufactured drugs are. I have had the opportunity to ask my care team about this.</span>
-            </label>
-          </div>
-
-          <div class="consent-box">
-            <label class="checkbox-item" style="background:transparent;border:none;padding:0;align-items:flex-start;">
-              <input type="checkbox" id="hh-consent-emergency" required>
-              <span><b>This is not emergency care.</b> I understand Nuvi Clinic does not provide urgent or emergency services, and that if I have a medical emergency I will call 911 or go to the nearest emergency room.</span>
+              <span><b>Everything above is accurate and complete.</b> I haven't left out any condition, medication, allergy, surgery, or family history — including anything I might think is minor. My provider uses this to decide what's safe to prescribe, so I understand leaving something out could put my health at risk. I'll let my care team know if anything changes.</span>
             </label>
           </div>
 
           <div class="consent-box">
             <label class="checkbox-item" style="background:transparent;border:none;padding:0;align-items:flex-start;">
               <input type="checkbox" id="hh-consent-terms" required>
-              <span>I have read and agree to the <a href="#page-terms" target="_blank">Terms of Service</a>, <a href="#page-privacy" target="_blank">Privacy Policy</a>, and <a href="#page-npp" target="_blank">Notice of Privacy Practices</a>.</span>
+              <span>I agree to the <a href="#page-terms" target="_blank">Terms</a> and <a href="#page-privacy" target="_blank">Privacy Policy</a>. I understand my care is delivered online without an in-person exam, that compounded medications aren't FDA-approved, and that this isn't emergency care — I'll call 911 for emergencies.</span>
             </label>
           </div>
-
-
           </div>
 
           <div style="display:flex;gap:12px;align-items:center;margin-top:28px;flex-wrap:wrap;">
@@ -3225,11 +3201,11 @@
 
     // Every attestation must be individually ticked. Checking them one by one
     // (rather than one blanket box) is the whole point — so enforce it.
-    const consentIds = ['hh-consent-accuracy','hh-consent-telehealth','hh-consent-compounded','hh-consent-emergency','hh-consent-terms'];
+    const consentIds = ['hh-consent-accuracy','hh-consent-terms'];
     for(const id of consentIds){
       const el = document.getElementById(id);
       if(el && !el.checked){
-        errorBox.innerHTML = '<div style="background:rgba(196,60,60,0.1);color:#B23A3A;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;">Please read and agree to all five statements before submitting.</div>';
+        errorBox.innerHTML = '<div style="background:rgba(196,60,60,0.1);color:#B23A3A;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;">Please check both boxes before submitting.</div>';
         el.focus();
         return false;
       }
@@ -3258,9 +3234,9 @@
       family_endocrine_cancer: document.getElementById('hh-family-endocrine').checked,
       family_endocrine_cancer_detail: document.getElementById('hh-family-endocrine-detail').value,
       consent_accuracy: document.getElementById('hh-consent-accuracy').checked,
-      consent_telehealth: document.getElementById('hh-consent-telehealth').checked,
-      consent_compounded: document.getElementById('hh-consent-compounded').checked,
-      consent_not_emergency: document.getElementById('hh-consent-emergency').checked,
+      consent_telehealth: document.getElementById('hh-consent-terms').checked,
+      consent_compounded: document.getElementById('hh-consent-terms').checked,
+      consent_not_emergency: document.getElementById('hh-consent-terms').checked,
       consent_terms: document.getElementById('hh-consent-terms').checked,
       consented_at: new Date().toISOString(),
       consent_version: CONSENT_VERSION,
