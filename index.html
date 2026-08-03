@@ -787,6 +787,16 @@
           <div class="field"><label>Date of birth</label><input id="hh-dob" type="date" required></div>
           <p style="font-size:12px;color:rgba(31,62,65,0.55);margin:-4px 0 4px;">Your name and date of birth must match your ID — the pharmacy requires them to fill a prescription.</p>
 
+          <div class="form-section-title">Shipping address</div>
+          <p style="font-size:12px;color:rgba(31,62,65,0.55);margin:-6px 0 12px;">Where we'll ship your medication. This is also used for billing.</p>
+          <div class="field"><label>Street address</label><input id="hh-address1" type="text" placeholder="123 Calle Principal"></div>
+          <div class="field"><label>Apt / unit <span style="font-weight:400;opacity:0.6;">(optional)</span></label><input id="hh-address2" type="text" placeholder="Apt 4B"></div>
+          <div class="two-col">
+            <div class="field"><label>City</label><input id="hh-city" type="text" placeholder="San Juan"></div>
+            <div class="field"><label>State / territory</label><input id="hh-state" type="text" placeholder="PR"></div>
+          </div>
+          <div class="field" style="max-width:200px;"><label>ZIP code</label><input id="hh-zip" type="text" placeholder="00901"></div>
+
           <div class="form-section-title">Primary goal</div>
           <div class="field">
             <select id="hh-goal">
@@ -988,7 +998,7 @@
       <div class="field"><label>Medication</label>
         <select id="np-approve-med" onchange="updateNPPricePreview()"></select>
       </div>
-      <div class="field"><label>Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" min="0" step="0.1" value="2.5" oninput="updateNPPricePreview()"></div>
+      <div class="field"><label id="np-dose-label">Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" min="0" step="0.1" value="2.5" oninput="updateNPPricePreview()"></div>
     </div>
     <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(31,62,65,0.65);margin:6px 0 14px;"></div>
     <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="npApprovePrescription()">Approve prescription</button>
@@ -1107,26 +1117,51 @@
 <section class="info-page" id="page-npp">
   <div class="wrap" style="max-width:780px;">
     <a href="#" class="info-back">← Back to home</a>
-    <div class="legal-draft-banner">⚠️ <b>DRAFT — not yet reviewed by counsel.</b> A Notice of Privacy Practices has specific content required by HIPAA. This outline is a starting point only and <b>must</b> be drafted or reviewed by a healthcare attorney before it is published or given to patients.</div>
+    <div class="legal-draft-banner">⚠️ <b>Draft pending legal review.</b> This notice follows the content HIPAA requires, but must be reviewed by a healthcare attorney and have the bracketed details completed before it is given to patients.</div>
     <h1>Notice of Privacy Practices</h1>
-    <p class="info-lead">Last updated: [DATE — to be set on publication]</p>
-    <p><b>This notice describes how medical information about you may be used and disclosed, and how you can get access to this information. Please review it carefully.</b></p>
-    <h3>How we may use and disclose your health information</h3>
-    <p><b>For treatment.</b> To provide, coordinate, and manage your care — including sharing your prescription with our pharmacy partner so it can be filled.</p>
-    <p><b>For payment.</b> To bill and collect payment for the services you receive.</p>
-    <p><b>For health care operations.</b> To run the practice, review quality of care, and train staff.</p>
-    <p><b>As required by law.</b> Including public health reporting and other disclosures required by state or federal law.</p>
-    <h3>Your rights</h3>
+    <p class="info-lead">Effective date: [DATE TO BE SET ON PUBLICATION]</p>
+
+    <p><b>THIS NOTICE DESCRIBES HOW MEDICAL INFORMATION ABOUT YOU MAY BE USED AND DISCLOSED AND HOW YOU CAN GET ACCESS TO THIS INFORMATION. PLEASE REVIEW IT CAREFULLY.</b></p>
+
+    <h3>Our commitment</h3>
+    <p>Nuvi Clinic is required by law to maintain the privacy of your protected health information (PHI), to give you this notice of our legal duties and privacy practices, and to follow the terms of the notice currently in effect. We are also required to notify you if a breach of your unsecured PHI occurs.</p>
+
+    <h3>How we may use and disclose your health information without your authorization</h3>
+    <p><b>Treatment.</b> To provide, coordinate, and manage your care. For example, we share your prescription and relevant history with our compounding pharmacy partner so your medication can be prepared and shipped, and among our own providers so they can make safe clinical decisions.</p>
+    <p><b>Payment.</b> To bill and collect payment for services. For example, we process your membership and medication charges through our payment processor. We do not send clinical details to our payment processor.</p>
+    <p><b>Health care operations.</b> To run the practice — including quality review, evaluating provider performance, training, and business management.</p>
+    <p><b>As required by law.</b> When federal, state, or Puerto Rico law requires it.</p>
+    <p><b>Public health and safety.</b> To prevent or reduce a serious threat to health or safety; to report suspected abuse, neglect, or domestic violence; to report adverse events or product problems to the FDA; and for public health activities such as disease reporting.</p>
+    <p><b>Health oversight, judicial, and law enforcement.</b> To health oversight agencies for audits and investigations; in response to a court order, subpoena, or other lawful process; and to law enforcement in the limited circumstances the law allows.</p>
+    <p><b>Others involved in your care.</b> If you agree, or if you are not present and we judge it to be in your best interest, we may share information relevant to your care with a family member or friend involved in it.</p>
+
+    <h3>Uses and disclosures that always require your written authorization</h3>
     <ul class="info-list">
-      <li>To inspect and get a copy of your health information.</li>
-      <li>To request a correction to information you believe is inaccurate.</li>
-      <li>To request restrictions on certain uses and disclosures.</li>
-      <li>To request confidential communications by an alternate means or location.</li>
-      <li>To receive an accounting of certain disclosures.</li>
-      <li>To receive a paper copy of this notice.</li>
-      <li>To file a complaint if you believe your privacy rights have been violated — you will not be penalized for filing one.</li>
+      <li>Most uses and disclosures of psychotherapy notes.</li>
+      <li>Uses and disclosures for marketing purposes.</li>
+      <li>Any sale of your protected health information.</li>
+      <li>Most other uses and disclosures not described in this notice.</li>
     </ul>
-    <p class="info-contact">Privacy questions or complaints: <b>info@nuviclinic.com</b>. [PLACEHOLDER — a named Privacy Officer and their contact details are required here.]</p>
+    <p>If you give us written authorization, you may revoke it at any time in writing. Revoking it will not affect disclosures we already made while it was in effect.</p>
+
+    <h3>Your rights</h3>
+    <p><b>Get a copy of your record.</b> You can ask to see or get an electronic or paper copy of your medical record. We will provide it within 30 days, and may charge a reasonable, cost-based fee.</p>
+    <p><b>Ask us to correct your record.</b> You can ask us to correct information you believe is incorrect or incomplete. We may say no, but we will tell you why in writing within 60 days.</p>
+    <p><b>Request confidential communications.</b> You can ask us to contact you in a specific way, or at a different address. We will say yes to all reasonable requests.</p>
+    <p><b>Ask us to limit what we use or share.</b> You can ask us not to use or share certain information. We are not required to agree, and may say no if it would affect your care. <b>However:</b> if you pay for a service in full out of pocket and ask us not to share that information with your health insurer, we must agree unless a law requires us to share it.</p>
+    <p><b>Get a list of disclosures.</b> You can request an accounting of certain disclosures we made in the six years before your request.</p>
+    <p><b>Get a copy of this notice.</b> You can ask for a paper copy at any time, even if you agreed to receive it electronically.</p>
+    <p><b>Choose someone to act for you.</b> If you have given someone medical power of attorney or they are your legal guardian, that person can exercise these rights on your behalf.</p>
+    <p><b>File a complaint.</b> If you believe your privacy rights have been violated, you can file a complaint with us using the contact details below, or with the U.S. Department of Health and Human Services Office for Civil Rights at 200 Independence Avenue SW, Washington DC 20201; 1-877-696-6775; or <a href="https://www.hhs.gov/hipaa/filing-a-complaint/" target="_blank" rel="noopener">hhs.gov/hipaa/filing-a-complaint</a>. <b>We will not retaliate against you for filing a complaint.</b></p>
+
+    <h3>Changes to this notice</h3>
+    <p>We can change the terms of this notice, and the changes will apply to all information we hold about you. The current notice will always be posted on this page with its effective date.</p>
+
+    <h3>Contact</h3>
+    <p><b>Privacy Officer:</b> [NAME TO BE DESIGNATED]<br>
+    Nuvi Clinic<br>
+    [MAILING ADDRESS TO BE ADDED]<br>
+    Email: <b>info@nuviclinic.com</b></p>
   </div>
 </section>
 
@@ -1567,40 +1602,48 @@
     'Tirzepatide': {
       category: 'Weight management',
       description: 'GLP-1/GIP dual agonist for fat loss, dosed weekly.',
-      basePrice: 200, perMg: 16.6,
+      basePrice: 200, perMg: 16.6, unit: 'mg',
       launched: true, form: 'Compounded injectable', startingDose: '2.5 mg / wk', startingDoseMg: 2.5
     },
     'Semaglutide': {
       category: 'Weight management',
       description: 'GLP-1 agonist for fat loss, dosed weekly.',
-      basePrice: 200, perMg: 50,
+      basePrice: 200, perMg: 50, unit: 'mg',
       launched: true, form: 'Compounded injectable', startingDose: '0.25 mg / wk', startingDoseMg: 0.25
     },
     'Tesamorelin': {
       category: 'Longevity',
       description: 'Growth hormone-releasing peptide, used for body composition and recovery.',
-      basePrice: 220, perMg: 35,
-      launched: false, form: 'Compounded injectable', startingDose: '1-2 mg / day', startingDoseMg: 1
+      basePrice: 220, perMg: 0.035, unit: 'mcg',
+      launched: false, form: 'Compounded injectable', startingDose: '500 mcg / day', startingDoseMg: 500
     },
     'Testosterone Cypionate': {
       category: "Men's health",
       description: 'Testosterone replacement therapy for clinically low levels.',
-      basePrice: 80, perMg: 0.5,
+      basePrice: 80, perMg: 0.5, unit: 'mg',
       launched: false, form: 'Injectable, weekly', startingDose: '100 mg / wk', startingDoseMg: 100
     },
     'ED Care': {
       category: "Men's health / libido",
       description: 'Sildenafil or tadalafil for erectile dysfunction, on-demand or daily.',
-      basePrice: 20, perMg: 0.3,
+      basePrice: 20, perMg: 0.3, unit: 'mg',
       launched: false, form: 'Oral', startingDose: '25 mg', startingDoseMg: 25
     },
     'NAD+ Support': {
       category: 'Recovery',
       description: 'Subcutaneous NAD+ for energy and recovery support.',
-      basePrice: 60, perMg: 8,
+      basePrice: 60, perMg: 8, unit: 'mg',
       launched: false, form: 'Subcutaneous', startingDose: '2 mg', startingDoseMg: 2
     }
   };
+
+  // Dose units differ by medication — peptides like Tesamorelin are supplied
+  // in micrograms, GLP-1s in milligrams. Showing "mg" for everything invites a
+  // 1000x dosing error, so the unit always comes from MEDICATION_INFO.
+  function getMedUnit(medication){
+    const m = MEDICATION_INFO[medication];
+    return (m && m.unit) ? m.unit : 'mg';
+  }
 
   function calcProtocolPrice(medication, doseMg){
     const info = MEDICATION_INFO[medication];
@@ -2259,7 +2302,7 @@
   // Bump this whenever the consent wording changes, so it's always provable
   // which version of the text a given patient actually agreed to.
   const CONSENT_VERSION = '2026-08-02.v1';
-  const HH_STEP_NAMES = ['About you & your goal', 'Medical history', 'Surgical, allergies & habits', 'Body markers', 'Family history & consent'];
+  const HH_STEP_NAMES = ['About you & shipping', 'Medical history', 'Surgical, allergies & habits', 'Body markers', 'Family history & consent'];
   let hhCurrentStep = 1;
   const HH_TOTAL_STEPS = 5;
 
@@ -2293,6 +2336,14 @@
       const dob = document.getElementById('hh-dob');
       if(name && !name.value.trim()){ alert('Please enter your full legal name.'); name.focus(); return; }
       if(dob && !dob.value){ alert('Please enter your date of birth.'); dob.focus(); return; }
+      const addr = document.getElementById('hh-address1');
+      const city = document.getElementById('hh-city');
+      const st = document.getElementById('hh-state');
+      const zip = document.getElementById('hh-zip');
+      if(addr && !addr.value.trim()){ alert('Please enter your street address — we need it to ship your medication.'); addr.focus(); return; }
+      if(city && !city.value.trim()){ alert('Please enter your city.'); city.focus(); return; }
+      if(st && !st.value.trim()){ alert('Please enter your state or territory.'); st.focus(); return; }
+      if(zip && !zip.value.trim()){ alert('Please enter your ZIP code.'); zip.focus(); return; }
     }
     // Body markers must be physically plausible. The min/max on the inputs
     // is only a browser hint — anyone can bypass it — so the real check lives
@@ -2333,6 +2384,11 @@
       const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = (val === null || val === undefined) ? '' : val; };
       setVal('hh-full-name', h.full_name);
       setVal('hh-dob', h.date_of_birth);
+      setVal('hh-address1', h.shipping_address1);
+      setVal('hh-address2', h.shipping_address2);
+      setVal('hh-city', h.shipping_city);
+      setVal('hh-state', h.shipping_state);
+      setVal('hh-zip', h.shipping_zip);
       setVal('hh-goal', h.goal);
       setVal('hh-conditions-other', h.conditions_other);
       setVal('hh-surgical', h.surgical_history);
@@ -3061,7 +3117,8 @@
   }
 
   async function npApproveNewPrescription(rxId, medication){
-    const doseMg = prompt('Weekly dose (mg) for ' + medication + ':', '2.5');
+    const unit = getMedUnit(medication);
+    const doseMg = prompt('Weekly dose (' + unit + ') for ' + medication + ':', unit === 'mcg' ? '500' : '2.5');
     if(doseMg === null) return;
     const price = calcProtocolPrice(medication, doseMg);
     try{
@@ -3115,11 +3172,21 @@
 
   function updateNPPricePreview(){
     const med = document.getElementById('np-approve-med').value;
-    const doseMg = document.getElementById('np-approve-dose-mg').value;
-    const price = calcProtocolPrice(med, doseMg);
+    const dose = document.getElementById('np-approve-dose-mg').value;
+    const unit = getMedUnit(med);
+    const price = calcProtocolPrice(med, dose);
     const rateLabel = medicationPricePerMgLabel(med);
+
+    // Relabel the input so the NP is never entering mcg into a field that says mg
+    const lbl = document.getElementById('np-dose-label');
+    if(lbl) lbl.textContent = 'Weekly dose (' + unit + ')';
+
+    // Step in sensible increments for the unit — 0.1 mg vs 25 mcg
+    const input = document.getElementById('np-approve-dose-mg');
+    if(input) input.step = (unit === 'mcg') ? '25' : '0.1';
+
     document.getElementById('np-price-preview').textContent =
-      med + ' at ' + doseMg + ' mg/week → $' + price + '/mo' + (rateLabel ? ' (' + rateLabel + ')' : ' (flat rate)');
+      med + ' at ' + dose + ' ' + unit + '/week → $' + price + '/mo' + (rateLabel ? ' (' + rateLabel + ')' : ' (flat rate)');
   }
 
   async function npApprovePrescription(){
@@ -3218,6 +3285,11 @@
       user_id: currentUser.id,
       full_name: document.getElementById('hh-full-name').value,
       date_of_birth: document.getElementById('hh-dob').value || null,
+      shipping_address1: document.getElementById('hh-address1').value,
+      shipping_address2: document.getElementById('hh-address2').value,
+      shipping_city: document.getElementById('hh-city').value,
+      shipping_state: document.getElementById('hh-state').value,
+      shipping_zip: document.getElementById('hh-zip').value,
       email: currentUser.email,
       goal: document.getElementById('hh-goal').value,
       conditions: conditions,
