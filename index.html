@@ -1102,8 +1102,21 @@
   // 3. Paste your Project URL and anon/public key below
   const SUPABASE_URL = 'https://wywcvmmheuyepkxptwue.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_5ZwAQQTVYZYIxtRvXknwPA_cUKAXN5v';
+  // detectSessionInUrl MUST be on — it's what reads the #access_token=... that
+  // a magic-link click lands on and converts it into a real session. Without
+  // it the token is simply ignored and the user bounces to the marketing page.
+  // flowType 'implicit' matches the hash-token style link Supabase emails by
+  // default; leaving it unset can make the client expect a ?code= PKCE param
+  // that never arrives, so nothing is ever parsed.
   const supabaseClient = (SUPABASE_URL.startsWith('http'))
-    ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          detectSessionInUrl: true,
+          persistSession: true,
+          autoRefreshToken: true,
+          flowType: 'implicit'
+        }
+      })
     : null;
   // ==============================
 
@@ -2953,6 +2966,7 @@
 
   if(supabaseClient){
     supabaseClient.auth.onAuthStateChange((event, session) => {
+      console.log('[auth] event:', event, '| session:', session ? 'YES (' + session.user.email + ')' : 'null');
       // IMPORTANT: only respond to events that genuinely mean "logged in" or
       // "logged out". onAuthStateChange also fires INITIAL_SESSION with a null
       // session while Supabase is still parsing the #access_token out of the
@@ -2966,9 +2980,23 @@
     });
 
     // Catch an already-active session on page load/refresh
-    supabaseClient.auth.getSession().then(({ data }) => {
+    supabaseClient.auth.getSession().then(({ data, error }) => {
+      if(error) console.error('[auth] getSession error:', error);
+      console.log('[auth] getSession on load:', data.session ? 'session found' : 'no session');
       if(data.session && data.session.user){ routeUserSession(data.session.user); }
     });
+
+    // Surface a failed magic-link redirect instead of silently landing on the
+    // homepage — Supabase puts the reason in the URL hash when it rejects one.
+    (function reportAuthErrorInUrl(){
+      const h = window.location.hash || '';
+      if(h.indexOf('error') > -1){
+        const p = new URLSearchParams(h.replace(/^#/, ''));
+        const desc = p.get('error_description') || p.get('error') || 'unknown error';
+        console.error('[auth] magic link rejected:', desc);
+        alert('Login link problem: ' + desc.replace(/\+/g, ' '));
+      }
+    })();
   }
 
   // Catch a return trip from a Stripe Payment Link. This fires after the user is
