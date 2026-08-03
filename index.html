@@ -247,6 +247,21 @@
   }
 
   /* ---- DASHBOARD ---- */
+  .info-page{display:none;padding:64px 0 90px;}
+  .info-page.visible{display:block;}
+  .info-back{display:inline-block;font-size:13.5px;color:rgba(31,62,65,0.6);margin-bottom:26px;}
+  .info-back:hover{color:var(--ink);}
+  .info-page h1{font-size:38px;margin-bottom:12px;}
+  .info-page h3{font-size:19px;margin:32px 0 10px;}
+  .info-page h4{font-size:16px;margin:0 0 4px;}
+  .info-page p{font-size:15.5px;line-height:1.75;color:rgba(31,62,65,0.82);margin-bottom:14px;}
+  .info-lead{font-size:17.5px !important;color:rgba(31,62,65,0.6) !important;margin-bottom:26px !important;}
+  .info-list{font-size:15.5px;line-height:1.8;color:rgba(31,62,65,0.82);padding-left:20px;margin-bottom:14px;}
+  .info-list li{margin-bottom:8px;}
+  .info-contact{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);}
+  .provider-card{background:var(--paper-warm);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:14px;}
+  .provider-creds{font-family:'IBM Plex Mono',monospace;font-size:12.5px !important;color:rgba(31,62,65,0.55) !important;margin-bottom:10px !important;}
+  .legal-draft-banner{background:rgba(196,60,60,0.08);border:1px solid rgba(196,60,60,0.25);border-radius:12px;padding:14px 18px;font-size:13.5px;line-height:1.6;color:#8C2F2F;margin-bottom:28px;}
   .account-icon-btn{
     display:inline-flex;align-items:center;justify-content:center;
     width:40px;height:40px;border-radius:50%;
@@ -921,6 +936,10 @@
 
     <div id="np-detail-rx-requests" style="margin-bottom:16px;"></div>
 
+    <div class="form-section-title">Membership</div>
+    <div id="np-membership-status" style="font-size:13.5px;margin-bottom:10px;"></div>
+    <button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13px;border-color:#B23A3A;color:#B23A3A;margin-bottom:20px;" onclick="npCancelMembership()">Cancel membership — medically ineligible</button>
+
     <div class="form-section-title">Clinical notes <span style="font-weight:400;color:rgba(31,62,65,0.5);">(staff only — never visible to patient)</span></div>
     <div id="np-clinical-notes-list" style="max-height:220px;overflow-y:auto;margin-bottom:12px;"></div>
     <div class="field"><label for="np-new-note">Add a note</label>
@@ -947,6 +966,130 @@
   </div>
 </div>
 
+<section class="info-page" id="page-about">
+  <div class="wrap" style="max-width:780px;">
+    <a href="#" class="info-back">← Back to home</a>
+    <h1>About Nuvi Clinic</h1>
+    <p class="info-lead">Physician-led metabolic and longevity medicine, built for Puerto Rico.</p>
+    <p>Nuvi Clinic is a telehealth practice offering physician-supervised weight management and longevity care. We were founded on a simple frustration: getting real, well-supervised metabolic care usually means long waits, rushed visits, and pricing nobody can explain.</p>
+    <h3>How we're different</h3>
+    <p><b>Every prescription is reviewed by a licensed physician.</b> Not a questionnaire, not an algorithm. You complete a health history, then speak with a nurse practitioner under physician supervision before anything is prescribed. If a medication isn't appropriate for you, we say so.</p>
+    <p><b>Transparent pricing.</b> Medication is priced per milligram, so you can see exactly what you're paying for and why it changes as your dose is adjusted. Your membership fee is separate and never bundled into a number you can't break down.</p>
+    <p><b>Dispensed by a licensed compounding pharmacy.</b> Your prescription is prepared by a licensed 503A compounding pharmacy and shipped directly to you.</p>
+    <p><b>Local.</b> We're based in Puerto Rico and currently serve Puerto Rico patients. Expanding to additional jurisdictions requires physician licensure in each one, so we do it deliberately rather than all at once.</p>
+    <h3>Our care team</h3>
+    <div class="provider-card">
+      <h4>Carlos M. Campa Maldonado, M.D.</h4>
+      <p class="provider-creds">License No. 23961 · NPI 1003317934</p>
+      <p>Medical Director. Dr. Campa oversees clinical protocols, reviews and approves prescriptions, and supervises the care team.</p>
+    </div>
+    <div class="provider-card">
+      <h4>Angélica C. Marrero</h4>
+      <p class="provider-creds">License No. 38327-R · NPI 1003549015</p>
+      <p>Provider. Conducts patient interviews and ongoing care visits under physician supervision.</p>
+    </div>
+  </div>
+</section>
+
+<section class="info-page" id="page-providers">
+  <div class="wrap" style="max-width:780px;">
+    <a href="#" class="info-back">← Back to home</a>
+    <h1>For providers</h1>
+    <p class="info-lead">Working with Nuvi Clinic as a clinician or referring provider.</p>
+    <h3>Referring a patient</h3>
+    <p>If you have a patient who would benefit from supervised metabolic or weight management care, you can refer them directly. They'll complete our intake, be interviewed by our care team, and every prescribing decision is made by our supervising physician — we'll keep you informed if your patient asks us to.</p>
+    <h3>Joining our care team</h3>
+    <p>We work with nurse practitioners and physicians licensed in the jurisdictions we serve. Providers must hold an active, unrestricted license, a current DEA registration where applicable, and an NPI. All prescribing follows documented protocols with physician oversight — we don't operate a rubber-stamp model, and we're not a fit for clinicians looking for one.</p>
+    <h3>Pharmacy and fulfillment</h3>
+    <p>Prescriptions are fulfilled through a licensed 503A compounding pharmacy partner and shipped directly to patients. Ordering is handled by our clinical staff; providers are not asked to manage logistics.</p>
+    <p class="info-contact">To discuss working together, contact <b>info@nuviclinic.com</b>.</p>
+  </div>
+</section>
+
+<section class="info-page" id="page-careers">
+  <div class="wrap" style="max-width:780px;">
+    <a href="#" class="info-back">← Back to home</a>
+    <h1>Careers</h1>
+    <p class="info-lead">We're small, early, and building carefully.</p>
+    <p>Nuvi Clinic is in its first year. We're not hiring at volume, and we'd rather be honest about that than post roles we can't fill yet.</p>
+    <h3>Who we're likely to need next</h3>
+    <ul class="info-list">
+      <li><b>Nurse practitioners</b> licensed in Puerto Rico, comfortable with metabolic and weight management care under physician supervision.</li>
+      <li><b>Patient coordinators</b> — bilingual (Spanish/English), organized, genuinely patient about helping people navigate their care.</li>
+    </ul>
+    <p>If that's you, or you think there's something you could build here that we haven't thought of, we'd rather hear from you early than not at all.</p>
+    <p class="info-contact">Write to <b>info@nuviclinic.com</b> with a short note about what you'd want to do here.</p>
+  </div>
+</section>
+
+<section class="info-page" id="page-privacy">
+  <div class="wrap" style="max-width:780px;">
+    <a href="#" class="info-back">← Back to home</a>
+    <div class="legal-draft-banner">⚠️ <b>DRAFT — not yet reviewed by counsel.</b> This is placeholder language written to outline structure. It is not a binding privacy policy and must be reviewed and finalized by a healthcare attorney before real patients use this service.</div>
+    <h1>Privacy Policy</h1>
+    <p class="info-lead">Last updated: [DATE — to be set on publication]</p>
+    <h3>What we collect</h3>
+    <p>Information you give us: name, date of birth, email address, shipping address, and the health information you provide in your intake and ongoing care (medical conditions, medications, allergies, family history, weight, and related clinical details). Information collected automatically: basic technical data needed to operate the site securely.</p>
+    <h3>How we use it</h3>
+    <p>To provide medical care, to prepare and fulfill prescriptions through our pharmacy partner, to process payments, to communicate with you about your care, and to meet legal and record-keeping obligations. We do not sell your personal or health information.</p>
+    <h3>Who we share it with</h3>
+    <p>Your care team; our licensed compounding pharmacy partner, in order to fill your prescription; our payment processor, for billing; and service providers who help operate the platform under written agreements. We may also disclose information where required by law.</p>
+    <h3>How it's protected</h3>
+    <p>Health information is stored in access-controlled systems with encryption in transit and at rest. Access is limited to the staff who need it to provide your care.</p>
+    <h3>Your choices</h3>
+    <p>You may request access to your records, ask us to correct inaccurate information, and ask questions about how your information is used. Medical records are subject to legal retention requirements, so deletion may not always be possible — we'll tell you plainly if that applies.</p>
+    <p class="info-contact">Questions: <b>info@nuviclinic.com</b>.</p>
+  </div>
+</section>
+
+<section class="info-page" id="page-terms">
+  <div class="wrap" style="max-width:780px;">
+    <a href="#" class="info-back">← Back to home</a>
+    <div class="legal-draft-banner">⚠️ <b>DRAFT — not yet reviewed by counsel.</b> This is placeholder language written to outline structure. It is not a binding agreement and must be reviewed and finalized by a healthcare attorney before real patients use this service.</div>
+    <h1>Terms of Service</h1>
+    <p class="info-lead">Last updated: [DATE — to be set on publication]</p>
+    <h3>What Nuvi Clinic is</h3>
+    <p>Nuvi Clinic provides telehealth medical services through licensed providers. Using this site does not by itself create a provider-patient relationship — that begins only after you complete an intake and are evaluated by our care team.</p>
+    <h3>Not for emergencies</h3>
+    <p>This service is not for medical emergencies. If you are experiencing a medical emergency, call 911 or go to the nearest emergency room.</p>
+    <h3>Eligibility</h3>
+    <p>You must be 18 or older and physically located in a jurisdiction where our providers are licensed. You agree to give accurate and complete health information — our providers rely on it to make safe decisions about your care.</p>
+    <h3>No guarantee of treatment</h3>
+    <p>Completing an intake or paying a membership fee does not guarantee you will be prescribed any medication. If our provider determines a treatment isn't clinically appropriate for you, it will not be prescribed.</p>
+    <h3>Membership, billing, and cancellation</h3>
+    <p>Membership is billed monthly. Medication is billed separately based on what is prescribed. [PLACEHOLDER — the minimum commitment period, refund terms, and the medical-ineligibility exception need to be finalized here with counsel and must match what is actually enforced in the product.]</p>
+    <h3>Compounded medications</h3>
+    <p>Some medications we prescribe are compounded by a licensed pharmacy. Compounded medications are not FDA-approved and are not evaluated by the FDA for safety, effectiveness, or quality in the way manufactured drugs are.</p>
+    <p class="info-contact">Questions: <b>info@nuviclinic.com</b>.</p>
+  </div>
+</section>
+
+<section class="info-page" id="page-npp">
+  <div class="wrap" style="max-width:780px;">
+    <a href="#" class="info-back">← Back to home</a>
+    <div class="legal-draft-banner">⚠️ <b>DRAFT — not yet reviewed by counsel.</b> A Notice of Privacy Practices has specific content required by HIPAA. This outline is a starting point only and <b>must</b> be drafted or reviewed by a healthcare attorney before it is published or given to patients.</div>
+    <h1>Notice of Privacy Practices</h1>
+    <p class="info-lead">Last updated: [DATE — to be set on publication]</p>
+    <p><b>This notice describes how medical information about you may be used and disclosed, and how you can get access to this information. Please review it carefully.</b></p>
+    <h3>How we may use and disclose your health information</h3>
+    <p><b>For treatment.</b> To provide, coordinate, and manage your care — including sharing your prescription with our pharmacy partner so it can be filled.</p>
+    <p><b>For payment.</b> To bill and collect payment for the services you receive.</p>
+    <p><b>For health care operations.</b> To run the practice, review quality of care, and train staff.</p>
+    <p><b>As required by law.</b> Including public health reporting and other disclosures required by state or federal law.</p>
+    <h3>Your rights</h3>
+    <ul class="info-list">
+      <li>To inspect and get a copy of your health information.</li>
+      <li>To request a correction to information you believe is inaccurate.</li>
+      <li>To request restrictions on certain uses and disclosures.</li>
+      <li>To request confidential communications by an alternate means or location.</li>
+      <li>To receive an accounting of certain disclosures.</li>
+      <li>To receive a paper copy of this notice.</li>
+      <li>To file a complaint if you believe your privacy rights have been violated — you will not be penalized for filing one.</li>
+    </ul>
+    <p class="info-contact">Privacy questions or complaints: <b>info@nuviclinic.com</b>. [PLACEHOLDER — a named Privacy Officer and their contact details are required here.]</p>
+  </div>
+</section>
+
 <footer>
   <div class="wrap">
     <div class="footer-top">
@@ -961,15 +1104,15 @@
         </div>
         <div class="footer-col">
           <h5>Company</h5>
-          <a href="javascript:void(0)" onclick="openModal('soon','About')">About</a>
-          <a href="javascript:void(0)" onclick="openModal('soon','For providers')">For providers</a>
-          <a href="javascript:void(0)" onclick="openModal('soon','Careers')">Careers</a>
+          <a href="#page-about">About</a>
+          <a href="#page-providers">For providers</a>
+          <a href="#page-careers">Careers</a>
         </div>
         <div class="footer-col">
           <h5>Legal</h5>
-          <a href="javascript:void(0)" onclick="openModal('soon','Privacy Policy')">Privacy</a>
-          <a href="javascript:void(0)" onclick="openModal('soon','Terms of Service')">Terms</a>
-          <a href="javascript:void(0)" onclick="openModal('soon','Notice of Privacy Practices')">Notice of Privacy Practices</a>
+          <a href="#page-privacy">Privacy</a>
+          <a href="#page-terms">Terms</a>
+          <a href="#page-npp">Notice of Privacy Practices</a>
         </div>
       </div>
     </div>
@@ -1080,9 +1223,10 @@
     <div id="staff-timesheet-list" style="max-height:200px;overflow-y:auto;margin-bottom:22px;"></div>
 
     <div class="form-section-title">Change password</div>
+    <div class="field"><label for="staff-cur-pass">Current password</label><input id="staff-cur-pass" type="password" placeholder="Required"></div>
     <div class="field"><label for="staff-new-pass">New password</label><input id="staff-new-pass" type="password" placeholder="At least 6 characters"></div>
     <div class="field"><label for="staff-new-pass2">Confirm new password</label><input id="staff-new-pass2" type="password"></div>
-    <button class="btn btn-outline" style="width:auto;padding:10px 20px;" onclick="changePassword('staff-new-pass','staff-new-pass2')">Update password</button>
+    <button class="btn btn-outline" style="width:auto;padding:10px 20px;" onclick="changePassword('staff-new-pass','staff-new-pass2','staff-cur-pass',true)">Update password</button>
   </div>
 </div>
 
@@ -1103,9 +1247,10 @@
 
     <div class="form-section-title">Password</div>
     <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:12px;">You normally log in with an email link, but you can set a password here if you prefer.</p>
+    <div class="field"><label for="patient-cur-pass">Current password</label><input id="patient-cur-pass" type="password" placeholder="Leave blank if you've never set one"></div>
     <div class="field"><label for="patient-new-pass">New password</label><input id="patient-new-pass" type="password" placeholder="At least 6 characters"></div>
     <div class="field"><label for="patient-new-pass2">Confirm new password</label><input id="patient-new-pass2" type="password"></div>
-    <button class="btn btn-outline" style="width:auto;padding:10px 20px;margin-bottom:24px;" onclick="changePassword('patient-new-pass','patient-new-pass2')">Set password</button>
+    <button class="btn btn-outline" style="width:auto;padding:10px 20px;margin-bottom:24px;" onclick="changePassword('patient-new-pass','patient-new-pass2','patient-cur-pass',false)">Set password</button>
 
     <div class="form-section-title">Shipping & identity</div>
     <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:12px;">Required before any medication can be prescribed and shipped — the pharmacy needs this to fulfill your prescription.</p>
@@ -1120,6 +1265,7 @@
     <button class="btn btn-outline" style="width:auto;padding:10px 20px;margin-bottom:24px;" onclick="saveShippingInfo()">Save</button>
 
     <div id="settings-cancelled-notice" style="display:none;background:rgba(196,60,60,0.08);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#B23A3A;"></div>
+    <div id="settings-commitment-notice" style="display:none;background:var(--paper-warm);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.65;"></div>
     <div id="settings-cancel-section">
       <div class="form-section-title">Cancel membership</div>
       <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:12px;">This does <b>not</b> automatically cancel any recurring charge in Stripe — contact us to confirm billing has stopped too.</p>
@@ -1208,7 +1354,7 @@
     if(!currentHealthHistory){ alert('Debug: currentHealthHistory is empty — the page may not have loaded your health history record yet. Try refreshing the dashboard.'); return; }
     try{
       const { error } = await supabaseClient.from('health_history')
-        .update({ paid: true, plan: plan })
+        .update({ paid: true, plan: plan, paid_at: new Date().toISOString() })
         .eq('id', currentHealthHistory.id);
       if(error) throw error;
       alert('Success — marked as paid (' + plan + '). Reloading your dashboard now.');
@@ -1464,7 +1610,8 @@
     { q: "What does \"compounded medication\" mean, and is it FDA-approved?", a: "Compounded medications are prepared by a licensed pharmacy under an individual prescription from your physician, rather than manufactured by a large pharmaceutical company. They are not FDA-approved or evaluated the same way brand-name manufactured drugs are. Your care team can walk you through what that means for your specific treatment." },
     { q: "How much does this actually cost?", a: "Two separate charges: your membership ($79/mo Basic or $149/mo Premium) covers access to your care team, and medication is billed separately based on what's prescribed — priced transparently per milligram, not a flat guess. You'll see the exact number before anything ships." },
     { q: "Can I ask for a different medication later?", a: "Yes — there's no cap on how many prescriptions you can request as a member. Each one is reviewed individually by your care team before it's approved, the same way your first one was." },
-    { q: "How do I cancel?", a: "From your account Settings, anytime. You'll be asked for a quick reason, and cancelling takes effect immediately on our side. If you're on a recurring charge, let us know directly so we can make sure billing actually stops too." },
+    { q: "Is there a minimum commitment?", a: "Yes — the first 3 months. Weight management medication is titrated gradually, and most people don't see their full result until around month three, so we ask members to commit to that initial period rather than month-to-month. The one exception: if your provider determines treatment isn't clinically appropriate for you, you're not held to it — your care team handles that directly." },
+    { q: "How do I cancel?", a: "After your initial 3-month commitment, you can cancel anytime from your account Settings. You'll be asked for a quick reason, and it takes effect immediately on our side. If you're on a recurring charge, let us know directly so we can make sure billing actually stops too." },
     { q: "Do I need insurance?", a: "No — this is a cash-pay model, membership plus medication cost, no insurance billing involved." },
     { q: "How fast can I actually get started?", a: "Health history takes about 5 minutes. NP interviews are usually available within a few days, and the interview itself is 15 minutes." }
   ];
@@ -1926,15 +2073,34 @@
 
   // ====== SETTINGS / CANCEL MEMBERSHIP ======
   // ====== PASSWORD CHANGE (shared by patient + staff) ======
-  async function changePassword(fieldId, confirmFieldId){
+  // Supabase's updateUser() does NOT check the old password on its own, so we
+  // verify it ourselves by re-authenticating with signInWithPassword first.
+  // Staff always have a password, so it's mandatory for them. Patients sign in
+  // by magic link and may never have set one, so for them it's only checked
+  // when they actually supply it.
+  async function changePassword(fieldId, confirmFieldId, currentFieldId, requireCurrent){
     if(!supabaseClient || !currentUser) return;
+    const curEl = currentFieldId ? document.getElementById(currentFieldId) : null;
+    const current = curEl ? curEl.value : '';
     const pass = document.getElementById(fieldId).value;
     const pass2 = document.getElementById(confirmFieldId).value;
-    if(!pass || pass.length < 6){ alert('Password must be at least 6 characters.'); return; }
-    if(pass !== pass2){ alert('The two passwords do not match.'); return; }
+
+    if(requireCurrent && !current){ alert('Enter your current password.'); return; }
+    if(!pass || pass.length < 6){ alert('New password must be at least 6 characters.'); return; }
+    if(pass !== pass2){ alert('The two new passwords do not match.'); return; }
+    if(current && current === pass){ alert('New password must be different from your current one.'); return; }
+
     try{
+      if(current){
+        const { error: authErr } = await supabaseClient.auth.signInWithPassword({
+          email: currentUser.email,
+          password: current
+        });
+        if(authErr){ alert('Current password is incorrect.'); return; }
+      }
       const { error } = await supabaseClient.auth.updateUser({ password: pass });
       if(error) throw error;
+      if(curEl) curEl.value = '';
       document.getElementById(fieldId).value = '';
       document.getElementById(confirmFieldId).value = '';
       alert('Password updated.');
@@ -2079,6 +2245,9 @@
 
     const cancelledNotice = document.getElementById('settings-cancelled-notice');
     const cancelSection = document.getElementById('settings-cancel-section');
+    const commitNotice = document.getElementById('settings-commitment-notice');
+    commitNotice.style.display = 'none';
+
     if(history && history.membership_cancelled){
       document.getElementById('settings-status').textContent = 'Cancelled';
       cancelledNotice.style.display = 'block';
@@ -2088,9 +2257,43 @@
       document.getElementById('settings-status').textContent = (history && history.paid) ? 'Active' : 'Not started';
       cancelledNotice.style.display = 'none';
       cancelSection.style.display = (history && history.paid) ? 'block' : 'none';
+
+      // Initial commitment period: treatment is titrated over months, so
+      // members commit to the first 3 billing cycles. The one exception —
+      // a provider determining treatment isn't clinically appropriate — is
+      // deliberately handled by staff, not self-served here, so a patient
+      // can't declare their own medical ineligibility to exit early.
+      const commit = getCommitmentStatus(history);
+      if(commit.active){
+        commitNotice.style.display = 'block';
+        commitNotice.innerHTML = '<b>You\'re in your initial 3-month commitment.</b><br>'
+          + 'It ends on <b>' + commit.endsOn + '</b> (' + commit.daysLeft + ' days left). '
+          + 'Weight management medication is titrated gradually — most people don\'t see their full result until around month three, which is why the first three months are a commitment rather than month-to-month.'
+          + '<br><br>If your provider has determined that treatment isn\'t appropriate for you, that\'s an exception to this — message your care team and they\'ll take care of it.';
+        cancelSection.style.display = 'none';
+      }
     }
 
     openModal('settings');
+  }
+
+  // Shared helper so the patient view and the cancel action can never
+  // disagree about whether the commitment period is still running.
+  const COMMITMENT_MONTHS = 3;
+  function getCommitmentStatus(history){
+    if(!history || !history.paid || !history.paid_at){
+      return { active: false, endsOn: null, daysLeft: 0 };
+    }
+    const start = new Date(history.paid_at);
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + COMMITMENT_MONTHS);
+    const now = new Date();
+    const active = now < end;
+    return {
+      active: active,
+      endsOn: end.toLocaleDateString(),
+      daysLeft: active ? Math.ceil((end - now) / 86400000) : 0
+    };
   }
 
   async function saveShippingInfo(){
@@ -2116,6 +2319,16 @@
 
   async function submitCancelMembership(){
     if(!supabaseClient || !currentHealthHistory) return;
+
+    // Second line of defence: the UI hides the cancel form during the
+    // commitment period, but re-check here so hiding a div is never the
+    // only thing enforcing a billing commitment.
+    const commit = getCommitmentStatus(currentHealthHistory);
+    if(commit.active){
+      alert('You\'re still in your initial 3-month commitment, which ends on ' + commit.endsOn + '.\n\nIf your provider has determined treatment isn\'t appropriate for you, message your care team — they can cancel it for you.');
+      return;
+    }
+
     const reason = document.getElementById('cancel-membership-reason').value;
     const notes = document.getElementById('cancel-membership-notes').value;
     const fullReason = notes ? (reason + ' — ' + notes) : reason;
@@ -2492,11 +2705,31 @@
     }
     listWrap.innerHTML = notes.map(n => {
       const when = new Date(n.created_at).toLocaleString();
+      // Only offer delete on notes this staff member wrote themselves.
+      const canDelete = n.author_user_id && currentUser && n.author_user_id === currentUser.id;
+      const delBtn = canDelete
+        ? '<button onclick="npDeleteClinicalNote(\'' + n.id + '\')" title="Delete this note" style="background:none;border:none;color:#B23A3A;font-size:11.5px;cursor:pointer;padding:0;">Delete</button>'
+        : '';
       return '<div style="border-bottom:1px solid var(--line);padding:10px 0;">'
-        + '<div style="font-size:12px;color:rgba(31,62,65,0.5);margin-bottom:3px;">' + (n.author_name || 'Staff') + ' — ' + when + '</div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:3px;">'
+        + '<span style="font-size:12px;color:rgba(31,62,65,0.5);">' + (n.author_name || 'Staff') + ' — ' + when + '</span>'
+        + delBtn
+        + '</div>'
         + '<div style="font-size:13.5px;white-space:pre-wrap;">' + n.note_text + '</div>'
         + '</div>';
     }).join('');
+  }
+
+  async function npDeleteClinicalNote(noteId){
+    if(!supabaseClient || !noteId) return;
+    if(!confirm('Delete this note permanently? This cannot be undone.')) return;
+    try{
+      const { error } = await supabaseClient.from('clinical_notes').delete().eq('id', noteId);
+      if(error) throw error;
+      await loadClinicalNotes(npCurrentPatientUserId);
+    } catch(err){
+      alert('Could not delete note: ' + (err.message || 'unknown error'));
+    }
   }
 
   async function npAddClinicalNote(){
@@ -2517,6 +2750,40 @@
     }
   }
 
+  // Staff-side override of the 3-month commitment. This exists specifically
+  // for the clinical exception: a provider has determined treatment isn't
+  // appropriate, so the patient shouldn't be held to the commitment. Kept on
+  // the staff side on purpose — patients can't self-declare ineligibility.
+  async function npCancelMembership(){
+    if(!supabaseClient || !npCurrentPatientId) return;
+    const note = prompt('Cancelling this membership on clinical grounds (overrides the 3-month commitment).\n\nBriefly, why is this patient not eligible to continue?');
+    if(note === null) return;
+    if(!note.trim()){ alert('A reason is required.'); return; }
+    try{
+      await supabaseClient.from('health_history').update({
+        membership_cancelled: true,
+        membership_cancelled_at: new Date().toISOString(),
+        membership_cancel_reason: 'Medically ineligible (provider decision) — ' + note.trim(),
+        cancelled_by_staff: true
+      }).eq('id', npCurrentPatientId);
+
+      // Record it in the clinical notes too, so the reasoning lives with the
+      // rest of the patient's documentation rather than only in a billing field.
+      await supabaseClient.from('clinical_notes').insert({
+        patient_user_id: npCurrentPatientUserId,
+        author_user_id: currentUser.id,
+        author_name: currentStaffName,
+        note_text: 'Membership cancelled — patient determined medically ineligible to continue. Reason: ' + note.trim()
+      });
+
+      alert('Membership cancelled and noted in the clinical record.');
+      await loadNPData();
+      await openNPPatientDetail(npCurrentPatientId);
+    } catch(err){
+      alert('Could not cancel membership: ' + (err.message || 'unknown error'));
+    }
+  }
+
   async function openNPPatientDetail(patientId){
     if(!patientId) return;
     const patient = npPatients.find(p => p.id === patientId);
@@ -2524,6 +2791,21 @@
     npCurrentPatientId = patientId;
     npCurrentPatientUserId = patient.user_id;
     loadClinicalNotes(patient.user_id);
+
+    const memEl = document.getElementById('np-membership-status');
+    if(memEl){
+      if(patient.membership_cancelled){
+        memEl.innerHTML = '<span style="color:#B23A3A;">Cancelled</span>' + (patient.membership_cancel_reason ? ' — ' + patient.membership_cancel_reason : '');
+      } else if(!patient.paid){
+        memEl.textContent = 'Not started — patient has not paid for a membership yet.';
+      } else {
+        const c = getCommitmentStatus(patient);
+        memEl.innerHTML = 'Active (' + (patient.plan || 'plan not set') + '). '
+          + (c.active
+              ? 'In initial commitment until <b>' + c.endsOn + '</b> (' + c.daysLeft + ' days left) — patient cannot self-cancel during this window.'
+              : 'Commitment period complete — patient can cancel on their own.');
+      }
+    }
 
     document.getElementById('np-detail-name').textContent = patient.full_name || patient.email || 'Unknown patient';
     document.getElementById('np-detail-email').textContent = patient.email || '';
@@ -3149,15 +3431,18 @@
     }
   }
 
-  // ====== ON-SCREEN AUTH DEBUG (temporary — remove before real launch) ======
-  // The magic-link failure has been hard to diagnose because everything fails
-  // silently. This paints the actual auth state onto the page so it can be
-  // read/screenshotted directly instead of needing devtools.
+  // ====== AUTH DEBUG (hidden by default) ======
+  // Kept for future troubleshooting but off unless explicitly requested.
+  // To turn it on, load the site with ?debug=1 on the end, e.g.
+  //   https://nuviclinic.com/?debug=1
+  // Everything still logs to the browser console either way.
+  const AUTH_DEBUG_ON = new URLSearchParams(window.location.search).get('debug') === '1';
   const AUTH_DEBUG_LINES = [];
   function authDebug(msg){
     const stamp = new Date().toISOString().substr(11,12);
     AUTH_DEBUG_LINES.push('[' + stamp + '] ' + msg);
     console.log('[auth] ' + msg);
+    if(!AUTH_DEBUG_ON) return;
     let box = document.getElementById('auth-debug-box');
     if(!box){
       box = document.createElement('div');
@@ -3253,7 +3538,7 @@
     pendingPaymentPlan = null; // clear first so we never double-apply or loop
     try{
       await supabaseClient.from('health_history')
-        .update({ paid: true, plan: plan })
+        .update({ paid: true, plan: plan, paid_at: new Date().toISOString() })
         .eq('id', currentHealthHistory.id);
       await loadPatientState();
     } catch(err){
@@ -3290,6 +3575,30 @@
     }
   });
 
+  // ====== INFO PAGE ROUTING (About, Legal, etc.) ======
+  // These are full "pages" inside the single-file app. Navigating to one hides
+  // the marketing content; leaving restores it. Deliberately does nothing while
+  // a dashboard is open so a logged-in patient/staff view is never disrupted.
+  const INFO_PAGE_IDS = ['page-about','page-providers','page-careers','page-privacy','page-terms','page-npp'];
+  function routeInfoPages(){
+    const dashOpen = document.getElementById('dashboard').classList.contains('visible')
+                  || document.getElementById('np-dashboard').classList.contains('visible');
+    const hash = (window.location.hash || '').replace('#','');
+    INFO_PAGE_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.classList.remove('visible');
+    });
+    if(dashOpen) return;
+    if(INFO_PAGE_IDS.indexOf(hash) > -1){
+      document.getElementById('marketing-content').classList.add('hidden-for-dashboard');
+      document.getElementById(hash).classList.add('visible');
+      window.scrollTo(0,0);
+    } else {
+      document.getElementById('marketing-content').classList.remove('hidden-for-dashboard');
+    }
+  }
+  window.addEventListener('hashchange', routeInfoPages);
+
   // ====== STARTUP ======
   // These MUST stay at the very bottom. They read MEDICATION_INFO and other
   // const declarations defined above — calling them earlier in the file throws
@@ -3299,6 +3608,7 @@
   renderFAQ();
   populateMedicationDropdown('store-request-med', false);
   populateMedicationDropdown('np-approve-med', true);
+  routeInfoPages();
 </script>
 
 </body>
