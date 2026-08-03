@@ -18,9 +18,9 @@
     --ink-soft:#33565A;
     --paper:#FAF7F1;        /* warm ivory page */
     --paper-warm:#F0EBE1;   /* deeper warm band */
-    --amber:#DA8D71;        /* coral (locked) */
+    --amber:#DA8D71;        /* coral (from logo) */
     --amber-deep:#BE6446;   /* coral, legible on light */
-    --teal:#7EA8A6;         /* teal (locked) */
+    --teal:#7EA8A6;         /* teal (from logo) */
     --teal-deep:#5C8A88;
     --sage:#4F7A64;
     --line:rgba(31,62,65,0.14);
@@ -1531,8 +1531,8 @@
   // Each link's "after payment" redirect should point back to this page with
   // ?paid=true&plan=Basic (or Premium / Executive) already set up.
   const STRIPE_LINKS = {
-    Basic: 'https://buy.stripe.com/test_eVqcN4fH59eZcY3giJ5wI00',
-    Premium: 'https://buy.stripe.com/test_7sY8wO7azbn77DJ3vX5wI01'
+    Basic:   'https://buy.stripe.com/bJe9AV3uQcDOgdE00l9EI0f',
+    Premium: 'https://buy.stripe.com/8x228t5CY9rCf9A4gB9EI0e'
   };
   // ---- TEST-ONLY helpers (only reachable when ?test=1) ----
   async function markPaidDemo(plan){
@@ -2247,7 +2247,7 @@
         purchased: history.purchased,
         cancelled: history.cancelled,
         cancelReason: history.cancel_reason,
-        onBuy: "goToMedicationCheckout('legacy', null, '" + history.approved_medication + "')",
+        onBuy: "goToMedicationCheckout('legacy', null, '" + history.approved_medication + "', " + getDisplayPrice(history.approved_medication, history.approved_price) + ")",
         onSkip: "markOrderedDemo('legacy', null)",
         onCancel: "openCancelRxModal('legacy', null, '" + history.approved_medication + "')"
       });
@@ -2260,7 +2260,7 @@
         purchased: r.purchased,
         cancelled: r.cancelled,
         cancelReason: r.cancel_reason,
-        onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "')",
+        onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "', " + getDisplayPrice(r.medication, r.price) + ")",
         onSkip: "markOrderedDemo('prescription', '" + r.id + "')",
         onCancel: "openCancelRxModal('prescription', '" + r.id + "', '" + r.medication + "')"
       });
@@ -2319,12 +2319,24 @@
   // reality, but a Payment Link has one fixed price — known prototype
   // simplification (see pre-launch-checklist.md); real per-dose pricing
   // needs a backend creating a Stripe Checkout Session dynamically.
-  const MEDICATION_STRIPE_LINKS = {
-    // LIVE Payment Links — replace each with the real link from Stripe live mode.
-    'Tirzepatide': 'YOUR_LIVE_LINK_TIRZEPATIDE',
-    'Semaglutide': 'YOUR_LIVE_LINK_SEMAGLUTIDE',
-    'Tesamorelin': 'YOUR_LIVE_LINK_TESAMORELIN',
-    'Sermorelin': 'YOUR_LIVE_LINK_SERMORELIN'
+  // Payment Links are keyed by PRICE, not by medication. Pricing is dose-based,
+  // so the same $180 link serves Tirzepatide 2.5mg and Semaglutide 1mg alike.
+  // Adding a new dose only needs a new entry here if it lands on a new price.
+  const MEDICATION_LINKS_BY_PRICE = {
+    140: 'https://buy.stripe.com/bJe5kF4yU0V65z000l9EI0d',
+    150: 'https://buy.stripe.com/aFafZjaXifQ0d1s3cx9EI0c',
+    160: 'https://buy.stripe.com/dRm7sN6H2dHSd1s7sN9EI0b',
+    180: 'https://buy.stripe.com/5kQaEZ7L647i8Lc14p9EI0a',
+    200: 'https://buy.stripe.com/fZueVf1mIcDOaTk4gB9EI09',
+    205: 'https://buy.stripe.com/8x24gB2qM1ZaaTk28t9EI08',
+    220: 'https://buy.stripe.com/fZu14paXieLW4uW8wR9EI07',
+    230: 'https://buy.stripe.com/bJeaEZ0iEbzK5z0eVf9EI06',
+    240: 'https://buy.stripe.com/cNi3cx2qM33e5z07sN9EI05',
+    300: 'https://buy.stripe.com/5kQ8wR5CYcDO4uW4gB9EI04',
+    330: 'https://buy.stripe.com/5kQ6oJ2qM6fq3qSeVf9EI02',
+    360: 'https://buy.stripe.com/8x25kFghCbzKgdEaEZ9EI03',
+    420: 'https://buy.stripe.com/00w6oJ7L67ju9Pg28t9EI01',
+    480: 'https://buy.stripe.com/aFa3cxd5q0V6f9A4gB9EI00'
   };
 
   // A prescription cannot be shipped without a complete address, so this is a
@@ -2346,9 +2358,11 @@
     return false;
   }
 
-  function goToMedicationCheckout(kind, id, medication){
+  function goToMedicationCheckout(kind, id, medication, price){
     if(!requireShippingAddress()) return;
-    const link = MEDICATION_STRIPE_LINKS[medication];
+    // Route by price. If a dose produces a price with no matching Payment Link,
+    // fail loudly rather than sending the patient to a link for a different amount.
+    const link = MEDICATION_LINKS_BY_PRICE[Math.round(parseFloat(price))];
     if(link && link.indexOf('YOUR_') !== 0){
       // In Stripe, set this link's "after payment" redirect to:
       // <site-url>?order_paid=true&rx_kind=<kind>&rx_id=<id or blank for legacy>
@@ -2356,8 +2370,8 @@
     } else {
       // LIVE: never silently mark medication as ordered. A prescription must
       // not be recorded as purchased unless payment actually went through.
-      alert('Checkout is temporarily unavailable for this medication. Please contact info@nuviclinic.com.');
-      console.error('Missing/invalid Stripe link for medication:', medication);
+      alert('We could not open checkout for this prescription. Please contact info@nuviclinic.com and we\'ll sort it out right away.');
+      console.error('No Stripe Payment Link for price:', price, '(' + medication + ')');
     }
   }
 
@@ -3943,7 +3957,10 @@
   // To turn it on, load the site with ?debug=1 on the end, e.g.
   //   https://nuviclinic.com/?debug=1
   // Everything still logs to the browser console either way.
-  const AUTH_DEBUG_ON = new URLSearchParams(window.location.search).get('debug') === '1';
+  // On-screen debug bar is OFF. Everything still logs to the browser console.
+  // To bring the bar back for troubleshooting, change false to:
+  //   new URLSearchParams(window.location.search).get('debug') === '1'
+  const AUTH_DEBUG_ON = false;
   // TEST MODE — add ?test=1 to the URL to expose skip-payment buttons for
   // walking the full flow without real charges. Off by default, so a real
   // patient can never reach them even by accident.
