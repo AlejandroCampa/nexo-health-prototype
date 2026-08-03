@@ -312,6 +312,8 @@
   @media(max-width:860px){ .dash-grid{grid-template-columns:1fr;} }
 
   /* ---- HEALTH HISTORY FORM ---- */
+  .consent-box{background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:13.2px;line-height:1.65;}
+  .consent-box:has(input:checked){border-color:var(--teal);background:rgba(126,168,166,0.08);}
   .form-section-title{font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:var(--amber-deep);margin:28px 0 14px;}
   .form-section-title:first-of-type{margin-top:0;}
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
@@ -680,7 +682,7 @@
         <p style="margin-bottom:18px;">Log your weight weekly to see real progress over time — this is for you, your care team can see it too.</p>
 
         <div class="two-col" style="align-items:flex-end;margin-bottom:20px;">
-          <div class="field"><label>Target weight (lbs)</label><input id="target-weight-input" type="number" step="0.1" placeholder="e.g. 180"></div>
+          <div class="field"><label>Target weight (lbs)</label><input id="target-weight-input" type="number" min="50" max="1000" step="0.1" placeholder="e.g. 180"></div>
           <button class="btn btn-outline" style="width:auto;padding:11px 20px;" onclick="saveTargetWeight()">Save goal</button>
         </div>
 
@@ -688,7 +690,7 @@
 
         <div class="form-section-title">Log this week's weight</div>
         <div class="two-col" style="align-items:flex-end;">
-          <div class="field"><label>Weight (lbs)</label><input id="log-weight-input" type="number" step="0.1" placeholder="e.g. 195"></div>
+          <div class="field"><label>Weight (lbs)</label><input id="log-weight-input" type="number" min="50" max="1000" step="0.1" placeholder="e.g. 195"></div>
           <button class="btn btn-primary" style="width:auto;padding:11px 20px;" onclick="logWeight()">Log weight</button>
         </div>
 
@@ -780,6 +782,11 @@
         <form id="history-form" onsubmit="return handleHistorySubmit(event)">
 
           <div class="hh-step" data-step="1">
+          <div class="form-section-title">About you</div>
+          <div class="field"><label>Full legal name</label><input id="hh-full-name" type="text" placeholder="As it appears on your ID" required></div>
+          <div class="field"><label>Date of birth</label><input id="hh-dob" type="date" required></div>
+          <p style="font-size:12px;color:rgba(31,62,65,0.55);margin:-4px 0 4px;">Your name and date of birth must match your ID — the pharmacy requires them to fill a prescription.</p>
+
           <div class="form-section-title">Primary goal</div>
           <div class="field">
             <select id="hh-goal">
@@ -835,13 +842,13 @@
           <div class="two-col">
             <div class="field"><label>Height</label>
               <div style="display:flex;gap:8px;">
-                <input id="hh-height-ft" type="number" placeholder="5" style="width:70px;">
+                <input id="hh-height-ft" type="number" min="1" max="8" step="1" placeholder="5" style="width:70px;">
                 <span style="align-self:center;font-size:13px;color:rgba(31,62,65,0.5);">ft</span>
-                <input id="hh-height-in" type="number" placeholder="9" style="width:70px;">
+                <input id="hh-height-in" type="number" min="0" max="11" step="1" placeholder="9" style="width:70px;">
                 <span style="align-self:center;font-size:13px;color:rgba(31,62,65,0.5);">in</span>
               </div>
             </div>
-            <div class="field"><label>Weight (lbs)</label><input id="hh-weight" type="number" placeholder="180"></div>
+            <div class="field"><label>Weight (lbs)</label><input id="hh-weight" type="number" min="50" max="1000" step="0.1" placeholder="180"></div>
           </div>
 
           </div>
@@ -863,11 +870,44 @@
             <input id="hh-family-endocrine-detail" class="flag-input" type="text" placeholder="Relationship + type of cancer, if known">
           </div>
 
-          <div class="form-section-title">Consent</div>
-          <label class="checkbox-item" style="margin-top:4px;">
-            <input type="checkbox" id="hh-consent" required>
-            <span>I confirm this information is accurate to the best of my knowledge and understand it will be reviewed by my care team.</span>
-          </label>
+          <div class="form-section-title">Consent & attestation</div>
+          <p style="font-size:13px;color:rgba(31,62,65,0.7);margin-bottom:14px;">Please read each of these. They matter — your provider makes real clinical decisions based on what you've told us.</p>
+
+          <div class="consent-box">
+            <label class="checkbox-item" style="background:transparent;border:none;padding:0;align-items:flex-start;">
+              <input type="checkbox" id="hh-consent-accuracy" required>
+              <span><b>My information is true and complete.</b> I have answered every question honestly and have not left out any medical condition, medication, allergy, surgery, substance use, or family history — including anything I might find embarrassing or think is unimportant. I understand my provider relies on this to decide what is safe to prescribe, and that <b>leaving something out could lead to serious harm, including permanent injury or death.</b> I accept responsibility for the accuracy of what I've provided, and I will tell my care team promptly if anything changes.</span>
+            </label>
+          </div>
+
+          <div class="consent-box">
+            <label class="checkbox-item" style="background:transparent;border:none;padding:0;align-items:flex-start;">
+              <input type="checkbox" id="hh-consent-telehealth" required>
+              <span><b>I consent to telehealth care.</b> I understand my care will be delivered remotely, that no in-person physical examination will be performed, and that this limits what my provider can assess. I understand my provider may determine that telehealth is not appropriate for me and may decline to prescribe.</span>
+            </label>
+          </div>
+
+          <div class="consent-box">
+            <label class="checkbox-item" style="background:transparent;border:none;padding:0;align-items:flex-start;">
+              <input type="checkbox" id="hh-consent-compounded" required>
+              <span><b>I understand compounded medications are not FDA-approved.</b> Medications prepared by a compounding pharmacy are not reviewed by the FDA for safety, effectiveness, or quality the way manufactured drugs are. I have had the opportunity to ask my care team about this.</span>
+            </label>
+          </div>
+
+          <div class="consent-box">
+            <label class="checkbox-item" style="background:transparent;border:none;padding:0;align-items:flex-start;">
+              <input type="checkbox" id="hh-consent-emergency" required>
+              <span><b>This is not emergency care.</b> I understand Nuvi Clinic does not provide urgent or emergency services, and that if I have a medical emergency I will call 911 or go to the nearest emergency room.</span>
+            </label>
+          </div>
+
+          <div class="consent-box">
+            <label class="checkbox-item" style="background:transparent;border:none;padding:0;align-items:flex-start;">
+              <input type="checkbox" id="hh-consent-terms" required>
+              <span>I have read and agree to the <a href="#page-terms" target="_blank">Terms of Service</a>, <a href="#page-privacy" target="_blank">Privacy Policy</a>, and <a href="#page-npp" target="_blank">Notice of Privacy Practices</a>.</span>
+            </label>
+          </div>
+
 
           </div>
 
@@ -972,7 +1012,7 @@
       <div class="field"><label>Medication</label>
         <select id="np-approve-med" onchange="updateNPPricePreview()"></select>
       </div>
-      <div class="field"><label>Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" step="0.1" value="2.5" oninput="updateNPPricePreview()"></div>
+      <div class="field"><label>Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" min="0" step="0.1" value="2.5" oninput="updateNPPricePreview()"></div>
     </div>
     <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(31,62,65,0.65);margin:6px 0 14px;"></div>
     <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="npApprovePrescription()">Approve prescription</button>
@@ -1074,6 +1114,10 @@
     <p>This service is not for medical emergencies. If you are experiencing a medical emergency, call 911 or go to the nearest emergency room.</p>
     <h3>Eligibility</h3>
     <p>You must be 18 or older and physically located in a jurisdiction where our providers are licensed. You agree to give accurate and complete health information — our providers rely on it to make safe decisions about your care.</p>
+    <h3>Your responsibility for the information you give us</h3>
+    <p>Our providers make clinical decisions based on what you tell us. You agree that the health information you provide — including conditions, medications, allergies, surgical history, substance use, and family history — is true, accurate, and complete, and that you have not withheld anything relevant. You agree to promptly update us if anything changes.</p>
+    <p>Withholding or misstating health information can lead to a prescribing decision that would not otherwise have been made, and can cause serious harm. To the fullest extent permitted by law, Nuvi Clinic is not responsible for adverse outcomes that result from information you failed to disclose or misrepresented. [PLACEHOLDER — counsel should review this clause and confirm what is enforceable in Puerto Rico; liability for professional negligence generally cannot be disclaimed.]</p>
+
     <h3>No guarantee of treatment</h3>
     <p>Completing an intake or paying a membership fee does not guarantee you will be prescribed any medication. If our provider determines a treatment isn't clinically appropriate for you, it will not be prescribed.</p>
     <h3>Membership, billing, and cancellation</h3>
@@ -1916,6 +1960,8 @@
     if(!supabaseClient || !currentHealthHistory) return;
     const val = document.getElementById('target-weight-input').value;
     if(!val) return;
+    const n = parseFloat(val);
+    if(isNaN(n) || n < 50 || n > 1000){ alert('Please enter a target weight between 50 and 1000 lbs.'); return; }
     try{
       await supabaseClient.from('health_history')
         .update({ target_weight_lbs: val })
@@ -1930,6 +1976,8 @@
     if(!supabaseClient || !currentUser) return;
     const val = document.getElementById('log-weight-input').value;
     if(!val){ alert('Enter a weight first.'); return; }
+    const n = parseFloat(val);
+    if(isNaN(n) || n < 50 || n > 1000){ alert('Please enter a weight between 50 and 1000 lbs.'); return; }
     try{
       await supabaseClient.from('weight_logs').insert({
         user_id: currentUser.id,
@@ -2232,7 +2280,10 @@
   }
 
   // ====== HEALTH HISTORY STEP NAVIGATION ======
-  const HH_STEP_NAMES = ['Your goal', 'Medical history', 'Surgical, allergies & habits', 'Body markers', 'Family history & consent'];
+  // Bump this whenever the consent wording changes, so it's always provable
+  // which version of the text a given patient actually agreed to.
+  const CONSENT_VERSION = '2026-08-02.v1';
+  const HH_STEP_NAMES = ['About you & your goal', 'Medical history', 'Surgical, allergies & habits', 'Body markers', 'Family history & consent'];
   let hhCurrentStep = 1;
   const HH_TOTAL_STEPS = 5;
 
@@ -2257,7 +2308,33 @@
     if(wrap && wrap.scrollIntoView) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function hhStep(delta){ hhShowStep(hhCurrentStep + delta); }
+  function hhStep(delta){
+    // Going forward off step 1 requires name + DOB — the pharmacy can't fill a
+    // prescription without them, so catching it here beats discovering it at
+    // fulfilment time.
+    if(delta > 0 && hhCurrentStep === 1){
+      const name = document.getElementById('hh-full-name');
+      const dob = document.getElementById('hh-dob');
+      if(name && !name.value.trim()){ alert('Please enter your full legal name.'); name.focus(); return; }
+      if(dob && !dob.value){ alert('Please enter your date of birth.'); dob.focus(); return; }
+    }
+    // Body markers must be physically plausible. The min/max on the inputs
+    // is only a browser hint — anyone can bypass it — so the real check lives
+    // here, before impossible values reach a clinician's chart.
+    if(delta > 0 && hhCurrentStep === 4){
+      const ft = document.getElementById('hh-height-ft');
+      const inch = document.getElementById('hh-height-in');
+      const wt = document.getElementById('hh-weight');
+      const num = el => (el && el.value !== '') ? parseFloat(el.value) : null;
+      const f = num(ft), i = num(inch), w = num(wt);
+
+      if(f !== null && (isNaN(f) || f < 1 || f > 8)){ alert('Please enter a height between 1 and 8 feet.'); ft.focus(); return; }
+      if(i !== null && (isNaN(i) || i < 0 || i > 11)){ alert('Inches must be between 0 and 11.'); inch.focus(); return; }
+      if(w !== null && (isNaN(w) || w < 50 || w > 1000)){ alert('Please enter a weight between 50 and 1000 lbs.'); wt.focus(); return; }
+    }
+
+    hhShowStep(hhCurrentStep + delta);
+  }
 
   function cancelHealthHistoryEdit(){
     // Only allow backing out if they already have a history on file — otherwise
@@ -2278,6 +2355,8 @@
     const h = currentHealthHistory;
     if(h){
       const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = (val === null || val === undefined) ? '' : val; };
+      setVal('hh-full-name', h.full_name);
+      setVal('hh-dob', h.date_of_birth);
       setVal('hh-goal', h.goal);
       setVal('hh-conditions-other', h.conditions_other);
       setVal('hh-surgical', h.surgical_history);
@@ -2297,8 +2376,9 @@
 
       const endo = document.getElementById('hh-family-endocrine');
       if(endo) endo.checked = !!h.family_endocrine_cancer;
-      const consent = document.getElementById('hh-consent');
-      if(consent) consent.checked = !!h.consent;
+      // Consent checkboxes are deliberately NOT pre-ticked on edit. If the
+      // patient is changing their medical history, they should re-affirm that
+      // the new version is accurate rather than inherit an old attestation.
 
       const btn = document.querySelector('#history-form button[type="submit"]');
       if(btn){ btn.textContent = 'Save changes'; btn.disabled = false; }
@@ -2322,6 +2402,8 @@
       } else {
         const heightStr = history.height_ft ? (history.height_ft + "'" + (history.height_in || 0) + '"') : '—';
         medEl.innerHTML = [
+          'Name: <b>' + (history.full_name || '—') + '</b>',
+          'Date of birth: <b>' + (history.date_of_birth || '—') + '</b>',
           'Goal: <b>' + (history.goal || '—') + '</b>',
           'Height / Weight: <b>' + heightStr + ' / ' + (history.weight_lbs || '—') + ' lbs</b>',
           'Conditions: <b>' + (((history.conditions||[]).join(', ')) || 'None reported') + (history.conditions_other ? ', ' + history.conditions_other : '') + '</b>',
@@ -2914,6 +2996,9 @@
 
     const lines = [
       'DOB: ' + (patient.date_of_birth || '—') + '  ·  Shipping: ' + shippingLine,
+      'Attestation: ' + (patient.consented_at
+          ? 'signed ' + new Date(patient.consented_at).toLocaleString() + ' (' + (patient.consent_version || 'version not recorded') + ')'
+          : 'NOT ON FILE'),
       'Goal: ' + (patient.goal || '—'),
       'Conditions: ' + (((patient.conditions||[]).join(', ')) || 'None reported') + (patient.conditions_other ? ' + ' + patient.conditions_other : ''),
       'Surgical history: ' + (patient.surgical_history || '—'),
@@ -3115,6 +3200,12 @@
 
   // ====== HEALTH HISTORY FORM ======
   function showHistoryForm(){
+    // Pre-fill the name they gave at signup so a first-time patient isn't
+    // retyping it — they can still correct it here if it was wrong.
+    const nameEl = document.getElementById('hh-full-name');
+    if(nameEl && !nameEl.value && currentUser && currentUser.user_metadata){
+      nameEl.value = currentUser.user_metadata.full_name || '';
+    }
     document.getElementById('history-form-wrap').style.display = 'block';
     // Must initialise the step navigation here too — this is the path a
     // first-time patient takes, and without it the Back/Next buttons are
@@ -3132,12 +3223,25 @@
       return false;
     }
 
+    // Every attestation must be individually ticked. Checking them one by one
+    // (rather than one blanket box) is the whole point — so enforce it.
+    const consentIds = ['hh-consent-accuracy','hh-consent-telehealth','hh-consent-compounded','hh-consent-emergency','hh-consent-terms'];
+    for(const id of consentIds){
+      const el = document.getElementById(id);
+      if(el && !el.checked){
+        errorBox.innerHTML = '<div style="background:rgba(196,60,60,0.1);color:#B23A3A;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;">Please read and agree to all five statements before submitting.</div>';
+        el.focus();
+        return false;
+      }
+    }
+
     const conditions = Array.from(document.querySelectorAll('#hh-conditions input:checked')).map(i => i.value);
     const family = Array.from(document.querySelectorAll('#hh-family input:checked')).map(i => i.value);
 
     const payload = {
       user_id: currentUser.id,
-      full_name: (currentUser.user_metadata && currentUser.user_metadata.full_name) || '',
+      full_name: document.getElementById('hh-full-name').value,
+      date_of_birth: document.getElementById('hh-dob').value || null,
       email: currentUser.email,
       goal: document.getElementById('hh-goal').value,
       conditions: conditions,
@@ -3153,7 +3257,14 @@
       family_history: family,
       family_endocrine_cancer: document.getElementById('hh-family-endocrine').checked,
       family_endocrine_cancer_detail: document.getElementById('hh-family-endocrine-detail').value,
-      consent: document.getElementById('hh-consent').checked
+      consent_accuracy: document.getElementById('hh-consent-accuracy').checked,
+      consent_telehealth: document.getElementById('hh-consent-telehealth').checked,
+      consent_compounded: document.getElementById('hh-consent-compounded').checked,
+      consent_not_emergency: document.getElementById('hh-consent-emergency').checked,
+      consent_terms: document.getElementById('hh-consent-terms').checked,
+      consented_at: new Date().toISOString(),
+      consent_version: CONSENT_VERSION,
+      consent: true
     };
 
     const submitBtn = document.querySelector('#history-form button[type="submit"]');
