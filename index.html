@@ -1607,25 +1607,25 @@
     'Tirzepatide': {
       category: 'Weight management',
       description: 'Dual GLP-1/GIP agonist. The most effective option we offer for fat loss, dosed once weekly and titrated up slowly.',
-      basePrice: 130, perMg: 20, unit: 'mg',
+      basePrice: 120, perMg: 24, unit: 'mg',
       launched: true, form: 'Compounded injectable, weekly', startingDose: '2.5 mg / wk', startingDoseMg: 2.5
     },
     'Semaglutide': {
       category: 'Weight management',
       description: 'GLP-1 agonist for appetite control and fat loss. Weekly injection, titrated gradually to limit side effects.',
-      basePrice: 140, perMg: 40, unit: 'mg',
+      basePrice: 141, perMg: 37, unit: 'mg',
       launched: true, form: 'Compounded injectable, weekly', startingDose: '0.25 mg / wk', startingDoseMg: 0.25
     },
     'Tesamorelin': {
       category: 'Longevity & recovery',
       description: 'Growth hormone-releasing peptide studied for visceral fat reduction and body composition. Daily dosing.',
-      basePrice: 155, perMg: 0.088, unit: 'mcg',
+      basePrice: 110, perMg: 0.22, unit: 'mcg',
       launched: true, form: 'Compounded injectable, daily', startingDose: '500 mcg / day', startingDoseMg: 500
     },
     'Sermorelin': {
       category: 'Longevity & recovery',
       description: 'Growth hormone-releasing peptide used to support sleep quality, recovery and lean mass. Daily dosing, typically at night.',
-      basePrice: 130, perMg: 0.13, unit: 'mcg',
+      basePrice: 100, perMg: 0.2, unit: 'mcg',
       launched: true, form: 'Compounded injectable, daily', startingDose: '300 mcg / day', startingDoseMg: 300
     },
     'NAD+ Support': {
@@ -1658,11 +1658,14 @@
   }
 
   function calcProtocolPrice(medication, doseMg){
-    const info = MEDICATION_INFO[medication];
-    if(!info) return 0;
-    const dose = parseFloat(doseMg) || 0;
-    return Math.round(info.basePrice + (dose * info.perMg));
+    const m = MEDICATION_INFO[medication];
+    if(!m) return 0;
+    const raw = m.basePrice + (m.perMg * (parseFloat(doseMg) || 0));
+    // Round to the nearest $5 — keeps prices clean and keeps the number of
+    // distinct Stripe Payment Links down as doses titrate up.
+    return Math.round(raw / 5) * 5;
   }
+
 
   function medicationPricePerMgLabel(medication){
     const info = MEDICATION_INFO[medication];
@@ -1809,8 +1812,8 @@
   const MEDICATION_CHECKOUT_PRICE = {
     'Tirzepatide': 180,
     'Semaglutide': 150,
-    'Tesamorelin': 199,
-    'Sermorelin': 169
+    'Tesamorelin': 220,
+    'Sermorelin': 140
   };
 
   function getDisplayPrice(medication, fallbackPrice){
