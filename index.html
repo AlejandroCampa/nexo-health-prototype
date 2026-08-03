@@ -1049,6 +1049,50 @@
       </div>
     </div>
 
+    <!-- PHYSICIAN OVERSIGHT — only rendered for role physician/admin -->
+    <div id="physician-oversight" style="display:none;margin-bottom:22px;">
+      <div class="dash-grid" style="grid-template-columns:1fr;">
+        <div class="dash-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
+            <h3 style="margin:0;">Clinic oversight</h3>
+            <span class="status-pill status-active">Physician view</span>
+          </div>
+          <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:18px;">Every provider's working hours and the whole clinic's booked schedule.</p>
+
+          <div class="form-section-title">Provider working hours</div>
+          <div id="oversight-availability" style="margin-bottom:18px;"></div>
+
+          <div class="form-section-title">Set / change hours</div>
+          <div class="two-col">
+            <div class="field"><label>Provider</label><select id="avail-provider"></select></div>
+            <div class="field"><label>Day</label>
+              <select id="avail-day">
+                <option value="0">Sunday</option><option value="1">Monday</option>
+                <option value="2">Tuesday</option><option value="3">Wednesday</option>
+                <option value="4">Thursday</option><option value="5">Friday</option>
+                <option value="6">Saturday</option>
+              </select>
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="field"><label>Start</label><input id="avail-start" type="time" value="08:00"></div>
+            <div class="field"><label>End</label><input id="avail-end" type="time" value="17:00"></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
+            <button class="btn btn-primary" style="width:auto;padding:10px 20px;" onclick="saveAvailability()">Save hours</button>
+            <button class="btn btn-outline" style="width:auto;padding:10px 20px;" onclick="clearAvailabilityForDay()">Clear this day</button>
+          </div>
+
+          <div class="form-section-title">Clinic schedule — next 14 days</div>
+          <p style="font-size:12.5px;color:rgba(31,62,65,0.55);margin-bottom:10px;">Booked slots are removed from patient availability automatically.</p>
+          <div id="oversight-schedule" style="max-height:340px;overflow-y:auto;"></div>
+
+          <div class="form-section-title">Provider hours logged — last 30 days</div>
+          <div id="oversight-timesheets"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="dash-grid" style="grid-template-columns:1fr;margin-bottom:22px;">
       <div class="dash-card">
         <h3 style="margin-bottom:14px;">Today's & upcoming interviews</h3>
@@ -3103,6 +3147,166 @@
     showMarketing();
   }
 
+
+  // ====== PHYSICIAN OVERSIGHT ======
+  // Only reachable for role 'physician' or 'admin'. The panel is hidden for an
+  // NP, and the database policies enforce the same rule server-side — an NP
+  // can only ever write their own hours, whatever the UI shows.
+  let isPhysician = false;
+  let staffRoster = [];
+  const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  async function initPhysicianOversight(staffRow){
+    isPhysician = !!(staffRow && (staffRow.role === 'physician' || staffRow.role === 'admin'));
+    const panel = document.getElementById('physician-oversight');
+    if(!panel) return;
+    if(!isPhysician){ panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+
+    const { data: roster } = await supabaseClient.from('staff').select('*').order('full_name');
+    staffRoster = roster || [];
+    const sel = document.getElementById('avail-provider');
+    if(sel){
+      sel.innerHTML = staffRoster.map(s =>
+        '<option value="' + s.user_id + '">' + (s.full_name || s.user_id.slice(0,8)) +
+        ' (' + (s.role || 'staff') + ')</option>').join('');
+    }
+    await Promise.all([renderOversightAvailability(), renderOversightSchedule(), renderOversightTimesheets()]);
+  }
+
+  function providerName(userId){
+    const s = staffRoster.find(x => x.user_id === userId);
+    return s ? (s.full_name || 'Provider') : 'Unassigned';
+  }
+
+  async function renderOversightAvailability(){
+    const wrap = document.getElementById('oversight-availability');
+    if(!wrap) return;
+    const { data } = await supabaseClient.from('np_availability').select('*');
+    const rows = data || [];
+    if(rows.length === 0){
+      wrap.innerHTML = '<p class="np-empty">No working hours set yet — patients cannot book until at least one provider has hours.</p>';
+      return;
+    }
+    // Group by provider, then day
+    const byProvider = {};
+    rows.forEach(r => {
+      (byProvider[r.np_user_id] = byProvider[r.np_user_id] || []).push(r);
+    });
+    wrap.innerHTML = Object.keys(byProvider).map(uid => {
+      const days = byProvider[uid].sort((a,b) => a.day_of_week - b.day_of_week)
+        .map(r => '<div class="dash-protocol-row"><div><div class="name" style="font-size:13px;">'
+          + DAY_NAMES[r.day_of_week] + '</div><div class="meta">' + r.start_time + ' – ' + r.end_time + '</div></div>'
+          + '<button class="btn btn-outline" style="width:auto;padding:4px 10px;font-size:11.5px;" '
+          + 'onclick="removeAvailability(\'' + r.id + '\')">Remove</button></div>').join('');
+      return '<div style="margin-bottom:14px;"><div style="font-weight:600;font-size:14px;margin-bottom:4px;">'
+        + providerName(uid) + '</div>' + days + '</div>';
+    }).join('');
+  }
+
+  async function saveAvailability(){
+    if(!isPhysician){ alert('Only a physician or admin can change provider hours.'); return; }
+    const np = document.getElementById('avail-provider').value;
+    const day = parseInt(document.getElementById('avail-day').value, 10);
+    const start = document.getElementById('avail-start').value;
+    const end = document.getElementById('avail-end').value;
+    if(!np || !start || !end){ alert('Pick a provider and a start/end time.'); return; }
+    if(start >= end){ alert('End time must be after start time.'); return; }
+    try{
+      // Replace that provider's window for that day rather than stacking duplicates
+      await supabaseClient.from('np_availability').delete().eq('np_user_id', np).eq('day_of_week', day);
+      const { error } = await supabaseClient.from('np_availability')
+        .insert({ np_user_id: np, day_of_week: day, start_time: start, end_time: end });
+      if(error) throw error;
+      npAvailabilityCache = null;   // patient-facing calendar must re-read
+      await renderOversightAvailability();
+      alert('Hours saved. Patient booking updates immediately.');
+    } catch(err){
+      alert('Could not save hours: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  async function clearAvailabilityForDay(){
+    if(!isPhysician){ alert('Only a physician or admin can change provider hours.'); return; }
+    const np = document.getElementById('avail-provider').value;
+    const day = parseInt(document.getElementById('avail-day').value, 10);
+    if(!confirm('Remove all hours for ' + providerName(np) + ' on ' + DAY_NAMES[day] + '?')) return;
+    try{
+      await supabaseClient.from('np_availability').delete().eq('np_user_id', np).eq('day_of_week', day);
+      npAvailabilityCache = null;
+      await renderOversightAvailability();
+    } catch(err){ alert('Could not clear: ' + (err.message || 'unknown error')); }
+  }
+
+  async function removeAvailability(id){
+    if(!confirm('Remove this working window?')) return;
+    try{
+      await supabaseClient.from('np_availability').delete().eq('id', id);
+      npAvailabilityCache = null;
+      await renderOversightAvailability();
+    } catch(err){ alert('Could not remove: ' + (err.message || 'unknown error')); }
+  }
+
+  async function renderOversightSchedule(){
+    const wrap = document.getElementById('oversight-schedule');
+    if(!wrap) return;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const end = new Date(today); end.setDate(end.getDate() + 14);
+    const iso = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+
+    const { data } = await supabaseClient.from('appointments').select('*')
+      .gte('appointment_date', iso(today)).lte('appointment_date', iso(end))
+      .neq('status', 'cancelled').order('appointment_date').order('appointment_time');
+    const appts = data || [];
+    if(appts.length === 0){
+      wrap.innerHTML = '<p class="np-empty">Nothing booked in the next 14 days.</p>';
+      return;
+    }
+    const byDate = {};
+    appts.forEach(a => { (byDate[a.appointment_date] = byDate[a.appointment_date] || []).push(a); });
+    wrap.innerHTML = Object.keys(byDate).sort().map(date => {
+      const label = new Date(date + 'T00:00:00').toLocaleDateString(undefined,
+        { weekday:'short', month:'short', day:'numeric' });
+      const items = byDate[date].map(a =>
+        '<div class="dash-protocol-row"><div><div class="name" style="font-size:13px;">'
+        + a.appointment_time + ' — ' + (a.type === 'physician_visit' ? 'Physician visit' : 'NP interview')
+        + '</div><div class="meta">Ticket ' + (a.ticket_number || '—')
+        + (a.np_user_id ? ' · ' + providerName(a.np_user_id) : '')
+        + '</div></div><span class="rx-badge">' + (a.status || 'scheduled') + '</span></div>').join('');
+      return '<div style="margin-bottom:12px;"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">'
+        + label + ' <span style="font-weight:400;color:rgba(31,62,65,0.5);">('
+        + byDate[date].length + ' booked)</span></div>' + items + '</div>';
+    }).join('');
+  }
+
+  async function renderOversightTimesheets(){
+    const wrap = document.getElementById('oversight-timesheets');
+    if(!wrap) return;
+    const since = new Date(); since.setDate(since.getDate() - 30);
+    const { data } = await supabaseClient.from('staff_timesheet').select('*')
+      .gte('clock_in', since.toISOString());
+    const rows = data || [];
+    if(rows.length === 0){
+      wrap.innerHTML = '<p class="np-empty">No shifts logged in the last 30 days.</p>';
+      return;
+    }
+    const totals = {};
+    rows.forEach(r => {
+      if(!r.clock_out) return;
+      const hrs = (new Date(r.clock_out) - new Date(r.clock_in)) / 3600000;
+      totals[r.staff_user_id] = (totals[r.staff_user_id] || 0) + hrs;
+    });
+    const openNow = rows.filter(r => !r.clock_out);
+    wrap.innerHTML = Object.keys(totals).map(uid =>
+      '<div class="dash-protocol-row"><div><div class="name" style="font-size:13px;">'
+      + providerName(uid) + '</div><div class="meta">last 30 days</div></div>'
+      + '<div class="meta">' + totals[uid].toFixed(1) + ' hrs</div></div>').join('')
+      + (openNow.length
+          ? '<p style="font-size:12.5px;color:var(--sage);margin-top:8px;">🟢 Currently clocked in: '
+            + openNow.map(r => providerName(r.staff_user_id)).join(', ') + '</p>'
+          : '');
+  }
+
   // ====== NP DASHBOARD ======
   let npPatients = [];
   let npCurrentPatientId = null;
@@ -3118,7 +3322,12 @@
     document.getElementById('np-dashboard').classList.add('visible');
     document.getElementById('nav-cta').style.display = 'none';
     document.getElementById('np-welcome').textContent = 'Welcome, ' + currentStaffName;
+    if(staffRow && (staffRow.role === 'physician' || staffRow.role === 'admin')){
+      const sub = document.querySelector('#np-dashboard .dash-head p');
+      if(sub) sub.textContent = 'Patients, prescriptions, and oversight of the whole care team.';
+    }
     await loadNPData();
+    await initPhysicianOversight(staffRow);
   }
 
   async function loadNPData(){
