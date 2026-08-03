@@ -704,7 +704,7 @@
             </div>
           </div>
 
-          <div id="test-skip-membership" style="gap:10px;margin-top:16px;">
+          <div id="test-skip-membership" style="display:none;gap:10px;margin-top:16px;">
             <p style="font-size:11.5px;font-family:'IBM Plex Mono',monospace;color:#B23A3A;margin-bottom:8px;">TEST MODE — skips real payment</p>
             <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="markPaidDemo('Basic')">Skip: mark paid (Basic)</button>
             <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="markPaidDemo('Premium')">Skip: mark paid (Premium)</button>
@@ -1532,7 +1532,7 @@
 
      >>> SET THIS TO false BEFORE ANY REAL PATIENT USES THE SITE <<<
      ============================================================ */
-  const TEST_MODE = true;
+  const TEST_MODE = false;
 
   // ====== SUPABASE CONFIG ======
   // 1. Create a project at supabase.com
