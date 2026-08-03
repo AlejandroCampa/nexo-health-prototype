@@ -335,7 +335,6 @@
   .ticket-number{font-family:'IBM Plex Mono',monospace;font-size:26px;letter-spacing:0.05em;color:var(--amber);margin:8px 0;}
 
   /* ---- VIDEO ROOM ---- */
-  .demo-tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:rgba(217,140,43,0.14);color:var(--amber-deep);padding:4px 10px;border-radius:100px;display:inline-block;margin-bottom:12px;}
   .video-shell{background:#0B1420;border-radius:16px;overflow:hidden;position:relative;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;}
   .video-shell video{width:100%;height:100%;object-fit:cover;}
   .video-waiting{color:rgba(247,245,240,0.6);font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:center;padding:0 20px;}
@@ -358,10 +357,6 @@
 </style>
 </head>
 <body>
-
-<div style="position:sticky;top:0;z-index:210;height:38px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:#B23A3A;color:#FFFFFF;text-align:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;letter-spacing:0.03em;">
-  ⚠ TESTING — THIS SITE IS NOT FINISHED. NOT A LIVE MEDICAL SERVICE YET.
-</div>
 
 <header>
   <nav>
@@ -391,7 +386,7 @@
         <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake')">Start your visit — $79/mo</a>
         <a class="btn btn-outline" href="#protocols">See protocols</a>
       </div>
-      <p class="hero-note">Every prescription is reviewed by a physician before it's filled. This is a working prototype for internal review, not a live medical service.</p>
+      <p class="hero-note">Every prescription is reviewed by a licensed physician before it's filled. No insurance required.</p>
     </div>
     <div class="rx-pad">
       <div class="rx-pad-head">Nuvi Clinic · Clinical Summary</div>
@@ -477,7 +472,7 @@
     <div class="fda-disclaimer">
       <b>A note on compounded medications:</b> compounded medications are not FDA-approved or evaluated by the FDA for safety, effectiveness, or quality the way manufactured brand-name drugs are. They're prepared by a licensed compounding pharmacy under an individual prescription from your physician. Your care team can answer questions about what's right for you.
     </div>
-    <p class="protocol-disclaimer">Prototype content — dosing shown for internal proposal purposes only. Final formulary, pricing, and clinical protocols to be set by the supervising physician and 503A pharmacy partner in accordance with Puerto Rico and DEA/FDA compounding regulations.</p>
+    <p class="protocol-disclaimer">Starting doses shown are typical starting points only. Your actual medication and dose are determined by your provider based on your individual health history and response to treatment.</p>
   </div>
 </section>
 
@@ -604,11 +599,7 @@
               <button class="btn btn-primary" style="width:100%;background:var(--amber);color:var(--ink);" onclick="goToCheckout('Premium')">Continue with Premium</button>
             </div>
           </div>
-          <p class="demo-tag" style="margin-top:16px;">Demo only — skips real Stripe checkout for faster testing</p>
-          <div style="display:flex;gap:10px;">
-            <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="markPaidDemo('Basic')">Skip: mark paid (Basic)</button>
-            <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="markPaidDemo('Premium')">Skip: mark paid (Premium)</button>
-          </div>
+
         </div>
 
         <div class="stage-view" id="stage-need-schedule" style="display:none;">
@@ -743,7 +734,7 @@
             <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;">
             <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="sendMessage()">Send</button>
           </div>
-          <p class="demo-tag" style="margin-top:12px;">Demo — this is real text-based messaging (saved to the database), not real SMS/phone yet. Doctor replies are added manually in Supabase for now.</p>
+          <p style="margin-top:12px;font-size:12.5px;color:rgba(31,62,65,0.5);">Messages are seen by your care team during business hours. This is not for emergencies — call 911 if you have a medical emergency.</p>
         </div>
 
         <div class="dash-card">
@@ -1117,7 +1108,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>© 2026 Nuvi Clinic. Prototype for internal / partner review — not a live medical service. Placeholder branding, pricing, and formulary pending final legal and clinical review.</p>
+      <p>© 2026 Nuvi Clinic. Telehealth services provided by licensed providers. Not for medical emergencies — call 911. Compounded medications are not FDA-approved or evaluated for safety, effectiveness, or quality.</p>
       <a href="javascript:void(0)" onclick="openModal('staff')" style="font-size:12px;color:rgba(31,62,65,0.4);">Staff login</a>
     </div>
   </div>
@@ -1289,7 +1280,7 @@
     <button class="modal-close" onclick="closeModal('soon')" aria-label="Close">✕</button>
     <span class="modal-eyebrow">Coming soon</span>
     <h3 id="soon-title">This page isn't built yet</h3>
-    <p class="modal-sub">This is a prototype for internal and pharmacy-partner review — this section will be built out for the live version of the site.</p>
+    <p class="modal-sub">This section is coming soon. In the meantime, contact info@nuviclinic.com and we'll help you directly.</p>
     <a class="btn btn-outline" href="javascript:void(0)" onclick="closeModal('soon')" style="display:inline-flex;width:auto;padding:11px 24px;">Close</a>
   </div>
 </div>
@@ -1344,25 +1335,14 @@
     if(link && link.indexOf('YOUR_') !== 0){
       window.location.href = link;
     } else {
-      // No real Stripe link configured for this plan — mark paid directly so testing isn't blocked
-      markPaidDemo(plan);
+      // LIVE: never silently mark a membership paid. If the Stripe link is
+      // missing or misconfigured, that is a real fault and must surface, not
+      // quietly grant a paid membership no money was collected for.
+      alert('Checkout is temporarily unavailable for this plan. Please contact info@nuviclinic.com and we\'ll get you set up.');
+      console.error('Missing/invalid Stripe link for plan:', plan);
     }
   }
 
-  async function markPaidDemo(plan){
-    if(!supabaseClient){ alert('Debug: supabaseClient is not connected.'); return; }
-    if(!currentHealthHistory){ alert('Debug: currentHealthHistory is empty — the page may not have loaded your health history record yet. Try refreshing the dashboard.'); return; }
-    try{
-      const { error } = await supabaseClient.from('health_history')
-        .update({ paid: true, plan: plan, paid_at: new Date().toISOString() })
-        .eq('id', currentHealthHistory.id);
-      if(error) throw error;
-      alert('Success — marked as paid (' + plan + '). Reloading your dashboard now.');
-      await loadPatientState();
-    } catch(err){
-      alert('Could not mark as paid: ' + (err.message || JSON.stringify(err) || 'unknown error'));
-    }
-  }
   // ==============================
 
   function openModal(name, plan){
@@ -1926,7 +1906,6 @@
         cancelled: history.cancelled,
         cancelReason: history.cancel_reason,
         onBuy: "goToMedicationCheckout('legacy', null, '" + history.approved_medication + "')",
-        onSkip: "markOrderedDemo('legacy', null)",
         onCancel: "openCancelRxModal('legacy', null, '" + history.approved_medication + "')"
       });
     }
@@ -1939,7 +1918,6 @@
         cancelled: r.cancelled,
         cancelReason: r.cancel_reason,
         onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "')",
-        onSkip: "markOrderedDemo('prescription', '" + r.id + "')",
         onCancel: "openCancelRxModal('prescription', '" + r.id + "', '" + r.medication + "')"
       });
     });
@@ -1973,7 +1951,6 @@
         + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(31,62,65,0.45);">Cancel</a>';
     } else {
       actionHtml = '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Buy</button>'
-        + '<br><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;margin-top:6px;" onclick="' + item.onSkip + '">Skip payment (testing)</button>'
         + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(31,62,65,0.45);">Cancel</a>';
     }
 
@@ -2009,29 +1986,10 @@
       // <site-url>?order_paid=true&rx_kind=<kind>&rx_id=<id or blank for legacy>
       window.location.href = link;
     } else {
-      // No real Stripe link set up yet for this medication — fall back to
-      // marking it ordered directly so testing isn't blocked.
-      markOrderedDemo(kind, id);
-    }
-  }
-
-  async function markOrderedDemo(kind, id){
-    if(!supabaseClient) return;
-    try{
-      if(kind === 'legacy'){
-        if(!currentHealthHistory) return;
-        await supabaseClient.from('health_history')
-          .update({ purchased: true, purchased_at: new Date().toISOString() })
-          .eq('id', currentHealthHistory.id);
-      } else {
-        await supabaseClient.from('prescriptions')
-          .update({ purchased: true, purchased_at: new Date().toISOString() })
-          .eq('id', id);
-      }
-      alert('Order placed. (Skipped real Stripe checkout for testing.)');
-      await loadPatientState();
-    } catch(err){
-      alert('Could not place order: ' + (err.message || 'unknown error'));
+      // LIVE: never silently mark medication as ordered. A prescription must
+      // not be recorded as purchased unless payment actually went through.
+      alert('Checkout is temporarily unavailable for this medication. Please contact info@nuviclinic.com.');
+      console.error('Missing/invalid Stripe link for medication:', medication);
     }
   }
 
