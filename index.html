@@ -2953,9 +2953,14 @@
 
   if(supabaseClient){
     supabaseClient.auth.onAuthStateChange((event, session) => {
+      // IMPORTANT: only respond to events that genuinely mean "logged in" or
+      // "logged out". onAuthStateChange also fires INITIAL_SESSION with a null
+      // session while Supabase is still parsing the #access_token out of the
+      // URL after a magic-link click — reacting to that would bounce the user
+      // back to the marketing page before the real SIGNED_IN event arrives.
       if(session && session.user){
         routeUserSession(session.user);
-      } else {
+      } else if(event === 'SIGNED_OUT'){
         showMarketing();
       }
     });
@@ -2990,15 +2995,20 @@
   })();
 
   // Safety net: Supabase's client normally strips the #access_token=... hash
-  // from the URL itself once it's finished reading it. If that somehow doesn't
-  // happen, force it clean shortly after load — otherwise a stale token can get
-  // baked into the *next* magic-link email's redirect target and cause a
-  // corrupted double-hash URL on the next login attempt.
+  // from the URL itself once it's finished reading it. Only force it clean if
+  // a session actually exists — a blind timer could otherwise wipe the token
+  // out of the URL before Supabase has finished parsing it on a slow load,
+  // which would silently break the login entirely.
   setTimeout(function(){
+    if(!supabaseClient) return;
     if(window.location.hash && window.location.hash.indexOf('access_token') > -1){
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+      supabaseClient.auth.getSession().then(({ data }) => {
+        if(data.session){
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        }
+      });
     }
-  }, 2000);
+  }, 3000);
 
   async function applyPendingPayment(){
     if(!pendingPaymentPlan || !supabaseClient || !currentHealthHistory) return;
