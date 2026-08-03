@@ -247,6 +247,13 @@
   }
 
   /* ---- DASHBOARD ---- */
+  .account-icon-btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:40px;height:40px;border-radius:50%;
+    border:1px solid var(--line);background:var(--white);color:var(--ink);
+    cursor:pointer;transition:background .2s,border-color .2s;
+  }
+  .account-icon-btn:hover{background:var(--paper-warm);border-color:var(--teal);}
   #dashboard{display:none;padding:56px 0 88px;}
   #dashboard.visible{display:block;}
   #np-dashboard{display:none;padding:56px 0 88px;}
@@ -538,8 +545,10 @@
         <h1 id="dash-welcome">Welcome</h1>
         <p>Here's where things stand with your care.</p>
       </div>
-      <div style="display:flex;align-items:center;gap:16px;">
-        <a href="javascript:void(0)" onclick="openSettingsModal()" style="font-size:13px;color:rgba(31,62,65,0.5);">Settings</a>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="account-icon-btn" onclick="openSettingsModal()" title="My account" aria-label="My account">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
         <button class="btn btn-outline dash-logout" onclick="handleLogout()">Log out</button>
       </div>
     </div>
@@ -865,7 +874,12 @@
         <h1 id="np-welcome">NP Dashboard</h1>
         <p>Patients, interviews, and prescriptions awaiting your review.</p>
       </div>
-      <button class="btn btn-outline dash-logout" onclick="handleLogout()">Log out</button>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="account-icon-btn" onclick="openStaffAccountModal()" title="My account" aria-label="My account">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
+        <button class="btn btn-outline dash-logout" onclick="handleLogout()">Log out</button>
+      </div>
     </div>
 
     <div class="dash-grid" style="grid-template-columns:1fr;margin-bottom:22px;">
@@ -1043,6 +1057,35 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-staff-account" onclick="closeOnOverlay(event,'staff-account')">
+  <div class="modal" style="max-width:560px;">
+    <button class="modal-close" onclick="closeModal('staff-account')" aria-label="Close">✕</button>
+    <span class="modal-eyebrow">My account</span>
+    <h3 id="staff-acct-name">—</h3>
+    <p class="modal-sub" id="staff-acct-role">—</p>
+
+    <div style="background:var(--paper-warm);border-radius:12px;padding:16px;margin-bottom:20px;font-size:13.5px;line-height:1.8;">
+      <div>Email: <b id="staff-acct-email">—</b></div>
+      <div>Patients managed: <b id="staff-acct-patients">—</b></div>
+      <div>Interviews completed: <b id="staff-acct-interviews">—</b></div>
+      <div>Prescriptions approved: <b id="staff-acct-rx">—</b></div>
+    </div>
+
+    <div class="form-section-title">Timesheet</div>
+    <div id="staff-clock-status" style="font-size:13.5px;margin-bottom:10px;">—</div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px;" onclick="staffClockIn()">Clock in</button>
+      <button class="btn btn-outline" style="width:auto;padding:10px 20px;" onclick="staffClockOut()">Clock out</button>
+    </div>
+    <div id="staff-timesheet-list" style="max-height:200px;overflow-y:auto;margin-bottom:22px;"></div>
+
+    <div class="form-section-title">Change password</div>
+    <div class="field"><label for="staff-new-pass">New password</label><input id="staff-new-pass" type="password" placeholder="At least 6 characters"></div>
+    <div class="field"><label for="staff-new-pass2">Confirm new password</label><input id="staff-new-pass2" type="password"></div>
+    <button class="btn btn-outline" style="width:auto;padding:10px 20px;" onclick="changePassword('staff-new-pass','staff-new-pass2')">Update password</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-settings" onclick="closeOnOverlay(event,'settings')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('settings')" aria-label="Close">✕</button>
@@ -1053,6 +1096,16 @@
       <div>Plan: <b id="settings-plan">—</b></div>
       <div>Status: <b id="settings-status">—</b></div>
     </div>
+
+    <div class="form-section-title">My medical information</div>
+    <div id="settings-medical-info" style="background:var(--paper-warm);border-radius:12px;padding:16px;margin-bottom:8px;font-size:13px;line-height:1.8;"></div>
+    <p style="font-size:12px;color:rgba(31,62,65,0.5);margin-bottom:22px;">To correct anything here, message your care team — medical records are updated by your provider.</p>
+
+    <div class="form-section-title">Password</div>
+    <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:12px;">You normally log in with an email link, but you can set a password here if you prefer.</p>
+    <div class="field"><label for="patient-new-pass">New password</label><input id="patient-new-pass" type="password" placeholder="At least 6 characters"></div>
+    <div class="field"><label for="patient-new-pass2">Confirm new password</label><input id="patient-new-pass2" type="password"></div>
+    <button class="btn btn-outline" style="width:auto;padding:10px 20px;margin-bottom:24px;" onclick="changePassword('patient-new-pass','patient-new-pass2')">Set password</button>
 
     <div class="form-section-title">Shipping & identity</div>
     <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:12px;">Required before any medication can be prescribed and shipped — the pharmacy needs this to fulfill your prescription.</p>
@@ -1879,11 +1932,150 @@
   }
 
   // ====== SETTINGS / CANCEL MEMBERSHIP ======
+  // ====== PASSWORD CHANGE (shared by patient + staff) ======
+  async function changePassword(fieldId, confirmFieldId){
+    if(!supabaseClient || !currentUser) return;
+    const pass = document.getElementById(fieldId).value;
+    const pass2 = document.getElementById(confirmFieldId).value;
+    if(!pass || pass.length < 6){ alert('Password must be at least 6 characters.'); return; }
+    if(pass !== pass2){ alert('The two passwords do not match.'); return; }
+    try{
+      const { error } = await supabaseClient.auth.updateUser({ password: pass });
+      if(error) throw error;
+      document.getElementById(fieldId).value = '';
+      document.getElementById(confirmFieldId).value = '';
+      alert('Password updated.');
+    } catch(err){
+      alert('Could not update password: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // ====== STAFF ACCOUNT + TIMESHEET ======
+  async function openStaffAccountModal(){
+    if(!currentUser) return;
+    document.getElementById('staff-acct-name').textContent = currentStaffName || currentUser.email;
+    document.getElementById('staff-acct-email').textContent = currentUser.email;
+
+    try{
+      const { data: staffRow } = await supabaseClient.from('staff').select('*').eq('user_id', currentUser.id).maybeSingle();
+      document.getElementById('staff-acct-role').textContent = staffRow && staffRow.role
+        ? (staffRow.role === 'np' ? 'Nurse Practitioner' : staffRow.role === 'physician' ? 'Physician' : 'Admin')
+        : 'Staff';
+    } catch(err){ /* non-fatal */ }
+
+    document.getElementById('staff-acct-patients').textContent = npPatients.length;
+
+    try{
+      const { data: appts } = await supabaseClient.from('appointments')
+        .select('id').eq('np_user_id', currentUser.id).eq('status', 'completed');
+      document.getElementById('staff-acct-interviews').textContent = (appts || []).length;
+    } catch(err){
+      document.getElementById('staff-acct-interviews').textContent = '—';
+    }
+
+    // Approved prescriptions is a clinic-wide count, not per-staff — the
+    // prescriptions table doesn't record which staff member approved each one.
+    try{
+      const { data: rx } = await supabaseClient.from('prescriptions').select('id').eq('status','approved');
+      document.getElementById('staff-acct-rx').textContent = (rx || []).length + ' (clinic-wide)';
+    } catch(err){
+      document.getElementById('staff-acct-rx').textContent = '—';
+    }
+
+    await loadTimesheet();
+    openModal('staff-account');
+  }
+
+  let openShiftId = null;
+  async function loadTimesheet(){
+    if(!supabaseClient || !currentUser) return;
+    const statusEl = document.getElementById('staff-clock-status');
+    const listEl = document.getElementById('staff-timesheet-list');
+    try{
+      const { data: shifts } = await supabaseClient.from('staff_timesheet')
+        .select('*').eq('staff_user_id', currentUser.id)
+        .order('clock_in', { ascending: false }).limit(20);
+      const rows = shifts || [];
+
+      const open = rows.find(s => !s.clock_out);
+      openShiftId = open ? open.id : null;
+      statusEl.textContent = open
+        ? '🟢 Currently clocked in since ' + new Date(open.clock_in).toLocaleString()
+        : '⚪ Not clocked in.';
+
+      let totalMs = 0;
+      rows.forEach(s => { if(s.clock_out) totalMs += (new Date(s.clock_out) - new Date(s.clock_in)); });
+      const totalHrs = (totalMs / 3600000).toFixed(1);
+
+      if(rows.length === 0){
+        listEl.innerHTML = '<p class="np-empty">No shifts recorded yet.</p>';
+        return;
+      }
+      listEl.innerHTML = '<div class="form-section-title">Recent shifts — ' + totalHrs + ' hrs total</div>'
+        + rows.map(s => {
+            const inT = new Date(s.clock_in).toLocaleString();
+            const outT = s.clock_out ? new Date(s.clock_out).toLocaleString() : 'in progress';
+            const dur = s.clock_out ? ((new Date(s.clock_out) - new Date(s.clock_in))/3600000).toFixed(1) + ' hrs' : '—';
+            return '<div class="dash-protocol-row"><div><div class="name" style="font-size:13px;">' + inT + '</div>'
+              + '<div class="meta">→ ' + outT + '</div></div><div class="meta">' + dur + '</div></div>';
+          }).join('');
+    } catch(err){
+      statusEl.textContent = 'Could not load timesheet: ' + (err.message || 'unknown error');
+    }
+  }
+
+  async function staffClockIn(){
+    if(!supabaseClient || !currentUser) return;
+    if(openShiftId){ alert('You are already clocked in.'); return; }
+    try{
+      await supabaseClient.from('staff_timesheet').insert({
+        staff_user_id: currentUser.id,
+        staff_name: currentStaffName,
+        clock_in: new Date().toISOString()
+      });
+      await loadTimesheet();
+    } catch(err){
+      alert('Could not clock in: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  async function staffClockOut(){
+    if(!supabaseClient || !currentUser) return;
+    if(!openShiftId){ alert('You are not currently clocked in.'); return; }
+    try{
+      await supabaseClient.from('staff_timesheet')
+        .update({ clock_out: new Date().toISOString() }).eq('id', openShiftId);
+      await loadTimesheet();
+    } catch(err){
+      alert('Could not clock out: ' + (err.message || 'unknown error'));
+    }
+  }
+
   function openSettingsModal(){
     if(!currentUser) return;
     document.getElementById('settings-email').textContent = currentUser.email;
     const history = currentHealthHistory;
     document.getElementById('settings-plan').textContent = (history && history.plan) || 'Not selected yet';
+
+    // Read-only summary of what's on file medically
+    const medEl = document.getElementById('settings-medical-info');
+    if(medEl){
+      if(!history){
+        medEl.innerHTML = '<span class="np-empty">No health history submitted yet.</span>';
+      } else {
+        const heightStr = history.height_ft ? (history.height_ft + "'" + (history.height_in || 0) + '"') : '—';
+        medEl.innerHTML = [
+          'Goal: <b>' + (history.goal || '—') + '</b>',
+          'Height / Weight: <b>' + heightStr + ' / ' + (history.weight_lbs || '—') + ' lbs</b>',
+          'Conditions: <b>' + (((history.conditions||[]).join(', ')) || 'None reported') + (history.conditions_other ? ', ' + history.conditions_other : '') + '</b>',
+          'Surgical history: <b>' + (history.surgical_history || '—') + '</b>',
+          'Allergies: <b>' + (history.allergies || '—') + '</b>',
+          'Alcohol: <b>' + (history.alcohol_use || '—') + '</b> · Smoking: <b>' + (history.smoking_use || '—') + '</b>',
+          'Family history: <b>' + (((history.family_history||[]).join(', ')) || 'None reported') + '</b>',
+          history.approved_medication ? ('Current prescription: <b>' + history.approved_medication + ' — ' + (history.approved_dose || '') + '</b>') : 'Current prescription: <b>None yet</b>'
+        ].map(l => '<div>' + l + '</div>').join('');
+      }
+    }
 
     document.getElementById('settings-dob').value = (history && history.date_of_birth) || '';
     document.getElementById('settings-address1').value = (history && history.shipping_address1) || '';
@@ -2964,14 +3156,43 @@
     }
   }
 
+  // ====== ON-SCREEN AUTH DEBUG (temporary — remove before real launch) ======
+  // The magic-link failure has been hard to diagnose because everything fails
+  // silently. This paints the actual auth state onto the page so it can be
+  // read/screenshotted directly instead of needing devtools.
+  const AUTH_DEBUG_LINES = [];
+  function authDebug(msg){
+    const stamp = new Date().toISOString().substr(11,12);
+    AUTH_DEBUG_LINES.push('[' + stamp + '] ' + msg);
+    console.log('[auth] ' + msg);
+    let box = document.getElementById('auth-debug-box');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'auth-debug-box';
+      box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#0B1420;color:#7CF3B0;font-family:monospace;font-size:11px;line-height:1.5;padding:8px 12px;max-height:35vh;overflow-y:auto;white-space:pre-wrap;border-top:2px solid #7CF3B0;';
+      box.onclick = function(){ box.style.display = 'none'; };
+      document.body.appendChild(box);
+    }
+    box.textContent = 'AUTH DEBUG (tap to hide)\n' + AUTH_DEBUG_LINES.join('\n');
+  }
+
+  // Record what the URL actually contained the instant the page loaded, before
+  // Supabase or anything else has a chance to strip it.
+  const RAW_HASH_AT_LOAD = window.location.hash || '(empty)';
+  const RAW_SEARCH_AT_LOAD = window.location.search || '(empty)';
+
   if(supabaseClient){
+    authDebug('page loaded at: ' + window.location.origin + window.location.pathname);
+    authDebug('hash at load: ' + (RAW_HASH_AT_LOAD.length > 60 ? RAW_HASH_AT_LOAD.substr(0,60) + '...(' + RAW_HASH_AT_LOAD.length + ' chars)' : RAW_HASH_AT_LOAD));
+    authDebug('query at load: ' + RAW_SEARCH_AT_LOAD);
+    authDebug('has access_token in hash: ' + (RAW_HASH_AT_LOAD.indexOf('access_token') > -1 ? 'YES' : 'no'));
+    authDebug('has error in hash: ' + (RAW_HASH_AT_LOAD.indexOf('error') > -1 ? 'YES' : 'no'));
+
     supabaseClient.auth.onAuthStateChange((event, session) => {
-      console.log('[auth] event:', event, '| session:', session ? 'YES (' + session.user.email + ')' : 'null');
-      // IMPORTANT: only respond to events that genuinely mean "logged in" or
-      // "logged out". onAuthStateChange also fires INITIAL_SESSION with a null
-      // session while Supabase is still parsing the #access_token out of the
-      // URL after a magic-link click — reacting to that would bounce the user
-      // back to the marketing page before the real SIGNED_IN event arrives.
+      authDebug('event=' + event + ' session=' + (session && session.user ? session.user.email : 'null'));
+      // Only respond to events that genuinely mean "logged in" or "logged out".
+      // onAuthStateChange also fires INITIAL_SESSION with a null session while
+      // Supabase is still parsing the #access_token out of the URL.
       if(session && session.user){
         routeUserSession(session.user);
       } else if(event === 'SIGNED_OUT'){
@@ -2979,24 +3200,19 @@
       }
     });
 
-    // Catch an already-active session on page load/refresh
     supabaseClient.auth.getSession().then(({ data, error }) => {
-      if(error) console.error('[auth] getSession error:', error);
-      console.log('[auth] getSession on load:', data.session ? 'session found' : 'no session');
+      if(error) authDebug('getSession ERROR: ' + error.message);
+      authDebug('getSession result: ' + (data.session ? 'SESSION FOUND (' + data.session.user.email + ')' : 'no session'));
       if(data.session && data.session.user){ routeUserSession(data.session.user); }
     });
 
-    // Surface a failed magic-link redirect instead of silently landing on the
-    // homepage — Supabase puts the reason in the URL hash when it rejects one.
-    (function reportAuthErrorInUrl(){
-      const h = window.location.hash || '';
-      if(h.indexOf('error') > -1){
-        const p = new URLSearchParams(h.replace(/^#/, ''));
-        const desc = p.get('error_description') || p.get('error') || 'unknown error';
-        console.error('[auth] magic link rejected:', desc);
-        alert('Login link problem: ' + desc.replace(/\+/g, ' '));
-      }
-    })();
+    // If Supabase rejected the link, the reason is in the hash — surface it.
+    if(RAW_HASH_AT_LOAD.indexOf('error') > -1){
+      const p = new URLSearchParams(RAW_HASH_AT_LOAD.replace(/^#/, ''));
+      authDebug('REJECTED: ' + (p.get('error_description') || p.get('error') || 'unknown').replace(/\+/g,' '));
+    }
+  } else {
+    authDebug('FATAL: supabaseClient is null — check SUPABASE_URL/KEY');
   }
 
   // Catch a return trip from a Stripe Payment Link. This fires after the user is
