@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nuvi Clinic — Physician-Led Metabolic & Performance Medicine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
@@ -14,20 +14,20 @@
      Variable NAMES preserved (inline styles + logic depend on them).
      ========================================================================= */
   :root{
-    --ink:#1F3E41;          /* navy-teal (locked) */
+    --ink:#0B1B3A;          /* navy marino */
     --ink-soft:#33565A;
-    --paper:#FAF7F1;        /* warm ivory page */
-    --paper-warm:#F0EBE1;   /* deeper warm band */
-    --amber:#DA8D71;        /* coral (from logo) */
-    --amber-deep:#BE6446;   /* coral, legible on light */
-    --teal:#7EA8A6;         /* teal (from logo) */
+    --paper:#FFFFFF;        /* blanco */
+    --paper-warm:#F2F5FA;   /* cool white band */
+    --amber:#00E5C0;        /* neón — accent */
+    --amber-deep:#00897B;   /* neón, legible on white */
+    --teal:#3D7BFF;         /* electric blue — secondary */
     --teal-deep:#5C8A88;
     --sage:#4F7A64;
-    --line:rgba(31,62,65,0.14);
-    --line-soft:rgba(31,62,65,0.07);
+    --line:rgba(11,27,58,0.12);
+    --line-soft:rgba(11,27,58,0.07);
     --white:#FFFFFF;
-    --shadow-sm:0 2px 4px -2px rgba(31,62,65,0.12);
-    --shadow-lg:0 40px 80px -44px rgba(31,62,65,0.55);
+    --shadow-sm:0 2px 4px -2px rgba(11,27,58,0.12);
+    --shadow-lg:0 40px 80px -44px rgba(11,27,58,0.55);
     --ease:cubic-bezier(0.22,1,0.36,1);
     --radius:20px;
   }
@@ -37,7 +37,7 @@
     margin:0;
     background:var(--paper);
     color:var(--ink);
-    font-family:'Inter',sans-serif;
+    font-family:'Outfit',sans-serif;
     font-size:16px;
     line-height:1.6;
     -webkit-font-smoothing:antialiased;
@@ -45,7 +45,7 @@
     overflow-x:hidden;
   }
   h1,h2,h3,.display{
-    font-family:'Plus Jakarta Sans',sans-serif;
+    font-family:'Space Grotesk',sans-serif;
     font-weight:700;
     letter-spacing:-0.02em;
     line-height:1.05;
@@ -74,10 +74,10 @@
     border-bottom:1px solid var(--line-soft);
   }
   nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;max-width:1200px;margin:0 auto;}
-  .logo{display:flex;align-items:center;gap:11px;font-family:'Plus Jakarta Sans',sans-serif;font-size:19px;font-weight:700;letter-spacing:-0.01em;color:var(--ink);}
+  .logo{display:flex;align-items:center;gap:11px;font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;letter-spacing:-0.01em;color:var(--ink);}
   .logo-icon{height:44px;width:auto;flex:none;}
   .modal-icon-row .logo-icon-modal{height:38px;width:auto;flex:none;}
-  .modal-icon-row{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;color:var(--ink);}
+  .modal-icon-row{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--ink);}
   .navlinks{display:flex;gap:34px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:0.02em;text-transform:uppercase;}
   .navlinks a{position:relative;color:var(--ink-soft);padding:4px 0;transition:color .25s var(--ease);}
   .navlinks a::after{content:"";position:absolute;left:0;bottom:-2px;width:100%;height:1.5px;background:var(--amber);transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease);}
@@ -87,13 +87,13 @@
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
     padding:12px 24px;border-radius:100px;
-    font-family:'Inter',sans-serif;font-size:14.5px;font-weight:600;letter-spacing:0.005em;
+    font-family:'Outfit',sans-serif;font-size:14.5px;font-weight:600;letter-spacing:0.005em;
     cursor:pointer;border:1.5px solid transparent;
     transition:transform .2s var(--ease), background .25s var(--ease), color .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
     white-space:nowrap;
   }
   .btn-primary{background:var(--ink);color:var(--paper);box-shadow:var(--shadow-sm);}
-  .btn-primary:hover{transform:translateY(-2px);background:var(--ink-soft);box-shadow:0 14px 26px -14px rgba(31,62,65,0.6);}
+  .btn-primary:hover{transform:translateY(-2px);background:var(--ink-soft);box-shadow:0 14px 26px -14px rgba(11,27,58,0.6);}
   .btn-primary:active{transform:translateY(0);}
   .btn-outline{border-color:var(--line);color:var(--ink);background:transparent;}
   .btn-outline:hover{border-color:var(--ink);background:var(--ink);color:var(--paper);transform:translateY(-2px);}
@@ -103,7 +103,7 @@
   .hero{padding:clamp(56px,9vw,120px) 0 clamp(64px,8vw,104px);position:relative;overflow:hidden;}
   .hero::before{
     /* faint oversized clinical watermark, not a gradient blob */
-    content:"℞";position:absolute;top:-6%;right:-2%;font-family:'Plus Jakarta Sans',sans-serif;
+    content:"℞";position:absolute;top:-6%;right:-2%;font-family:'Space Grotesk',sans-serif;
     font-size:min(52vw,720px);line-height:1;color:var(--teal);opacity:0.06;pointer-events:none;user-select:none;z-index:0;
   }
   .hero-grid{display:grid;grid-template-columns:1.15fr 0.85fr;gap:clamp(36px,5vw,80px);align-items:center;position:relative;z-index:1;}
@@ -113,7 +113,7 @@
     color:var(--ink);background:transparent;border:1px solid var(--line);
     padding:8px 15px;border-radius:100px;margin-bottom:28px;
   }
-  .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 4px rgba(218,141,113,0.22);}
+  .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 4px rgba(0,229,192,0.22);}
   .hero h1{font-size:clamp(46px,7vw,84px);line-height:0.98;font-weight:700;letter-spacing:-0.035em;}
   .hero h1 em{
     font-style:normal;color:var(--amber-deep);position:relative;white-space:nowrap;
@@ -136,14 +136,14 @@
   .rx-pad::after{content:"";position:absolute;inset:0;border-radius:18px;border:1px solid var(--white);pointer-events:none;}
   .rx-pad::before{
     content:"℞";
-    position:absolute;top:22px;right:26px;font-family:'Plus Jakarta Sans',sans-serif;font-size:40px;color:var(--amber);opacity:0.9;line-height:1;
+    position:absolute;top:22px;right:26px;font-family:'Space Grotesk',sans-serif;font-size:40px;color:var(--amber);opacity:0.9;line-height:1;
   }
   .rx-pad-head{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--teal-deep);margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--line);}
   .rx-line{display:flex;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px dashed var(--line);font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink-soft);}
   .rx-line:last-of-type{border-bottom:none;}
   .rx-line b{font-weight:600;color:var(--ink);text-align:right;}
   .rx-sig{margin-top:22px;padding-top:18px;border-top:1px solid var(--ink);display:flex;align-items:center;justify-content:space-between;gap:12px;}
-  .rx-sig-name{font-family:'Plus Jakarta Sans',sans-serif;font-style:italic;font-weight:600;font-size:18px;color:var(--ink);}
+  .rx-sig-name{font-family:'Space Grotesk',sans-serif;font-style:italic;font-weight:600;font-size:18px;color:var(--ink);}
   .rx-stamp{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.08em;color:var(--sage);border:1.5px solid var(--sage);padding:5px 9px;border-radius:6px;transform:rotate(-4deg);white-space:nowrap;}
 
   /* ---- SECTION HEADERS ---------------------------------------------------- */
@@ -162,7 +162,7 @@
     transition:transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s var(--ease);
   }
   .step::before{content:"";position:absolute;left:0;top:clamp(28px,3vw,40px);width:3px;height:0;background:var(--amber);border-radius:0 3px 3px 0;transition:height .4s var(--ease);}
-  .step:hover{transform:translateY(-6px);box-shadow:0 30px 50px -34px rgba(31,62,65,0.4);border-color:var(--line);}
+  .step:hover{transform:translateY(-6px);box-shadow:0 30px 50px -34px rgba(11,27,58,0.4);border-color:var(--line);}
   .step:hover::before{height:44px;}
   .step-num{font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--amber-deep);margin-bottom:26px;display:inline-block;padding-bottom:6px;border-bottom:1px solid var(--line);}
   .step h3{font-size:clamp(19px,2vw,23px);margin-bottom:12px;letter-spacing:-0.02em;}
@@ -184,16 +184,16 @@
     overflow:hidden;transition:transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s var(--ease);
     display:flex;flex-direction:column;
   }
-  .vial-card:hover{transform:translateY(-6px);box-shadow:0 36px 60px -34px rgba(31,62,65,0.42);border-color:var(--amber);}
+  .vial-card:hover{transform:translateY(-6px);box-shadow:0 36px 60px -34px rgba(11,27,58,0.42);border-color:var(--amber);}
   .vial-label{background:var(--ink);color:var(--paper);padding:22px 24px 20px;position:relative;}
   .vial-label .cat{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--teal);}
-  .vial-label h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:25px;font-weight:700;margin-top:6px;letter-spacing:-0.02em;color:var(--paper);}
+  .vial-label h3{font-family:'Space Grotesk',sans-serif;font-size:25px;font-weight:700;margin-top:6px;letter-spacing:-0.02em;color:var(--paper);}
   .vial-body{padding:24px;display:flex;flex-direction:column;flex:1;}
   .vial-spec{display:flex;justify-content:space-between;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:11px 0;border-bottom:1px solid var(--line-soft);color:var(--ink-soft);}
   .vial-spec:last-of-type{border-bottom:none;}
   .vial-spec b{color:var(--ink);font-weight:600;text-align:right;}
   .vial-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:20px;border-top:1px solid var(--line);}
-  .price{font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.02em;color:var(--ink);}
+  .price{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.02em;color:var(--ink);}
   .price span{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:400;color:var(--ink-soft);letter-spacing:0.02em;}
   .rx-badge{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;background:rgba(79,122,100,0.15);color:var(--sage);padding:6px 10px;border-radius:100px;white-space:nowrap;}
   .protocol-disclaimer{margin-top:34px;font-size:13px;color:var(--ink-soft);opacity:0.8;line-height:1.65;max-width:820px;}
@@ -206,7 +206,7 @@
   .faq-item:first-child{border-top:1px solid var(--line);}
   .faq-q{display:flex;align-items:center;justify-content:space-between;padding:26px 6px;cursor:pointer;gap:24px;transition:padding-left .25s var(--ease);}
   .faq-q:hover{padding-left:14px;}
-  .faq-q h4{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(17px,1.7vw,20px);font-weight:600;letter-spacing:-0.01em;}
+  .faq-q h4{font-family:'Space Grotesk',sans-serif;font-size:clamp(17px,1.7vw,20px);font-weight:600;letter-spacing:-0.01em;}
   .faq-q .plus{font-family:'IBM Plex Mono',monospace;font-size:22px;color:var(--amber-deep);flex:none;transition:transform .3s var(--ease);line-height:1;}
   .faq-item.open .faq-q{padding-left:14px;}
   .faq-item.open .faq-q .plus{transform:rotate(45deg);}
@@ -217,28 +217,28 @@
   /* ---- MEMBERSHIP --------------------------------------------------------- */
   .tiers{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;max-width:820px;margin:0 auto;}
   .tier{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:38px 32px;display:flex;flex-direction:column;transition:transform .35s var(--ease),box-shadow .35s var(--ease);}
-  .tier:hover{transform:translateY(-5px);box-shadow:0 34px 56px -36px rgba(31,62,65,0.4);}
+  .tier:hover{transform:translateY(-5px);box-shadow:0 34px 56px -36px rgba(11,27,58,0.4);}
   .tier.featured{background:var(--ink);color:var(--paper);border-color:var(--ink);position:relative;box-shadow:var(--shadow-lg);}
   .tier.featured .tier-name{color:var(--amber);}
   .tier.featured .tier-price span{color:rgba(250,247,241,0.65);}
   .tier.featured li{color:rgba(250,247,241,0.9);}
-  .tier-badge{position:absolute;top:-14px;right:28px;background:var(--amber);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;padding:7px 14px;border-radius:100px;font-weight:600;box-shadow:0 8px 18px -8px rgba(31,62,65,0.5);}
+  .tier-badge{position:absolute;top:-14px;right:28px;background:var(--amber);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;padding:7px 14px;border-radius:100px;font-weight:600;box-shadow:0 8px 18px -8px rgba(11,27,58,0.5);}
   .tier-name{font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--amber-deep);margin-bottom:16px;}
-  .tier-price{font-family:'Plus Jakarta Sans',sans-serif;font-size:46px;font-weight:700;letter-spacing:-0.03em;margin-bottom:4px;line-height:1;}
-  .tier-price span{font-family:'Inter',sans-serif;font-size:15px;font-weight:500;opacity:0.6;letter-spacing:0;}
+  .tier-price{font-family:'Space Grotesk',sans-serif;font-size:46px;font-weight:700;letter-spacing:-0.03em;margin-bottom:4px;line-height:1;}
+  .tier-price span{font-family:'Outfit',sans-serif;font-size:15px;font-weight:500;opacity:0.6;letter-spacing:0;}
   .tier ul{list-style:none;padding:0;margin:26px 0 30px;flex:1;}
   .tier li{display:flex;gap:11px;padding:9px 0;font-size:14.5px;line-height:1.5;align-items:flex-start;}
   .tier li::before{content:"";flex:none;width:18px;height:18px;margin-top:1px;border-radius:50%;background:rgba(79,122,100,0.16);color:var(--sage);
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%234F7A64' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;}
-  .tier.featured li::before{background-color:rgba(218,141,113,0.22);
+  .tier.featured li::before{background-color:rgba(0,229,192,0.22);
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23DA8D71' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");}
 
   /* ---- TRUST STRIP -------------------------------------------------------- */
   .trust{background:var(--ink);color:var(--paper);padding:clamp(56px,7vw,80px) 0;position:relative;overflow:hidden;}
   .trust::before{content:"";position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:0.5;}
   .trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:36px;}
-  .trust-item{border-left:1px solid rgba(126,168,166,0.45);padding-left:22px;}
-  .trust-item h4{font-family:'Plus Jakarta Sans',sans-serif;font-size:19px;font-weight:600;margin-bottom:10px;letter-spacing:-0.01em;color:var(--paper);}
+  .trust-item{border-left:1px solid rgba(61,123,255,0.45);padding-left:22px;}
+  .trust-item h4{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;margin-bottom:10px;letter-spacing:-0.01em;color:var(--paper);}
   .trust-item p{margin:0;font-size:13.5px;color:rgba(250,247,241,0.68);line-height:1.6;}
 
   /* ---- FOOTER ------------------------------------------------------------- */
@@ -296,7 +296,7 @@
 
   /* ---- MODALS ------------------------------------------------------------- */
   .modal-overlay{
-    position:fixed;inset:0;background:rgba(31,62,65,0.58);
+    position:fixed;inset:0;background:rgba(11,27,58,0.58);
     display:none;align-items:center;justify-content:center;
     padding:24px;z-index:200;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
   }
@@ -317,17 +317,17 @@
   .modal-close:hover{background:var(--ink);color:var(--paper);transform:rotate(90deg);}
   .modal-eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--amber-deep);margin-bottom:12px;}
   .modal-eyebrow::before{content:"";width:20px;height:1.5px;background:var(--amber);}
-  .modal h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:27px;font-weight:700;letter-spacing:-0.02em;margin-bottom:10px;}
+  .modal h3{font-family:'Space Grotesk',sans-serif;font-size:27px;font-weight:700;letter-spacing:-0.02em;margin-bottom:10px;}
   .modal p.modal-sub{font-size:14.5px;color:var(--ink-soft);line-height:1.55;margin:0 0 24px;}
   .field{margin-bottom:18px;}
   .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:7px;color:var(--ink);letter-spacing:0.01em;}
   .field input, .field select, .field textarea{
     width:100%;padding:13px 15px;border-radius:12px;border:1px solid var(--line);
-    background:var(--white);font-family:'Inter',sans-serif;font-size:14.5px;color:var(--ink);
+    background:var(--white);font-family:'Outfit',sans-serif;font-size:14.5px;color:var(--ink);
     transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
   }
-  .field input::placeholder,.field textarea::placeholder{color:rgba(31,62,65,0.38);}
-  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(126,168,166,0.28);}
+  .field input::placeholder,.field textarea::placeholder{color:rgba(11,27,58,0.38);}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(61,123,255,0.28);}
   .modal .btn{width:100%;margin-top:8px;}
   .modal-foot-link{display:block;text-align:center;margin-top:18px;font-size:13px;color:var(--ink-soft);}
   .modal-foot-link a{color:var(--amber-deep);font-weight:600;}
@@ -335,7 +335,7 @@
   .modal-icon-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
   .modal-plan-tag{
     display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:0.02em;
-    background:rgba(218,141,113,0.16);color:var(--amber-deep);padding:6px 13px;border-radius:100px;margin-bottom:20px;
+    background:rgba(0,229,192,0.16);color:var(--amber-deep);padding:6px 13px;border-radius:100px;margin-bottom:20px;
   }
   .modal-success{text-align:center;padding:12px 0;}
   .modal-success .check{
@@ -385,12 +385,12 @@
   .dash-head p{margin-top:10px;color:var(--ink-soft);font-size:15px;}
   .dash-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;align-items:start;}
   .dash-card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:clamp(24px,2.6vw,32px);}
-  .dash-card h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.02em;margin-bottom:8px;}
+  .dash-card h3{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.02em;margin-bottom:8px;}
   .dash-card p{font-size:14.5px;color:var(--ink-soft);line-height:1.6;margin:0;}
   .status-pill{
     display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;
     font-size:11px;text-transform:uppercase;letter-spacing:0.08em;
-    background:rgba(218,141,113,0.15);color:var(--amber-deep);padding:7px 14px;border-radius:100px;margin-bottom:18px;
+    background:rgba(0,229,192,0.15);color:var(--amber-deep);padding:7px 14px;border-radius:100px;margin-bottom:18px;
   }
   .status-pill.status-active{background:rgba(79,122,100,0.15);color:var(--sage);}
   .status-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
@@ -410,7 +410,7 @@
 
   /* ---- HEALTH HISTORY FORM ----------------------------------------------- */
   .consent-box{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;font-size:13.5px;line-height:1.7;transition:border-color .25s var(--ease),background .25s var(--ease);}
-  .consent-box:has(input:checked){border-color:var(--teal);background:rgba(126,168,166,0.08);}
+  .consent-box:has(input:checked){border-color:var(--teal);background:rgba(61,123,255,0.08);}
   .form-section-title{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--amber-deep);margin:32px 0 16px;display:flex;align-items:center;gap:12px;}
   .form-section-title::before{content:"";width:20px;height:1.5px;background:var(--amber);flex:none;}
   .form-section-title:first-of-type{margin-top:0;}
@@ -418,19 +418,19 @@
   .checkbox-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
   .checkbox-item{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;background:var(--white);border:1px solid var(--line);padding:13px 15px;border-radius:12px;cursor:pointer;line-height:1.45;transition:border-color .2s var(--ease),background .2s var(--ease);}
   .checkbox-item:hover{border-color:var(--teal);}
-  .checkbox-item:has(input:checked){border-color:var(--teal);background:rgba(126,168,166,0.08);}
+  .checkbox-item:has(input:checked){border-color:var(--teal);background:rgba(61,123,255,0.08);}
   .checkbox-item input{width:17px;height:17px;flex:none;margin-top:1px;accent-color:var(--teal-deep);}
   .flag-box{background:rgba(196,60,60,0.06);border:1px solid rgba(196,60,60,0.25);border-radius:14px;padding:18px 20px;margin-top:14px;}
   .flag-box p{font-size:12.5px;color:var(--ink-soft);margin:10px 0 0;line-height:1.55;}
-  .flag-input{margin-top:12px;width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;background:var(--white);}
+  .flag-input{margin-top:12px;width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);font-family:'Outfit',sans-serif;font-size:14px;background:var(--white);}
   @media(max-width:700px){ .checkbox-grid,.two-col{grid-template-columns:1fr;} }
 
   /* ---- SCHEDULER ---------------------------------------------------------- */
   .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;}
-  .slot-btn{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:left;cursor:pointer;transition:all .2s var(--ease);font-family:'Inter',sans-serif;}
-  .slot-btn:hover{border-color:var(--amber);background:rgba(218,141,113,0.08);transform:translateY(-2px);}
+  .slot-btn{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:left;cursor:pointer;transition:all .2s var(--ease);font-family:'Outfit',sans-serif;}
+  .slot-btn:hover{border-color:var(--amber);background:rgba(0,229,192,0.08);transform:translateY(-2px);}
   .slot-day{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.04em;}
-  .slot-time{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:19px;margin-top:4px;color:var(--ink);}
+  .slot-time{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:19px;margin-top:4px;color:var(--ink);}
   @media(max-width:700px){ .slot-grid{grid-template-columns:1fr 1fr;} }
 
   .ticket-card{background:var(--ink);color:var(--paper);border-radius:16px;padding:28px;text-align:center;margin:18px 0;position:relative;overflow:hidden;}
@@ -454,7 +454,7 @@
   }
   .cal-day.empty{border:none;background:transparent;cursor:default;}
   .cal-day.disabled{opacity:0.28;cursor:default;background:var(--paper-warm);}
-  .cal-day.available:hover{border-color:var(--amber);background:rgba(218,141,113,0.1);transform:translateY(-2px);}
+  .cal-day.available:hover{border-color:var(--amber);background:rgba(0,229,192,0.1);transform:translateY(-2px);}
   .cal-day.selected{background:var(--ink);color:var(--paper);border-color:var(--ink);}
   .cal-day.today{border-color:var(--amber);font-weight:700;color:var(--amber-deep);}
 
@@ -681,7 +681,7 @@
           <span class="status-pill" style="background:rgba(196,60,60,0.1);color:#B23A3A;">Membership cancelled</span>
           <h3>Your membership is cancelled</h3>
           <p id="membership-cancelled-reason" style="margin-bottom:18px;"></p>
-          <p style="font-size:13px;color:rgba(31,62,65,0.55);margin-bottom:18px;">Cancelling here stops your access on our side — if you were charged after cancelling, contact us directly and we'll help sort out billing with Stripe.</p>
+          <p style="font-size:13px;color:rgba(11,27,58,0.55);margin-bottom:18px;">Cancelling here stops your access on our side — if you were charged after cancelling, contact us directly and we'll help sort out billing with Stripe.</p>
           <button class="btn btn-primary" style="width:auto;padding:13px 28px;" onclick="resubscribeMembership()">Resubscribe</button>
         </div>
 
@@ -692,13 +692,13 @@
           <div class="two-col">
             <div class="dash-card" style="padding:20px;">
               <div class="tier-name" style="margin-bottom:8px;">Basic</div>
-              <div class="tier-price" style="font-size:28px;">$70<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
+              <div class="tier-price" style="font-size:28px;">$70<span style="font-family:'Outfit',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
               <p style="margin:10px 0 16px;font-size:13px;">Medical evaluation and peptide prescription.</p>
               <button class="btn btn-outline" style="width:100%;" onclick="goToCheckout('Basic')">Continue with Basic</button>
             </div>
             <div class="dash-card" style="padding:20px;border-color:var(--amber);">
               <div class="tier-name" style="margin-bottom:8px;">Premium</div>
-              <div class="tier-price" style="font-size:28px;">$150<span style="font-family:'Inter',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
+              <div class="tier-price" style="font-size:28px;">$150<span style="font-family:'Outfit',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
               <p style="margin:10px 0 16px;font-size:13px;">Everything in Basic, plus direct 1-on-1 visits with the physician.</p>
               <button class="btn btn-primary" style="width:100%;background:var(--amber);color:var(--ink);" onclick="goToCheckout('Premium')">Continue with Premium</button>
             </div>
@@ -717,15 +717,15 @@
           <p style="margin-bottom:18px;">Every patient completes a required 15-minute interview with a nurse practitioner, under the supervising physician's sign-off, before any prescription is approved. Appointments run 8:00 AM – 7:00 PM, every day.</p>
           <div id="np-calendar-nav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
             <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(-1)">←</button>
-            <div id="np-calendar-month-label" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;"></div>
+            <div id="np-calendar-month-label" style="font-family:'Space Grotesk',sans-serif;font-size:16px;"></div>
             <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(1)">→</button>
           </div>
           <div class="cal-weekday-row" id="np-calendar-weekdays"></div>
           <div class="cal-grid" id="np-calendar"></div>
           <div id="np-slots-wrap" style="display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--line);">
-            <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(31,62,65,0.6);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
+            <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(11,27,58,0.6);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
             <div class="slot-grid" id="np-slot-grid"></div>
-            <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(31,62,65,0.55);">No open times that day — try another date.</p>
+            <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(11,27,58,0.55);">No open times that day — try another date.</p>
           </div>
         </div>
 
@@ -755,10 +755,10 @@
             <div class="meta" id="active-plan-price">—</div>
           </div>
           <div class="dash-protocol-row" style="border-top:1px solid var(--ink);margin-top:4px;">
-            <div class="name" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;">Total monthly</div>
-            <div class="name" id="active-total-price" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;">—</div>
+            <div class="name" style="font-family:'Space Grotesk',sans-serif;font-size:17px;">Total monthly</div>
+            <div class="name" id="active-total-price" style="font-family:'Space Grotesk',sans-serif;font-size:17px;">—</div>
           </div>
-          <p id="active-med-notes" style="margin-top:14px;font-size:13px;color:rgba(31,62,65,0.55);"></p>
+          <p id="active-med-notes" style="margin-top:14px;font-size:13px;color:rgba(11,27,58,0.55);"></p>
         </div>
 
       </div>
@@ -812,7 +812,7 @@
         <div id="store-pending-list"><p class="np-empty">None right now.</p></div>
 
         <div class="form-section-title">Request a new prescription</div>
-        <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
+        <p style="font-size:13px;color:rgba(11,27,58,0.6);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
         <div class="two-col">
           <div class="field"><label>Category</label>
             <select id="store-request-cat" onchange="onRequestCategoryChange()"></select>
@@ -844,10 +844,10 @@
           <p style="margin-bottom:14px;">Premium includes direct messaging with your care team — ask questions between visits and get a reply without waiting for your next appointment.</p>
           <div id="message-thread" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
           <div style="display:flex;gap:8px;">
-            <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;">
+            <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Outfit',sans-serif;font-size:14px;">
             <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="sendMessage()">Send</button>
           </div>
-          <p style="margin-top:12px;font-size:12.5px;color:rgba(31,62,65,0.5);">Messages are seen by your care team during business hours. This is not for emergencies — call 911 if you have a medical emergency.</p>
+          <p style="margin-top:12px;font-size:12.5px;color:rgba(11,27,58,0.5);">Messages are seen by your care team during business hours. This is not for emergencies — call 911 if you have a medical emergency.</p>
         </div>
 
         <div class="dash-card">
@@ -860,16 +860,16 @@
           <div id="physician-calendar-wrap">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
               <button type="button" class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:12px;" onclick="physicianCalendarShiftMonth(-1)">←</button>
-              <div id="physician-calendar-month-label" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;"></div>
+              <div id="physician-calendar-month-label" style="font-family:'Space Grotesk',sans-serif;font-size:15px;"></div>
               <button type="button" class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:12px;" onclick="physicianCalendarShiftMonth(1)">→</button>
             </div>
             <div class="cal-weekday-row" id="physician-calendar-weekdays"></div>
             <div class="cal-grid" id="physician-calendar"></div>
             <div id="physician-slots-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
-              <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(31,62,65,0.6);margin-bottom:8px;text-transform:uppercase;"></div>
+              <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(11,27,58,0.6);margin-bottom:8px;text-transform:uppercase;"></div>
               <div class="slot-grid" id="physician-slot-grid" style="grid-template-columns:1fr 1fr;"></div>
-              <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(31,62,65,0.5);">No open times that day.</p>
-              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(31,62,65,0.6);">You've used both physician visits for this month — you can book again starting next month.</p>
+              <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(11,27,58,0.5);">No open times that day.</p>
+              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(11,27,58,0.6);">You've used both physician visits for this month — you can book again starting next month.</p>
             </div>
           </div>
         </div>
@@ -891,10 +891,10 @@
           <div class="form-section-title">About you</div>
           <div class="field"><label>Full legal name</label><input id="hh-full-name" type="text" placeholder="As it appears on your ID" required></div>
           <div class="field"><label>Date of birth</label><input id="hh-dob" type="date" required></div>
-          <p style="font-size:12px;color:rgba(31,62,65,0.55);margin:-4px 0 4px;">Your name and date of birth must match your ID — the pharmacy requires them to fill a prescription.</p>
+          <p style="font-size:12px;color:rgba(11,27,58,0.55);margin:-4px 0 4px;">Your name and date of birth must match your ID — the pharmacy requires them to fill a prescription.</p>
 
           <div class="form-section-title">Shipping address</div>
-          <p style="font-size:12px;color:rgba(31,62,65,0.55);margin:-6px 0 12px;">Where we'll ship your medication.</p>
+          <p style="font-size:12px;color:rgba(11,27,58,0.55);margin:-6px 0 12px;">Where we'll ship your medication.</p>
           <div class="field"><label>Street address</label><input id="hh-address1" type="text" placeholder="123 Calle Principal"></div>
           <div class="field"><label>Apt / unit <span style="font-weight:400;opacity:0.6;">(optional)</span></label><input id="hh-address2" type="text" placeholder="Apt 4B"></div>
           <div class="two-col">
@@ -959,9 +959,9 @@
             <div class="field"><label>Height</label>
               <div style="display:flex;gap:8px;">
                 <input id="hh-height-ft" type="number" min="1" max="8" step="1" placeholder="5" style="width:70px;">
-                <span style="align-self:center;font-size:13px;color:rgba(31,62,65,0.5);">ft</span>
+                <span style="align-self:center;font-size:13px;color:rgba(11,27,58,0.5);">ft</span>
                 <input id="hh-height-in" type="number" min="0" max="11" step="1" placeholder="9" style="width:70px;">
-                <span style="align-self:center;font-size:13px;color:rgba(31,62,65,0.5);">in</span>
+                <span style="align-self:center;font-size:13px;color:rgba(11,27,58,0.5);">in</span>
               </div>
             </div>
             <div class="field"><label>Weight (lbs)</label><input id="hh-weight" type="number" min="50" max="1000" step="0.1" placeholder="180"></div>
@@ -1027,7 +1027,7 @@
           <button class="btn btn-primary" id="video-join-btn" onclick="joinVideoCall(currentAppointment ? currentAppointment.ticket_number : '', 'patient', 'video-local', 'video-remote', 'video-status')">Join meeting</button>
           <button class="btn btn-outline" onclick="leaveVideoCall('video-local','video-remote','video-status');hideVideoRoom()">Leave</button>
         </div>
-        <p style="margin-top:14px;font-size:12px;color:rgba(31,62,65,0.45);">Video connects browser-to-browser. On most home and mobile networks this works instantly — a small number of very restrictive corporate/school networks may need extra setup to connect.</p>
+        <p style="margin-top:14px;font-size:12px;color:rgba(11,27,58,0.45);">Video connects browser-to-browser. On most home and mobile networks this works instantly — a small number of very restrictive corporate/school networks may need extra setup to connect.</p>
       </div>
     </div>
 
@@ -1057,7 +1057,7 @@
             <h3 style="margin:0;">Clinic oversight</h3>
             <span class="status-pill status-active">Physician view</span>
           </div>
-          <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:18px;">Every provider's working hours and the whole clinic's booked schedule.</p>
+          <p style="font-size:13px;color:rgba(11,27,58,0.6);margin-bottom:18px;">Every provider's working hours and the whole clinic's booked schedule.</p>
 
           <div class="form-section-title">Provider working hours</div>
           <div id="oversight-availability" style="margin-bottom:18px;"></div>
@@ -1084,7 +1084,7 @@
           </div>
 
           <div class="form-section-title">Clinic schedule — next 14 days</div>
-          <p style="font-size:12.5px;color:rgba(31,62,65,0.55);margin-bottom:10px;">Booked slots are removed from patient availability automatically.</p>
+          <p style="font-size:12.5px;color:rgba(11,27,58,0.55);margin-bottom:10px;">Booked slots are removed from patient availability automatically.</p>
           <div id="oversight-schedule" style="max-height:340px;overflow-y:auto;"></div>
 
           <div class="form-section-title">Provider hours logged — last 30 days</div>
@@ -1136,7 +1136,7 @@
     <div id="np-membership-status" style="font-size:13.5px;margin-bottom:10px;"></div>
     <button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13px;border-color:#B23A3A;color:#B23A3A;margin-bottom:20px;" onclick="npCancelMembership()">Cancel membership — medically ineligible</button>
 
-    <div class="form-section-title">Clinical notes <span style="font-weight:400;color:rgba(31,62,65,0.5);">(staff only — never visible to patient)</span></div>
+    <div class="form-section-title">Clinical notes <span style="font-weight:400;color:rgba(11,27,58,0.5);">(staff only — never visible to patient)</span></div>
     <div id="np-clinical-notes-list" style="max-height:220px;overflow-y:auto;margin-bottom:12px;"></div>
     <div class="field"><label for="np-new-note">Add a note</label>
       <textarea id="np-new-note" rows="3" placeholder="e.g. discussed dose tolerance, plan to reassess at next visit..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
@@ -1150,13 +1150,13 @@
       </div>
       <div class="field"><label id="np-dose-label">Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" min="0" step="0.1" value="2.5" oninput="updateNPPricePreview()"></div>
     </div>
-    <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(31,62,65,0.65);margin:6px 0 14px;"></div>
+    <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(11,27,58,0.65);margin:6px 0 14px;"></div>
     <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="npApprovePrescription()">Approve prescription</button>
 
     <div class="form-section-title">Message patient</div>
     <div id="np-message-thread" style="max-height:180px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
     <div style="display:flex;gap:8px;">
-      <input id="np-message-input" type="text" placeholder="Reply as care team..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Inter',sans-serif;font-size:14px;">
+      <input id="np-message-input" type="text" placeholder="Reply as care team..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Outfit',sans-serif;font-size:14px;">
       <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="npSendMessage()">Send</button>
     </div>
   </div>
@@ -1343,7 +1343,7 @@
     </div>
     <div class="footer-bottom">
       <p>© 2026 Nuvi Clinic. Telehealth services provided by licensed providers. Not for medical emergencies — call 911. Compounded medications are not FDA-approved or evaluated for safety, effectiveness, or quality.</p>
-      <a href="javascript:void(0)" onclick="openModal('staff')" style="font-size:12px;color:rgba(31,62,65,0.4);">Staff login</a>
+      <a href="javascript:void(0)" onclick="openModal('staff')" style="font-size:12px;color:rgba(11,27,58,0.4);">Staff login</a>
     </div>
   </div>
 </footer>
@@ -1468,18 +1468,18 @@
 
     <div class="form-section-title">My medical information</div>
     <div id="settings-medical-info" style="background:var(--paper-warm);border-radius:12px;padding:16px;margin-bottom:8px;font-size:13px;line-height:1.8;"></div>
-    <p style="font-size:12px;color:rgba(31,62,65,0.5);margin-bottom:10px;">If something here is wrong, you can correct it yourself. Your care team sees the updated version.</p>
+    <p style="font-size:12px;color:rgba(11,27,58,0.5);margin-bottom:10px;">If something here is wrong, you can correct it yourself. Your care team sees the updated version.</p>
     <button class="btn btn-outline" style="width:auto;padding:10px 20px;margin-bottom:24px;" onclick="openHealthHistoryForEdit()">Review / edit my health history</button>
 
     <div class="form-section-title">Password</div>
-    <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:12px;">You normally log in with an email link, but you can set a password here if you prefer.</p>
+    <p style="font-size:13px;color:rgba(11,27,58,0.6);margin-bottom:12px;">You normally log in with an email link, but you can set a password here if you prefer.</p>
     <div class="field"><label for="patient-cur-pass">Current password</label><input id="patient-cur-pass" type="password" placeholder="Leave blank if you've never set one"></div>
     <div class="field"><label for="patient-new-pass">New password</label><input id="patient-new-pass" type="password" placeholder="At least 6 characters"></div>
     <div class="field"><label for="patient-new-pass2">Confirm new password</label><input id="patient-new-pass2" type="password"></div>
     <button class="btn btn-outline" style="width:auto;padding:10px 20px;margin-bottom:24px;" onclick="changePassword('patient-new-pass','patient-new-pass2','patient-cur-pass',false)">Set password</button>
 
     <div class="form-section-title">Shipping & identity</div>
-    <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:12px;">Required before any medication can be prescribed and shipped — the pharmacy needs this to fulfill your prescription.</p>
+    <p style="font-size:13px;color:rgba(11,27,58,0.6);margin-bottom:12px;">Required before any medication can be prescribed and shipped — the pharmacy needs this to fulfill your prescription.</p>
     <div class="field"><label for="settings-dob">Date of birth</label><input id="settings-dob" type="date"></div>
     <div class="field"><label for="settings-address1">Shipping address</label><input id="settings-address1" type="text" placeholder="Street address"></div>
     <div class="field"><label for="settings-address2">Apt / Suite (optional)</label><input id="settings-address2" type="text" placeholder="Optional"></div>
@@ -1494,7 +1494,7 @@
     <div id="settings-commitment-notice" style="display:none;background:var(--paper-warm);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.65;"></div>
     <div id="settings-cancel-section">
       <div class="form-section-title">Cancel membership</div>
-      <p style="font-size:13px;color:rgba(31,62,65,0.6);margin-bottom:12px;">This does <b>not</b> automatically cancel any recurring charge in Stripe — contact us to confirm billing has stopped too.</p>
+      <p style="font-size:13px;color:rgba(11,27,58,0.6);margin-bottom:12px;">This does <b>not</b> automatically cancel any recurring charge in Stripe — contact us to confirm billing has stopped too.</p>
       <div class="field"><label for="cancel-membership-reason">Reason</label>
         <select id="cancel-membership-reason">
           <option>Too expensive</option>
@@ -1893,7 +1893,7 @@
     box.innerHTML =
         '<div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:16px;font-weight:600;margin-bottom:6px;">' + name + '</div>'
       + '<p style="font-size:13.5px;line-height:1.65;margin-bottom:10px;">' + m.description + '</p>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:rgba(31,62,65,0.6);line-height:1.8;">'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:rgba(11,27,58,0.6);line-height:1.8;">'
       + m.form + '<br>'
       + 'Typical starting dose: ' + m.startingDose + '<br>'
       + '$' + price + '/month — flat, any dose'
@@ -1953,7 +1953,7 @@
         + '<div class="vial-art">' + (info.image
               ? '<img src="' + info.image + '" alt="' + name + '" style="max-height:86px;max-width:100%;object-fit:contain;">'
               : medArt(info)) + '</div>'
-        + '<p style="font-size:13px;color:rgba(31,62,65,0.6);margin:0 0 12px;">' + info.description + '</p>'
+        + '<p style="font-size:13px;color:rgba(11,27,58,0.6);margin:0 0 12px;">' + info.description + '</p>'
         + '<div class="vial-spec"><span>Form</span><b>' + info.form + '</b></div>'
         + '<div class="vial-spec"><span>Starting dose</span><b>' + info.startingDose + '</b></div>'
         + '<div class="vial-spec"><span>Price</span><b>Flat — never increases</b></div>'
@@ -2336,15 +2336,15 @@
     let actionHtml;
     if(item.purchased){
       actionHtml = '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Order placed with pharmacy</span>'
-        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(31,62,65,0.45);">Cancel</a>';
+        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(11,27,58,0.45);">Cancel</a>';
     } else if(!hasCompleteShippingAddress(currentHealthHistory)){
       // Don't dangle a Buy button we're going to reject — say why up front.
       actionHtml = '<button class="btn btn-outline" style="width:auto;padding:7px 16px;font-size:13px;border-color:var(--amber);color:var(--amber-deep);" onclick="openHealthHistoryForEdit()">Add shipping address to order</button>'
-        + '<br><span style="font-size:11.5px;color:rgba(31,62,65,0.5);">Required before we can ship</span>';
+        + '<br><span style="font-size:11.5px;color:rgba(11,27,58,0.5);">Required before we can ship</span>';
     } else {
       actionHtml = '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Buy</button>'
         + (TEST_MODE ? '<br><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;margin-top:6px;" onclick="' + item.onSkip + '">Skip payment (TEST)</button>' : '')
-        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(31,62,65,0.45);">Cancel</a>';
+        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(11,27,58,0.45);">Cancel</a>';
     }
 
     return '<div class="dash-protocol-row">'
@@ -3040,7 +3040,7 @@
       return;
     }
 
-    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(31,62,65,0.5);">Checking availability...</p>';
+    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(11,27,58,0.5);">Checking availability...</p>';
 
     const { data: bookedRows } = await supabaseClient
       .from('appointments').select('appointment_time')
@@ -3269,7 +3269,7 @@
         + (a.np_user_id ? ' · ' + providerName(a.np_user_id) : '')
         + '</div></div><span class="rx-badge">' + (a.status || 'scheduled') + '</span></div>').join('');
       return '<div style="margin-bottom:12px;"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">'
-        + label + ' <span style="font-weight:400;color:rgba(31,62,65,0.5);">('
+        + label + ' <span style="font-weight:400;color:rgba(11,27,58,0.5);">('
         + byDate[date].length + ' booked)</span></div>' + items + '</div>';
     }).join('');
   }
@@ -3380,7 +3380,7 @@
         : '';
       return '<div style="border-bottom:1px solid var(--line);padding:10px 0;">'
         + '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:3px;">'
-        + '<span style="font-size:12px;color:rgba(31,62,65,0.5);">' + (n.author_name || 'Staff') + ' — ' + when + '</span>'
+        + '<span style="font-size:12px;color:rgba(11,27,58,0.5);">' + (n.author_name || 'Staff') + ' — ' + when + '</span>'
         + delBtn
         + '</div>'
         + '<div style="font-size:13.5px;white-space:pre-wrap;">' + n.note_text + '</div>'
@@ -3919,7 +3919,7 @@
 
     dateLabel.textContent = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     slotsWrap.style.display = 'block';
-    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(31,62,65,0.5);">Checking availability...</p>';
+    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(11,27,58,0.5);">Checking availability...</p>';
     emptyMsg.style.display = 'none';
 
     const availability = await loadNPAvailability();
