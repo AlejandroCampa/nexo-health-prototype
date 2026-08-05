@@ -1138,6 +1138,51 @@
     <div id="np-membership-status" style="font-size:13.5px;margin-bottom:10px;"></div>
     <button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13px;border-color:#B23A3A;color:#B23A3A;margin-bottom:20px;" onclick="npCancelMembership()">Cancel membership — medically ineligible</button>
 
+    <div class="form-section-title">Medical record <span style="font-weight:400;color:rgba(8,26,77,0.5);">(SOAP format — signed clinical documentation)</span></div>
+    <div id="np-records-list" style="margin-bottom:14px;"></div>
+
+    <details id="np-record-form" style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:22px;">
+      <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ New medical record</summary>
+
+      <div class="two-col" style="margin-top:14px;">
+        <div class="field"><label>Encounter date</label><input id="rec-date" type="date"></div>
+        <div class="field"><label>Encounter type</label>
+          <select id="rec-type">
+            <option>Initial consultation</option>
+            <option>Follow-up visit</option>
+            <option>Dose adjustment</option>
+            <option>Async review</option>
+            <option>Adverse event review</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="field"><label>Weight (lbs)</label><input id="rec-weight" type="number" min="50" max="1000" step="0.1"></div>
+        <div class="field"><label>Blood pressure</label><input id="rec-bp" type="text" placeholder="120/80"></div>
+      </div>
+      <div class="field" style="max-width:200px;"><label>Heart rate (bpm)</label><input id="rec-hr" type="number" min="20" max="250"></div>
+
+      <div class="field"><label>S — Subjective <span style="font-weight:400;opacity:0.6;">what the patient reports</span></label>
+        <textarea id="rec-s" rows="3" placeholder="Patient reports tolerating current dose well. Denies nausea, vomiting, abdominal pain..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
+      </div>
+      <div class="field"><label>O — Objective <span style="font-weight:400;opacity:0.6;">measurements and observations</span></label>
+        <textarea id="rec-o" rows="3" placeholder="Weight down 8 lbs since last visit. Vitals stable. No signs of dehydration on video exam..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
+      </div>
+      <div class="field"><label>A — Assessment <span style="font-weight:400;opacity:0.6;">clinical impression</span></label>
+        <textarea id="rec-a" rows="3" placeholder="Obesity, responding appropriately to GLP-1 therapy. No contraindications identified..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
+      </div>
+      <div class="field"><label>P — Plan <span style="font-weight:400;opacity:0.6;">medication, dose, follow-up</span></label>
+        <textarea id="rec-p" rows="3" placeholder="Continue tirzepatide 5mg weekly. Reassess in 4 weeks. Advised to maintain protein intake and hydration..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+        <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="saveMedicalRecord(false)">Save draft</button>
+        <button class="btn btn-primary" style="width:auto;padding:9px 18px;" onclick="saveMedicalRecord(true)">Sign &amp; save</button>
+      </div>
+      <p style="font-size:12px;color:rgba(8,26,77,0.55);margin-top:10px;">A signed record cannot be edited — corrections are made by adding an amendment.</p>
+    </details>
+
     <div class="form-section-title">Clinical notes <span style="font-weight:400;color:rgba(8,26,77,0.5);">(staff only — never visible to patient)</span></div>
     <div id="np-clinical-notes-list" style="max-height:220px;overflow-y:auto;margin-bottom:12px;"></div>
     <div class="field"><label for="np-new-note">Add a note</label>
@@ -3363,6 +3408,189 @@
     }).join('');
   }
 
+
+  // ====== MEDICAL RECORDS (SOAP) ======
+  // Formal clinical documentation, distinct from the quick internal notes.
+  // Signed records are immutable — corrections are made by adding an
+  // amendment, which is how medical records are legally supposed to work.
+  let currentPatientRecord = null;
+
+  async function loadMedicalRecords(patientUserId){
+    const wrap = document.getElementById('np-records-list');
+    if(!wrap || !patientUserId) return;
+    try{
+      const { data } = await supabaseClient.from('medical_records')
+        .select('*').eq('patient_user_id', patientUserId)
+        .order('encounter_date', { ascending:false }).order('created_at', { ascending:false });
+      const rows = data || [];
+      if(rows.length === 0){
+        wrap.innerHTML = '<p class="np-empty">No medical records yet.</p>';
+        return;
+      }
+      wrap.innerHTML = rows.map(r => {
+        const d = new Date(r.encounter_date + 'T00:00:00').toLocaleDateString(undefined,
+                    { year:'numeric', month:'short', day:'numeric' });
+        const status = r.signed
+          ? '<span class="rx-badge" style="border-color:var(--sage);color:var(--sage);">Signed</span>'
+          : '<span class="rx-badge" style="border-color:var(--amber-deep);color:var(--amber-deep);">Draft</span>';
+        return '<div style="border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">'
+          + '<div><b style="font-size:13.5px;">' + d + ' — ' + (r.encounter_type || 'Visit') + '</b>'
+          + '<div style="font-size:12px;color:rgba(31,62,65,0.55);">' + (r.author_name || 'Provider')
+          + (r.author_role ? ', ' + r.author_role : '') + '</div></div>'
+          + '<div style="display:flex;gap:8px;align-items:center;">' + status
+          + '<button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;" '
+          + 'onclick="printMedicalRecord(\'' + r.id + '\')">Print / Save PDF</button></div>'
+          + '</div>'
+          + (r.assessment ? '<div style="font-size:12.5px;color:rgba(31,62,65,0.7);">' + escapeHtml(r.assessment).slice(0,140) + '</div>' : '')
+          + '</div>';
+      }).join('');
+    } catch(err){
+      wrap.innerHTML = '<p class="np-empty">Could not load records: ' + (err.message || 'unknown') + '</p>';
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function saveMedicalRecord(sign){
+    if(!supabaseClient || !npCurrentPatientUserId){ alert('No patient selected.'); return; }
+    const val = id => { const e = document.getElementById(id); return e ? e.value : ''; };
+    const s = val('rec-s'), o = val('rec-o'), a = val('rec-a'), p = val('rec-p');
+    if(!s && !o && !a && !p){ alert('Enter at least one section before saving.'); return; }
+    if(sign && !a){ alert('An assessment is required before signing a record.'); return; }
+    if(sign && !confirm('Sign this record? Once signed it cannot be edited — corrections require an amendment.')) return;
+
+    try{
+      const { data: staffRow } = await supabaseClient.from('staff')
+        .select('role').eq('user_id', currentUser.id).maybeSingle();
+      const roleLabel = staffRow && staffRow.role === 'physician' ? 'Physician'
+                      : staffRow && staffRow.role === 'np' ? 'Nurse Practitioner'
+                      : 'Provider';
+
+      const { error } = await supabaseClient.from('medical_records').insert({
+        patient_user_id: npCurrentPatientUserId,
+        author_user_id: currentUser.id,
+        author_name: currentStaffName,
+        author_role: roleLabel,
+        encounter_date: val('rec-date') || new Date().toISOString().slice(0,10),
+        encounter_type: val('rec-type'),
+        subjective: s, objective: o, assessment: a, plan: p,
+        weight_lbs: val('rec-weight') ? parseFloat(val('rec-weight')) : null,
+        blood_pressure: val('rec-bp') || null,
+        heart_rate: val('rec-hr') ? parseInt(val('rec-hr'),10) : null,
+        signed: !!sign,
+        signed_at: sign ? new Date().toISOString() : null
+      });
+      if(error) throw error;
+
+      ['rec-s','rec-o','rec-a','rec-p','rec-weight','rec-bp','rec-hr'].forEach(id => {
+        const e = document.getElementById(id); if(e) e.value = '';
+      });
+      const det = document.getElementById('np-record-form'); if(det) det.open = false;
+      await loadMedicalRecords(npCurrentPatientUserId);
+      alert(sign ? 'Record signed and saved.' : 'Draft saved.');
+    } catch(err){
+      alert('Could not save record: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // Opens the record as a formatted clinical document in a new window and
+  // triggers the browser print dialog — which also gives "Save as PDF".
+  async function printMedicalRecord(recordId){
+    try{
+      const { data: r } = await supabaseClient.from('medical_records')
+        .select('*').eq('id', recordId).maybeSingle();
+      if(!r){ alert('Record not found.'); return; }
+
+      const { data: pt } = await supabaseClient.from('health_history')
+        .select('full_name, date_of_birth, email').eq('user_id', r.patient_user_id).maybeSingle();
+
+      const fmt = d => d ? new Date(d + 'T00:00:00').toLocaleDateString(undefined,
+                          { year:'numeric', month:'long', day:'numeric' }) : '—';
+      const section = (label, body) => body
+        ? '<div class="sec"><h3>' + label + '</h3><p>' + escapeHtml(body).replace(/\n/g,'<br>') + '</p></div>' : '';
+
+      const vitals = [];
+      if(r.weight_lbs) vitals.push('Weight: ' + r.weight_lbs + ' lbs');
+      if(r.blood_pressure) vitals.push('BP: ' + escapeHtml(r.blood_pressure));
+      if(r.heart_rate) vitals.push('HR: ' + r.heart_rate + ' bpm');
+
+      const html = `<!doctype html><html><head><meta charset="utf-8">
+<title>Medical Record — ${escapeHtml(pt && pt.full_name || 'Patient')} — ${fmt(r.encounter_date)}</title>
+<style>
+  @page { size: letter; margin: 0.9in; }
+  *{box-sizing:border-box;}
+  body{font-family:Georgia,'Times New Roman',serif;color:#111;line-height:1.55;font-size:11.5pt;margin:0;}
+  .head{border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;}
+  .clinic{font-family:Helvetica,Arial,sans-serif;font-size:15pt;font-weight:700;letter-spacing:.02em;}
+  .sub{font-family:Helvetica,Arial,sans-serif;font-size:8.5pt;color:#555;margin-top:2px;}
+  .title{font-family:Helvetica,Arial,sans-serif;font-size:10pt;font-weight:700;
+         text-transform:uppercase;letter-spacing:.12em;margin-top:16px;}
+  table.meta{width:100%;border-collapse:collapse;margin:16px 0 22px;font-size:10.5pt;}
+  table.meta td{padding:4px 0;vertical-align:top;}
+  table.meta td.k{width:130px;color:#555;font-family:Helvetica,Arial,sans-serif;font-size:9pt;
+                  text-transform:uppercase;letter-spacing:.06em;}
+  .sec{margin-bottom:18px;page-break-inside:avoid;}
+  .sec h3{font-family:Helvetica,Arial,sans-serif;font-size:9.5pt;text-transform:uppercase;
+          letter-spacing:.1em;margin:0 0 5px;border-bottom:1px solid #ccc;padding-bottom:3px;}
+  .sec p{margin:0;white-space:pre-wrap;}
+  .sig{margin-top:34px;padding-top:14px;border-top:1px solid #111;font-size:10.5pt;}
+  .sig .nm{font-weight:700;}
+  .draft{border:1.5px solid #B23A3A;color:#B23A3A;display:inline-block;padding:3px 10px;
+         font-family:Helvetica,Arial,sans-serif;font-size:8.5pt;font-weight:700;
+         letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;}
+  .foot{margin-top:26px;font-size:8.5pt;color:#666;font-family:Helvetica,Arial,sans-serif;
+        border-top:1px solid #ddd;padding-top:8px;}
+</style></head><body>
+  <div class="head">
+    <div class="clinic">NUVI CLINIC</div>
+    <div class="sub">Telehealth · San Juan, Puerto Rico · nuviclinic.com</div>
+    <div class="title">Clinical Encounter Record</div>
+  </div>
+
+  ${r.signed ? '' : '<div class="draft">Draft — not signed</div>'}
+
+  <table class="meta">
+    <tr><td class="k">Patient</td><td><b>${escapeHtml(pt && pt.full_name || '—')}</b></td></tr>
+    <tr><td class="k">Date of birth</td><td>${fmt(pt && pt.date_of_birth)}</td></tr>
+    <tr><td class="k">Encounter date</td><td>${fmt(r.encounter_date)}</td></tr>
+    <tr><td class="k">Encounter type</td><td>${escapeHtml(r.encounter_type || '—')}</td></tr>
+    ${vitals.length ? '<tr><td class="k">Vitals</td><td>' + vitals.join(' &nbsp;·&nbsp; ') + '</td></tr>' : ''}
+  </table>
+
+  ${section('Subjective', r.subjective)}
+  ${section('Objective', r.objective)}
+  ${section('Assessment', r.assessment)}
+  ${section('Plan', r.plan)}
+
+  <div class="sig">
+    <div class="nm">${escapeHtml(r.author_name || 'Provider')}${r.author_role ? ', ' + escapeHtml(r.author_role) : ''}</div>
+    <div>${r.signed
+      ? 'Electronically signed ' + new Date(r.signed_at).toLocaleString()
+      : 'UNSIGNED DRAFT — not a completed medical record'}</div>
+  </div>
+
+  <div class="foot">
+    Confidential medical record. Contains protected health information.
+    Unauthorised disclosure is prohibited by law.
+    Printed ${new Date().toLocaleString()}.
+  </div>
+</body></html>`;
+
+      const w = window.open('', '_blank');
+      if(!w){ alert('Please allow pop-ups to print records.'); return; }
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+      setTimeout(function(){ w.print(); }, 350);
+    } catch(err){
+      alert('Could not open record: ' + (err.message || 'unknown error'));
+    }
+  }
+
   // ====== CLINICAL NOTES (staff-only, never shown to patient) ======
   async function loadClinicalNotes(patientUserId){
     const listWrap = document.getElementById('np-clinical-notes-list');
@@ -3462,6 +3690,8 @@
     npCurrentPatientId = patientId;
     npCurrentPatientUserId = patient.user_id;
     loadClinicalNotes(patient.user_id);
+    loadMedicalRecords(patient.user_id);
+    { const rd=document.getElementById('rec-date'); if(rd) rd.value=new Date().toISOString().slice(0,10); }
 
     const memEl = document.getElementById('np-membership-status');
     if(memEl){
