@@ -69,7 +69,7 @@
   /* ---- NAV ---------------------------------------------------------------- */
   header{
     position:sticky;top:0;z-index:50;
-    background:rgba(250,247,241,0.82);
+    background:rgba(91,231,255,0.82);
     backdrop-filter:blur(14px) saturate(1.4);
     -webkit-backdrop-filter:blur(14px) saturate(1.4);
     border-bottom:1px solid var(--line-soft);
@@ -105,9 +105,10 @@
   .hero::before{
     /* faint oversized clinical watermark, not a gradient blob */
     content:"℞";position:absolute;top:-6%;right:-2%;font-family:'Sora',sans-serif;
-    font-size:min(52vw,720px);line-height:1;color:var(--teal);opacity:0.06;pointer-events:none;user-select:none;z-index:0;
+    font-size:min(30vw,420px);line-height:1;color:var(--teal);opacity:0.10;pointer-events:none;user-select:none;z-index:0;
   }
-  .hero-grid{display:grid;grid-template-columns:1.15fr 0.85fr;gap:clamp(36px,5vw,80px);align-items:center;position:relative;z-index:1;}
+  .hero-grid{display:grid;grid-template-columns:1fr;gap:clamp(36px,5vw,80px);align-items:center;position:relative;z-index:1;}
+  .hero-grid > div{max-width:720px;}
   .eyebrow{
     display:inline-flex;align-items:center;gap:9px;
     font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;
@@ -4549,37 +4550,76 @@
   }
 </script>
 
-<!-- Automatic translation: offers Spanish/English based on the browser's
-     language setting. Uses Google Translate's widget so the whole page,
-     including dynamically rendered content, is covered. -->
-<div id="gt-wrap" style="position:fixed;bottom:14px;right:14px;z-index:400;">
-  <div id="google_translate_element"></div>
+<!-- Language toggle. Google Translate does the work but its default
+     widget is hidden entirely — this is our own control. -->
+<div id="lang-toggle" aria-label="Language">
+  <button type="button" data-lang="en" onclick="setLang('en')">EN</button>
+  <button type="button" data-lang="es" onclick="setLang('es')">ES</button>
 </div>
+<div id="google_translate_element" aria-hidden="true"></div>
+
 <style>
-  #gt-wrap .goog-te-gadget{font-family:'Outfit',sans-serif !important;font-size:0 !important;}
-  #gt-wrap .goog-te-combo{font-family:'Outfit',sans-serif;font-size:13px;padding:8px 12px;
-    border-radius:100px;border:1px solid var(--line);background:var(--white);color:var(--ink);
-    box-shadow:0 6px 18px -10px rgba(8,26,77,0.45);cursor:pointer;}
-  #gt-wrap .goog-te-gadget-icon{display:none;}
-  body{top:0 !important;}
-  .skiptranslate iframe{display:none !important;}
+  #lang-toggle{
+    position:fixed;bottom:18px;right:18px;z-index:400;
+    display:inline-flex;padding:3px;gap:2px;
+    background:var(--white);border:1px solid var(--line);border-radius:100px;
+    box-shadow:0 8px 24px -12px rgba(8,26,77,0.45);
+  }
+  #lang-toggle button{
+    font-family:'Outfit',sans-serif;font-size:12.5px;font-weight:600;letter-spacing:0.04em;
+    padding:7px 15px;border:none;border-radius:100px;background:transparent;
+    color:var(--ink);opacity:0.5;cursor:pointer;transition:all .18s var(--ease);
+  }
+  #lang-toggle button:hover{opacity:0.85;}
+  #lang-toggle button[aria-current="true"]{
+    background:var(--ink);color:var(--white);opacity:1;
+  }
+  /* Google's own chrome — gone. */
+  #google_translate_element,.goog-te-banner-frame,.goog-te-gadget,
+  .skiptranslate,#goog-gt-tt,.goog-tooltip{display:none !important;}
+  body{top:0 !important;position:static !important;}
+  font[style]{background:none !important;box-shadow:none !important;}
+  @media (max-width:640px){ #lang-toggle{bottom:12px;right:12px;} }
 </style>
+
 <script>
+  function currentLang(){
+    var m = document.cookie.match(/googtrans=\/[^/]*\/(\w+)/);
+    return (m && m[1] === 'es') ? 'es' : 'en';
+  }
+  function paintLangToggle(){
+    var cur = currentLang();
+    document.querySelectorAll('#lang-toggle button').forEach(function(b){
+      b.setAttribute('aria-current', b.dataset.lang === cur ? 'true' : 'false');
+    });
+  }
+  function setLang(lang){
+    if(lang === currentLang()) return;
+    // Cookie has to be set on the bare domain too, or Google ignores it.
+    var host = location.hostname;
+    document.cookie = 'googtrans=/en/' + lang + ';path=/';
+    document.cookie = 'googtrans=/en/' + lang + ';path=/;domain=.' + host;
+    location.reload();
+  }
   function googleTranslateElementInit(){
     new google.translate.TranslateElement(
-      { pageLanguage:'en', includedLanguages:'en,es',
-        layout:google.translate.TranslateElement.InlineLayout.SIMPLE,
-        autoDisplay:false },
+      { pageLanguage:'en', includedLanguages:'en,es', autoDisplay:false },
       'google_translate_element');
-    // If the browser is set to Spanish, switch automatically the first time.
+  }
+  (function(){
+    // First visit from a Spanish browser switches automatically.
     try{
       var lang = (navigator.language || '').toLowerCase();
       if(lang.indexOf('es') === 0 && !document.cookie.match(/googtrans/)){
         document.cookie = 'googtrans=/en/es;path=/';
         location.reload();
+        return;
       }
     }catch(e){}
-  }
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', paintLangToggle);
+    } else { paintLangToggle(); }
+  })();
 </script>
 <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
