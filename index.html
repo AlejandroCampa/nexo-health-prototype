@@ -305,7 +305,7 @@
   .modal-overlay.open{display:flex;animation:nuviFade .3s var(--ease) both;}
   @keyframes nuviFade{from{opacity:0;}to{opacity:1;}}
   .modal{
-    background:var(--paper);border:1px solid var(--line);border-radius:24px;max-width:440px;width:100%;
+    background:var(--white);border:1px solid var(--line);border-radius:24px;max-width:440px;width:100%;
     padding:38px;position:relative;box-shadow:var(--shadow-lg);
     max-height:88vh;overflow-y:auto;animation:nuviPop .4s var(--ease) both;
   }
@@ -766,10 +766,11 @@
         <div id="store-request-detail" style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;"></div>
         <div class="field"><label>Goal</label>
           <select id="store-request-goal">
-            <option>Fat loss</option>
-            <option>Men's health</option>
-            <option>Recovery / performance</option>
-            <option>Longevity</option>
+            <option>Weight Loss</option>
+            <option>Improve Metabolic Health</option>
+            <option>Maintain a Healthy Weight</option>
+            <option>Learn About GLP-1 Treatment</option>
+            <option>Not Sure Yet</option>
           </select>
         </div>
         <div class="field"><label>Anything your care team should know?</label><input id="store-request-notes" type="text" placeholder="Optional"></div>
@@ -848,10 +849,11 @@
           <div class="form-section-title">Primary goal</div>
           <div class="field">
             <select id="hh-goal">
-              <option>Fat loss</option>
-              <option>Men's health</option>
-              <option>Recovery / performance</option>
-              <option>Longevity</option>
+              <option>Weight Loss</option>
+              <option>Improve Metabolic Health</option>
+              <option>Maintain a Healthy Weight</option>
+              <option>Learn About GLP-1 Treatment</option>
+              <option>Not Sure Yet</option>
             </select>
           </div>
 
@@ -1352,22 +1354,22 @@
 <div class="modal-overlay" id="modal-intake" onclick="closeOnOverlay(event,'intake')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('intake')" aria-label="Close">✕</button>
-    <span class="modal-eyebrow">Start your visit</span>
-    <h3 id="intake-title">Let's get your intake started</h3>
-    <p class="modal-sub" id="intake-sub">Takes about 5 minutes. A physician reviews your answers before your visit.</p>
+    <h3 id="intake-title">Start Your Health Assessment</h3>
+    <p class="modal-sub" id="intake-sub">Takes about 5 minutes. A licensed physician reviews your answers before your consultation.</p>
     <div id="intake-plan-tag-wrap"></div>
     <form onsubmit="return handleFormSubmit(event,'intake')">
       <div class="field"><label for="intake-name">Full name</label><input id="intake-name" type="text" placeholder="Jane Rivera" required></div>
       <div class="field"><label for="intake-email">Email</label><input id="intake-email" type="email" placeholder="you@email.com" required></div>
       <div class="field"><label for="intake-goal">Primary goal</label>
         <select id="intake-goal">
-          <option>Fat loss</option>
-          <option>Men's health</option>
-          <option>Recovery / performance</option>
-          <option>Longevity</option>
+          <option>Weight Loss</option>
+          <option>Improve Metabolic Health</option>
+          <option>Maintain a Healthy Weight</option>
+          <option>Learn About GLP-1 Treatment</option>
+          <option>Not Sure Yet</option>
         </select>
       </div>
-      <button class="btn btn-primary" type="submit" style="background:var(--amber);color:var(--ink);">Continue to intake form</button>
+      <button class="btn btn-primary" type="submit">Continue to intake form</button>
     </form>
   </div>
 </div>
@@ -1615,14 +1617,10 @@
       const tagWrap = document.getElementById('intake-plan-tag-wrap');
       const title = document.getElementById('intake-title');
       const sub = document.getElementById('intake-sub');
-      if(plan){
-        tagWrap.innerHTML = '<span class="modal-plan-tag">'+plan+' plan selected</span><input type="hidden" id="intake-plan-value" value="'+plan+'">';
-        title.textContent = 'Start your ' + plan + ' membership';
-      } else {
-        tagWrap.innerHTML = '<input type="hidden" id="intake-plan-value" value="">';
-        title.textContent = "Let's get your intake started";
-      }
-      sub.textContent = 'Takes about 5 minutes. A physician reviews your answers before your visit.';
+      // Single membership tier now, so the title no longer changes by plan.
+      tagWrap.innerHTML = '<input type="hidden" id="intake-plan-value" value="' + (plan || '') + '">';
+      title.textContent = 'Start Your Health Assessment';
+      sub.textContent = 'Takes about 5 minutes. A licensed physician reviews your answers before your consultation.';
       clearFormError('intake');
     }
 
