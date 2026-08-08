@@ -16,10 +16,10 @@
   :root{
     --ink:#081A4D;          /* navy marino */
     --ink-soft:#33565A;
-    --paper:#5BE7FF;        /* soft neon mint */
-    --paper-warm:#33DCFF;   /* cool white band */
-    --amber:#00F5D0;        /* neón — accent */
-    --amber-deep:#00A88F;   /* neón, legible on white */
+    --paper:#5BE7FF;        /* neon cyan */
+    --paper-warm:#33DCFF;   /* deeper cyan band */
+    --amber:#00F5D0;        /* neon mint — accent */
+    --amber-deep:#00A88F;   /* neon, legible */
     --teal:#00C2FF;         /* electric blue — secondary */
     --teal-deep:#5C8A88;
     --sage:#4F7A64;
@@ -239,7 +239,7 @@
   .trust{background:var(--ink);color:var(--paper);padding:clamp(56px,7vw,80px) 0;position:relative;overflow:hidden;}
   .trust::before{content:"";position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:0.5;}
   .trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:36px;}
-  .trust-item{border-left:1px solid rgba(0,194,255,0.45);padding-left:22px;}
+  .trust-item{border-left:1px solid rgba(0,245,208,0.45);padding-left:22px;}
   .trust-item h4{font-family:'Sora',sans-serif;font-size:19px;font-weight:600;margin-bottom:10px;letter-spacing:-0.01em;color:var(--paper);}
   .trust-item p{margin:0;font-size:13.5px;color:rgba(250,247,241,0.68);line-height:1.6;}
 
@@ -329,7 +329,7 @@
     transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
   }
   .field input::placeholder,.field textarea::placeholder{color:rgba(8,26,77,0.38);}
-  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,194,255,0.28);}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,245,208,0.28);}
   .modal .btn{width:100%;margin-top:8px;}
   .modal-foot-link{display:block;text-align:center;margin-top:18px;font-size:13px;color:var(--ink-soft);}
   .modal-foot-link a{color:var(--amber-deep);font-weight:600;}
@@ -412,7 +412,7 @@
 
   /* ---- HEALTH HISTORY FORM ----------------------------------------------- */
   .consent-box{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;font-size:13.5px;line-height:1.7;transition:border-color .25s var(--ease),background .25s var(--ease);}
-  .consent-box:has(input:checked){border-color:var(--teal);background:rgba(0,194,255,0.08);}
+  .consent-box:has(input:checked){border-color:var(--teal);background:rgba(0,245,208,0.08);}
   .form-section-title{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--amber-deep);margin:32px 0 16px;display:flex;align-items:center;gap:12px;}
   .form-section-title::before{content:"";width:20px;height:1.5px;background:var(--amber);flex:none;}
   .form-section-title:first-of-type{margin-top:0;}
@@ -420,7 +420,7 @@
   .checkbox-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
   .checkbox-item{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;background:var(--white);border:1px solid var(--line);padding:13px 15px;border-radius:12px;cursor:pointer;line-height:1.45;transition:border-color .2s var(--ease),background .2s var(--ease);}
   .checkbox-item:hover{border-color:var(--teal);}
-  .checkbox-item:has(input:checked){border-color:var(--teal);background:rgba(0,194,255,0.08);}
+  .checkbox-item:has(input:checked){border-color:var(--teal);background:rgba(0,245,208,0.08);}
   .checkbox-item input{width:17px;height:17px;flex:none;margin-top:1px;accent-color:var(--teal-deep);}
   .flag-box{background:rgba(196,60,60,0.06);border:1px solid rgba(196,60,60,0.25);border-radius:14px;padding:18px 20px;margin-top:14px;}
   .flag-box p{font-size:12.5px;color:var(--ink-soft);margin:10px 0 0;line-height:1.55;}
@@ -485,26 +485,14 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div>
-      <span class="eyebrow">Two physicians · San Juan · 100% online</span>
-      <h1>Your price doesn't go up<br>when your <em>dose does.</em></h1>
-      <p class="lede">Most weight programs charge you more every time your dose increases. We don't — one flat monthly price, start to finish. Reviewed by a physician licensed here in Puerto Rico, filled by a licensed compounding pharmacy, shipped to your door.</p>
+      <span class="eyebrow">Puerto Rico · 100% online</span>
+      <h1>Weight loss treatment with<br><em>GLP-1 agonists.</em></h1>
+      <p class="lede">Physician-evaluated GLP-1 therapy starting at $275 a month, all in. Your medication is prepared by a 503A compounding pharmacy that operates under strict quality regulations, and shipped directly to your home.</p>
       <div class="hero-ctas">
-        <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake')">Start your visit — $70/mo</a>
-        <a class="btn btn-outline" href="#protocols">See protocols</a>
+        <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake')">Start your evaluation</a>
+        <a class="btn btn-outline" href="#protocols">See treatments</a>
       </div>
-      <p class="hero-note">No insurance needed. No clinic visit. Cancel after your first three months.</p>
-    </div>
-    <div class="rx-pad">
-      <div class="rx-pad-head">Nuvi Clinic · Clinical Summary</div>
-      <div class="rx-line"><span>Protocol</span><b>Tirzepatide</b></div>
-      <div class="rx-line"><span>Dose</span><b>2.5 mg / week, SC</b></div>
-      <div class="rx-line"><span>Goal</span><b>Fat loss</b></div>
-      <div class="rx-line"><span>Pharmacy</span><b>503A compounding partner</b></div>
-      <div class="rx-line"><span>Status</span><b style="color:var(--sage)">Physician approved</b></div>
-      <div class="rx-sig">
-        <span class="rx-sig-name">Reviewed & signed</span>
-        <span class="rx-stamp">PHYSICIAN VERIFIED</span>
-      </div>
+      <p class="hero-note">Initial evaluation $70/month. Tirzepatide from $180/month. Semaglutide from $150/month.</p>
     </div>
   </div>
 </section>
@@ -524,7 +512,7 @@
       </div>
       <div class="step">
         <div class="step-num">02</div>
-        <h3>Physician visit</h3>
+        <h3>Physician evaluation</h3>
         <p>A licensed physician evaluates your goals — weight, hormonal health, recovery — and determines what's clinically appropriate.</p>
       </div>
       <div class="step">
@@ -536,39 +524,12 @@
   </div>
 </section>
 
-<section class="section" id="timeline" style="background:var(--paper-warm);">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="section-eyebrow">What to expect</span>
-      <h2>Give it three months.</h2>
-      <p>Dose increases gradually, on a physician-set schedule — not all at once. Most patients need at least 3 months of consistent treatment before seeing their full results. This isn't a quick-fix product, and we'd rather tell you that upfront than have you stop right before it starts working.</p>
-    </div>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">Month 1</div>
-        <h3>Starting dose</h3>
-        <p>Treatment begins at a low starting dose while your body adjusts. Early changes are often subtle — this month is about tolerance, not results.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">Month 2</div>
-        <h3>Titrating up</h3>
-        <p>Your physician increases your dose based on how you're responding. This is usually when patients start noticing real changes in appetite and weight.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">Month 3+</div>
-        <h3>Full effect</h3>
-        <p>By now most patients are at or near a therapeutic dose. This is where consistent, ongoing progress happens — and why membership is monthly, not one-and-done.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <section class="section" id="protocols">
   <div class="wrap">
     <div class="section-head">
       <span class="section-eyebrow">Medications</span>
       <h2>What we treat — and what we prescribe for it.</h2>
-      <p>Everything here is available to browse whether or not you're a member. Nothing ships without a physician visit and an individual prescription — this is a formulary, not a storefront.</p>
+      <p>Prices below are starting prices at the typical starting dose. Your actual cost depends on the dose your physician prescribes. Nothing ships without a physician evaluation and an individual prescription.</p>
     </div>
 
     <div class="protocol-filters" id="catalog-filters"></div>
@@ -576,7 +537,7 @@
     <div class="protocol-grid" id="catalog-grid"></div>
 
     <div class="fda-disclaimer">
-      <b>A note on compounded medications:</b> compounded medications are not FDA-approved or evaluated by the FDA for safety, effectiveness, or quality the way manufactured brand-name drugs are. They're prepared by a licensed compounding pharmacy under an individual prescription from your physician. Your care team can answer questions about what's right for you.
+      <b>About our pharmacy:</b> your GLP-1 medication is prepared by a 503A compounding pharmacy that operates under strict state and federal quality regulations. Every preparation is made individually against your physician's prescription and shipped directly to your home.
     </div>
     <p class="protocol-disclaimer">Starting doses shown are typical starting points only. Your actual medication and dose are determined by your provider based on your individual health history and response to treatment.</p>
   </div>
@@ -598,32 +559,20 @@
     <div class="section-head">
       <span class="section-eyebrow">Membership</span>
       <h2>One membership. Ongoing care.</h2>
-      <p>Medication cost is separate and depends on your protocol — membership covers the physician relationship. Both plans let you request as many prescriptions as you want over time — each one is reviewed and approved individually by your care team, there's no cap on how many you can ask for.</p>
+      <p>Medication cost is separate and depends on your prescribed dose. Membership covers your physician relationship — evaluations, prescription management, and messaging. No minimum commitment, cancel anytime.</p>
     </div>
-    <div class="tiers">
-      <div class="tier">
-        <div class="tier-name">Basic</div>
+    <div class="tiers" style="justify-content:center;">
+      <div class="tier featured" style="max-width:420px;">
+        <div class="tier-name">Initial evaluation &amp; ongoing care</div>
         <div class="tier-price">$70<span>/mo</span></div>
         <ul>
+          <li>Monthly physician evaluations</li>
           <li>Unlimited messaging with your care team</li>
-          <li>Quarterly physician visits</li>
           <li>Prescription management</li>
-          <li>Standard shipping</li>
+          <li>2-day shipping</li>
+          <li>No minimum commitment — cancel anytime</li>
         </ul>
-        <a class="btn btn-outline" href="javascript:void(0)" onclick="openModal('intake','Basic')">Choose Basic</a>
-      </div>
-      <div class="tier featured">
-        <div class="tier-badge">Most popular</div>
-        <div class="tier-name">Premium</div>
-        <div class="tier-price">$150<span>/mo</span></div>
-        <ul>
-          <li>Everything in Basic</li>
-          <li>Monthly physician visits</li>
-          <li>Quarterly lab review</li>
-          <li>Priority messaging response</li>
-          <li>Free expedited shipping</li>
-        </ul>
-        <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake','Premium')" style="background:var(--amber);color:var(--ink);">Choose Premium</a>
+        <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake','Basic')">Start your evaluation</a>
       </div>
     </div>
   </div>
@@ -689,27 +638,18 @@
 
         <div class="stage-view" id="stage-need-payment" style="display:none;">
           <span class="status-pill status-active">History received</span>
-          <h3>Choose your plan</h3>
-          <p style="margin-bottom:16px;">Your care team reviews your history once you're enrolled. Pick a plan to continue to your NP interview.</p>
-          <div class="two-col">
-            <div class="dash-card" style="padding:20px;">
-              <div class="tier-name" style="margin-bottom:8px;">Basic</div>
-              <div class="tier-price" style="font-size:28px;">$70<span style="font-family:'Outfit',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
-              <p style="margin:10px 0 16px;font-size:13px;">Medical evaluation and peptide prescription.</p>
-              <button class="btn btn-outline" style="width:100%;" onclick="goToCheckout('Basic')">Continue with Basic</button>
-            </div>
-            <div class="dash-card" style="padding:20px;border-color:var(--amber);">
-              <div class="tier-name" style="margin-bottom:8px;">Premium</div>
-              <div class="tier-price" style="font-size:28px;">$150<span style="font-family:'Outfit',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
-              <p style="margin:10px 0 16px;font-size:13px;">Everything in Basic, plus direct 1-on-1 visits with the physician.</p>
-              <button class="btn btn-primary" style="width:100%;background:var(--amber);color:var(--ink);" onclick="goToCheckout('Premium')">Continue with Premium</button>
-            </div>
+          <h3>Start your membership</h3>
+          <p style="margin-bottom:16px;">Your physician reviews your history once you're enrolled. Continue to book your evaluation.</p>
+          <div class="dash-card" style="padding:20px;max-width:420px;border-color:var(--amber);">
+            <div class="tier-name" style="margin-bottom:8px;">Initial evaluation &amp; ongoing care</div>
+            <div class="tier-price" style="font-size:28px;">$70<span style="font-family:'Outfit',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
+            <p style="margin:10px 0 16px;font-size:13px;">Monthly physician evaluations, prescription management, and messaging. Medication billed separately. No minimum commitment.</p>
+            <button class="btn btn-primary" style="width:100%;" onclick="goToCheckout('Basic')">Continue</button>
           </div>
 
           <div id="test-skip-membership" style="display:none;gap:10px;margin-top:16px;">
             <p style="font-size:11.5px;font-family:'IBM Plex Mono',monospace;color:#B23A3A;margin-bottom:8px;">TEST MODE — skips real payment</p>
-            <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="markPaidDemo('Basic')">Skip: mark paid (Basic)</button>
-            <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="markPaidDemo('Premium')">Skip: mark paid (Premium)</button>
+            <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="markPaidDemo('Basic')">Skip: mark paid</button>
           </div>
         </div>
 
@@ -739,7 +679,7 @@
             <div class="ticket-number" id="ticket-number-display">—</div>
             <div class="mono" style="font-size:13px;" id="ticket-datetime-display">—</div>
           </div>
-          <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showVideoRoom()">Join video visit</button>
+          <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showVideoRoom()">Join video evaluation</button>
         </div>
 
         <div class="stage-view" id="stage-awaiting-approval" style="display:none;">
@@ -778,7 +718,7 @@
       </div>
     </div>
 
-    <!-- WEIGHT GOAL & TRACKER: all members, Basic and Premium alike -->
+    <!-- WEIGHT GOAL & TRACKER: all members -->
     <div id="weight-tracker-wrap" style="display:none;margin-top:22px;">
       <div class="dash-card">
         <span class="status-pill status-active">Progress</span>
@@ -841,9 +781,9 @@
     <div id="premium-care-wrap" style="display:none;margin-top:22px;">
       <div class="dash-grid">
         <div class="dash-card">
-          <span class="status-pill status-active">Premium perk</span>
+          <span class="status-pill status-active">Included</span>
           <h3>Message your care team</h3>
-          <p style="margin-bottom:14px;">Premium includes direct messaging with your care team — ask questions between visits and get a reply without waiting for your next appointment.</p>
+          <p style="margin-bottom:14px;">Message your care team — ask questions between visits and get a reply without waiting for your next appointment.</p>
           <div id="message-thread" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
           <div style="display:flex;gap:8px;">
             <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Outfit',sans-serif;font-size:14px;">
@@ -853,8 +793,8 @@
         </div>
 
         <div class="dash-card">
-          <span class="status-pill status-active">Premium perk</span>
-          <h3>1-on-1 check-ins</h3>
+          <span class="status-pill status-active">Included</span>
+          <h3>Physician evaluations</h3>
           <p style="margin-bottom:14px;">Book a 15-minute check-in with your care team whenever you need one — up to 4 per month. Most members use one after each dose change to talk through how they're feeling.</p>
 
           <div id="physician-appt-list" style="margin-bottom:14px;"></div>
@@ -871,7 +811,7 @@
               <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(8,26,77,0.6);margin-bottom:8px;text-transform:uppercase;"></div>
               <div class="slot-grid" id="physician-slot-grid" style="grid-template-columns:1fr 1fr;"></div>
               <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(8,26,77,0.5);">No open times that day.</p>
-              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(8,26,77,0.6);">You've used both physician visits for this month — you can book again starting next month.</p>
+              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(8,26,77,0.6);">You've used both physician evaluations for this month — you can book again starting next month.</p>
             </div>
           </div>
         </div>
@@ -1018,7 +958,7 @@
     <!-- VIDEO ROOM -->
     <div id="video-room-wrap" style="display:none;margin-top:22px;">
       <div class="dash-card">
-        <h3>Video visit</h3>
+        <h3>Video evaluation</h3>
         <p style="margin-bottom:18px;">Live video with your NP or physician. Uses your browser's camera and microphone directly — nothing to install.</p>
         <div class="video-shell" id="video-shell" style="position:relative;">
           <video id="video-remote" autoplay playsinline style="width:100%;height:100%;object-fit:cover;background:#0B1420;"></video>
@@ -1135,10 +1075,11 @@
     <div id="np-detail-rx-requests" style="margin-bottom:16px;"></div>
 
     <div class="form-section-title">Membership</div>
+    <div id="np-payment-banner" style="border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;"></div>
     <div id="np-membership-status" style="font-size:13.5px;margin-bottom:10px;"></div>
     <button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13px;border-color:#B23A3A;color:#B23A3A;margin-bottom:20px;" onclick="npCancelMembership()">Cancel membership — medically ineligible</button>
 
-    <div class="form-section-title">Medical record <span style="font-weight:400;color:rgba(8,26,77,0.5);">(SOAP format — signed clinical documentation)</span></div>
+    <div class="form-section-title">Progress note <span style="font-weight:400;color:rgba(8,26,77,0.5);">(signed clinical documentation)</span></div>
     <div id="np-records-list" style="margin-bottom:14px;"></div>
 
     <details id="np-record-form" style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:22px;">
@@ -1146,33 +1087,29 @@
 
       <div class="two-col" style="margin-top:14px;">
         <div class="field"><label>Encounter date</label><input id="rec-date" type="date"></div>
+        <div class="field"><label>Encounter time</label><input id="rec-time" type="time"></div>
+      </div>
+      <div class="two-col">
         <div class="field"><label>Encounter type</label>
           <select id="rec-type">
-            <option>Initial consultation</option>
-            <option>Follow-up visit</option>
+            <option>Initial evaluation</option>
+            <option>Follow-up evaluation</option>
             <option>Dose adjustment</option>
             <option>Async review</option>
             <option>Adverse event review</option>
           </select>
         </div>
-      </div>
-
-      <div class="two-col">
         <div class="field"><label>Weight (lbs)</label><input id="rec-weight" type="number" min="50" max="1000" step="0.1"></div>
-        <div class="field"><label>Blood pressure</label><input id="rec-bp" type="text" placeholder="120/80"></div>
       </div>
-      <div class="field" style="max-width:200px;"><label>Heart rate (bpm)</label><input id="rec-hr" type="number" min="20" max="250"></div>
 
-      <div class="field"><label>S — Subjective <span style="font-weight:400;opacity:0.6;">what the patient reports</span></label>
-        <textarea id="rec-s" rows="3" placeholder="Patient reports tolerating current dose well. Denies nausea, vomiting, abdominal pain..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
+      <div class="field"><label>HPI — History of Present Illness</label>
+        <textarea id="rec-s" rows="5" style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
+        <p style="font-size:12px;color:rgba(8,26,77,0.55);margin-top:6px;">Pre-filled from the patient's intake — edit as needed.</p>
       </div>
-      <div class="field"><label>O — Objective <span style="font-weight:400;opacity:0.6;">measurements and observations</span></label>
-        <textarea id="rec-o" rows="3" placeholder="Weight down 8 lbs since last visit. Vitals stable. No signs of dehydration on video exam..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
-      </div>
-      <div class="field"><label>A — Assessment <span style="font-weight:400;opacity:0.6;">clinical impression</span></label>
+      <div class="field"><label>Assessment</label>
         <textarea id="rec-a" rows="3" placeholder="Obesity, responding appropriately to GLP-1 therapy. No contraindications identified..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
       </div>
-      <div class="field"><label>P — Plan <span style="font-weight:400;opacity:0.6;">medication, dose, follow-up</span></label>
+      <div class="field"><label>Plan <span style="font-weight:400;opacity:0.6;">medication, dose, follow-up</span></label>
         <textarea id="rec-p" rows="3" placeholder="Continue tirzepatide 5mg weekly. Reassess in 4 weeks. Advised to maintain protein intake and hydration..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
       </div>
 
@@ -1390,7 +1327,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>© 2026 Nuvi Clinic. Telehealth services provided by licensed providers. Not for medical emergencies — call 911. Compounded medications are not FDA-approved or evaluated for safety, effectiveness, or quality.</p>
+      <p>© 2026 Nuvi Clinic. Telehealth services provided by licensed physicians. Not for medical emergencies — call 911.</p>
       <a href="javascript:void(0)" onclick="openModal('staff')" style="font-size:12px;color:rgba(8,26,77,0.4);">Staff login</a>
     </div>
   </div>
@@ -1621,10 +1558,9 @@
   // ====== STRIPE PAYMENT LINKS (test mode) ======
   // Paste the 3 Payment Link URLs from your Stripe dashboard here.
   // Each link's "after payment" redirect should point back to this page with
-  // ?paid=true&plan=Basic (or Premium / Executive) already set up.
+  // ?paid=true&plan=Basic already set up.
   const STRIPE_LINKS = {
     Basic:   'https://buy.stripe.com/bJe9AV3uQcDOgdE00l9EI0f',
-    Premium: 'https://buy.stripe.com/8x228t5CY9rCf9A4gB9EI0e'
   };
   // ---- TEST-ONLY helpers (only reachable when ?test=1) ----
   async function markPaidDemo(plan){
@@ -1803,7 +1739,7 @@
   // dosing on those isn't something patients adjust the same way.
   // These numbers are estimates from public market research, not your real
   // pharmacy's cost sheet — swap in real numbers once you have a contract.
-  const MEMBERSHIP_PRICE = { Basic: 70, Premium: 150 };
+  const MEMBERSHIP_PRICE = { Basic: 70 };
 
   // Single source of truth for every medication — powers the NP approval
   // dropdown, the patient Store, AND the public logged-out catalog below.
@@ -1813,47 +1749,18 @@
   const MEDICATION_INFO = {
     'Tirzepatide': {
       category: 'Weight management',
-      description: 'Dual GLP-1/GIP agonist. The most effective option we offer for fat loss, dosed once weekly and titrated up slowly.',
-      basePrice: 200, perMg: 0, unit: 'mg',
+      description: 'Dual GLP-1/GIP agonist. The most effective option we offer for weight loss, dosed once weekly and titrated up gradually by your physician.',
+      basePrice: 120, perMg: 24, unit: 'mg',
       launched: true, form: 'Compounded injectable, weekly', startingDose: '2.5 mg / wk', startingDoseMg: 2.5
     },
     'Semaglutide': {
       category: 'Weight management',
-      description: 'GLP-1 agonist for appetite control and fat loss. Weekly injection, titrated gradually to limit side effects.',
-      basePrice: 180, perMg: 0, unit: 'mg',
+      description: 'GLP-1 agonist for appetite control and weight loss. Weekly injection, titrated gradually to limit side effects.',
+      basePrice: 141, perMg: 37, unit: 'mg',
       launched: true, form: 'Compounded injectable, weekly', startingDose: '0.25 mg / wk', startingDoseMg: 0.25
-    },
-    'Tesamorelin': {
-      category: 'Longevity & recovery',
-      description: 'Growth hormone-releasing peptide studied for visceral fat reduction and body composition. Daily dosing.',
-      basePrice: 220, perMg: 0, unit: 'mcg',
-      launched: true, form: 'Compounded injectable, daily', startingDose: '500 mcg / day', startingDoseMg: 500
-    },
-    'Sermorelin': {
-      category: 'Longevity & recovery',
-      description: 'Growth hormone-releasing peptide used to support sleep quality, recovery and lean mass. Daily dosing, typically at night.',
-      basePrice: 180, perMg: 0, unit: 'mcg',
-      launched: true, form: 'Compounded injectable, daily', startingDose: '300 mcg / day', startingDoseMg: 300
-    },
-    'NAD+ Support': {
-      category: 'Longevity & recovery',
-      description: 'NAD+ for cellular energy and recovery support. Subcutaneous dosing.',
-      basePrice: 60, perMg: 8, unit: 'mg',
-      launched: false, form: 'Subcutaneous', startingDose: '2 mg', startingDoseMg: 2
-    },
-    'Testosterone Cypionate': {
-      category: "Men's health",
-      description: 'Testosterone replacement therapy for clinically low levels, confirmed by lab work before starting.',
-      basePrice: 80, perMg: 0.5, unit: 'mg',
-      launched: false, form: 'Injectable, weekly', startingDose: '100 mg / wk', startingDoseMg: 100
-    },
-    'ED Care': {
-      category: "Men's health",
-      description: 'Sildenafil or tadalafil for erectile dysfunction, taken on demand or as a low daily dose.',
-      basePrice: 20, perMg: 0.3, unit: 'mg',
-      launched: false, form: 'Oral', startingDose: '25 mg', startingDoseMg: 25
     }
   };
+
 
 
   // Dose units differ by medication — peptides like Tesamorelin are supplied
@@ -2004,22 +1911,20 @@
         + '<p style="font-size:13px;color:rgba(8,26,77,0.6);margin:0 0 12px;">' + info.description + '</p>'
         + '<div class="vial-spec"><span>Form</span><b>' + info.form + '</b></div>'
         + '<div class="vial-spec"><span>Starting dose</span><b>' + info.startingDose + '</b></div>'
-        + '<div class="vial-spec"><span>Price</span><b>Flat — never increases</b></div>'
-        + '<div class="vial-foot"><div class="price">$' + startingPrice + '<span> /month</span></div><span class="rx-badge">Rx only</span></div>'
+        + '<div class="vial-spec"><span>Pricing</span><b>By prescribed dose</b></div>'
+        + '<div class="vial-foot"><div class="price"><span style="font-size:13px;font-weight:500;opacity:0.65;display:block;line-height:1.2;">Starting at</span>$' + startingPrice + '<span> /month</span></div><span class="rx-badge">Rx only</span></div>'
         + '</div></div>';
     }).join('');
   }
 
   const FAQ_ITEMS = [
-    { q: "How does this actually work?", a: "You start a free intake and submit your health history. Once that's reviewed, you pick a membership plan and complete a short interview with a nurse practitioner, under a supervising physician's sign-off. If approved, your prescription is compounded by a licensed pharmacy and shipped to you — no in-person visit required." },
-    { q: "Is this available outside Puerto Rico?", a: "Right now we're licensed and focused on Puerto Rico. Expanding to additional states requires physician licensure and compliance with each state's telemedicine rules individually, so it happens one state at a time rather than all at once." },
-    { q: "What does \"compounded medication\" mean, and is it FDA-approved?", a: "Compounded medications are prepared by a licensed pharmacy under an individual prescription from your physician, rather than manufactured by a large pharmaceutical company. They are not FDA-approved or evaluated the same way brand-name manufactured drugs are. Your care team can walk you through what that means for your specific treatment." },
-    { q: "How much does this actually cost?", a: "Two charges: your membership ($70/mo Basic or $150/mo Premium) covers your care team, and medication is a flat monthly price — $200 for Tirzepatide, $180 for Semaglutide. That price does not change as your dose increases, so what you pay in month one is what you pay in month six." },
-    { q: "Can I ask for a different medication later?", a: "Yes — there's no cap on how many prescriptions you can request as a member. Each one is reviewed individually by your care team before it's approved, the same way your first one was." },
-    { q: "Is there a minimum commitment?", a: "Yes — the first 3 months. Weight management medication is titrated gradually, and most people don't see their full result until around month three, so we ask members to commit to that initial period rather than month-to-month. The one exception: if your provider determines treatment isn't clinically appropriate for you, you're not held to it — your care team handles that directly." },
-    { q: "How do I cancel?", a: "After your initial 3-month commitment, you can cancel anytime from your account Settings. You'll be asked for a quick reason, and it takes effect immediately on our side. If you're on a recurring charge, let us know directly so we can make sure billing actually stops too." },
-    { q: "Do I need insurance?", a: "No — this is a cash-pay model, membership plus medication cost, no insurance billing involved." },
-    { q: "How fast can I actually get started?", a: "Health history takes about 5 minutes. NP interviews are usually available within a few days, and the interview itself is 15 minutes." }
+    { q: "How does this actually work?", a: "You start a free intake and submit your health history. Once that's reviewed, you complete a short evaluation with a licensed physician. Once approved, your medication is compounded by a licensed pharmacy and shipped to your home — no in-person visit required." },
+    { q: "Is this available outside Puerto Rico?", a: "We are shipping to Puerto Rico at the moment. Expanding elsewhere requires physician licensure in each jurisdiction, so it happens deliberately rather than all at once." },
+    { q: "What does \"compounded medication\" mean?", a: "Compounded medications are prepared by a licensed 503A compounding pharmacy under an individual prescription from your physician. These pharmacies operate under strict state and federal quality regulations, and every preparation is made specifically for you." },
+    { q: "Can I ask for a different medication later?", a: "Yes — each request is reviewed individually by your physician before it's approved, the same way your first one was." },
+    { q: "Is there a minimum commitment?", a: "No minimum commitment. Membership is month to month." },
+    { q: "How do I cancel?", a: "You can cancel at any time from your account Settings." },
+    { q: "How fast can I actually get started?", a: "Your medication can be ordered within 1 day and shipped within 3 days after subscribing." }
   ];
 
   function renderFAQ(){
@@ -2045,10 +1950,8 @@
   // MUST match the actual amount on each Stripe Payment Link. If these drift
   // apart, the patient sees one price and gets charged another.
   const MEDICATION_CHECKOUT_PRICE = {
-    'Tirzepatide': 200,
-    'Semaglutide': 180,
-    'Tesamorelin': 220,
-    'Sermorelin':  180
+    'Tirzepatide': 180,
+    'Semaglutide': 150
   };
 
   function getDisplayPrice(medication, fallbackPrice){
@@ -2206,7 +2109,7 @@
       document.getElementById('store-wrap').style.display = 'none';
     }
 
-    if(history && history.approved && history.plan === 'Premium' && !history.membership_cancelled){
+    if(history && history.approved && !history.membership_cancelled){
       document.getElementById('premium-care-wrap').style.display = 'block';
       await loadMessages();
       await loadPhysicianAppointment();
@@ -2420,10 +2323,17 @@
   // Flat pricing — one price per medication, so only these tiers are ever used.
   // Every price here MUST correspond to a real Payment Link of the same amount.
   // The other links created in Stripe remain unused but harmless.
+  // Per-dose pricing. Every price here must match a real Payment Link amount.
   const MEDICATION_LINKS_BY_PRICE = {
+    150: 'https://buy.stripe.com/aFafZjaXifQ0d1s3cx9EI0c',
+    160: 'https://buy.stripe.com/dRm7sN6H2dHSd1s7sN9EI0b',
     180: 'https://buy.stripe.com/5kQaEZ7L647i8Lc14p9EI0a',
-    200: 'https://buy.stripe.com/fZueVf1mIcDOaTk4gB9EI09',
-    220: 'https://buy.stripe.com/fZu14paXieLW4uW8wR9EI07'
+    205: 'https://buy.stripe.com/8x24gB2qM1ZaaTk28t9EI08',
+    230: 'https://buy.stripe.com/bJeaEZ0iEbzK5z0eVf9EI06',
+    240: 'https://buy.stripe.com/cNi3cx2qM33e5z07sN9EI05',
+    300: 'https://buy.stripe.com/5kQ8wR5CYcDO4uW4gB9EI04',
+    360: 'https://buy.stripe.com/8x25kFghCbzKgdEaEZ9EI03',
+    420: 'https://buy.stripe.com/00w6oJ7L67ju9Pg28t9EI01'
   };
 
   // A prescription cannot be shipped without a complete address, so this is a
@@ -3007,7 +2917,7 @@
     }
     wrap.innerHTML = physicianExistingAppts.map(a =>
       '<div class="ticket-card" style="margin-bottom:10px;">'
-      + '<div class="mono" style="font-size:11px;text-transform:uppercase;opacity:0.7;">Physician visit</div>'
+      + '<div class="mono" style="font-size:11px;text-transform:uppercase;opacity:0.7;">Physician evaluation</div>'
       + '<div class="ticket-number" style="font-size:20px;">' + a.ticket_number + '</div>'
       + '<div class="mono" style="font-size:13px;">' + a.appointment_date + ' · ' + a.appointment_time + ' — ' + a.status + '</div>'
       + '</div>'
@@ -3116,7 +3026,7 @@
     if(!supabaseClient || !currentUser) return;
 
     if(physicianVisitsInMonth(dateValue) >= PHYSICIAN_MAX_VISITS_PER_MONTH){
-      alert("You've already used both physician visits for that month.");
+      alert("You've already used both physician evaluations for that month.");
       return;
     }
 
@@ -3312,7 +3222,7 @@
         { weekday:'short', month:'short', day:'numeric' });
       const items = byDate[date].map(a =>
         '<div class="dash-protocol-row"><div><div class="name" style="font-size:13px;">'
-        + a.appointment_time + ' — ' + (a.type === 'physician_visit' ? 'Physician visit' : 'NP interview')
+        + a.appointment_time + ' — ' + (a.type === 'physician_visit' ? 'Physician evaluation' : 'NP interview')
         + '</div><div class="meta">Ticket ' + (a.ticket_number || '—')
         + (a.np_user_id ? ' · ' + providerName(a.np_user_id) : '')
         + '</div></div><span class="rx-badge">' + (a.status || 'scheduled') + '</span></div>').join('');
@@ -3409,6 +3319,43 @@
   }
 
 
+  // Builds an HPI draft from what the patient actually entered at intake, so
+  // the physician edits rather than retypes. Everything here came from the
+  // patient — the provider is expected to review and correct it.
+  function buildHPIDraft(p){
+    if(!p) return '';
+    const age = p.date_of_birth
+      ? Math.floor((Date.now() - new Date(p.date_of_birth)) / 31557600000) : null;
+    const bmi = (p.weight_lbs && p.height_ft != null)
+      ? ((p.weight_lbs * 703) / Math.pow(p.height_ft * 12 + (p.height_in || 0), 2)).toFixed(1) : null;
+    const L = [];
+    L.push((age ? age + '-year-old' : 'Patient') + ' presenting for medical weight management.');
+    if(p.weight_lbs) L.push('Current weight ' + p.weight_lbs + ' lbs'
+      + (p.height_ft != null ? ', height ' + p.height_ft + "'" + (p.height_in || 0) + '"' : '')
+      + (bmi ? ', BMI ' + bmi : '') + '.'
+      + (p.target_weight_lbs ? ' Stated goal weight ' + p.target_weight_lbs + ' lbs.' : ''));
+    const cond = (p.conditions || []).filter(Boolean);
+    L.push(cond.length ? 'Reported medical history: ' + cond.join(', ') + '.'
+                       : 'No chronic medical conditions reported.');
+    if(p.conditions_other) L.push('Patient adds: ' + p.conditions_other);
+    L.push(p.surgical_history && p.surgical_history.toLowerCase() !== 'none'
+      ? 'Surgical history: ' + p.surgical_history + '.' : 'No significant surgical history reported.');
+    L.push(p.allergies && p.allergies.toLowerCase() !== 'none'
+      ? 'Allergies: ' + p.allergies + '.' : 'No known drug allergies.');
+    const soc = [];
+    if(p.alcohol_use) soc.push('alcohol — ' + p.alcohol_use.toLowerCase());
+    if(p.smoking_use) soc.push('tobacco — ' + p.smoking_use.toLowerCase());
+    if(p.substance_use) soc.push('other substances — ' + p.substance_use.toLowerCase());
+    if(soc.length) L.push('Social history: ' + soc.join('; ') + '.');
+    const fam = (p.family_history || []).filter(Boolean);
+    if(fam.length) L.push('Family history: ' + fam.join(', ') + '.');
+    if(p.family_endocrine_cancer){
+      L.push('*** FLAG: patient reports family history of medullary thyroid carcinoma or MEN2. '
+        + (p.family_endocrine_cancer_detail || '') + ' This is a contraindication to GLP-1 therapy — review before prescribing. ***');
+    }
+    return L.join('\n\n');
+  }
+
   // ====== MEDICAL RECORDS (SOAP) ======
   // Formal clinical documentation, distinct from the quick internal notes.
   // Signed records are immutable — corrections are made by adding an
@@ -3458,8 +3405,8 @@
   async function saveMedicalRecord(sign){
     if(!supabaseClient || !npCurrentPatientUserId){ alert('No patient selected.'); return; }
     const val = id => { const e = document.getElementById(id); return e ? e.value : ''; };
-    const s = val('rec-s'), o = val('rec-o'), a = val('rec-a'), p = val('rec-p');
-    if(!s && !o && !a && !p){ alert('Enter at least one section before saving.'); return; }
+    const s = val('rec-s'), a = val('rec-a'), p = val('rec-p');
+    if(!s && !a && !p){ alert('Enter at least one section before saving.'); return; }
     if(sign && !a){ alert('An assessment is required before signing a record.'); return; }
     if(sign && !confirm('Sign this record? Once signed it cannot be edited — corrections require an amendment.')) return;
 
@@ -3477,16 +3424,15 @@
         author_role: roleLabel,
         encounter_date: val('rec-date') || new Date().toISOString().slice(0,10),
         encounter_type: val('rec-type'),
-        subjective: s, objective: o, assessment: a, plan: p,
+        subjective: s, objective: null, assessment: a, plan: p,
         weight_lbs: val('rec-weight') ? parseFloat(val('rec-weight')) : null,
-        blood_pressure: val('rec-bp') || null,
-        heart_rate: val('rec-hr') ? parseInt(val('rec-hr'),10) : null,
+        encounter_time: val('rec-time') || null,
         signed: !!sign,
         signed_at: sign ? new Date().toISOString() : null
       });
       if(error) throw error;
 
-      ['rec-s','rec-o','rec-a','rec-p','rec-weight','rec-bp','rec-hr'].forEach(id => {
+      ['rec-s','rec-a','rec-p','rec-weight'].forEach(id => {
         const e = document.getElementById(id); if(e) e.value = '';
       });
       const det = document.getElementById('np-record-form'); if(det) det.open = false;
@@ -3515,8 +3461,6 @@
 
       const vitals = [];
       if(r.weight_lbs) vitals.push('Weight: ' + r.weight_lbs + ' lbs');
-      if(r.blood_pressure) vitals.push('BP: ' + escapeHtml(r.blood_pressure));
-      if(r.heart_rate) vitals.push('HR: ' + r.heart_rate + ' bpm');
 
       const html = `<!doctype html><html><head><meta charset="utf-8">
 <title>Medical Record — ${escapeHtml(pt && pt.full_name || 'Patient')} — ${fmt(r.encounter_date)}</title>
@@ -3556,13 +3500,12 @@
   <table class="meta">
     <tr><td class="k">Patient</td><td><b>${escapeHtml(pt && pt.full_name || '—')}</b></td></tr>
     <tr><td class="k">Date of birth</td><td>${fmt(pt && pt.date_of_birth)}</td></tr>
-    <tr><td class="k">Encounter date</td><td>${fmt(r.encounter_date)}</td></tr>
+    <tr><td class="k">Encounter</td><td>${fmt(r.encounter_date)}${r.encounter_time ? " at " + r.encounter_time : ""}</td></tr>
     <tr><td class="k">Encounter type</td><td>${escapeHtml(r.encounter_type || '—')}</td></tr>
     ${vitals.length ? '<tr><td class="k">Vitals</td><td>' + vitals.join(' &nbsp;·&nbsp; ') + '</td></tr>' : ''}
   </table>
 
-  ${section('Subjective', r.subjective)}
-  ${section('Objective', r.objective)}
+  ${section('History of Present Illness', r.subjective)}
   ${section('Assessment', r.assessment)}
   ${section('Plan', r.plan)}
 
@@ -3578,6 +3521,7 @@
     Unauthorised disclosure is prohibited by law.
     Printed ${new Date().toLocaleString()}.
   </div>
+
 </body></html>`;
 
       const w = window.open('', '_blank');
@@ -3691,7 +3635,35 @@
     npCurrentPatientUserId = patient.user_id;
     loadClinicalNotes(patient.user_id);
     loadMedicalRecords(patient.user_id);
-    { const rd=document.getElementById('rec-date'); if(rd) rd.value=new Date().toISOString().slice(0,10); }
+    {
+      const rd=document.getElementById('rec-date');
+      if(rd) rd.value=new Date().toISOString().slice(0,10);
+      const rt=document.getElementById('rec-time');
+      if(rt) rt.value=new Date().toTimeString().slice(0,5);
+      const hpi=document.getElementById('rec-s');
+      if(hpi && !hpi.value) hpi.value = buildHPIDraft(patient);
+    }
+
+    const payEl = document.getElementById('np-payment-banner');
+    if(payEl){
+      const approved = !!patient.approved;
+      const bought   = !!patient.purchased;
+      const when     = patient.purchased_at ? new Date(patient.purchased_at).toLocaleString() : null;
+      if(!approved){
+        payEl.style.cssText='border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;background:var(--paper-warm);border:1px solid var(--line);';
+        payEl.innerHTML='<b>Awaiting your review.</b> No prescription approved yet.';
+      } else if(bought){
+        payEl.style.cssText='border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.4);color:#2F5C46;';
+        payEl.innerHTML='<b>✓ Medication PAID.</b> '
+          + escapeHtml(patient.approved_medication || 'Prescription') + ' — ' + escapeHtml(patient.approved_dose || '')
+          + (when ? '<br><span style="font-size:12.5px;">Paid ' + when + ' — ready to submit to the pharmacy.</span>' : '');
+      } else {
+        payEl.style.cssText='border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;background:rgba(196,60,60,0.10);border:1px solid rgba(196,60,60,0.35);color:#8C2F2F;';
+        payEl.innerHTML='<b>Approved — NOT YET PAID.</b> '
+          + escapeHtml(patient.approved_medication || 'Prescription') + ' — ' + escapeHtml(patient.approved_dose || '')
+          + '<br><span style="font-size:12.5px;">Do not submit to the pharmacy until payment clears.</span>';
+      }
+    }
 
     const memEl = document.getElementById('np-membership-status');
     if(memEl){
@@ -4579,5 +4551,38 @@
   }
 </script>
 
+<!-- Automatic translation: offers Spanish/English based on the browser's
+     language setting. Uses Google Translate's widget so the whole page,
+     including dynamically rendered content, is covered. -->
+<div id="gt-wrap" style="position:fixed;bottom:14px;right:14px;z-index:400;">
+  <div id="google_translate_element"></div>
+</div>
+<style>
+  #gt-wrap .goog-te-gadget{font-family:'Outfit',sans-serif !important;font-size:0 !important;}
+  #gt-wrap .goog-te-combo{font-family:'Outfit',sans-serif;font-size:13px;padding:8px 12px;
+    border-radius:100px;border:1px solid var(--line);background:var(--white);color:var(--ink);
+    box-shadow:0 6px 18px -10px rgba(8,26,77,0.45);cursor:pointer;}
+  #gt-wrap .goog-te-gadget-icon{display:none;}
+  body{top:0 !important;}
+  .skiptranslate iframe{display:none !important;}
+</style>
+<script>
+  function googleTranslateElementInit(){
+    new google.translate.TranslateElement(
+      { pageLanguage:'en', includedLanguages:'en,es',
+        layout:google.translate.TranslateElement.InlineLayout.SIMPLE,
+        autoDisplay:false },
+      'google_translate_element');
+    // If the browser is set to Spanish, switch automatically the first time.
+    try{
+      var lang = (navigator.language || '').toLowerCase();
+      if(lang.indexOf('es') === 0 && !document.cookie.match(/googtrans/)){
+        document.cookie = 'googtrans=/en/es;path=/';
+        location.reload();
+      }
+    }catch(e){}
+  }
+</script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
