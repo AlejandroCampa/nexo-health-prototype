@@ -69,7 +69,7 @@
   /* ---- NAV ---------------------------------------------------------------- */
   header{
     position:sticky;top:0;z-index:50;
-    background:rgba(91,231,255,0.82);
+    background:rgba(240,253,255,0.90);
     backdrop-filter:blur(14px) saturate(1.4);
     -webkit-backdrop-filter:blur(14px) saturate(1.4);
     border-bottom:1px solid var(--line-soft);
@@ -1040,6 +1040,31 @@
       </div>
     </div>
 
+    <!-- ADMIN CONSOLE — role 'admin' only. Backend view across every role. -->
+    <div id="admin-console" style="display:none;margin-bottom:22px;">
+      <div class="dash-grid" style="grid-template-columns:1fr;">
+        <div class="dash-card" style="border-color:var(--ink);">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
+            <h3 style="margin:0;">Admin console</h3>
+            <span class="status-pill" style="background:var(--ink);color:var(--white);">Super admin</span>
+          </div>
+          <p style="font-size:13px;color:var(--ink-soft);margin-bottom:18px;">System-wide view. Visible only to admin accounts.</p>
+
+          <div class="form-section-title">At a glance</div>
+          <div id="admin-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;"></div>
+
+          <div class="form-section-title">Staff &amp; roles</div>
+          <div id="admin-roster" style="margin-bottom:20px;"></div>
+
+          <div class="form-section-title">Funnel</div>
+          <div id="admin-funnel" style="margin-bottom:20px;"></div>
+
+          <div class="form-section-title">Data health</div>
+          <div id="admin-health" style="margin-bottom:8px;"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- PHYSICIAN OVERSIGHT — only rendered for role physician/admin -->
     <div id="physician-oversight" style="display:none;margin-bottom:22px;">
       <div class="dash-grid" style="grid-template-columns:1fr;">
@@ -1124,7 +1149,8 @@
     <div id="np-detail-rx-requests" style="margin-bottom:16px;"></div>
 
     <div class="form-section-title">Membership</div>
-    <div id="np-payment-banner" style="border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;"></div>
+    <div id="np-payment-banner" style="border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:14px;"></div>
+    <div id="np-eval-tracker" style="border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;"></div>
     <div id="np-membership-status" style="font-size:13.5px;margin-bottom:10px;"></div>
     <button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13px;border-color:#B23A3A;color:#B23A3A;margin-bottom:20px;" onclick="npCancelMembership()">Cancel membership — medically ineligible</button>
 
@@ -3146,6 +3172,103 @@
   }
 
 
+  // ====== ADMIN CONSOLE ======
+  // Backend overview for role 'admin'. Read-only by design — this is for
+  // seeing what's going on, not for editing clinical data behind a provider's back.
+  let isAdmin = false;
+
+  async function initAdminConsole(staffRow){
+    isAdmin = !!(staffRow && staffRow.role === 'admin');
+    const panel = document.getElementById('admin-console');
+    if(!panel) return;
+    if(!isAdmin){ panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+
+    const [hh, rx, ap, mr, st] = await Promise.all([
+      supabaseClient.from('health_history').select('*'),
+      supabaseClient.from('prescriptions').select('*'),
+      supabaseClient.from('appointments').select('*'),
+      supabaseClient.from('medical_records').select('*'),
+      supabaseClient.from('staff').select('*')
+    ]);
+    const H = hh.data || [], R = rx.data || [], A = ap.data || [],
+          M = mr.data || [], S = st.data || [];
+
+    const paid      = H.filter(p => p.paid && !p.membership_cancelled).length;
+    const approved  = H.filter(p => p.approved).length;
+    const purchased = H.filter(p => p.purchased).length;
+    const cancelled = H.filter(p => p.membership_cancelled).length;
+    const pending   = R.filter(r => r.status === 'pending').length;
+    const mrr       = paid * 70;
+
+    const stat = (label, val, note) =>
+      '<div style="background:var(--paper-warm);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">'
+      + '<div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:var(--ink);line-height:1.1;">' + val + '</div>'
+      + '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">' + label + '</div>'
+      + (note ? '<div style="font-size:11px;opacity:0.7;margin-top:2px;">' + note + '</div>' : '')
+      + '</div>';
+
+    document.getElementById('admin-stats').innerHTML =
+        stat('Total patients', H.length)
+      + stat('Active members', paid, '$' + mrr.toLocaleString() + '/mo membership')
+      + stat('Approved', approved)
+      + stat('Purchased medication', purchased)
+      + stat('Pending Rx requests', pending)
+      + stat('Progress notes', M.length, M.filter(x=>x.signed).length + ' signed');
+
+    // ---- staff roster with roles ----
+    const roleLabel = r => r === 'physician' ? 'Physician'
+                        : r === 'np' ? 'Nurse Practitioner'
+                        : r === 'admin' ? 'Admin' : (r || 'unknown');
+    document.getElementById('admin-roster').innerHTML = S.length
+      ? S.map(s => {
+          const notes = M.filter(m => m.author_user_id === s.user_id).length;
+          const appts = A.filter(a => a.np_user_id === s.user_id && a.status === 'completed').length;
+          return '<div class="dash-protocol-row"><div>'
+            + '<div class="name" style="font-size:13.5px;">' + escapeHtml(s.full_name || '(no name)') + '</div>'
+            + '<div class="meta">' + roleLabel(s.role) + ' \u00b7 ' + appts + ' evaluations \u00b7 ' + notes + ' notes</div>'
+            + '</div><span class="rx-badge">' + roleLabel(s.role) + '</span></div>';
+        }).join('')
+      : '<p class="np-empty">No staff records.</p>';
+
+    // ---- funnel ----
+    const step = (label, n, of) => {
+      const pct = of ? Math.round(n / of * 100) : 0;
+      return '<div style="margin-bottom:8px;">'
+        + '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;">'
+        + '<span>' + label + '</span><b>' + n + (of ? '  (' + pct + '%)' : '') + '</b></div>'
+        + '<div style="height:6px;background:var(--line);border-radius:100px;overflow:hidden;">'
+        + '<div style="height:100%;width:' + pct + '%;background:var(--amber-deep);"></div></div></div>';
+    };
+    const total = H.length || 1;
+    document.getElementById('admin-funnel').innerHTML =
+        step('Submitted health history', H.length, H.length)
+      + step('Paid membership', paid, total)
+      + step('Completed evaluation', A.filter(a=>a.status==='completed').length, total)
+      + step('Prescription approved', approved, total)
+      + step('Purchased medication', purchased, total)
+      + (cancelled ? '<p style="font-size:12.5px;color:#8C2F2F;margin-top:8px;">' + cancelled + ' cancelled membership' + (cancelled===1?'':'s') + '</p>' : '');
+
+    // ---- data health: the things that quietly break fulfilment ----
+    const issues = [];
+    const noAddr = H.filter(p => p.approved && !(String(p.shipping_address1||'').trim()
+                     && String(p.shipping_city||'').trim() && String(p.shipping_zip||'').trim()));
+    if(noAddr.length) issues.push(noAddr.length + ' approved patient(s) with no shipping address');
+    const noDob = H.filter(p => !p.date_of_birth);
+    if(noDob.length) issues.push(noDob.length + ' patient(s) missing date of birth — pharmacy requires it');
+    const unsigned = M.filter(m => !m.signed);
+    if(unsigned.length) issues.push(unsigned.length + ' unsigned progress note(s)');
+    const paidUnapproved = H.filter(p => p.paid && !p.approved && !p.membership_cancelled);
+    if(paidUnapproved.length) issues.push(paidUnapproved.length + ' paying member(s) still awaiting approval');
+    const thyroid = H.filter(p => p.family_endocrine_cancer);
+    if(thyroid.length) issues.push(thyroid.length + ' patient(s) flagged for thyroid contraindication');
+
+    document.getElementById('admin-health').innerHTML = issues.length
+      ? issues.map(i => '<div style="font-size:13px;padding:8px 12px;background:rgba(217,140,43,0.12);'
+          + 'border:1px solid rgba(217,140,43,0.35);border-radius:8px;margin-bottom:6px;color:#8A5A12;">' + i + '</div>').join('')
+      : '<p style="font-size:13px;color:var(--sage);">No data issues detected.</p>';
+  }
+
   // ====== PHYSICIAN OVERSIGHT ======
   // Only reachable for role 'physician' or 'admin'. The panel is hidden for an
   // NP, and the database policies enforce the same rule server-side — an NP
@@ -3326,6 +3449,7 @@
     }
     await loadNPData();
     await initPhysicianOversight(staffRow);
+    await initAdminConsole(staffRow);
   }
 
   async function loadNPData(){
@@ -3400,6 +3524,63 @@
     }
     return L.join('\n\n');
   }
+
+  // ====== EVALUATION CADENCE ======
+  // Membership is one physician evaluation per month. This makes the count and
+  // the next-due date explicit so nobody has to reconstruct it from the calendar.
+  async function renderEvalTracker(patientUserId){
+    const el = document.getElementById('np-eval-tracker');
+    if(!el || !patientUserId) return;
+    try{
+      const { data } = await supabaseClient.from('appointments').select('*')
+        .eq('user_id', patientUserId).neq('status','cancelled')
+        .order('appointment_date', { ascending: false });
+      const appts = (data || []).filter(a => a.type === 'np_interview' || a.type === 'physician_visit');
+      const done = appts.filter(a => a.status === 'completed');
+      const upcoming = appts.filter(a => a.status !== 'completed')
+        .sort((a,b) => a.appointment_date.localeCompare(b.appointment_date))[0];
+
+      const last = done[0];
+      let dueLine = '', tone = 'neutral';
+      if(!last){
+        dueLine = upcoming
+          ? 'First evaluation booked for ' + upcoming.appointment_date + ' at ' + upcoming.appointment_time
+          : 'No evaluation completed or booked yet.';
+        tone = upcoming ? 'neutral' : 'warn';
+      } else {
+        const lastD = new Date(last.appointment_date + 'T00:00:00');
+        const due = new Date(lastD); due.setMonth(due.getMonth() + 1);
+        const days = Math.round((due - new Date()) / 86400000);
+        if(upcoming){
+          dueLine = 'Next booked ' + upcoming.appointment_date + ' at ' + upcoming.appointment_time;
+          tone = 'ok';
+        } else if(days < 0){
+          dueLine = 'OVERDUE by ' + Math.abs(days) + ' day' + (Math.abs(days)===1?'':'s') +
+                    ' — due ' + due.toISOString().slice(0,10) + ', nothing booked.';
+          tone = 'warn';
+        } else {
+          dueLine = 'Next due ' + due.toISOString().slice(0,10) + ' (' + days + ' day' + (days===1?'':'s') + ') — not booked yet.';
+          tone = days <= 7 ? 'soon' : 'ok';
+        }
+      }
+
+      const styles = {
+        ok:      'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.35);color:#2F5C46;',
+        soon:    'background:rgba(217,140,43,0.14);border:1px solid rgba(217,140,43,0.4);color:#8A5A12;',
+        warn:    'background:rgba(196,60,60,0.10);border:1px solid rgba(196,60,60,0.35);color:#8C2F2F;',
+        neutral: 'background:var(--paper-warm);border:1px solid var(--line);'
+      };
+      el.style.cssText = 'border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;' + styles[tone];
+      el.innerHTML = '<b>' + done.length + ' evaluation' + (done.length===1?'':'s') + ' completed</b>'
+        + (last ? ' \u00b7 last on ' + last.appointment_date : '')
+        + '<br><span style="font-size:12.5px;">' + dueLine + '</span>'
+        + '<br><span style="font-size:11.5px;opacity:0.75;">Membership includes one physician evaluation per month.</span>';
+    } catch(err){
+      el.textContent = 'Could not load evaluation history.';
+    }
+  }
+
+  // ====== EVALUATION CADENCE END ======
 
   // ====== MEDICAL RECORDS (SOAP) ======
   // Formal clinical documentation, distinct from the quick internal notes.
@@ -3680,6 +3861,7 @@
     npCurrentPatientUserId = patient.user_id;
     loadClinicalNotes(patient.user_id);
     loadMedicalRecords(patient.user_id);
+    renderEvalTracker(patient.user_id);
     {
       const rd=document.getElementById('rec-date');
       if(rd) rd.value=new Date().toISOString().slice(0,10);
@@ -4631,7 +4813,8 @@
 <script>
   function currentLang(){
     var m = document.cookie.match(/googtrans=\/[^/]*\/(\w+)/);
-    return (m && m[1] === 'es') ? 'es' : 'en';
+    if(!m) return 'es';                 // Spanish is the default
+    return m[1] === 'en' ? 'en' : 'es';
   }
   function paintLangToggle(){
     var cur = currentLang();
@@ -4653,11 +4836,12 @@
       'google_translate_element');
   }
   (function(){
-    // First visit from a Spanish browser switches automatically.
+    // Spanish is the default. First-time visitors land in Spanish regardless
+    // of browser language; switching to EN sets the cookie and sticks.
     try{
-      var lang = (navigator.language || '').toLowerCase();
-      if(lang.indexOf('es') === 0 && !document.cookie.match(/googtrans/)){
+      if(!document.cookie.match(/googtrans/)){
         document.cookie = 'googtrans=/en/es;path=/';
+        document.cookie = 'googtrans=/en/es;path=/;domain=.' + location.hostname;
         location.reload();
         return;
       }
