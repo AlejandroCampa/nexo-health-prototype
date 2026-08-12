@@ -737,6 +737,12 @@
 
         <div class="stage-view" id="stage-active" style="display:none;">
           <span class="status-pill status-active">Active</span>
+
+          <!-- Monthly evaluation prompt. Membership includes one physician
+               evaluation per month and refills depend on it happening, so the
+               patient needs to see this before they see their protocol. -->
+          <div id="next-eval-card" style="display:none;border-radius:12px;padding:16px;margin-bottom:18px;"></div>
+
           <h3>Your protocol</h3>
           <div id="active-med-list"></div>
           <div class="dash-protocol-row">
@@ -2135,6 +2141,7 @@
       document.getElementById('ticket-datetime-display').textContent = appt.appointment_date + ' · ' + appt.appointment_time;
     }
     if(stage === 'active' && history){
+      renderNextEvalCard();
       const membershipPrice = MEMBERSHIP_PRICE[history.plan] || 0;
       let totalMedPrice = 0;
       let medListHtml = '';
@@ -3525,6 +3532,84 @@
     return L.join('\n\n');
   }
 
+  // ====== PATIENT: MONTHLY EVALUATION PROMPT ======
+  // Membership includes one physician evaluation per month, and refills depend
+  // on it. Without a prompt, a patient finishes month one and nothing brings
+  // them back — so this computes when they're next due and pushes them to book.
+  async function renderNextEvalCard(){
+    const el = document.getElementById('next-eval-card');
+    if(!el || !supabaseClient || !currentUser) return;
+    try{
+      const { data } = await supabaseClient.from('appointments').select('*')
+        .eq('user_id', currentUser.id).neq('status','cancelled')
+        .order('appointment_date', { ascending: false });
+      const appts = data || [];
+      const done = appts.filter(a => a.status === 'completed');
+      const upcoming = appts.filter(a => a.status !== 'completed')
+        .sort((a,b) => a.appointment_date.localeCompare(b.appointment_date))[0];
+
+      let tone, title, body, cta = true;
+
+      if(upcoming){
+        tone = 'ok'; cta = false;
+        title = 'Your next evaluation is booked';
+        body = new Date(upcoming.appointment_date + 'T00:00:00')
+                 .toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})
+               + ' at ' + upcoming.appointment_time + '.';
+      } else if(done.length === 0){
+        tone = 'warn';
+        title = 'Book your first evaluation';
+        body = 'You need a physician evaluation before anything can be prescribed.';
+      } else {
+        const last = done[0];
+        const due = new Date(last.appointment_date + 'T00:00:00');
+        due.setMonth(due.getMonth() + 1);
+        const days = Math.round((due - new Date()) / 86400000);
+        const dueStr = due.toLocaleDateString(undefined,{month:'long',day:'numeric'});
+        if(days < 0){
+          tone = 'warn';
+          title = 'Your evaluation is overdue';
+          body = 'It was due ' + dueStr + '. Your refill depends on this visit — book it now.';
+        } else if(days <= 10){
+          tone = 'soon';
+          title = 'Time to book your monthly evaluation';
+          body = 'Due ' + dueStr + (days === 0 ? ' — today.' : ' — ' + days + ' day' + (days===1?'':'s') + ' away.');
+        } else {
+          tone = 'ok';
+          title = 'Next evaluation due ' + dueStr;
+          body = 'You can book it any time. Membership includes one evaluation each month.';
+          cta = true;
+        }
+      }
+
+      const styles = {
+        ok:   'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.35);color:#2F5C46;',
+        soon: 'background:rgba(217,140,43,0.14);border:1px solid rgba(217,140,43,0.45);color:#8A5A12;',
+        warn: 'background:rgba(196,60,60,0.10);border:1px solid rgba(196,60,60,0.40);color:#8C2F2F;'
+      };
+      el.style.cssText = 'display:block;border-radius:12px;padding:16px;margin-bottom:18px;' + styles[tone];
+      el.innerHTML = '<b style="font-size:15px;">' + title + '</b>'
+        + '<div style="font-size:13.5px;margin-top:4px;">' + body + '</div>'
+        + (cta ? '<button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;margin-top:12px;" '
+                 + 'onclick="openScheduler()">Book evaluation</button>' : '');
+    } catch(err){
+      el.style.display = 'none';
+    }
+  }
+
+  // Sends the patient to the booking view wherever it lives in the dashboard.
+  function openScheduler(){
+    const target = document.getElementById('physician-care-wrap')
+                || document.getElementById('stage-need-schedule');
+    if(target){
+      target.style.display = 'block';
+      target.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+    if(typeof loadPhysicianAppointment === 'function') loadPhysicianAppointment();
+  }
+
+  // ====== PATIENT: MONTHLY EVALUATION PROMPT END ======
+
   // ====== EVALUATION CADENCE ======
   // Membership is one physician evaluation per month. This makes the count and
   // the next-due date explicit so nobody has to reconstruct it from the calendar.
@@ -4283,14 +4368,27 @@
     return slots;
   }
 
-  function getNPForSlot(dateValue, time, availability){
+  // Returns an NP who both works this slot AND isn't already booked in it.
+  // The previous version returned the first matching window regardless, which
+  // meant that with two NPs on identical hours the second one never received
+  // a single appointment — all load fell on whoever appeared first in the table.
+  function getNPForSlot(dateValue, time, availability, takenNPs){
     const weekday = new Date(dateValue + 'T00:00:00').getDay();
-    const dayWindows = (availability || []).filter(a => a.day_of_week === weekday);
-    for(const w of dayWindows){
-      if(timesForWindow(w.start_time, w.end_time).includes(time)) return w.np_user_id;
-    }
-    return null;
+    const busy = new Set(takenNPs || []);
+    const free = (availability || [])
+      .filter(a => a.day_of_week === weekday
+                && timesForWindow(a.start_time, a.end_time).includes(time)
+                && !busy.has(a.np_user_id))
+      .map(a => a.np_user_id);
+    if(free.length === 0) return null;
+    // Spread the work: prefer whoever has the fewest appointments that day.
+    if(free.length === 1 || !npDayLoad) return free[0];
+    return free.slice().sort((x, y) => (npDayLoad[x] || 0) - (npDayLoad[y] || 0))[0];
   }
+
+  // Per-NP appointment counts for the date currently being viewed. Populated
+  // by selectCalendarDate so slot assignment can balance between providers.
+  let npDayLoad = null;
 
   function calendarShiftMonth(delta){
     calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
@@ -4357,19 +4455,30 @@
     const availability = await loadNPAvailability();
     const weekday = dateObj.getDay();
     const dayWindows = availability.filter(a => a.day_of_week === weekday);
-    const npOpenSet = new Set();
-    dayWindows.forEach(w => timesForWindow(w.start_time, w.end_time).forEach(t => npOpenSet.add(t)));
 
-    // Check every patient's booked NP interviews for this date, not just the
-    // current user's, so slots already taken by someone else never show as open.
+    // How many providers cover each time slot. Two NPs working the same hour
+    // means that hour can hold two patients, not one — the previous version
+    // removed a slot as soon as ANY booking existed, which capped the whole
+    // clinic at one provider's throughput no matter how many were rostered.
+    const npCountByTime = {};
+    dayWindows.forEach(w => timesForWindow(w.start_time, w.end_time).forEach(t => {
+      npCountByTime[t] = (npCountByTime[t] || 0) + 1;
+    }));
+
+    // Every booked interview on this date, across all patients.
     const { data: bookedRows } = await supabaseClient
-      .from('appointments').select('appointment_time')
+      .from('appointments').select('appointment_time, np_user_id')
       .eq('type', 'np_interview').eq('appointment_date', dateValue).neq('status', 'cancelled');
-    const bookedTimes = new Set((bookedRows || []).map(r => r.appointment_time));
+    const bookedCount = {};
+    npDayLoad = {};
+    (bookedRows || []).forEach(r => {
+      bookedCount[r.appointment_time] = (bookedCount[r.appointment_time] || 0) + 1;
+      if(r.np_user_id) npDayLoad[r.np_user_id] = (npDayLoad[r.np_user_id] || 0) + 1;
+    });
 
-    // Only offer times that both fall inside an NP's working hours AND aren't
-    // already taken — if no NP is scheduled to work that day, this is empty.
-    const openTimes = allDaySlotTimes().filter(t => npOpenSet.has(t) && !bookedTimes.has(t));
+    // A slot stays open while at least one provider covering it is still free.
+    const openTimes = allDaySlotTimes().filter(t =>
+      npCountByTime[t] && (bookedCount[t] || 0) < npCountByTime[t]);
 
     slotGrid.innerHTML = '';
     if(openTimes.length === 0){
@@ -4394,17 +4503,22 @@
       // two patients could both click the same open slot within moments of
       // each other (last-write-wins isn't good enough for real appointments).
       const { data: conflictCheck } = await supabaseClient
-        .from('appointments').select('id')
+        .from('appointments').select('np_user_id')
         .eq('type', 'np_interview').eq('appointment_date', dateValue).eq('appointment_time', time)
         .neq('status', 'cancelled');
-      if(conflictCheck && conflictCheck.length > 0){
+      const takenNPs = (conflictCheck || []).map(r => r.np_user_id);
+
+      const availability = await loadNPAvailability();
+      const assignedNP = getNPForSlot(dateValue, time, availability, takenNPs);
+
+      // Null means every provider working that slot is already booked. This is
+      // the race-condition guard: two patients clicking the same open slot
+      // moments apart both reach here, and the second one is turned away.
+      if(!assignedNP){
         alert('That time was just booked by someone else — please pick another.');
         selectCalendarDate(dateValue, new Date(dateValue + 'T00:00:00'));
         return;
       }
-
-      const availability = await loadNPAvailability();
-      const assignedNP = getNPForSlot(dateValue, time, availability);
 
       const { error } = await supabaseClient.from('appointments').insert({
         user_id: currentUser.id,
@@ -4836,14 +4950,28 @@
       'google_translate_element');
   }
   (function(){
-    // Spanish is the default. First-time visitors land in Spanish regardless
-    // of browser language; switching to EN sets the cookie and sticks.
+    // Spanish is the default. First-time visitors land in Spanish; switching
+    // to EN sets a cookie and sticks.
+    //
+    // Guarded against a reload loop: if cookies are blocked — sandboxed
+    // iframe, private browsing, cookie-restricted browser — writing the
+    // cookie silently fails, the condition stays true, and an unguarded
+    // reload() would loop forever. So we verify the write landed, only
+    // reload once per session, and never reload inside a frame.
     try{
-      if(!document.cookie.match(/googtrans/)){
+      var inFrame = (window.top !== window.self);
+      var triedAlready = false;
+      try{ triedAlready = sessionStorage.getItem('nuviLangInit') === '1'; }catch(e){}
+
+      if(!document.cookie.match(/googtrans/) && !inFrame && !triedAlready){
+        try{ sessionStorage.setItem('nuviLangInit','1'); }catch(e){}
         document.cookie = 'googtrans=/en/es;path=/';
         document.cookie = 'googtrans=/en/es;path=/;domain=.' + location.hostname;
-        location.reload();
-        return;
+        // Only reload if the cookie actually stuck.
+        if(document.cookie.match(/googtrans/)){
+          location.reload();
+          return;
+        }
       }
     }catch(e){}
     if(document.readyState === 'loading'){
