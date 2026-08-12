@@ -890,14 +890,16 @@
           <p style="font-size:12px;color:rgba(8,26,77,0.55);margin:-4px 0 4px;">Your name and date of birth must match your ID — the pharmacy requires them to fill a prescription.</p>
 
           <div class="form-section-title">Shipping address</div>
-          <p style="font-size:12px;color:rgba(8,26,77,0.55);margin:-6px 0 12px;">Where we'll ship your medication.</p>
+          <p style="font-size:12px;color:rgba(8,26,77,0.55);margin:-6px 0 12px;">Where we'll ship your medication. Our physicians are licensed in Puerto Rico, so we can only treat and ship to patients located here.</p>
           <div class="field"><label>Street address</label><input id="hh-address1" type="text" placeholder="123 Calle Principal"></div>
           <div class="field"><label>Apt / unit <span style="font-weight:400;opacity:0.6;">(optional)</span></label><input id="hh-address2" type="text" placeholder="Apt 4B"></div>
           <div class="two-col">
             <div class="field"><label>City</label><input id="hh-city" type="text" placeholder="San Juan"></div>
-            <div class="field"><label>State / territory</label><input id="hh-state" type="text" placeholder="PR"></div>
+            <div class="field"><label>State / territory</label>
+              <select id="hh-state"><option value="PR">Puerto Rico</option></select>
+            </div>
           </div>
-          <div class="field" style="max-width:200px;"><label>ZIP code</label><input id="hh-zip" type="text" placeholder="00901"></div>
+          <div class="field" style="max-width:200px;"><label>ZIP code</label><input id="hh-zip" type="text" inputmode="numeric" maxlength="5" placeholder="00901"></div>
 
           <div class="form-section-title">Primary goal</div>
           <div class="field">
@@ -2452,10 +2454,13 @@
   // is the point: they get sent to fill it in rather than ordering into a void.
   function hasCompleteShippingAddress(h){
     if(!h) return false;
-    return !!(String(h.shipping_address1 || '').trim()
+    const complete = !!(String(h.shipping_address1 || '').trim()
            && String(h.shipping_city || '').trim()
            && String(h.shipping_state || '').trim()
            && String(h.shipping_zip || '').trim());
+    // An address outside Puerto Rico is not a shippable address for us —
+    // catches anyone whose record predates this restriction, or who moved.
+    return complete && isPuertoRicoAddress(h.shipping_state, h.shipping_zip);
   }
 
   function requireShippingAddress(){
@@ -2701,8 +2706,21 @@
       const zip = document.getElementById('hh-zip');
       if(addr && !addr.value.trim()){ alert('Please enter your street address — we need it to ship your medication.'); addr.focus(); return; }
       if(city && !city.value.trim()){ alert('Please enter your city.'); city.focus(); return; }
-      if(st && !st.value.trim()){ alert('Please enter your state or territory.'); st.focus(); return; }
+      if(st && !st.value.trim()){ alert('Please select your state or territory.'); st.focus(); return; }
       if(zip && !zip.value.trim()){ alert('Please enter your ZIP code.'); zip.focus(); return; }
+
+      // Licensure gate. Our physicians hold Puerto Rico licences, so we cannot
+      // legally evaluate or prescribe for a patient located elsewhere. The
+      // dropdown already restricts the state, but the ZIP is free text and is
+      // what the pharmacy actually ships against — so it gets checked properly.
+      if(!isPuertoRicoAddress(st ? st.value : '', zip ? zip.value : '')){
+        alert('We can only treat patients located in Puerto Rico right now.\n\n'
+            + 'Our physicians are licensed here, and we cannot legally evaluate or '
+            + 'prescribe for patients outside Puerto Rico. Please check your ZIP code.\n\n'
+            + 'Puerto Rico ZIP codes run 006xx, 007xx and 009xx.');
+        if(zip) zip.focus();
+        return;
+      }
     }
     // Body markers must be physically plausible. The min/max on the inputs
     // is only a browser hint — anyone can bypass it — so the real check lives
@@ -3660,6 +3678,20 @@
       msg.style.color = '#8C2F2F';
       msg.textContent = 'Could not book: ' + (err.message || 'unknown error');
     }
+  }
+
+
+  // Puerto Rico ZIP codes occupy three ranges: 00601–00795 and 00901–00988.
+  // Checking the ZIP rather than trusting the state field matters because the
+  // ZIP is what the pharmacy ships against — a mismatched pair would mean a
+  // package leaving the jurisdiction our physicians are licensed in.
+  function isPuertoRicoAddress(state, zip){
+    const st = String(state || '').trim().toUpperCase();
+    if(st && st !== 'PR' && st !== 'PUERTO RICO') return false;
+    const digits = String(zip || '').replace(/\D/g, '').slice(0, 5);
+    if(digits.length !== 5) return false;
+    const n = parseInt(digits, 10);
+    return (n >= 601 && n <= 795) || (n >= 901 && n <= 988);
   }
 
   // ====== PATIENT SEARCH ======
