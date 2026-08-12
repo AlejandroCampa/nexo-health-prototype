@@ -1046,6 +1046,20 @@
       </div>
     </div>
 
+    <!-- CO-SIGNATURE QUEUE — licensed physicians only -->
+    <div id="cosign-queue-wrap" style="display:none;margin-bottom:22px;">
+      <div class="dash-grid" style="grid-template-columns:1fr;">
+        <div class="dash-card" style="border-color:var(--amber-deep);">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
+            <h3 style="margin:0;">Notes awaiting your co-signature</h3>
+            <span id="cosign-count" class="status-pill" style="background:var(--amber-deep);color:var(--white);">0</span>
+          </div>
+          <p style="font-size:13px;color:var(--ink-soft);margin-bottom:16px;">Written by a provider practising under your supervision. Review each one before countersigning — your signature attests to the clinical content.</p>
+          <div id="cosign-list"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ADMIN CONSOLE — role 'admin' only. Backend view across every role. -->
     <div id="admin-console" style="display:none;margin-bottom:22px;">
       <div class="dash-grid" style="grid-template-columns:1fr;">
@@ -1125,6 +1139,13 @@
     <div class="dash-grid" style="grid-template-columns:1fr;">
       <div class="dash-card">
         <h3 style="margin-bottom:14px;">All patients</h3>
+        <div style="margin-bottom:12px;">
+          <input id="np-patient-search" type="search" placeholder="Search patients by name or email…"
+                 oninput="filterPatientList()"
+                 style="width:100%;font-family:inherit;font-size:14px;padding:11px 14px;
+                        border:1px solid var(--line);border-radius:10px;background:var(--white);">
+          <div id="np-search-count" style="font-size:12px;color:var(--ink-soft);margin-top:6px;"></div>
+        </div>
         <div id="np-patient-list"></div>
       </div>
     </div>
@@ -1156,7 +1177,18 @@
 
     <div class="form-section-title">Membership</div>
     <div id="np-payment-banner" style="border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:14px;"></div>
-    <div id="np-eval-tracker" style="border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;"></div>
+    <div id="np-eval-tracker" style="border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:14px;"></div>
+
+    <details id="np-followup" style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:16px;">
+      <summary style="cursor:pointer;font-weight:600;font-size:13.5px;">+ Book this patient's next evaluation</summary>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:10px 0 12px;">Schedule it before they leave the call — patients who leave without a booked follow-up are the ones who lapse.</p>
+      <div class="two-col">
+        <div class="field"><label>Date</label><input id="fu-date" type="date" onchange="loadFollowupSlots()"></div>
+        <div class="field"><label>Time</label><select id="fu-time"><option value="">Pick a date first</option></select></div>
+      </div>
+      <button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;" onclick="bookFollowup()">Book evaluation</button>
+      <div id="fu-msg" style="font-size:12.5px;margin-top:10px;"></div>
+    </details>
     <div id="np-membership-status" style="font-size:13.5px;margin-bottom:10px;"></div>
     <button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13px;border-color:#B23A3A;color:#B23A3A;margin-bottom:20px;" onclick="npCancelMembership()">Cancel membership — medically ineligible</button>
 
@@ -3179,6 +3211,94 @@
   }
 
 
+
+  // ====== CO-SIGNATURE ======
+  // A provider practising under supervision writes the note; a licensed
+  // physician countersigns it. Deliberately excludes 'admin' from signing —
+  // a non-clinical administrator must never attest to clinical content.
+  let staffRequiresCosign = false;
+  let canCosign = false;
+
+  async function initCosign(staffRow){
+    staffRequiresCosign = !!(staffRow && staffRow.requires_cosign);
+    canCosign = !!(staffRow && staffRow.role === 'physician' && !staffRow.requires_cosign);
+
+    const wrap = document.getElementById('cosign-queue-wrap');
+    if(!wrap) return;
+    if(!canCosign){ wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    await loadCosignQueue();
+  }
+
+  async function loadCosignQueue(){
+    const list = document.getElementById('cosign-list');
+    const badge = document.getElementById('cosign-count');
+    if(!list) return;
+    try{
+      const { data } = await supabaseClient.from('medical_records')
+        .select('*').eq('requires_cosign', true)
+        .order('encounter_date', { ascending: true });
+      const pending = (data || []).filter(r => !r.cosigned_at);
+      if(badge) badge.textContent = pending.length;
+
+      if(pending.length === 0){
+        list.innerHTML = '<p class="np-empty">Nothing waiting. All supervised notes are countersigned.</p>';
+        return;
+      }
+
+      // patient names, so the physician isn't reviewing anonymous UUIDs
+      const { data: hh } = await supabaseClient.from('health_history').select('user_id, full_name');
+      const nameFor = {};
+      (hh || []).forEach(h => { nameFor[h.user_id] = h.full_name; });
+
+      list.innerHTML = pending.map(r => {
+        const d = new Date(r.encounter_date + 'T00:00:00')
+                    .toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+        const age = Math.floor((Date.now() - new Date(r.created_at)) / 86400000);
+        const stale = age >= 3;
+        return '<div style="border:1px solid ' + (stale ? 'rgba(196,60,60,0.4)' : 'var(--line)')
+          + ';border-radius:10px;padding:14px 16px;margin-bottom:10px;'
+          + (stale ? 'background:rgba(196,60,60,0.06);' : '') + '">'
+          + '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px;">'
+          + '<div><b style="font-size:14px;">' + escapeHtml(nameFor[r.patient_user_id] || 'Patient') + '</b>'
+          + '<div style="font-size:12px;color:var(--ink-soft);">' + d + ' \u00b7 '
+          + escapeHtml(r.encounter_type || 'Visit') + ' \u00b7 written by '
+          + escapeHtml(r.author_name || 'provider') + '</div></div>'
+          + (stale ? '<span class="rx-badge" style="border-color:#B23A3A;color:#B23A3A;">'
+                     + age + ' days waiting</span>' : '') + '</div>'
+          + (r.assessment ? '<div style="font-size:13px;margin-bottom:6px;"><b>Assessment:</b> '
+                            + escapeHtml(r.assessment) + '</div>' : '')
+          + (r.plan ? '<div style="font-size:13px;margin-bottom:10px;"><b>Plan:</b> '
+                      + escapeHtml(r.plan) + '</div>' : '')
+          + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+          + '<button class="btn btn-outline" style="width:auto;padding:6px 14px;font-size:12.5px;" '
+          + 'onclick="printMedicalRecord(\'' + r.id + '\')">Read full note</button>'
+          + '<button class="btn btn-primary" style="width:auto;padding:6px 14px;font-size:12.5px;" '
+          + 'onclick="cosignRecord(\'' + r.id + '\')">Co-sign</button>'
+          + '</div></div>';
+      }).join('');
+    } catch(err){
+      list.innerHTML = '<p class="np-empty">Could not load queue: ' + (err.message || 'unknown') + '</p>';
+    }
+  }
+
+  async function cosignRecord(recordId){
+    if(!canCosign){ alert('Only a licensed physician can countersign.'); return; }
+    if(!confirm('Co-sign this note?\n\nYour signature attests that you have reviewed the clinical content. This cannot be undone.')) return;
+    try{
+      const { error } = await supabaseClient.from('medical_records').update({
+        cosigned_by: currentUser.id,
+        cosigned_by_name: currentStaffName,
+        cosigned_at: new Date().toISOString()
+      }).eq('id', recordId);
+      if(error) throw error;
+      await loadCosignQueue();
+      if(npCurrentPatientUserId) await loadMedicalRecords(npCurrentPatientUserId);
+    } catch(err){
+      alert('Could not co-sign: ' + (err.message || 'unknown error'));
+    }
+  }
+
   // ====== ADMIN CONSOLE ======
   // Backend overview for role 'admin'. Read-only by design — this is for
   // seeing what's going on, not for editing clinical data behind a provider's back.
@@ -3324,7 +3444,7 @@
     wrap.innerHTML = Object.keys(byProvider).map(uid => {
       const days = byProvider[uid].sort((a,b) => a.day_of_week - b.day_of_week)
         .map(r => '<div class="dash-protocol-row"><div><div class="name" style="font-size:13px;">'
-          + DAY_NAMES[r.day_of_week] + '</div><div class="meta">' + r.start_time + ' – ' + r.end_time + '</div></div>'
+          + DAY_NAMES[r.day_of_week] + '</div><div class="meta">' + to12Hour(r.start_time) + ' – ' + to12Hour(r.end_time) + '</div></div>'
           + '<button class="btn btn-outline" style="width:auto;padding:4px 10px;font-size:11.5px;" '
           + 'onclick="removeAvailability(\'' + r.id + '\')">Remove</button></div>').join('');
       return '<div style="margin-bottom:14px;"><div style="font-weight:600;font-size:14px;margin-bottom:4px;">'
@@ -3435,6 +3555,137 @@
           : '');
   }
 
+
+
+  // ====== PROVIDER-BOOKED FOLLOW-UP ======
+  // Patients who finish a call without a booked follow-up are the ones who
+  // lapse, so the provider can schedule it directly rather than relying on
+  // the patient to come back and do it themselves. Uses the same slot rules
+  // as patient-side booking, so it can't create a double-booking.
+  async function loadFollowupSlots(){
+    const dateEl = document.getElementById('fu-date');
+    const timeEl = document.getElementById('fu-time');
+    const msg = document.getElementById('fu-msg');
+    if(!dateEl || !timeEl) return;
+    const dateValue = dateEl.value;
+    timeEl.innerHTML = '<option value="">Loading…</option>';
+    if(msg) msg.textContent = '';
+    if(!dateValue){ timeEl.innerHTML = '<option value="">Pick a date first</option>'; return; }
+
+    try{
+      const availability = await loadNPAvailability();
+      const weekday = new Date(dateValue + 'T00:00:00').getDay();
+      const dayWindows = availability.filter(a => a.day_of_week === weekday);
+      if(dayWindows.length === 0){
+        timeEl.innerHTML = '<option value="">No provider works this day</option>';
+        return;
+      }
+      const npCountByTime = {};
+      dayWindows.forEach(w => timesForWindow(w.start_time, w.end_time).forEach(t => {
+        npCountByTime[t] = (npCountByTime[t] || 0) + 1;
+      }));
+      const { data: bookedRows } = await supabaseClient.from('appointments')
+        .select('appointment_time, np_user_id')
+        .eq('type','np_interview').eq('appointment_date', dateValue).neq('status','cancelled');
+      const bookedCount = {};
+      npDayLoad = {};
+      (bookedRows || []).forEach(r => {
+        bookedCount[r.appointment_time] = (bookedCount[r.appointment_time] || 0) + 1;
+        if(r.np_user_id) npDayLoad[r.np_user_id] = (npDayLoad[r.np_user_id] || 0) + 1;
+      });
+      const open = allDaySlotTimes().filter(t =>
+        npCountByTime[t] && (bookedCount[t] || 0) < npCountByTime[t]);
+
+      timeEl.innerHTML = open.length
+        ? '<option value="">Select a time…</option>' + open.map(t => '<option>' + t + '</option>').join('')
+        : '<option value="">Fully booked that day</option>';
+    } catch(err){
+      timeEl.innerHTML = '<option value="">Could not load times</option>';
+    }
+  }
+
+  async function bookFollowup(){
+    const msg = document.getElementById('fu-msg');
+    const dateValue = document.getElementById('fu-date').value;
+    const time = document.getElementById('fu-time').value;
+    if(!npCurrentPatientUserId){ alert('No patient selected.'); return; }
+    if(!dateValue || !time){ alert('Pick a date and time.'); return; }
+
+    try{
+      // Same conflict check the patient-side flow uses.
+      const { data: taken } = await supabaseClient.from('appointments')
+        .select('np_user_id')
+        .eq('type','np_interview').eq('appointment_date', dateValue)
+        .eq('appointment_time', time).neq('status','cancelled');
+      const takenNPs = (taken || []).map(r => r.np_user_id);
+      const availability = await loadNPAvailability();
+      const assignedNP = getNPForSlot(dateValue, time, availability, takenNPs);
+      if(!assignedNP){
+        msg.style.color = '#8C2F2F';
+        msg.textContent = 'That slot just filled — pick another time.';
+        await loadFollowupSlots();
+        return;
+      }
+
+      const ticket = 'NV-' + Math.random().toString(36).slice(2,8).toUpperCase();
+      const { error } = await supabaseClient.from('appointments').insert({
+        user_id: npCurrentPatientUserId,
+        ticket_number: ticket,
+        appointment_date: dateValue,
+        appointment_time: time,
+        status: 'scheduled',
+        type: 'np_interview',
+        np_user_id: assignedNP
+      });
+      if(error) throw error;
+
+      // Drop a message into the patient's thread so they see it on their
+      // dashboard — this is our reminder channel until SMS is wired up.
+      try{
+        await supabaseClient.from('messages').insert({
+          user_id: npCurrentPatientUserId,
+          sender: 'doctor',
+          body: 'Your next evaluation is booked for '
+                + new Date(dateValue + 'T00:00:00').toLocaleDateString(undefined,
+                    { weekday:'long', month:'long', day:'numeric' })
+                + ' at ' + time + '. Reply here if you need to change it.'
+        });
+      } catch(e){ /* message is a nicety, not a blocker */ }
+
+      msg.style.color = 'var(--sage)';
+      msg.textContent = 'Booked for ' + dateValue + ' at ' + time + '. Patient notified in their messages.';
+      document.getElementById('fu-time').value = '';
+      await renderEvalTracker(npCurrentPatientUserId);
+    } catch(err){
+      msg.style.color = '#8C2F2F';
+      msg.textContent = 'Could not book: ' + (err.message || 'unknown error');
+    }
+  }
+
+  // ====== PATIENT SEARCH ======
+  // Filters the rendered list client-side. Fast at clinic scale and avoids a
+  // round-trip on every keystroke; if the roster ever outgrows one page load
+  // this should become a server-side query.
+  function filterPatientList(){
+    const box = document.getElementById('np-patient-search');
+    const list = document.getElementById('np-patient-list');
+    const count = document.getElementById('np-search-count');
+    if(!box || !list) return;
+    const q = box.value.trim().toLowerCase();
+    const rows = [...list.children];
+    let shown = 0;
+    rows.forEach(row => {
+      const hit = !q || row.textContent.toLowerCase().includes(q);
+      row.style.display = hit ? '' : 'none';
+      if(hit) shown++;
+    });
+    if(count){
+      count.textContent = q
+        ? shown + ' of ' + rows.length + ' patient' + (rows.length === 1 ? '' : 's')
+        : rows.length + ' patient' + (rows.length === 1 ? '' : 's');
+    }
+  }
+
   // ====== NP DASHBOARD ======
   let npPatients = [];
   let npCurrentPatientId = null;
@@ -3457,6 +3708,7 @@
     await loadNPData();
     await initPhysicianOversight(staffRow);
     await initAdminConsole(staffRow);
+    await initCosign(staffRow);
   }
 
   async function loadNPData(){
@@ -3688,9 +3940,16 @@
       wrap.innerHTML = rows.map(r => {
         const d = new Date(r.encounter_date + 'T00:00:00').toLocaleDateString(undefined,
                     { year:'numeric', month:'short', day:'numeric' });
-        const status = r.signed
-          ? '<span class="rx-badge" style="border-color:var(--sage);color:var(--sage);">Signed</span>'
-          : '<span class="rx-badge" style="border-color:var(--amber-deep);color:var(--amber-deep);">Draft</span>';
+        let status;
+        if(!r.signed){
+          status = '<span class="rx-badge" style="border-color:var(--amber-deep);color:var(--amber-deep);">Draft</span>';
+        } else if(r.requires_cosign && !r.cosigned_at){
+          status = '<span class="rx-badge" style="border-color:#B23A3A;color:#B23A3A;">Awaiting co-signature</span>';
+        } else if(r.cosigned_at){
+          status = '<span class="rx-badge" style="border-color:var(--sage);color:var(--sage);">Signed &amp; co-signed</span>';
+        } else {
+          status = '<span class="rx-badge" style="border-color:var(--sage);color:var(--sage);">Signed</span>';
+        }
         return '<div style="border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px;">'
           + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">'
           + '<div><b style="font-size:13.5px;">' + d + ' — ' + (r.encounter_type || 'Visit') + '</b>'
@@ -3739,7 +3998,10 @@
         weight_lbs: val('rec-weight') ? parseFloat(val('rec-weight')) : null,
         encounter_time: val('rec-time') || null,
         signed: !!sign,
-        signed_at: sign ? new Date().toISOString() : null
+        signed_at: sign ? new Date().toISOString() : null,
+        // If this author practises under supervision, the note enters the
+        // supervising physician's queue instead of being complete on signing.
+        requires_cosign: staffRequiresCosign
       });
       if(error) throw error;
 
@@ -3748,7 +4010,11 @@
       });
       const det = document.getElementById('np-record-form'); if(det) det.open = false;
       await loadMedicalRecords(npCurrentPatientUserId);
-      alert(sign ? 'Record signed and saved.' : 'Draft saved.');
+      alert(sign
+        ? (staffRequiresCosign
+            ? 'Note signed and sent for co-signature. It is not complete until your supervising physician countersigns it.'
+            : 'Record signed and saved.')
+        : 'Draft saved.');
     } catch(err){
       alert('Could not save record: ' + (err.message || 'unknown error'));
     }
@@ -3811,7 +4077,7 @@
   <table class="meta">
     <tr><td class="k">Patient</td><td><b>${escapeHtml(pt && pt.full_name || '—')}</b></td></tr>
     <tr><td class="k">Date of birth</td><td>${fmt(pt && pt.date_of_birth)}</td></tr>
-    <tr><td class="k">Encounter</td><td>${fmt(r.encounter_date)}${r.encounter_time ? " at " + r.encounter_time : ""}</td></tr>
+    <tr><td class="k">Encounter</td><td>${fmt(r.encounter_date)}${r.encounter_time ? " at " + to12Hour(r.encounter_time) : ""}</td></tr>
     <tr><td class="k">Encounter type</td><td>${escapeHtml(r.encounter_type || '—')}</td></tr>
     ${vitals.length ? '<tr><td class="k">Vitals</td><td>' + vitals.join(' &nbsp;·&nbsp; ') + '</td></tr>' : ''}
   </table>
@@ -3826,6 +4092,10 @@
       ? 'Electronically signed ' + new Date(r.signed_at).toLocaleString()
       : 'UNSIGNED DRAFT — not a completed medical record'}</div>
   </div>
+  ${r.requires_cosign ? (r.cosigned_at
+    ? '<div class="sig" style="margin-top:18px;"><div class="nm">' + escapeHtml(r.cosigned_by_name || 'Supervising Physician') + ', Supervising Physician</div>'
+      + '<div>Reviewed and countersigned ' + new Date(r.cosigned_at).toLocaleString() + '</div></div>'
+    : '<div class="draft" style="margin-top:18px;">Awaiting supervising physician co-signature — incomplete record</div>') : ''}
 
   <div class="foot">
     Confidential medical record. Contains protected health information.
@@ -3947,6 +4217,15 @@
     loadClinicalNotes(patient.user_id);
     loadMedicalRecords(patient.user_id);
     renderEvalTracker(patient.user_id);
+    {
+      const fu = document.getElementById('fu-date');
+      if(fu){
+        const d = new Date(); d.setDate(d.getDate() + 30);
+        fu.value = d.toISOString().slice(0,10);
+        fu.min = new Date().toISOString().slice(0,10);
+        loadFollowupSlots();
+      }
+    }
     {
       const rd=document.getElementById('rec-date');
       if(rd) rd.value=new Date().toISOString().slice(0,10);
@@ -4327,6 +4606,21 @@
   const NP_DAY_END_HOUR = 19; // 7:00 PM
   const NP_SLOT_MINUTES = 15;
   const NP_BOOKING_WINDOW_DAYS = 60;
+
+
+  // Converts a 24-hour "HH:MM" string to US 12-hour format. Time <input>
+  // elements always hold 24-hour values regardless of what the browser
+  // displays, so anything we render from stored data has to be converted.
+  function to12Hour(hhmm){
+    if(!hhmm) return '';
+    const parts = String(hhmm).split(':');
+    let h = parseInt(parts[0], 10);
+    const m = (parts[1] || '00').slice(0,2);
+    if(isNaN(h)) return hhmm;
+    const period = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if(h === 0) h = 12;
+    return h + ':' + m + ' ' + period;
+  }
 
   function formatSlotTime(hour, minute){
     const period = hour >= 12 ? 'PM' : 'AM';
