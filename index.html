@@ -1040,7 +1040,28 @@
         <h1 id="np-welcome">NP Dashboard</h1>
         <p>Patients, interviews, and prescriptions awaiting your review.</p>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;">
+      <div style="display:flex;align-items:center;gap:12px;position:relative;">
+        <button class="account-icon-btn" id="notif-bell" onclick="toggleNotifications()"
+                title="Notifications" aria-label="Notifications" style="position:relative;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;
+                padding:0 5px;border-radius:100px;background:#C43C3C;color:#fff;font-family:'Sora',sans-serif;
+                font-size:11px;font-weight:700;line-height:19px;text-align:center;">0</span>
+        </button>
+
+        <div id="notif-panel" style="display:none;position:absolute;top:calc(100% + 10px);right:0;z-index:120;
+             width:min(420px,calc(100vw - 40px));max-height:65vh;overflow-y:auto;background:var(--white);
+             border:1px solid var(--line);border-radius:16px;box-shadow:0 22px 50px -22px rgba(8,26,77,0.45);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;
+                      padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--white);">
+            <b style="font-size:14px;">Notifications</b>
+            <button onclick="markNotificationsRead()"
+                    style="background:none;border:none;color:var(--amber-deep);font-family:'Outfit',sans-serif;
+                           font-size:12.5px;cursor:pointer;padding:0;">Mark all read</button>
+          </div>
+          <div id="notif-list"></div>
+        </div>
+
         <button class="account-icon-btn" onclick="openStaffAccountModal()" title="My account" aria-label="My account">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
@@ -3248,6 +3269,212 @@
 
 
 
+
+  // ====== STAFF NOTIFICATIONS ======
+  // Alerts are DERIVED from source data rather than written to a notifications
+  // table. A separate event table drifts out of sync the moment anything is
+  // edited directly in the database — this can't, because it reads the truth.
+  // Unread state is a single timestamp per staff member.
+  let notifSeenAt = null;
+  let notifItems = [];
+  let notifTimer = null;
+
+  const NOTIF_ICONS = {
+    patient: '👤', message: '💬', overdue: '⏰', rx: '💊', cosign: '✍️'
+  };
+
+  async function initNotifications(staffRow){
+    notifSeenAt = staffRow && staffRow.notifications_seen_at
+      ? new Date(staffRow.notifications_seen_at) : new Date(0);
+    await loadNotifications();
+    if(notifTimer) clearInterval(notifTimer);
+    // Poll rather than subscribe: simpler, survives a dropped websocket, and
+    // 45s is well inside "fast enough" for a clinic.
+    notifTimer = setInterval(loadNotifications, 45000);
+  }
+
+  async function loadNotifications(){
+    if(!supabaseClient || !currentUser) return;
+    const items = [];
+    const now = Date.now();
+    try{
+      const [hhRes, msgRes, rxRes, apRes] = await Promise.all([
+        supabaseClient.from('health_history').select('*'),
+        supabaseClient.from('messages').select('*').order('created_at', { ascending: false }),
+        supabaseClient.from('prescriptions').select('*').eq('status', 'pending'),
+        supabaseClient.from('appointments').select('*').neq('status', 'cancelled')
+      ]);
+      const H = hhRes.data || [], M = msgRes.data || [],
+            R = rxRes.data || [], A = apRes.data || [];
+      const nameFor = {};
+      H.forEach(h => { nameFor[h.user_id] = h.full_name || 'Patient'; });
+
+      // --- new patients awaiting first review ---
+      H.filter(h => h.paid && !h.approved && !h.membership_cancelled).forEach(h => {
+        items.push({
+          type: 'patient',
+          at: new Date(h.paid_at || h.created_at),
+          title: nameFor[h.user_id],
+          body: 'Paid member awaiting prescription review',
+          patientId: h.id
+        });
+      });
+
+      // --- unanswered patient messages ---
+      // A message counts as answered once staff have replied after it.
+      const lastStaffReply = {};
+      M.filter(m => m.sender === 'doctor').forEach(m => {
+        const t = new Date(m.created_at).getTime();
+        if(!lastStaffReply[m.user_id] || t > lastStaffReply[m.user_id]) lastStaffReply[m.user_id] = t;
+      });
+      const seenPatient = {};
+      M.filter(m => m.sender === 'patient').forEach(m => {
+        if(seenPatient[m.user_id]) return;          // newest only, per patient
+        const t = new Date(m.created_at).getTime();
+        if((lastStaffReply[m.user_id] || 0) > t) return;
+        seenPatient[m.user_id] = true;
+        const hh = H.find(x => x.user_id === m.user_id);
+        items.push({
+          type: 'message',
+          at: new Date(m.created_at),
+          title: nameFor[m.user_id] || 'Patient',
+          body: String(m.body || '').slice(0, 70),
+          patientId: hh ? hh.id : null
+        });
+      });
+
+      // --- evaluations overdue ---
+      H.filter(h => h.approved && !h.membership_cancelled).forEach(h => {
+        const mine = A.filter(a => a.user_id === h.user_id);
+        const done = mine.filter(a => a.status === 'completed')
+          .sort((a,b) => b.appointment_date.localeCompare(a.appointment_date));
+        const upcoming = mine.some(a => a.status !== 'completed');
+        if(upcoming || done.length === 0) return;
+        const due = new Date(done[0].appointment_date + 'T00:00:00');
+        due.setMonth(due.getMonth() + 1);
+        const daysOver = Math.floor((now - due) / 86400000);
+        if(daysOver > 0){
+          items.push({
+            type: 'overdue',
+            at: due,
+            title: nameFor[h.user_id],
+            body: 'Evaluation overdue by ' + daysOver + ' day' + (daysOver === 1 ? '' : 's') + ' — refill blocked',
+            patientId: h.id
+          });
+        }
+      });
+
+      // --- pending prescription requests ---
+      R.forEach(r => {
+        const hh = H.find(x => x.user_id === r.user_id);
+        items.push({
+          type: 'rx',
+          at: new Date(r.created_at),
+          title: nameFor[r.user_id] || 'Patient',
+          body: 'Requested ' + (r.medication || 'a prescription') + ' — awaiting review',
+          patientId: hh ? hh.id : null
+        });
+      });
+
+      // --- notes awaiting co-signature (only shown to whoever can sign) ---
+      if(canCosign){
+        const { data: mr } = await supabaseClient.from('medical_records')
+          .select('*').eq('requires_cosign', true);
+        (mr || []).filter(r => !r.cosigned_at).forEach(r => {
+          const hh = H.find(x => x.user_id === r.patient_user_id);
+          items.push({
+            type: 'cosign',
+            at: new Date(r.created_at),
+            title: nameFor[r.patient_user_id] || 'Patient',
+            body: 'Note by ' + (r.author_name || 'provider') + ' awaiting your co-signature',
+            patientId: hh ? hh.id : null
+          });
+        });
+      }
+
+      items.sort((a,b) => b.at - a.at);
+      notifItems = items;
+      renderNotifications();
+    } catch(err){
+      const list = document.getElementById('notif-list');
+      if(list) list.innerHTML = '<p class="np-empty" style="padding:16px;">Could not load notifications.</p>';
+    }
+  }
+
+  function timeAgo(d){
+    const s = Math.floor((Date.now() - d) / 1000);
+    if(s < 60) return 'just now';
+    if(s < 3600) return Math.floor(s/60) + 'm ago';
+    if(s < 86400) return Math.floor(s/3600) + 'h ago';
+    const days = Math.floor(s/86400);
+    return days === 1 ? 'yesterday' : days + 'd ago';
+  }
+
+  function renderNotifications(){
+    const list = document.getElementById('notif-list');
+    const badge = document.getElementById('notif-badge');
+    if(!list) return;
+
+    const unread = notifItems.filter(n => !notifSeenAt || n.at > notifSeenAt);
+    if(badge){
+      badge.style.display = unread.length ? 'block' : 'none';
+      badge.textContent = unread.length > 99 ? '99+' : unread.length;
+    }
+
+    if(notifItems.length === 0){
+      list.innerHTML = '<p class="np-empty" style="padding:22px 16px;">Nothing needs your attention.</p>';
+      return;
+    }
+
+    list.innerHTML = notifItems.slice(0, 40).map(n => {
+      const isUnread = !notifSeenAt || n.at > notifSeenAt;
+      return '<div onclick="openNotification(' + (n.patientId ? "'" + n.patientId + "'" : 'null') + ')"'
+        + ' style="display:flex;gap:11px;padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer;'
+        + (isUnread ? 'background:rgba(0,194,255,0.06);' : '') + '">'
+        + '<span style="font-size:17px;line-height:1.3;flex-shrink:0;">' + (NOTIF_ICONS[n.type] || '•') + '</span>'
+        + '<div style="min-width:0;flex:1;">'
+        + '<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;">'
+        + '<b style="font-size:13.5px;">' + escapeHtml(n.title) + '</b>'
+        + '<span style="font-size:11.5px;color:var(--ink-soft);flex-shrink:0;">' + timeAgo(n.at) + '</span></div>'
+        + '<div style="font-size:12.5px;color:var(--ink-soft);">' + escapeHtml(n.body) + '</div>'
+        + '</div>'
+        + (isUnread ? '<span style="width:7px;height:7px;border-radius:50%;background:#C43C3C;flex-shrink:0;margin-top:6px;"></span>' : '')
+        + '</div>';
+    }).join('');
+  }
+
+  function toggleNotifications(){
+    const panel = document.getElementById('notif-panel');
+    if(!panel) return;
+    const showing = panel.style.display === 'block';
+    panel.style.display = showing ? 'none' : 'block';
+    if(!showing) loadNotifications();
+  }
+
+  function openNotification(patientId){
+    document.getElementById('notif-panel').style.display = 'none';
+    if(patientId) openNPPatientDetail(patientId);
+  }
+
+  async function markNotificationsRead(){
+    notifSeenAt = new Date();
+    renderNotifications();
+    try{
+      await supabaseClient.from('staff')
+        .update({ notifications_seen_at: notifSeenAt.toISOString() })
+        .eq('user_id', currentUser.id);
+    } catch(err){ /* the UI already updated; retry happens next load */ }
+  }
+
+  // Close the panel when clicking elsewhere.
+  document.addEventListener('click', function(e){
+    const panel = document.getElementById('notif-panel');
+    const bell = document.getElementById('notif-bell');
+    if(!panel || panel.style.display !== 'block') return;
+    if(panel.contains(e.target) || (bell && bell.contains(e.target))) return;
+    panel.style.display = 'none';
+  });
+
   // ====== STAFF PROFILE PHOTOS ======
   // Photos go to Supabase Storage, not the database. They're resized in the
   // browser first — a phone photo is 3–5 MB and nobody needs that for a 76px
@@ -3887,6 +4114,7 @@
     await initPhysicianOversight(staffRow);
     await initAdminConsole(staffRow);
     await initCosign(staffRow);
+    await initNotifications(staffRow);
   }
 
   async function loadNPData(){
