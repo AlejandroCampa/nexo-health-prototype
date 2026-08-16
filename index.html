@@ -2485,8 +2485,29 @@
       stage = 'need-schedule';
     }
 
+    console.log('[state] stage =', stage, '| paid =', history && history.paid, '| appt =', appt && appt.status);
     document.querySelectorAll('.stage-view').forEach(v => v.style.display = 'none');
-    document.getElementById('stage-' + stage).style.display = 'block';
+    const stageEl = document.getElementById('stage-' + stage);
+    if(stageEl){
+      stageEl.style.display = 'block';
+    } else {
+      console.error('[state] no view found for stage:', stage);
+    }
+
+    // A patient who has just paid must land on their dashboard, not be left
+    // looking at the marketing page with their money gone. showDashboard()
+    // needs a user object, so reveal the panels directly instead.
+    const dash = document.getElementById('dashboard');
+    if(dash && !dash.classList.contains('visible')){
+      console.log('[state] forcing dashboard visible');
+      document.getElementById('marketing-content').classList.add('hidden-for-dashboard');
+      dash.classList.add('visible');
+      const navCta = document.getElementById('nav-cta');
+      if(navCta) navCta.style.display = 'none';
+    }
+    if(stage === 'need-schedule' && stageEl){
+      stageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 
     if(stage === 'membership-cancelled'){
       document.getElementById('membership-cancelled-reason').textContent =
@@ -5919,15 +5940,24 @@
       try{ sessionStorage.removeItem('nuviPendingPayment'); }catch(e){}
       console.log('[payment] applied, plan:', plan);
 
-      notify('payment', {
-        name: currentHealthHistory.full_name,
-        email: currentHealthHistory.email || (currentUser && currentUser.email)
-      }, {
-        amount: activeCoupon ? ('$' + activeCoupon.price) : '$70',
-        coupon: activeCoupon ? activeCoupon.code : null
-      });
-
+      // Refresh the UI FIRST. The notification email is a nicety; the patient
+      // reaching their dashboard is the entire point of the transaction, so
+      // nothing optional is allowed to run ahead of it.
+      currentHealthHistory.paid = true;
+      currentHealthHistory.plan = plan;
       await loadPatientState();
+
+      // Only now, and detached, so a failed or undeployed function can never
+      // interfere with the payment flow.
+      setTimeout(function(){
+        notify('payment', {
+          name: currentHealthHistory && currentHealthHistory.full_name,
+          email: (currentHealthHistory && currentHealthHistory.email) || (currentUser && currentUser.email)
+        }, {
+          amount: activeCoupon ? ('$' + activeCoupon.price) : '$70',
+          coupon: activeCoupon ? activeCoupon.code : null
+        });
+      }, 0);
     } catch(err){
       console.error('[payment] could not apply:', err);
       pendingPaymentPlan = plan;   // put it back so the next load retries
