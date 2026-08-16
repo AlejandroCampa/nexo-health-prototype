@@ -5931,10 +5931,21 @@
     const plan = pendingPaymentPlan;
     pendingPaymentPlan = null; // clear first so we never double-apply or loop
     try{
-      const { error: payErr } = await supabaseClient.from('health_history')
+      // .select() makes the update return the rows it changed. Without it an
+      // UPDATE blocked by a row-level-security policy returns success having
+      // written nothing — which looks identical to a real write and is why
+      // this failed silently.
+      const { data: updated, error: payErr } = await supabaseClient.from('health_history')
         .update({ paid: true, plan: plan, paid_at: new Date().toISOString() })
-        .eq('id', currentHealthHistory.id);
+        .eq('id', currentHealthHistory.id)
+        .select();
       if(payErr) throw payErr;
+      if(!updated || updated.length === 0){
+        throw new Error('The payment was not saved. The database accepted the request '
+          + 'but changed no rows — this is almost always a row-level-security policy '
+          + 'blocking the update. Row id: ' + currentHealthHistory.id);
+      }
+      console.log('[payment] rows updated:', updated.length, updated[0]);
       // Only forget it once the database confirms — a failed write would
       // otherwise lose the payment with no way to recover it.
       try{ sessionStorage.removeItem('nuviPendingPayment'); }catch(e){}
