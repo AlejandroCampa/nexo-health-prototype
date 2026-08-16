@@ -888,7 +888,21 @@
             <div class="ticket-number" id="ticket-number-display">—</div>
             <div class="mono" style="font-size:13px;" id="ticket-datetime-display">—</div>
           </div>
-          <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showVideoRoom()">Join video evaluation</button>
+          <div id="appt-passed-note" style="display:none;background:rgba(217,140,43,0.14);
+               border:1px solid rgba(217,140,43,0.45);border-radius:12px;padding:14px 16px;
+               margin-bottom:16px;font-size:13.5px;color:#8A5A12;">
+            <b>This appointment time has passed.</b><br>
+            If you missed it or booked the wrong time, reschedule below — it takes a moment
+            and nothing else about your account changes.
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showVideoRoom()">Join video evaluation</button>
+            <button class="btn btn-outline" style="width:auto;padding:12px 24px;" onclick="rescheduleAppointment()">Reschedule</button>
+          </div>
+          <p style="font-size:12.5px;color:var(--ink-soft);margin-top:12px;">
+            Need to change your time? Reschedule above, or message your care team.
+          </p>
         </div>
 
         <div class="stage-view" id="stage-awaiting-approval" style="display:none;">
@@ -1868,6 +1882,52 @@
   // ==============================
 
 
+
+  // ====== RESCHEDULE ======
+  // Without this a patient who books the wrong time is stuck: they can't join
+  // a slot that has passed, and the whole flow is gated behind a completed
+  // evaluation. Cancelling returns them to the booking screen rather than
+  // deleting anything, so the old appointment stays visible to staff.
+  async function rescheduleAppointment(){
+    if(!supabaseClient || !currentUser) return;
+    if(!confirm('Cancel this appointment and pick a new time?\n\nYour membership and health history are not affected.')) return;
+    try{
+      const { data: mine } = await supabaseClient.from('appointments')
+        .select('*').eq('user_id', currentUser.id)
+        .neq('status', 'cancelled').neq('status', 'completed')
+        .order('appointment_date', { ascending: false });
+      const appt = (mine || [])[0];
+      if(appt){
+        const { error } = await supabaseClient.from('appointments')
+          .update({ status: 'cancelled' }).eq('id', appt.id);
+        if(error) throw error;
+      }
+      await loadPatientState();
+      // Drop them straight onto the calendar rather than making them hunt for it.
+      const sched = document.getElementById('stage-need-schedule');
+      if(sched){ sched.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    } catch(err){
+      alert('Could not reschedule: ' + (err.message || 'unknown error') + '\n\nPlease message your care team and we will move it for you.');
+    }
+  }
+
+  // Flags a booked slot whose time has already gone by, so the patient
+  // understands why "Join" isn't working and what to do instead.
+  function markPassedAppointment(dateValue, timeLabel){
+    const note = document.getElementById('appt-passed-note');
+    if(!note) return;
+    let passed = false;
+    try{
+      const mins = (typeof slotToMinutes === 'function') ? slotToMinutes(timeLabel) : -1;
+      if(dateValue && mins >= 0){
+        const when = new Date(dateValue + 'T00:00:00');
+        when.setMinutes(mins + 20);          // small grace period
+        passed = new Date() > when;
+      }
+    } catch(e){}
+    note.style.display = passed ? 'block' : 'none';
+  }
+
   // ====== EMAIL NOTIFICATIONS ======
   // Calls the 'notify' Edge Function, which holds the Resend key server-side.
   // Deliberately fire-and-forget: a failed notification must never block a
@@ -2453,6 +2513,7 @@
     if(stage === 'scheduled' && appt){
       document.getElementById('ticket-number-display').textContent = appt.ticket_number;
       document.getElementById('ticket-datetime-display').textContent = appt.appointment_date + ' · ' + appt.appointment_time;
+      markPassedAppointment(appt.appointment_date, appt.appointment_time);
     }
     if(stage === 'active' && history){
       renderNextEvalCard();
