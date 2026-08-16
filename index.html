@@ -564,8 +564,8 @@
      padding:11px 18px;font-size:13px;letter-spacing:0.01em;font-family:'Outfit',sans-serif;position:relative;z-index:60;">
   <span style="display:inline-flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:center;">
     <span style="width:6px;height:6px;border-radius:50%;background:var(--coral);flex:none;"></span>
-    <b style="font-weight:600;">50% off your first month</b>
-    <span style="opacity:0.7;">membership <s>$70</s> $35 · this month only</span>
+    <b style="font-weight:600;" id="promo-bar-headline">Founding rate — $35/month, locked</b>
+    <span style="opacity:0.7;" id="promo-bar-sub">join in August and keep <s>$70</s> $35 for good</span>
   </span>
 </div>
 <header>
@@ -598,7 +598,7 @@
           <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake')">Start your evaluation</a>
           <a class="btn btn-outline" href="#protocols">See treatments</a>
         </div>
-        <p class="hero-note">First month $35 (usually $70). Tirzepatide from $180/month. Semaglutide from $150/month.</p>
+        <p class="hero-note" id="hero-price-note">Join in August: $35/month, locked in for as long as you stay. $70/month from September. Tirzepatide from $180/month. Semaglutide from $150/month.</p>
         <div class="hero-people">
           <div class="hero-avatars">
             <img src="data:image/jpeg;base64,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" alt="Nuvi Clinic patient" width="40" height="40">
@@ -750,10 +750,10 @@
     </div>
     <div class="tiers" style="justify-content:center;">
       <div class="tier featured" style="max-width:420px;">
-        <div class="tier-badge" style="background:var(--amber-deep);color:var(--white);">50% off first month</div>
+        <div class="tier-badge" style="background:var(--amber-deep);color:var(--white);" id="tier-badge">Founding rate — August only</div>
         <div class="tier-name">Initial evaluation &amp; ongoing care</div>
-        <div class="tier-price"><s style="font-size:24px;opacity:0.4;font-weight:500;">$70</s> $35<span>/mo</span></div>
-        <p style="font-size:12.5px;color:var(--ink-soft);margin:-6px 0 14px;">First month $35, then $70/month. Cancel anytime.</p>
+        <div class="tier-price" id="tier-price"><s style="font-size:24px;opacity:0.4;font-weight:500;">$70</s> $35<span>/mo</span></div>
+        <p style="font-size:12.5px;color:var(--ink-soft);margin:-6px 0 14px;" id="tier-price-note">$35/month, locked in for as long as you stay subscribed. $70/month for anyone joining from September. Cancel anytime.</p>
         <ul>
           <li>Monthly physician evaluations</li>
           <li>Unlimited messaging with your care team</li>
@@ -807,6 +807,11 @@
       </div>
     </div>
 
+    <div id="checkout-settling" style="display:none;background:var(--paper-quiet);border:1px solid var(--line);
+         border-radius:14px;padding:14px 18px;margin-bottom:16px;font-size:14px;color:var(--ink);">
+      <b>Confirming your payment&hellip;</b> This takes a few seconds. You don't need to do anything.
+    </div>
+
     <div class="dash-grid">
       <div class="dash-card" id="stage-card">
 
@@ -821,7 +826,7 @@
           <span class="status-pill" style="background:rgba(196,60,60,0.1);color:#B23A3A;">Membership cancelled</span>
           <h3>Your membership is cancelled</h3>
           <p id="membership-cancelled-reason" style="margin-bottom:18px;"></p>
-          <p style="font-size:13px;color:rgba(8,26,77,0.55);margin-bottom:18px;">Cancelling here stops your access on our side — if you were charged after cancelling, contact us directly and we'll help sort out billing with Stripe.</p>
+          <p style="font-size:13px;color:rgba(8,26,77,0.55);margin-bottom:18px;">Cancelling stops your billing at the end of the period you've already paid for. If anything looks wrong on a statement, message us and we'll sort it out.</p>
           <button class="btn btn-primary" style="width:auto;padding:13px 28px;" onclick="resubscribeMembership()">Resubscribe</button>
         </div>
 
@@ -831,8 +836,8 @@
           <p style="margin-bottom:16px;">Your physician reviews your history once you're enrolled. Continue to book your evaluation.</p>
           <div class="dash-card" style="padding:20px;max-width:420px;border-color:var(--amber);">
             <div class="tier-name" style="margin-bottom:8px;">Initial evaluation &amp; ongoing care</div>
-            <div class="tier-price" style="font-size:28px;"><s style="font-size:20px;opacity:0.4;font-weight:500;">$70</s> $35<span style="font-family:'Outfit',sans-serif;font-size:13px;opacity:0.6;"> first month</span></div>
-            <p style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;">Then $70/month. Cancel anytime.</p>
+            <div class="tier-price" style="font-size:28px;" id="stage-price"><s style="font-size:20px;opacity:0.4;font-weight:500;">$70</s> $35<span style="font-family:'Outfit',sans-serif;font-size:13px;opacity:0.6;">/month</span></div>
+            <p style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;" id="stage-price-note">Founding rate — locked in for as long as you stay subscribed. Cancel anytime.</p>
             <p style="margin:10px 0 16px;font-size:13px;">Monthly physician evaluations, prescription management, and messaging. Medication billed separately. No minimum commitment.</p>
             <button class="btn btn-primary" style="width:100%;" onclick="goToCheckout('Basic')">Continue</button>
           </div>
@@ -1024,7 +1029,18 @@
           <div class="form-section-title">About you</div>
           <div class="field"><label>Full legal name</label><input id="hh-full-name" type="text" placeholder="As it appears on your ID" required></div>
           <div class="field"><label>Date of birth</label><input id="hh-dob" type="date" required></div>
-          <p style="font-size:12px;color:rgba(8,26,77,0.55);margin:-4px 0 4px;">Your name and date of birth must match your ID — the pharmacy requires them to fill a prescription.</p>
+          <div class="two-col">
+            <div class="field"><label>Sex assigned at birth</label>
+              <select id="hh-gender" required>
+                <option value="">Select…</option>
+                <option value="f">Female</option>
+                <option value="m">Male</option>
+                <option value="u">Prefer not to say</option>
+              </select>
+            </div>
+            <div class="field"><label>Mobile phone</label><input id="hh-phone" type="tel" inputmode="tel" placeholder="(787) 555-0123"></div>
+          </div>
+          <p style="font-size:12px;color:rgba(8,26,77,0.55);margin:-4px 0 4px;">Your name, date of birth and sex must match your ID — the pharmacy requires them to fill a prescription. Your mobile number is used by the carrier for delivery.</p>
 
           <div class="form-section-title">Shipping address</div>
           <p style="font-size:12px;color:rgba(8,26,77,0.55);margin:-6px 0 12px;">Where we'll ship your medication. Our physicians are licensed in Puerto Rico, so we can only treat and ship to patients located here.</p>
@@ -1250,7 +1266,73 @@
           <div id="admin-funnel" style="margin-bottom:20px;"></div>
 
           <div class="form-section-title">Data health</div>
-          <div id="admin-health" style="margin-bottom:8px;"></div>
+          <div id="admin-health" style="margin-bottom:20px;"></div>
+
+          <!-- ============ PHARMACY ORDERS ============ -->
+          <div class="form-section-title">Pharmacy orders</div>
+          <p style="font-size:12.5px;color:var(--ink-soft);margin:-6px 0 10px;">
+            Every paid order and where it is with LifeFile. Anything marked
+            <b>Needs attention</b> was charged but not accepted by the pharmacy &mdash;
+            fix the cause, then retry.
+          </p>
+          <div id="admin-orders" style="margin-bottom:20px;"></div>
+
+          <!-- ============ COUPONS ============ -->
+          <div class="form-section-title">Coupon codes</div>
+          <p style="font-size:12.5px;color:var(--ink-soft);margin:-6px 0 10px;">
+            Hidden codes never appear anywhere public &mdash; they only work if typed
+            exactly. A <b>Free</b> code is the $0 tier.
+          </p>
+          <div id="admin-coupons" style="margin-bottom:14px;"></div>
+
+          <details style="margin-bottom:20px;">
+            <summary style="cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink);">Create a new code</summary>
+            <div style="padding:14px 0 4px;">
+              <div class="two-col">
+                <div class="field"><label>Code</label>
+                  <div style="display:flex;gap:8px;">
+                    <input id="coupon-new-code" type="text" placeholder="NUVI-XXXX-XXXX" style="flex:1;text-transform:uppercase;">
+                    <button type="button" class="btn btn-outline" style="width:auto;padding:0 14px;font-size:12.5px;" onclick="generateCouponCode()">Random</button>
+                  </div>
+                </div>
+                <div class="field"><label>Label (internal)</label><input id="coupon-new-label" type="text" placeholder="Founder — free membership"></div>
+              </div>
+              <div class="two-col">
+                <div class="field"><label>Type</label>
+                  <select id="coupon-new-kind" onchange="onCouponKindChange()">
+                    <option value="free">Free (100% off)</option>
+                    <option value="percent">Percent off</option>
+                    <option value="fixed_price">Fixed price</option>
+                  </select>
+                </div>
+                <div class="field" id="coupon-value-wrap" style="display:none;"><label id="coupon-value-label">Value</label><input id="coupon-new-value" type="number" step="0.01" min="0" value="0"></div>
+              </div>
+              <div class="two-col">
+                <div class="field"><label>Applies to</label>
+                  <select id="coupon-new-applies">
+                    <option value="membership">Membership</option>
+                    <option value="medication">Medication</option>
+                    <option value="both">Both</option>
+                  </select>
+                </div>
+                <div class="field"><label>Max redemptions <span style="font-weight:400;opacity:0.6;">(blank = unlimited)</span></label><input id="coupon-new-max" type="number" min="1" placeholder="25"></div>
+              </div>
+              <label style="display:flex;gap:9px;align-items:center;font-size:13.5px;margin:4px 0 14px;cursor:pointer;">
+                <input type="checkbox" id="coupon-new-hidden" checked> Hidden (never listed publicly)
+              </label>
+              <button class="btn btn-primary" style="width:auto;padding:10px 22px;" onclick="createCoupon()">Create code</button>
+              <div id="coupon-new-msg" style="font-size:12.5px;margin-top:10px;min-height:16px;"></div>
+            </div>
+          </details>
+
+          <!-- ============ PHARMACY CATALOG ============ -->
+          <div class="form-section-title">Pharmacy catalog</div>
+          <p style="font-size:12.5px;color:var(--ink-soft);margin:-6px 0 10px;">
+            Maps each medication to its LifeFile product ID. A medication with no
+            row here cannot be ordered online &mdash; checkout refuses rather than
+            taking money for something we can't send.
+          </p>
+          <div id="admin-catalog" style="margin-bottom:8px;"></div>
         </div>
       </div>
     </div>
@@ -1671,12 +1753,62 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-checkout" onclick="closeOnOverlay(event,'checkout')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('checkout')" aria-label="Close">&#10005;</button>
+    <span class="modal-eyebrow">Checkout</span>
+    <h3 id="checkout-title">Checkout</h3>
+    <p class="modal-sub" id="checkout-sub"></p>
+
+    <div style="background:var(--paper-quiet);border-radius:14px;padding:16px 18px;margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;">
+        <div id="checkout-item" style="font-size:15px;font-weight:600;color:var(--ink);"></div>
+        <div style="text-align:right;white-space:nowrap;">
+          <span id="checkout-original" style="font-family:'Sora',sans-serif;font-size:20px;font-weight:600;color:var(--ink);"></span>
+          <span id="checkout-final" style="display:none;font-family:'Sora',sans-serif;font-size:20px;font-weight:700;color:var(--sage);margin-left:8px;"></span>
+          <div id="checkout-cadence" style="font-size:12px;color:var(--ink-soft);"></div>
+        </div>
+      </div>
+    </div>
+
+    <form onsubmit="return submitCheckout(event)">
+      <div class="field">
+        <label for="checkout-coupon">Coupon code <span style="font-weight:400;opacity:0.6;">(optional)</span></label>
+        <div style="display:flex;gap:8px;">
+          <input id="checkout-coupon" type="text" autocomplete="off" autocapitalize="characters"
+                 placeholder="Enter code" style="flex:1;text-transform:uppercase;">
+          <button type="button" class="btn btn-outline" style="width:auto;padding:0 18px;font-size:13px;"
+                  onclick="applyCheckoutCoupon()">Apply</button>
+        </div>
+        <div id="checkout-coupon-msg" style="font-size:12.5px;margin-top:6px;min-height:16px;color:var(--ink-soft);"></div>
+      </div>
+
+      <div id="checkout-autopay-wrap" style="display:none;margin:4px 0 18px;">
+        <label style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.5;cursor:pointer;">
+          <input type="checkbox" id="checkout-autopay" checked style="margin-top:3px;flex-shrink:0;">
+          <span>
+            <b>Refill this automatically each month.</b>
+            Your card is charged monthly and the refill goes to the pharmacy on its own &mdash;
+            no reordering, no gap in your protocol. Cancel any time from your dashboard.
+          </span>
+        </label>
+      </div>
+
+      <div id="checkout-error" style="font-size:13px;color:#B23A3A;margin-bottom:12px;min-height:16px;"></div>
+      <button class="btn btn-primary" type="submit" id="checkout-submit" style="width:100%;">Continue to payment</button>
+      <p style="font-size:11.5px;color:rgba(8,26,77,0.5);margin:12px 0 0;text-align:center;">
+        Payments are processed by Stripe. Nuvi Clinic never sees or stores your card number.
+      </p>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-cancel-rx" onclick="closeOnOverlay(event,'cancel-rx')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('cancel-rx')" aria-label="Close">✕</button>
     <span class="modal-eyebrow">Cancel medication</span>
     <h3 id="cancel-rx-med-name">Cancel this prescription?</h3>
-    <p class="modal-sub">This stops it from showing as active on your account. It does <b>not</b> automatically cancel any recurring charge — contact us if you've already been billed and need that stopped too.</p>
+    <p class="modal-sub">This stops the prescription <b>and</b> its monthly autopay. You won't be charged for it again.</p>
     <form onsubmit="return submitCancelRx(event)">
       <div class="field"><label for="cancel-rx-reason">Reason</label>
         <select id="cancel-rx-reason">
@@ -1778,7 +1910,7 @@
     <div id="settings-commitment-notice" style="display:none;background:var(--paper-warm);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.65;"></div>
     <div id="settings-cancel-section">
       <div class="form-section-title">Cancel membership</div>
-      <p style="font-size:13px;color:rgba(8,26,77,0.6);margin-bottom:12px;">This does <b>not</b> automatically cancel any recurring charge in Stripe — contact us to confirm billing has stopped too.</p>
+      <p style="font-size:13px;color:rgba(8,26,77,0.6);margin-bottom:12px;">This stops your recurring charge as well. Billing ends after the period you've already paid for — you keep access until then.</p>
       <div class="field"><label for="cancel-membership-reason">Reason</label>
         <select id="cancel-membership-reason">
           <option>Too expensive</option>
@@ -1842,24 +1974,192 @@
   if(emailjsReady && window.emailjs){ emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }); }
   // ==============================
 
-  // ====== STRIPE PAYMENT LINKS (test mode) ======
-  // Paste the 3 Payment Link URLs from your Stripe dashboard here.
-  // Each link's "after payment" redirect should point back to this page with
-  // ?paid=true&plan=Basic already set up.
-  const STRIPE_LINKS = {
-    Basic: 'https://buy.stripe.com/bJe9AV3uQcDOgdE00l9EI0f'   // $70/mo
-  };
-  function goToCheckout(plan){
-    const link = STRIPE_LINKS[plan];
-    if(link && link.indexOf('YOUR_') !== 0){
-      window.location.href = link;
-    } else {
-      // LIVE: never silently mark a membership paid. If the Stripe link is
-      // missing or misconfigured, that is a real fault and must surface, not
-      // quietly grant a paid membership no money was collected for.
-      alert('Checkout is temporarily unavailable for this plan. Please contact info@nuviclinic.com and we\'ll get you set up.');
-      console.error('Missing/invalid Stripe link for plan:', plan);
+  // ====== NUVI BACKEND (Supabase Edge Functions) ======
+  // Every price, every coupon and every pharmacy order is decided server-side.
+  // This file no longer contains a single Stripe Payment Link, and no longer
+  // has any way to mark something as paid — that authority now belongs to the
+  // Stripe webhook alone.
+  const FN_BASE = SUPABASE_URL + '/functions/v1';
+
+  async function callFunction(name, body){
+    if(!supabaseClient) throw new Error('Not connected.');
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session) throw new Error('Your session expired. Please sign in again.');
+    const res = await fetch(FN_BASE + '/' + name, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + session.access_token,
+        'apikey': SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body || {})
+    });
+    let payload = {};
+    try { payload = await res.json(); } catch(e){ /* non-JSON error page */ }
+    if(!res.ok){
+      const err = new Error(payload.error || ('Request failed (' + res.status + ')'));
+      err.status = res.status;
+      err.payload = payload;
+      throw err;
     }
+    return payload;
+  }
+
+  // ====== CHECKOUT ======
+  // One modal serves membership and medication. It holds the item being bought
+  // and, optionally, a coupon that has been validated by the server. The
+  // browser never computes a price — it only displays what the server returned.
+  let checkoutCtx = null;
+
+  function openCheckout(ctx){
+    checkoutCtx = Object.assign({ couponCode: null, finalPrice: null }, ctx);
+    document.getElementById('checkout-title').textContent = ctx.title;
+    document.getElementById('checkout-sub').textContent = ctx.subtitle || '';
+    document.getElementById('checkout-item').textContent = ctx.itemLabel;
+    document.getElementById('checkout-original').textContent = '$' + Number(ctx.price).toFixed(2);
+    document.getElementById('checkout-original').style.textDecoration = 'none';
+    document.getElementById('checkout-original').style.opacity = '1';
+    document.getElementById('checkout-final').style.display = 'none';
+    document.getElementById('checkout-coupon').value = '';
+    document.getElementById('checkout-coupon-msg').textContent = '';
+    document.getElementById('checkout-coupon-msg').style.color = 'var(--ink-soft)';
+    document.getElementById('checkout-cadence').textContent = ctx.cadence || '';
+    document.getElementById('checkout-autopay-wrap').style.display =
+      (ctx.context === 'medication') ? 'block' : 'none';
+    document.getElementById('checkout-autopay').checked = true;
+    const btn = document.getElementById('checkout-submit');
+    btn.disabled = false;
+    btn.textContent = 'Continue to payment';
+    document.getElementById('checkout-error').textContent = '';
+    openModal('checkout');
+  }
+
+  async function applyCheckoutCoupon(){
+    if(!checkoutCtx) return;
+    const input = document.getElementById('checkout-coupon');
+    const msg = document.getElementById('checkout-coupon-msg');
+    const code = input.value.trim();
+    if(!code){ msg.textContent = 'Enter a code first.'; msg.style.color = 'var(--ink-soft)'; return; }
+
+    msg.textContent = 'Checking...';
+    msg.style.color = 'var(--ink-soft)';
+
+    try{
+      const r = await callFunction('validate-coupon', {
+        code: code,
+        context: checkoutCtx.context,
+        prescriptionId: checkoutCtx.prescriptionId || undefined
+      });
+
+      if(!r.valid){
+        checkoutCtx.couponCode = null;
+        msg.textContent = r.message || 'That code isn\u2019t valid for this purchase.';
+        msg.style.color = '#B23A3A';
+        document.getElementById('checkout-final').style.display = 'none';
+        document.getElementById('checkout-original').style.textDecoration = 'none';
+        document.getElementById('checkout-original').style.opacity = '1';
+        return;
+      }
+
+      checkoutCtx.couponCode = r.code;
+      checkoutCtx.finalPrice = r.finalPrice;
+      msg.textContent = r.message;
+      msg.style.color = 'var(--sage)';
+
+      const origEl = document.getElementById('checkout-original');
+      const finalEl = document.getElementById('checkout-final');
+      origEl.style.textDecoration = 'line-through';
+      origEl.style.opacity = '0.45';
+      finalEl.style.display = 'inline';
+      finalEl.textContent = r.free ? 'Free' : ('$' + Number(r.finalPrice).toFixed(2));
+
+      const btn = document.getElementById('checkout-submit');
+      btn.textContent = r.free ? 'Activate \u2014 no payment needed' : 'Continue to payment';
+    } catch(err){
+      msg.textContent = err.message || 'Could not check that code.';
+      msg.style.color = '#B23A3A';
+    }
+  }
+
+  async function submitCheckout(e){
+    if(e) e.preventDefault();
+    if(!checkoutCtx) return false;
+
+    const btn = document.getElementById('checkout-submit');
+    const errEl = document.getElementById('checkout-error');
+    errEl.textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Opening checkout...';
+
+    try{
+      const r = await callFunction('create-checkout', {
+        context: checkoutCtx.context,
+        prescriptionId: checkoutCtx.prescriptionId || undefined,
+        source: checkoutCtx.source || undefined,
+        couponCode: checkoutCtx.couponCode || undefined,
+        autopay: checkoutCtx.context === 'medication'
+          ? document.getElementById('checkout-autopay').checked
+          : undefined
+      });
+
+      if(r.free){
+        // A 100%-off code never touches Stripe. The server already activated
+        // it, so just refresh the dashboard off real data.
+        closeModal('checkout');
+        await loadPatientState();
+        return false;
+      }
+      if(r.url){ window.location.href = r.url; return false; }
+      throw new Error('Checkout did not return a payment link.');
+    } catch(err){
+      // needsAddress comes back when a medication order has nowhere to ship.
+      if(err.payload && err.payload.needsAddress){
+        closeModal('checkout');
+        openHealthHistoryForEdit();
+        return false;
+      }
+      errEl.textContent = err.message || 'We could not start checkout. Please contact info@nuviclinic.com.';
+      btn.disabled = false;
+      btn.textContent = 'Continue to payment';
+    }
+    return false;
+  }
+
+  // Every price on the page is written for the founding window. Once that
+  // window closes the copy must stop advertising $35, and it must do so without
+  // anyone remembering to edit HTML on 1 September. Same rule as the server, so
+  // the two cannot disagree.
+  function applyMembershipPricingCopy(){
+    if(isFoundingWindowOpen()) return;
+
+    const rate = '$' + STANDARD_RATE;
+    const set = function(id, html){
+      const el = document.getElementById(id);
+      if(el) el.innerHTML = html;
+    };
+
+    set('promo-bar-headline', 'Physician-led GLP-1 care');
+    set('promo-bar-sub', 'membership ' + rate + '/month \u00b7 cancel anytime');
+    set('hero-price-note', 'Membership ' + rate + '/month. Tirzepatide from $180/month. Semaglutide from $150/month.');
+    set('tier-badge', 'Most popular');
+    set('tier-price', rate + '<span>/mo</span>');
+    set('tier-price-note', 'Cancel anytime. No minimum commitment.');
+    set('stage-price', rate + '<span style="font-family:\'Outfit\',sans-serif;font-size:13px;opacity:0.6;">/month</span>');
+    set('stage-price-note', 'Cancel anytime.');
+  }
+  document.addEventListener('DOMContentLoaded', applyMembershipPricingCopy);
+
+  function goToCheckout(plan){
+    openCheckout({
+      context: 'membership',
+      title: 'Start your membership',
+      subtitle: isFoundingWindowOpen()
+        ? 'Founding rate \u2014 $35/month for as long as you stay subscribed. Cancel any time.'
+        : 'Monthly membership. Cancel any time from your dashboard.',
+      itemLabel: 'Nuvi Clinic Membership',
+      price: MEMBERSHIP_PRICE[plan] || MEMBERSHIP_PRICE.Basic,
+      cadence: 'per month'
+    });
   }
 
   // ==============================
@@ -1991,13 +2291,50 @@
   // dosing on those isn't something patients adjust the same way.
   // These numbers are estimates from public market research, not your real
   // pharmacy's cost sheet — swap in real numbers once you have a contract.
-  const MEMBERSHIP_PRICE = { Basic: 70 };
+  // ====== FOUNDING-COHORT MEMBERSHIP PRICING ======
+  // Start a membership in August 2026 and you pay $35/mo for as long as you
+  // stay subscribed. From 1 September 2026 the rate is $70/mo.
+  //
+  // The lock needs no maintenance: Checkout creates the subscription with the
+  // rate that applied on the day, and Stripe repeats that same amount every
+  // cycle. Nothing reprices an existing subscriber.
+  //
+  // These are DISPLAY values, mirroring the same rule in the server's
+  // pricing.ts. The server decides what Stripe actually charges, so editing
+  // anything here cannot change what a patient is billed — only what they are
+  // shown. Keep the two in step.
+  const FOUNDING_RATE = 35;
+  const STANDARD_RATE = 70;
+  const FOUNDING_WINDOW_ENDS = Date.parse('2026-09-01T04:00:00Z'); // 1 Sep, midnight AST
+
+  function isFoundingWindowOpen(){
+    return Date.now() < FOUNDING_WINDOW_ENDS;
+  }
+  function currentMembershipRate(){
+    return isFoundingWindowOpen() ? FOUNDING_RATE : STANDARD_RATE;
+  }
+
+  // MEMBERSHIP_PRICE is read across the dashboard for protocol totals. It has
+  // to reflect what THIS patient actually pays, not today's public rate — a
+  // founding member still on $35 in November must not see $70 in their totals.
+  const MEMBERSHIP_PRICE = {
+    get Basic(){ return currentMembershipRate(); },
+    Standard: STANDARD_RATE
+  };
+
+  function patientMembershipRate(history){
+    const cents = history ? Number(history.membership_price_cents) : NaN;
+    if(Number.isFinite(cents) && cents > 0) return cents / 100;
+    if(history && history.plan === 'Standard') return STANDARD_RATE;
+    if(history && history.paid) return FOUNDING_RATE; // legacy rows predate the cents column
+    return currentMembershipRate();
+  }
 
   // Single source of truth for every medication — powers the NP approval
   // dropdown, the patient Store, AND the public logged-out catalog below.
-  // To add a medication in the future: add one entry here with launched:true
-  // (and a real Stripe link in MEDICATION_STRIPE_LINKS once ready) — nothing
-  // else in the codebase needs to change.
+  // To add a medication in the future: add one entry here with launched:true,
+  // then add the matching LifeFile product row under Admin → Pharmacy catalog.
+  // No Stripe setup is needed — prices are created per order at checkout.
   const MEDICATION_INFO = {
     'Tirzepatide': {
       category: 'Weight management',
@@ -2201,15 +2538,17 @@
   // amount entered in Stripe for each medication.
   // MUST match the actual amount on each Stripe Payment Link. If these drift
   // apart, the patient sees one price and gets charged another.
-  const MEDICATION_CHECKOUT_PRICE = {
-    'Tirzepatide': 180,
-    'Semaglutide': 150
-  };
-
-  function getDisplayPrice(medication, fallbackPrice){
-    return MEDICATION_CHECKOUT_PRICE.hasOwnProperty(medication)
-      ? MEDICATION_CHECKOUT_PRICE[medication]
-      : fallbackPrice;
+  // The displayed price is now the prescription's own approved price — the
+  // exact number create-checkout reads from the database and hands to Stripe.
+  //
+  // This used to be forced to a flat per-medication figure because a Stripe
+  // Payment Link carries one fixed amount, so the UI had to be bent to match
+  // the link. Dynamic Checkout Sessions removed that constraint, and keeping
+  // the override would now cause the opposite harm: showing $180 while
+  // charging the $205 the clinician actually approved.
+  function getDisplayPrice(medication, approvedPrice){
+    const p = Number(approvedPrice);
+    return (Number.isFinite(p) && p > 0) ? p : 0;
   }
 
   // ====== SESSION / DASHBOARD HANDLING ======
@@ -2253,14 +2592,11 @@
     const history = (historyRows && historyRows[0]) || null;
     currentHealthHistory = history;
 
-    if(pendingPaymentPlan && history && !history.paid){
-      await applyPendingPayment();
-      return; // applyPendingPayment() calls loadPatientState() again with fresh data
-    }
-
-    if(pendingOrder){
-      await applyPendingOrder();
-      return; // applyPendingOrder() calls loadPatientState() again with fresh data
+    if(returnedFromCheckout && returnedFromCheckout.state === 'success'){
+      // Hands off to the settlement poller, which calls loadPatientState()
+      // again once the Stripe webhook has actually written the payment.
+      awaitCheckoutSettlement();
+      return;
     }
 
     const { data: apptRows } = await supabaseClient
@@ -2317,7 +2653,7 @@
     }
     if(stage === 'active' && history){
       renderNextEvalCard();
-      const membershipPrice = MEMBERSHIP_PRICE[history.plan] || 0;
+      const membershipPrice = patientMembershipRate(history);
       let totalMedPrice = 0;
       let medListHtml = '';
 
@@ -2476,25 +2812,40 @@
   async function loadStore(history){
     if(!supabaseClient || !currentUser) return;
 
-    const { data: rxRows } = await supabaseClient.from('prescriptions')
-      .select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
-    const prescriptions = rxRows || [];
+    const [rxRes, orderRes] = await Promise.all([
+      supabaseClient.from('prescriptions').select('*')
+        .eq('user_id', currentUser.id).order('created_at', { ascending: false }),
+      supabaseClient.from('medication_orders').select('*')
+        .eq('user_id', currentUser.id).order('created_at', { ascending: false })
+    ]);
+    const prescriptions = rxRes.data || [];
+    const orders = orderRes.data || [];
+
+    // Most recent order per prescription. medication_orders is patient-readable
+    // but patient-WRITABLE by nobody — every row in it was created by the
+    // Stripe webhook, so what the Store shows here is real money that moved.
+    const latestOrder = {};
+    orders.forEach(o => {
+      const key = o.prescription_id || 'legacy';
+      if(!latestOrder[key]) latestOrder[key] = o;
+    });
 
     const approvedWrap = document.getElementById('store-approved-list');
     const pendingWrap = document.getElementById('store-pending-list');
 
     let approvedHtml = '';
 
-    // The original first prescription lives on health_history, not the new
+    // The original first prescription lives on health_history, not the
     // prescriptions table — show it here too so the store is complete.
     if(history.approved_medication){
       approvedHtml += renderStoreItem({
         medication: history.approved_medication,
         dose: history.approved_dose,
         price: getDisplayPrice(history.approved_medication, history.approved_price),
-        purchased: history.purchased,
         cancelled: history.cancelled,
         cancelReason: history.cancel_reason,
+        order: latestOrder['legacy'] || null,
+        autopay: history.medication_autopay_status || 'off',
         onBuy: "goToMedicationCheckout('legacy', null, '" + history.approved_medication + "', " + getDisplayPrice(history.approved_medication, history.approved_price) + ")",
         onCancel: "openCancelRxModal('legacy', null, '" + history.approved_medication + "')"
       });
@@ -2504,9 +2855,11 @@
     approvedRx.forEach(r => {
       approvedHtml += renderStoreItem({
         medication: r.medication, dose: r.dose, price: getDisplayPrice(r.medication, r.price),
-        purchased: r.purchased,
         cancelled: r.cancelled,
         cancelReason: r.cancel_reason,
+        order: latestOrder[r.id] || null,
+        autopay: r.autopay_status || 'off',
+        nextRefill: r.next_refill_at,
         onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "', " + getDisplayPrice(r.medication, r.price) + ")",
         onCancel: "openCancelRxModal('prescription', '" + r.id + "', '" + r.medication + "')"
       });
@@ -2519,72 +2872,104 @@
       pendingWrap.innerHTML = '<p class="np-empty">None right now.</p>';
     } else {
       pendingWrap.innerHTML = pendingRx.map(r =>
-        '<div class="np-row" style="cursor:default;"><div><div class="name">' + r.medication + '</div>'
-        + '<div class="meta">Goal: ' + (r.requested_goal || '—') + '</div></div>'
+        '<div class="np-row" style="cursor:default;"><div><div class="name">' + escapeHtml(r.medication) + '</div>'
+        + '<div class="meta">Goal: ' + escapeHtml(r.requested_goal || '\u2014') + '</div></div>'
         + '<div class="meta">Under review</div></div>'
       ).join('');
     }
   }
 
+  // Order lifecycle as the patient should read it. Deliberately plain: someone
+  // waiting on medication wants to know where it is, not our internal enum.
+  const ORDER_STATUS_LABEL = {
+    awaiting_payment: ['Awaiting payment', 'rgba(8,26,77,0.10)', 'var(--ink-soft)'],
+    queued:           ['Sending to pharmacy', 'rgba(0,194,255,0.16)', 'var(--teal-deep)'],
+    submitted:        ['Sent to pharmacy', 'rgba(0,194,255,0.16)', 'var(--teal-deep)'],
+    accepted:         ['Accepted by pharmacy', 'rgba(0,194,255,0.16)', 'var(--teal-deep)'],
+    in_process:       ['Being compounded', 'rgba(0,245,208,0.22)', 'var(--sage)'],
+    shipped:          ['Shipped', 'rgba(79,122,100,0.16)', 'var(--sage)'],
+    delivered:        ['Delivered', 'rgba(79,122,100,0.16)', 'var(--sage)'],
+    cancelled:        ['Cancelled', 'rgba(196,60,60,0.10)', '#B23A3A'],
+    failed:           ['Needs attention', 'rgba(255,111,94,0.18)', 'var(--amber-deep)']
+  };
+
+  function trackingLink(carrier, tracking){
+    const c = String(carrier || '').toLowerCase();
+    if(c.indexOf('ups') > -1) return 'https://www.ups.com/track?tracknum=' + encodeURIComponent(tracking);
+    if(c.indexOf('usps') > -1) return 'https://tools.usps.com/go/TrackConfirmAction?tLabels=' + encodeURIComponent(tracking);
+    // Every shipping service on our LifeFile account is FedEx, so an
+    // unlabelled tracking number is overwhelmingly likely to be FedEx.
+    return 'https://www.fedex.com/fedextrack/?trknbr=' + encodeURIComponent(tracking);
+  }
+
+  function formatShortDate(iso){
+    if(!iso) return '';
+    try{
+      return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    } catch(e){ return ''; }
+  }
+
   function renderStoreItem(item){
-    const priceLabel = item.price ? ('$' + item.price + '/mo') : '—';
+    const priceLabel = item.price ? ('$' + item.price + '/mo') : '\u2014';
 
     if(item.cancelled){
       return '<div class="dash-protocol-row">'
-        + '<div><div class="name">' + item.medication + '</div><div class="meta">Cancelled' + (item.cancelReason ? ' — ' + item.cancelReason : '') + '</div></div>'
+        + '<div><div class="name">' + escapeHtml(item.medication) + '</div><div class="meta">Cancelled'
+        + (item.cancelReason ? ' \u2014 ' + escapeHtml(item.cancelReason) : '') + '</div></div>'
         + '<span class="rx-badge" style="background:rgba(196,60,60,0.1);color:#B23A3A;">Cancelled</span></div>';
     }
 
+    const order = item.order;
     let actionHtml;
-    if(item.purchased){
-      actionHtml = '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Order placed with pharmacy</span>'
-        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(8,26,77,0.45);">Cancel</a>';
+
+    if(order){
+      const meta = ORDER_STATUS_LABEL[order.status] || ORDER_STATUS_LABEL.submitted;
+      actionHtml = '<span class="rx-badge" style="background:' + meta[1] + ';color:' + meta[2] + ';">'
+        + meta[0] + '</span>';
+
+      if(order.tracking_number){
+        actionHtml += '<br><a href="' + trackingLink(order.carrier, order.tracking_number) + '"'
+          + ' target="_blank" rel="noopener"'
+          + ' style="font-size:12px;color:var(--amber-deep);font-family:\'IBM Plex Mono\',monospace;">'
+          + escapeHtml(order.tracking_number) + ' \u2197</a>';
+      } else if(order.status === 'failed'){
+        actionHtml += '<br><span style="font-size:11.5px;color:var(--amber-deep);">'
+          + 'We\u2019re on it \u2014 your care team has been alerted.</span>';
+      }
+
+      if(item.autopay === 'active'){
+        actionHtml += '<br><span style="font-size:11.5px;color:var(--ink-soft);">Autopay on'
+          + (item.nextRefill ? (' \u00b7 next ' + formatShortDate(item.nextRefill)) : '') + '</span>';
+      } else if(item.autopay === 'canceling'){
+        actionHtml += '<br><span style="font-size:11.5px;color:var(--ink-soft);">Autopay ends after this month</span>';
+      }
+
+      actionHtml += '<br><a href="javascript:void(0)" onclick="' + item.onCancel
+        + '" style="font-size:12px;color:rgba(8,26,77,0.45);">Cancel</a>';
     } else if(!hasCompleteShippingAddress(currentHealthHistory)){
       // Don't dangle a Buy button we're going to reject — say why up front.
       actionHtml = '<button class="btn btn-outline" style="width:auto;padding:7px 16px;font-size:13px;border-color:var(--amber);color:var(--amber-deep);" onclick="openHealthHistoryForEdit()">Add shipping address to order</button>'
         + '<br><span style="font-size:11.5px;color:rgba(8,26,77,0.5);">Required before we can ship</span>';
     } else {
-      actionHtml = '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Buy</button>'
+      actionHtml = '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Order</button>'
         + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(8,26,77,0.45);">Cancel</a>';
     }
 
     return '<div class="dash-protocol-row">'
-      + '<div><div class="name">' + item.medication + '</div><div class="meta">' + (item.dose || '') + '</div></div>'
+      + '<div><div class="name">' + escapeHtml(item.medication) + '</div><div class="meta">' + escapeHtml(item.dose || '') + '</div></div>'
       + '<div style="text-align:right;">'
       + '<div class="meta" style="margin-bottom:6px;">' + priceLabel + '</div>'
       + actionHtml
       + '</div></div>';
   }
 
-  // ====== MEDICATION STRIPE PAYMENT LINKS ======
-  // Nuvi Clinic bills the patient directly for medication (the pharmacy then
-  // invoices Nuvi at wholesale/compounding cost — Nuvi keeps the margin).
-  // One Payment Link per medication (set up in Stripe with "Collect
-  // customer's shipping address" turned on). Price varies by dose in
-  // reality, but a Payment Link has one fixed price — known prototype
-  // simplification (see pre-launch-checklist.md); real per-dose pricing
-  // needs a backend creating a Stripe Checkout Session dynamically.
-  // Payment Links are keyed by PRICE, not by medication. Pricing is dose-based,
-  // so the same $180 link serves Tirzepatide 2.5mg and Semaglutide 1mg alike.
-  // Adding a new dose only needs a new entry here if it lands on a new price.
-  // Flat pricing — one price per medication, so only these tiers are ever hit.
-  // The other Payment Links you created still exist in Stripe and are simply
-  // unused; leaving them costs nothing and they're there if pricing changes.
-  // Flat pricing — one price per medication, so only these tiers are ever used.
-  // Every price here MUST correspond to a real Payment Link of the same amount.
-  // The other links created in Stripe remain unused but harmless.
-  // Per-dose pricing. Every price here must match a real Payment Link amount.
-  const MEDICATION_LINKS_BY_PRICE = {
-    150: 'https://buy.stripe.com/aFafZjaXifQ0d1s3cx9EI0c',
-    160: 'https://buy.stripe.com/dRm7sN6H2dHSd1s7sN9EI0b',
-    180: 'https://buy.stripe.com/5kQaEZ7L647i8Lc14p9EI0a',
-    205: 'https://buy.stripe.com/8x24gB2qM1ZaaTk28t9EI08',
-    230: 'https://buy.stripe.com/bJeaEZ0iEbzK5z0eVf9EI06',
-    240: 'https://buy.stripe.com/cNi3cx2qM33e5z07sN9EI05',
-    300: 'https://buy.stripe.com/5kQ8wR5CYcDO4uW4gB9EI04',
-    360: 'https://buy.stripe.com/8x25kFghCbzKgdEaEZ9EI03',
-    420: 'https://buy.stripe.com/00w6oJ7L67ju9Pg28t9EI01'
-  };
+  // ====== MEDICATION CHECKOUT ======
+  // The Payment Link table that used to live here is gone. Payment Links carry
+  // one fixed price, which is why the old code had to route by dollar amount
+  // and fail loudly on any dose that didn't land on a preset tier. Checkout
+  // Sessions are created per order by the create-checkout function using the
+  // price the clinician actually approved, so any dose is orderable and the
+  // patient-facing number can never drift from what Stripe charges.
 
   // A prescription cannot be shipped without a complete address, so this is a
   // hard requirement on every purchase path — not just a form field. Older
@@ -2610,19 +2995,16 @@
 
   function goToMedicationCheckout(kind, id, medication, price){
     if(!requireShippingAddress()) return;
-    // Route by price. If a dose produces a price with no matching Payment Link,
-    // fail loudly rather than sending the patient to a link for a different amount.
-    const link = MEDICATION_LINKS_BY_PRICE[Math.round(parseFloat(price))];
-    if(link && link.indexOf('YOUR_') !== 0){
-      // In Stripe, set this link's "after payment" redirect to:
-      // <site-url>?order_paid=true&rx_kind=<kind>&rx_id=<id or blank for legacy>
-      window.location.href = link;
-    } else {
-      // LIVE: never silently mark medication as ordered. A prescription must
-      // not be recorded as purchased unless payment actually went through.
-      alert('We could not open checkout for this prescription. Please contact info@nuviclinic.com and we\'ll sort it out right away.');
-      console.error('No Stripe Payment Link for price:', price, '(' + medication + ')');
-    }
+    openCheckout({
+      context: 'medication',
+      source: (kind === 'legacy') ? 'legacy' : 'prescription',
+      prescriptionId: (kind === 'legacy') ? null : id,
+      title: 'Order ' + medication,
+      subtitle: 'Compounded and shipped to your address in Puerto Rico.',
+      itemLabel: medication,
+      price: price,
+      cadence: 'per month'
+    });
   }
 
   // ====== CANCEL A MEDICATION ======
@@ -2652,6 +3034,24 @@
         await supabaseClient.from('prescriptions')
           .update({ cancelled: true, cancelled_at: new Date().toISOString(), cancel_reason: fullReason })
           .eq('id', cancelRxContext.id);
+      }
+      // Stopping the prescription MUST stop the recurring charge. Marking a
+      // row cancelled while Stripe keeps billing monthly is the single worst
+      // failure mode in this whole flow, so it is done in the same action —
+      // and if it fails, the patient is told plainly rather than reassured.
+      //
+      // This runs for the legacy prescription too. It used to be skipped for
+      // legacy, which meant the one prescription every patient starts with
+      // could be "cancelled" in the app while Stripe kept charging and the
+      // pharmacy kept shipping, every month, with no way to stop it.
+      try{
+        await callFunction('cancel-subscription', {
+          context: 'medication',
+          prescriptionId: (cancelRxContext.kind === 'legacy') ? null : cancelRxContext.id
+        });
+      } catch(subErr){
+        alert('Your prescription is cancelled, but we could not stop the recurring charge automatically.\n\n'
+            + 'Please email info@nuviclinic.com right away and we will stop it manually today.');
       }
       closeModal('cancel-rx');
       await loadPatientState();
@@ -2899,6 +3299,8 @@
     if(h){
       const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = (val === null || val === undefined) ? '' : val; };
       setVal('hh-full-name', h.full_name);
+      setVal('hh-gender', h.gender);
+      setVal('hh-phone', h.phone);
       setVal('hh-dob', h.date_of_birth);
       setVal('hh-address1', h.shipping_address1);
       setVal('hh-address2', h.shipping_address2);
@@ -3060,13 +3462,24 @@
     const reason = document.getElementById('cancel-membership-reason').value;
     const notes = document.getElementById('cancel-membership-notes').value;
     const fullReason = notes ? (reason + ' — ' + notes) : reason;
-    if(!confirm('Cancel your membership? This does not automatically stop any Stripe charge already scheduled.')) return;
+    if(!confirm('Cancel your membership?\n\nYour billing stops at the end of the month you have already paid for, and you keep access until then.')) return;
     try{
       await supabaseClient.from('health_history')
         .update({ membership_cancelled: true, membership_cancelled_at: new Date().toISOString(), membership_cancel_reason: fullReason })
         .eq('id', currentHealthHistory.id);
+
+      let billingStopped = false;
+      try{
+        const r = await callFunction('cancel-subscription', { context: 'membership' });
+        billingStopped = !!r.cancelled;
+      } catch(subErr){ billingStopped = false; }
+
       closeModal('settings');
       await loadPatientState();
+
+      alert(billingStopped
+        ? 'Your membership is cancelled and billing has been stopped. You keep access through the end of the period you have already paid for.'
+        : 'Your membership is cancelled on our side, but we could not confirm that billing stopped.\n\nPlease email info@nuviclinic.com so we can stop it manually today.');
     } catch(err){
       alert('Could not cancel membership: ' + (err.message || 'unknown error'));
     }
@@ -3075,10 +3488,33 @@
   async function resubscribeMembership(){
     if(!supabaseClient || !currentHealthHistory) return;
     try{
+      // Clearing the cancelled flag used to be the whole function, which
+      // restored full access without restoring any billing — a cancelled
+      // Stripe subscription charges nothing. Access and payment have to come
+      // back together or not at all.
+      //
+      // Two real cases, and they need opposite handling:
+      //   still inside the paid period -> the subscription is alive with
+      //     cancel_at_period_end set. Resume it. Sending them to checkout here
+      //     would create a second subscription and bill them twice.
+      //   period already ended -> Stripe closed it. A new checkout is the only
+      //     way back.
+      const r = await callFunction('cancel-subscription', { context: 'membership', resume: true });
+
+      if(r.resumed){
+        await supabaseClient.from('health_history')
+          .update({ membership_cancelled: false, membership_cancelled_at: null, membership_cancel_reason: null })
+          .eq('id', currentHealthHistory.id);
+        await loadPatientState();
+        alert('Welcome back. Your membership is active again and billing resumes on its normal date.');
+        return;
+      }
+
       await supabaseClient.from('health_history')
         .update({ membership_cancelled: false, membership_cancelled_at: null, membership_cancel_reason: null })
         .eq('id', currentHealthHistory.id);
       await loadPatientState();
+      goToCheckout('Basic');
     } catch(err){
       alert('Could not resubscribe: ' + (err.message || 'unknown error'));
     }
@@ -3797,6 +4233,12 @@
     if(!isAdmin){ panel.style.display = 'none'; return; }
     panel.style.display = 'block';
 
+    // Orders, coupons and the pharmacy catalog load independently of the stats
+    // below, so a failure in one panel doesn't blank the whole console.
+    loadAdminOrders();
+    loadAdminCoupons();
+    loadAdminCatalog();
+
     const [hh, rx, ap, mr, st] = await Promise.all([
       supabaseClient.from('health_history').select('*'),
       supabaseClient.from('prescriptions').select('*'),
@@ -3891,6 +4333,236 @@
   let isPhysician = false;
   let staffRoster = [];
   const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  // ====== ADMIN: PHARMACY ORDERS ======
+  async function loadAdminOrders(){
+    const wrap = document.getElementById('admin-orders');
+    if(!wrap) return;
+    try{
+      const { data, error } = await supabaseClient.from('medication_orders')
+        .select('*').order('created_at', { ascending: false }).limit(60);
+      if(error) throw error;
+      const orders = data || [];
+
+      if(orders.length === 0){
+        wrap.innerHTML = '<p class="np-empty">No orders yet.</p>';
+        return;
+      }
+
+      // Failures first: those are the only rows that need a human today.
+      orders.sort(function(a, b){
+        const af = a.status === 'failed' ? 0 : 1;
+        const bf = b.status === 'failed' ? 0 : 1;
+        return af - bf;
+      });
+
+      wrap.innerHTML = orders.map(function(o){
+        const meta = ORDER_STATUS_LABEL[o.status] || ORDER_STATUS_LABEL.submitted;
+        const money = '$' + ((o.amount_cents || 0) / 100).toFixed(2);
+        const when = formatShortDate(o.created_at);
+
+        let right = '<span class="rx-badge" style="background:' + meta[1] + ';color:' + meta[2] + ';">' + meta[0] + '</span>';
+        if(o.lifefile_order_id){
+          right += '<br><span style="font-size:11.5px;color:var(--ink-soft);font-family:\'IBM Plex Mono\',monospace;">LF #' + escapeHtml(String(o.lifefile_order_id)) + '</span>';
+        }
+        if(o.tracking_number){
+          right += '<br><a href="' + trackingLink(o.carrier, o.tracking_number) + '" target="_blank" rel="noopener" style="font-size:11.5px;color:var(--amber-deep);">' + escapeHtml(o.tracking_number) + '</a>';
+        }
+        if(o.status === 'failed'){
+          right += '<br><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:12px;margin-top:5px;" onclick="retryAdminOrder(\'' + o.id + '\')">Retry</button>';
+        }
+
+        const err = o.submit_error
+          ? '<div style="font-size:11.5px;color:#B23A3A;margin-top:3px;">' + escapeHtml(o.submit_error) + '</div>'
+          : '';
+
+        return '<div class="dash-protocol-row">'
+          + '<div style="min-width:0;"><div class="name">' + escapeHtml(o.medication || '\u2014')
+          + (o.is_refill ? ' <span style="font-weight:400;opacity:0.6;">(refill #' + o.refill_cycle + ')</span>' : '')
+          + '</div>'
+          + '<div class="meta">' + escapeHtml(o.dose || '') + ' \u00b7 ' + money + ' \u00b7 ' + when
+          + (o.coupon_code ? (' \u00b7 ' + escapeHtml(o.coupon_code)) : '') + '</div>'
+          + err + '</div>'
+          + '<div style="text-align:right;flex-shrink:0;">' + right + '</div></div>';
+      }).join('');
+    } catch(err){
+      wrap.innerHTML = '<p class="np-empty">Could not load orders: ' + escapeHtml(err.message || 'unknown error') + '</p>';
+    }
+  }
+
+  async function retryAdminOrder(orderId){
+    if(!confirm('Send this order to LifeFile again?\n\nOnly do this if you have fixed whatever caused it to fail \u2014 a successful retry creates a real prescription at the pharmacy.')) return;
+    try{
+      // Clearing the attempt counter is what makes the order eligible again;
+      // the retry sweep and the submit function both refuse past the cap.
+      const { error } = await supabaseClient.from('medication_orders')
+        .update({ status: 'queued', submit_attempts: 0, submit_error: null })
+        .eq('id', orderId);
+      if(error) throw error;
+      alert('Queued. The retry sweep picks it up within 15 minutes, or it will go out on the next successful attempt.');
+      await loadAdminOrders();
+    } catch(err){
+      alert('Could not queue the retry: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // ====== ADMIN: COUPONS ======
+  async function loadAdminCoupons(){
+    const wrap = document.getElementById('admin-coupons');
+    if(!wrap) return;
+    try{
+      const { data, error } = await supabaseClient.from('coupons')
+        .select('*').order('created_at', { ascending: false });
+      if(error) throw error;
+      const coupons = data || [];
+
+      if(coupons.length === 0){
+        wrap.innerHTML = '<p class="np-empty">No codes yet.</p>';
+        return;
+      }
+
+      wrap.innerHTML = coupons.map(function(c){
+        const worth = c.kind === 'free' ? '100% off'
+          : c.kind === 'percent' ? (Number(c.value) + '% off')
+          : ('$' + Number(c.value).toFixed(2) + ' flat');
+        const used = c.times_redeemed + (c.max_redemptions ? (' / ' + c.max_redemptions) : '');
+        const expired = c.expires_at && new Date(c.expires_at) < new Date();
+        const live = c.active && !expired && (!c.max_redemptions || c.times_redeemed < c.max_redemptions);
+
+        return '<div class="dash-protocol-row">'
+          + '<div style="min-width:0;">'
+          + '<div class="name" style="font-family:\'IBM Plex Mono\',monospace;font-size:14px;">' + escapeHtml(c.code) + '</div>'
+          + '<div class="meta">' + escapeHtml(c.label || '\u2014') + ' \u00b7 ' + worth + ' \u00b7 ' + escapeHtml(c.applies_to)
+          + (c.hidden ? ' \u00b7 hidden' : '') + '</div></div>'
+          + '<div style="text-align:right;flex-shrink:0;">'
+          + '<span class="rx-badge" style="background:' + (live ? 'rgba(79,122,100,0.14)' : 'rgba(8,26,77,0.08)')
+          + ';color:' + (live ? 'var(--sage)' : 'var(--ink-soft)') + ';">' + (live ? 'Live' : 'Off') + '</span>'
+          + '<div class="meta" style="margin-top:4px;">Used ' + used + '</div>'
+          + '<a href="javascript:void(0)" onclick="toggleCoupon(\'' + c.id + '\',' + (c.active ? 'false' : 'true') + ')" style="font-size:12px;color:rgba(8,26,77,0.45);">'
+          + (c.active ? 'Deactivate' : 'Reactivate') + '</a>'
+          + '</div></div>';
+      }).join('');
+    } catch(err){
+      wrap.innerHTML = '<p class="np-empty">Could not load coupons: ' + escapeHtml(err.message || 'unknown error') + '</p>';
+    }
+  }
+
+  function onCouponKindChange(){
+    const kind = document.getElementById('coupon-new-kind').value;
+    const wrap = document.getElementById('coupon-value-wrap');
+    const label = document.getElementById('coupon-value-label');
+    wrap.style.display = (kind === 'free') ? 'none' : 'block';
+    label.textContent = (kind === 'percent') ? 'Percent off (0\u2013100)' : 'Price in dollars';
+  }
+
+  // Ambiguous characters are excluded on purpose: these codes get read aloud
+  // and copied off a phone screen, and O/0 and I/1 are where that goes wrong.
+  function generateCouponCode(){
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = new Uint8Array(8);
+    crypto.getRandomValues(bytes);
+    let out = '';
+    for(let i = 0; i < 8; i++){
+      out += alphabet[bytes[i] % alphabet.length];
+      if(i === 3) out += '-';
+    }
+    document.getElementById('coupon-new-code').value = 'NUVI-' + out;
+  }
+
+  async function createCoupon(){
+    const msg = document.getElementById('coupon-new-msg');
+    const code = document.getElementById('coupon-new-code').value.trim().toUpperCase();
+    if(!code){ msg.textContent = 'Enter or generate a code first.'; msg.style.color = '#B23A3A'; return; }
+
+    const kind = document.getElementById('coupon-new-kind').value;
+    const maxRaw = document.getElementById('coupon-new-max').value;
+
+    msg.textContent = 'Creating...';
+    msg.style.color = 'var(--ink-soft)';
+
+    try{
+      const { error } = await supabaseClient.from('coupons').insert({
+        code: code,
+        label: document.getElementById('coupon-new-label').value.trim() || null,
+        kind: kind,
+        value: (kind === 'free') ? 0 : Number(document.getElementById('coupon-new-value').value || 0),
+        applies_to: document.getElementById('coupon-new-applies').value,
+        max_redemptions: maxRaw ? Number(maxRaw) : null,
+        hidden: document.getElementById('coupon-new-hidden').checked,
+        created_by: currentUser ? currentUser.id : null
+      });
+      if(error) throw error;
+
+      msg.textContent = 'Created. ' + code + ' is live now.';
+      msg.style.color = 'var(--sage)';
+      document.getElementById('coupon-new-code').value = '';
+      document.getElementById('coupon-new-label').value = '';
+      await loadAdminCoupons();
+    } catch(err){
+      msg.textContent = (err.code === '23505')
+        ? 'That code already exists.'
+        : ('Could not create: ' + (err.message || 'unknown error'));
+      msg.style.color = '#B23A3A';
+    }
+  }
+
+  async function toggleCoupon(id, makeActive){
+    try{
+      const { error } = await supabaseClient.from('coupons').update({ active: makeActive }).eq('id', id);
+      if(error) throw error;
+      await loadAdminCoupons();
+    } catch(err){
+      alert('Could not update that code: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // ====== ADMIN: PHARMACY CATALOG ======
+  async function loadAdminCatalog(){
+    const wrap = document.getElementById('admin-catalog');
+    if(!wrap) return;
+    try{
+      const { data, error } = await supabaseClient.from('medication_catalog')
+        .select('*').order('medication', { ascending: true });
+      if(error) throw error;
+      const rows = data || [];
+
+      // Anything we sell but can't map is a booby trap: the patient sees a
+      // price, pays, and the order fails. Surface it at the top, loudly.
+      const mapped = {};
+      rows.forEach(function(r){ mapped[r.medication] = true; });
+      const unmapped = Object.keys(MEDICATION_INFO).filter(function(m){
+        return MEDICATION_INFO[m].launched && !mapped[m];
+      });
+
+      let html = '';
+      if(unmapped.length){
+        html += '<div style="background:rgba(255,111,94,0.12);border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:var(--amber-deep);">'
+          + '<b>Not orderable online:</b> ' + escapeHtml(unmapped.join(', '))
+          + '. These are launched to patients but have no LifeFile product mapping, so checkout will refuse them.</div>';
+      }
+
+      html += rows.length
+        ? rows.map(function(r){
+            const placeholder = /placeholder|sandbox/i.test(String(r.drug_name || ''));
+            return '<div class="dash-protocol-row">'
+              + '<div style="min-width:0;"><div class="name">' + escapeHtml(r.medication)
+              + (r.dose_label ? (' \u00b7 ' + escapeHtml(r.dose_label)) : '') + '</div>'
+              + '<div class="meta">' + escapeHtml(r.drug_name) + ' \u00b7 ' + escapeHtml(r.drug_strength || '\u2014')
+              + ' \u00b7 ' + escapeHtml(r.drug_form || '\u2014') + ' \u00b7 ' + r.days_supply + '-day supply</div></div>'
+              + '<div style="text-align:right;flex-shrink:0;">'
+              + '<span class="meta" style="font-family:\'IBM Plex Mono\',monospace;">' + escapeHtml(String(r.lf_product_id)) + '</span>'
+              + (placeholder
+                  ? '<br><span class="rx-badge" style="background:rgba(255,111,94,0.18);color:var(--amber-deep);">Sandbox placeholder</span>'
+                  : '')
+              + '</div></div>';
+          }).join('')
+        : '<p class="np-empty">No catalog rows. Nothing can be ordered online yet.</p>';
+
+      wrap.innerHTML = html;
+    } catch(err){
+      wrap.innerHTML = '<p class="np-empty">Could not load catalog: ' + escapeHtml(err.message || 'unknown error') + '</p>';
+    }
+  }
 
   async function initPhysicianOversight(staffRow){
     isPhysician = !!(staffRow && (staffRow.role === 'physician' || staffRow.role === 'admin'));
@@ -4905,7 +5577,9 @@
         medication: medication,
         dose: doseMg + ' mg / week',
         price: price,
-        reviewed_notes: 'Approved by care team.'
+        reviewed_notes: 'Approved by care team.',
+        approved_by: currentUser ? currentUser.id : null,
+        approved_at: new Date().toISOString()
       }).eq('id', rxId);
       if(error) throw error;
       closeModal('np-patient');
@@ -4978,7 +5652,12 @@
         approved_medication: med,
         approved_dose: doseMg + ' mg / week',
         approved_price: price,
-        approved_notes: 'Approved by care team.'
+        approved_notes: 'Approved by care team.',
+        // The order sent to LifeFile carries the approving clinician's NPI and
+        // licence, so who approved it has to be recorded at the moment of
+        // approval — not inferred later from whoever happens to be on shift.
+        approved_by: currentUser ? currentUser.id : null,
+        approved_at: new Date().toISOString()
       }).eq('id', npCurrentPatientId);
       if(error) throw error;
       closeModal('np-patient');
@@ -5063,6 +5742,10 @@
       user_id: currentUser.id,
       full_name: document.getElementById('hh-full-name').value,
       date_of_birth: document.getElementById('hh-dob').value || null,
+      // LifeFile requires gender on every order and rejects a submission
+      // without it, so it is collected here rather than chased down later.
+      gender: document.getElementById('hh-gender').value || 'u',
+      phone: document.getElementById('hh-phone').value || null,
       shipping_address1: document.getElementById('hh-address1').value,
       shipping_address2: document.getElementById('hh-address2').value,
       shipping_city: document.getElementById('hh-city').value,
@@ -5398,6 +6081,15 @@
         }
       }
 
+      // Tell the clinic. Not awaited and never allowed to throw: a failed
+      // internal notification must not make a successfully booked appointment
+      // look like it failed to the patient.
+      callFunction('notify-admin-booking', {
+        ticket: ticket,
+        date: dateLabel,
+        time: time
+      }).catch(function(err){ console.error('booking alert failed', err); });
+
       await loadPatientState();
     } catch(err){
       alert('Could not book that slot: ' + (err.message || 'unknown error'));
@@ -5624,28 +6316,56 @@
     authDebug('FATAL: supabaseClient is null — check SUPABASE_URL/KEY');
   }
 
-  // Catch a return trip from a Stripe Payment Link. This fires after the user is
-  // already logged in (payment now happens mid-flow, after health history), so we
-  // just mark their existing record paid rather than starting a new signup.
-  let pendingPaymentPlan = null;
-  (function checkForPaymentReturn(){
+  // ====== RETURN FROM STRIPE CHECKOUT ======
+  // This used to read ?paid=true out of the URL and write paid:true straight to
+  // the database, which meant typing "?paid=true" into the address bar granted
+  // a free membership. That is gone. Stripe's webhook is now the only thing
+  // that can mark anything paid, and a database trigger blocks patient-role
+  // writes to those columns even if the browser tried.
+  //
+  // All this does is notice we came back from Checkout and poll for the
+  // webhook to land, so the dashboard updates without a manual refresh.
+  let returnedFromCheckout = null;
+  (function checkForCheckoutReturn(){
     const params = new URLSearchParams(window.location.search);
-    if(params.get('paid') === 'true'){
-      pendingPaymentPlan = params.get('plan') || '';
+    const state = params.get('checkout');
+    if(state){
+      returnedFromCheckout = { state: state, context: params.get('context') || '' };
       window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
     }
   })();
 
-  // Same pattern, but for a medication purchase from the Store returning
-  // from Stripe (shipping address collected by Stripe itself at checkout).
-  let pendingOrder = null;
-  (function checkForOrderReturn(){
-    const params = new URLSearchParams(window.location.search);
-    if(params.get('order_paid') === 'true'){
-      pendingOrder = { kind: params.get('rx_kind') || '', id: params.get('rx_id') || '' };
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+  // Stripe redirects the browser back the instant payment succeeds, which is
+  // often a beat or two before the webhook has finished writing. Poll briefly
+  // rather than showing a stale "unpaid" dashboard to someone who just paid.
+  async function awaitCheckoutSettlement(){
+    if(!returnedFromCheckout || returnedFromCheckout.state !== 'success') return;
+    const ctx = returnedFromCheckout.context;
+    returnedFromCheckout = null;
+
+    const banner = document.getElementById('checkout-settling');
+    if(banner) banner.style.display = 'block';
+
+    for(let attempt = 0; attempt < 10; attempt++){
+      await new Promise(r => setTimeout(r, attempt === 0 ? 1200 : 2000));
+      try{
+        if(ctx === 'membership'){
+          const { data } = await supabaseClient.from('health_history')
+            .select('paid,membership_status').eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false }).limit(1);
+          if(data && data[0] && data[0].paid){ break; }
+        } else {
+          const { data } = await supabaseClient.from('medication_orders')
+            .select('id').eq('user_id', currentUser.id)
+            .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString()).limit(1);
+          if(data && data.length){ break; }
+        }
+      } catch(err){ console.error('settlement poll failed', err); }
     }
-  })();
+
+    if(banner) banner.style.display = 'none';
+    await loadPatientState();
+  }
 
   // Safety net: Supabase's client normally strips the #access_token=... hash
   // from the URL itself once it's finished reading it. Only force it clean if
@@ -5663,39 +6383,8 @@
     }
   }, 3000);
 
-  async function applyPendingPayment(){
-    if(!pendingPaymentPlan || !supabaseClient || !currentHealthHistory) return;
-    const plan = pendingPaymentPlan;
-    pendingPaymentPlan = null; // clear first so we never double-apply or loop
-    try{
-      await supabaseClient.from('health_history')
-        .update({ paid: true, plan: plan, paid_at: new Date().toISOString() })
-        .eq('id', currentHealthHistory.id);
-      await loadPatientState();
-    } catch(err){
-      console.error('Could not apply pending payment:', err);
-    }
-  }
-
-  async function applyPendingOrder(){
-    if(!pendingOrder || !supabaseClient) return;
-    const order = pendingOrder;
-    pendingOrder = null; // clear first so we never double-apply
-    try{
-      if(order.kind === 'legacy' && currentHealthHistory){
-        await supabaseClient.from('health_history')
-          .update({ purchased: true, purchased_at: new Date().toISOString() })
-          .eq('id', currentHealthHistory.id);
-      } else if(order.id){
-        await supabaseClient.from('prescriptions')
-          .update({ purchased: true, purchased_at: new Date().toISOString() })
-          .eq('id', order.id);
-      }
-      await loadPatientState();
-    } catch(err){
-      console.error('Could not apply pending order:', err);
-    }
-  }
+  // applyPendingPayment() and applyPendingOrder() were removed with the
+  // ?paid=true flow above. Nothing in the browser writes payment state now.
 
   document.addEventListener('keydown', (e)=>{
     if(e.key === 'Escape'){
