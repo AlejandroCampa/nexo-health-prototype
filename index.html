@@ -5317,6 +5317,17 @@
         email: payload.email || (currentUser && currentUser.email)
       });
 
+      // If they paid before completing this form, the payment has been waiting
+      // in sessionStorage with nowhere to go. Now there is a record to attach
+      // it to, so apply it immediately rather than making them pay again.
+      if(pendingPaymentPlan){
+        const { data: fresh } = await supabaseClient.from('health_history')
+          .select('*').eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false }).limit(1);
+        currentHealthHistory = (fresh && fresh[0]) || currentHealthHistory;
+        await applyPendingPayment();
+      }
+
       document.getElementById('history-form-wrap').style.display = 'none';
       await loadPatientState();
       document.getElementById('stage-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -5885,7 +5896,17 @@
   }, 3000);
 
   async function applyPendingPayment(){
-    if(!pendingPaymentPlan || !supabaseClient || !currentHealthHistory) return;
+    // Say exactly why nothing happened — a silent return here means the
+    // patient paid and the account never activated, which is the worst
+    // possible failure to have to debug from a screenshot.
+    if(!pendingPaymentPlan){ console.log('[payment] no pending plan'); return; }
+    if(!supabaseClient){ console.log('[payment] no supabase client'); return; }
+    if(!currentHealthHistory){
+      console.warn('[payment] PAID BUT NO HEALTH HISTORY — the payment cannot be '
+        + 'attached to a record yet. It is saved and will apply as soon as the '
+        + 'health history is submitted.');
+      return;
+    }
     const plan = pendingPaymentPlan;
     pendingPaymentPlan = null; // clear first so we never double-apply or loop
     try{
