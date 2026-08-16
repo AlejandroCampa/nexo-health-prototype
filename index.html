@@ -832,10 +832,11 @@
           <div class="dash-card" style="padding:20px;max-width:420px;border-color:var(--amber);">
             <div class="tier-name" style="margin-bottom:8px;">Initial evaluation &amp; ongoing care</div>
             <div class="tier-price" id="checkout-price" style="font-size:28px;">$70<span style="font-family:'Outfit',sans-serif;font-size:13px;opacity:0.6;">/mo</span></div>
-            <p style="margin:10px 0 16px;font-size:13px;">Monthly physician evaluations, prescription management, and messaging. Medication billed separately. No minimum commitment, cancel anytime.</p>
+            <p id="checkout-note" style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;">Cancel anytime.</p>
+            <p style="margin:10px 0 16px;font-size:13px;">Monthly physician evaluations, prescription management, and messaging. Medication billed separately. No minimum commitment.</p>
 
             <div style="border-top:1px solid var(--line);padding-top:14px;margin-bottom:16px;">
-              <label for="coupon-input" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">Have a code?</label>
+              <label for="coupon-input" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">Have a referral code?</label>
               <div style="display:flex;gap:8px;">
                 <input id="coupon-input" type="text" placeholder="NUVI-XXXX-XXXX" autocomplete="off"
                        style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:13px;
@@ -1881,8 +1882,8 @@
   // open. A tampered coupon can therefore never reduce a real charge.
   const STRIPE_LINKS = {
     Basic:      'https://buy.stripe.com/bJe9AV3uQcDOgdE00l9EI0f',  // $70/mo standard
-    Promo35:    'PASTE_35_DOLLAR_LINK_HERE',                        // $35 first month
-    Comped:     'PASTE_ZERO_DOLLAR_LINK_HERE'                       // $0 — comped access
+    Promo35:    'https://buy.stripe.com/3cI00l4yU7jugdEbJ39EI0h',                        // $35 first month
+    Comped:     'https://buy.stripe.com/14AbJ3c1mbzK2mOaEZ9EI0g'                       // $0 — comped access
   };
 
   // ---- Coupon codes ----------------------------------------------------
@@ -1891,10 +1892,36 @@
   // the source can see the codes, which is why the real protection is that
   // each code opens a fixed-price Stripe link rather than altering a price.
   const COUPONS = {
-    'NUVI-8HBF-QUFW': { plan: 'Promo35', label: '50% off first month', price: 35 },
-    'NUVI-AB7O-M0HA': { plan: 'Comped',  label: 'Complimentary membership', price: 0 }
+    'NUVI-AB7O-M0HA': { plan: 'Comped', label: 'Complimentary membership', price: 0 }
   };
   let activeCoupon = null;
+
+  // ---- Launch promotion --------------------------------------------------
+  // First month at $35 for everyone, no code required. Set the end date and
+  // it turns itself off — no deploy needed on the day it expires. Dates are
+  // read in Puerto Rico time so it ends at local midnight, not UTC.
+  const PROMO = {
+    active: true,
+    plan:   'Promo35',
+    price:  35,
+    endsOn: '2026-08-31'          // inclusive; the promo dies at the end of this day
+  };
+
+  function promoIsLive(){
+    if(!PROMO.active) return false;
+    if(STRIPE_LINKS[PROMO.plan].indexOf('PASTE_') === 0) return false;
+    const nowPR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Puerto_Rico' }));
+    const end   = new Date(PROMO.endsOn + 'T23:59:59');
+    return nowPR <= end;
+  }
+
+  // What the patient will actually be charged, and which link gets them there.
+  // A coupon beats the promo; the promo beats standard pricing.
+  function currentCheckout(){
+    if(activeCoupon) return { plan: activeCoupon.plan, price: activeCoupon.price, label: activeCoupon.label };
+    if(promoIsLive()) return { plan: PROMO.plan, price: PROMO.price, label: 'First month' };
+    return { plan: 'Basic', price: 70, label: null };
+  }
 
   function normaliseCode(code){
     return String(code || '').trim().toUpperCase().replace(/\s+/g, '');
@@ -1932,18 +1959,26 @@
   function updateCheckoutPrice(){
     const el = document.getElementById('checkout-price');
     if(!el) return;
-    if(activeCoupon){
-      el.innerHTML = '<s style="font-size:20px;opacity:0.4;font-weight:500;">$70</s> $'
-        + activeCoupon.price
-        + '<span style="font-family:\'Outfit\',sans-serif;font-size:13px;opacity:0.6;"> first month</span>';
+    const co = currentCheckout();
+    const small = 'font-family:\'Outfit\',sans-serif;font-size:13px;opacity:0.6;';
+    if(co.price === 70){
+      el.innerHTML = '$70<span style="' + small + '">/mo</span>';
     } else {
-      el.innerHTML = '$70<span style="font-family:\'Outfit\',sans-serif;font-size:13px;opacity:0.6;">/mo</span>';
+      el.innerHTML = '<s style="font-size:20px;opacity:0.4;font-weight:500;">$70</s> $' + co.price
+        + '<span style="' + small + '"> first month</span>';
+    }
+    const note = document.getElementById('checkout-note');
+    if(note){
+      note.textContent = co.price === 70
+        ? 'Cancel anytime.'
+        : 'Then $70/month. Cancel anytime.';
     }
   }
 
   function goToCheckout(plan){
-    // A valid coupon overrides the plan, which is how it changes the price.
-    const chosen = activeCoupon ? activeCoupon.plan : plan;
+    // Coupon beats promo beats standard. The browser only picks a link —
+    // Stripe decides what is actually charged.
+    const chosen = currentCheckout().plan;
     const link = STRIPE_LINKS[chosen];
     if(link && link.indexOf('PASTE_') !== 0 && link.indexOf('YOUR_') !== 0){
       window.location.href = link;
@@ -5730,6 +5765,9 @@
   // already logged in (payment now happens mid-flow, after health history), so we
   // just mark their existing record paid rather than starting a new signup.
   let pendingPaymentPlan = null;
+  // Reflect the live promo price as soon as the page is ready.
+  document.addEventListener('DOMContentLoaded', function(){ try{ updateCheckoutPrice(); }catch(e){} });
+
   (function checkForPaymentReturn(){
     const params = new URLSearchParams(window.location.search);
     if(params.get('paid') === 'true'){
