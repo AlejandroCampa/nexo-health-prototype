@@ -100,6 +100,16 @@
     transition:transform .22s var(--ease), background .25s var(--ease), color .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
     white-space:nowrap;text-align:center;
   }
+  /* Spanish labels run considerably longer than their English equivalents —
+     "Continue to intake form" becomes "Continuar con el formulario de
+     admisión". With nowrap that overflows a narrow modal and gets clipped, so
+     buttons are allowed to wrap on small screens. Short labels still sit on
+     one line because they fit. */
+  @media (max-width:600px){
+    .btn{white-space:normal;line-height:1.32;padding:13px 18px;}
+    .modal .btn{width:100%;}
+    .rx-stamp,.rx-badge{white-space:normal;line-height:1.3;}
+  }
   .btn-primary{background:var(--ink);color:#EAFBFF;box-shadow:0 10px 24px -14px rgba(8,26,77,0.75);}
   .btn-primary:hover{transform:translateY(-2px);background:#0B2467;box-shadow:0 20px 34px -18px rgba(8,26,77,0.8);}
   .btn-primary:active{transform:translateY(0);}
