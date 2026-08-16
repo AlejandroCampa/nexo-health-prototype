@@ -865,8 +865,8 @@
 
         <div class="stage-view" id="stage-need-schedule" style="display:none;">
           <span class="status-pill status-active">History received</span>
-          <h3>Schedule your NP interview</h3>
-          <p style="margin-bottom:18px;">Every patient completes a required 15-minute interview with a nurse practitioner, under the supervising physician's sign-off, before any prescription is approved. Appointments run 8:00 AM – 7:00 PM, every day.</p>
+          <h3>Schedule your physician evaluation</h3>
+          <p style="margin-bottom:18px;">Every patient completes a required 15-minute evaluation with a licensed physician before any prescription is approved. Appointments run 8:00 AM – 7:00 PM, every day.</p>
           <div id="np-calendar-nav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
             <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(-1)">←</button>
             <div id="np-calendar-month-label" style="font-family:'Sora',sans-serif;font-size:16px;"></div>
@@ -882,7 +882,7 @@
         </div>
 
         <div class="stage-view" id="stage-scheduled" style="display:none;">
-          <span class="status-pill status-active">Interview scheduled</span>
+          <span class="status-pill status-active">Evaluation scheduled</span>
           <h3>You're booked</h3>
           <div class="ticket-card">
             <div class="mono" style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.7;">Ticket number</div>
@@ -908,8 +908,8 @@
 
         <div class="stage-view" id="stage-awaiting-approval" style="display:none;">
           <span class="status-pill">Awaiting sign-off</span>
-          <h3>Interview complete</h3>
-          <p>Your NP interview is done. The supervising physician is doing final review — your active protocol will show up here once it's approved.</p>
+          <h3>Evaluation complete</h3>
+          <p>Your evaluation is complete. Your physician is finalising the review — your protocol will appear here once approved.</p>
         </div>
 
         <div class="stage-view" id="stage-active" style="display:none;">
@@ -941,8 +941,8 @@
           <li><span class="dash-check-icon done">✓</span> Account created</li>
           <li><span class="dash-check-icon pending" id="check-history">•</span> Health history submitted</li>
           <li><span class="dash-check-icon pending" id="check-paid">•</span> Plan selected & paid</li>
-          <li><span class="dash-check-icon pending" id="check-scheduled">•</span> NP interview scheduled</li>
-          <li><span class="dash-check-icon pending" id="check-interview">•</span> Interview completed</li>
+          <li><span class="dash-check-icon pending" id="check-scheduled">•</span> Physician evaluation scheduled</li>
+          <li><span class="dash-check-icon pending" id="check-interview">•</span> Evaluation completed</li>
           <li><span class="dash-check-icon pending" id="check-approved">•</span> Prescription approved</li>
         </ul>
       </div>
@@ -1224,8 +1224,8 @@
   <div class="wrap">
     <div class="dash-head">
       <div>
-        <h1 id="np-welcome">NP Dashboard</h1>
-        <p>Patients, interviews, and prescriptions awaiting your review.</p>
+        <h1 id="np-welcome">Clinical Dashboard</h1>
+        <p>Patients, evaluations, and prescriptions awaiting your review.</p>
       </div>
       <div style="display:flex;align-items:center;gap:12px;position:relative;">
         <button class="account-icon-btn" id="notif-bell" onclick="toggleNotifications()"
@@ -1394,7 +1394,7 @@
       <p style="font-size:12.5px;color:var(--ink-soft);margin:10px 0 12px;">Schedule it before they leave the call — patients who leave without a booked follow-up are the ones who lapse.</p>
       <div class="two-col">
         <div class="field"><label>Date</label><input id="fu-date" type="date" onchange="loadFollowupSlots()"></div>
-        <div class="field"><label>Time</label><select id="fu-time"><option value="">Pick a date first</option></select></div>
+        <div class="field"><label>Time</label><select id="fu-time" class="notranslate" translate="no"><option value="">Pick a date first</option></select></div>
       </div>
       <button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;" onclick="bookFollowup()">Book evaluation</button>
       <div id="fu-msg" style="font-size:12.5px;margin-top:10px;"></div>
@@ -1476,7 +1476,7 @@
     <p class="info-lead">Physician-led metabolic and longevity medicine, built for Puerto Rico.</p>
     <p>Nuvi Clinic is a telehealth practice offering physician-supervised weight management and longevity care. We were founded on a simple frustration: getting real, well-supervised metabolic care usually means long waits, rushed visits, and pricing nobody can explain.</p>
     <h3>How we're different</h3>
-    <p><b>Every prescription is reviewed by a licensed physician.</b> Not a questionnaire, not an algorithm. You complete a health history, then speak with a nurse practitioner under physician supervision before anything is prescribed. If a medication isn't appropriate for you, we say so.</p>
+    <p><b>Every prescription is reviewed by a licensed physician.</b> Not a questionnaire, not an algorithm. You complete a health history, then speak with a licensed physician before anything is prescribed. If a medication isn't appropriate for you, we say so.</p>
     <p><b>One flat price, whatever your dose.</b> Your medication costs the same every month — it doesn't go up when your provider increases your dose. Most clinics charge more as you titrate up. We don't. Your membership is separate and never bundled into a number you can't break down.</p>
     <p><b>Dispensed by a licensed compounding pharmacy.</b> Your prescription is prepared by a licensed 503A compounding pharmacy and shipped directly to you.</p>
     <p><b>Local.</b> We're based in Puerto Rico and currently serve Puerto Rico patients. Expanding to additional jurisdictions requires physician licensure in each one, so we do it deliberately rather than all at once.</p>
@@ -1503,7 +1503,7 @@
     <h3>Referring a patient</h3>
     <p>If you have a patient who would benefit from supervised metabolic or weight management care, you can refer them directly. They'll complete our intake, be interviewed by our care team, and every prescribing decision is made by our supervising physician — we'll keep you informed if your patient asks us to.</p>
     <h3>Joining our care team</h3>
-    <p>We work with nurse practitioners and physicians licensed in the jurisdictions we serve. Providers must hold an active, unrestricted license, a current DEA registration where applicable, and an NPI. All prescribing follows documented protocols with physician oversight — we don't operate a rubber-stamp model, and we're not a fit for clinicians looking for one.</p>
+    <p>We work with physicians licensed in the jurisdictions we serve. Providers must hold an active, unrestricted license, a current DEA registration where applicable, and an NPI. All prescribing follows documented protocols with physician oversight — we don't operate a rubber-stamp model, and we're not a fit for clinicians looking for one.</p>
     <h3>Pharmacy and fulfillment</h3>
     <p>Prescriptions are fulfilled through a licensed 503A compounding pharmacy partner and shipped directly to patients. Ordering is handled by our clinical staff; providers are not asked to manage logistics.</p>
     <p class="info-contact">To discuss working together, contact <b>info@nuviclinic.com</b>.</p>
@@ -1759,7 +1759,7 @@
     <div style="background:var(--paper-warm);border-radius:12px;padding:16px;margin-bottom:20px;font-size:13.5px;line-height:1.8;">
       <div>Email: <b id="staff-acct-email">—</b></div>
       <div>Patients managed: <b id="staff-acct-patients">—</b></div>
-      <div>Interviews completed: <b id="staff-acct-interviews">—</b></div>
+      <div>Evaluations completed: <b id="staff-acct-interviews">—</b></div>
       <div>Prescriptions approved: <b id="staff-acct-rx">—</b></div>
     </div>
 
@@ -2534,7 +2534,9 @@
     }
     if(stage === 'scheduled' && appt){
       document.getElementById('ticket-number-display').textContent = appt.ticket_number;
-      document.getElementById('ticket-datetime-display').textContent = appt.appointment_date + ' · ' + appt.appointment_time;
+      { const td = document.getElementById('ticket-datetime-display');
+        td.setAttribute('translate','no'); td.classList.add('notranslate');
+        td.textContent = appt.appointment_date + ' · ' + appt.appointment_time; }
       markPassedAppointment(appt.appointment_date, appt.appointment_time);
     }
     if(stage === 'active' && history){
@@ -3505,7 +3507,7 @@
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'slot-btn';
-      btn.innerHTML = '<div class="slot-time" style="font-size:14px;">' + t + '</div>';
+      btn.innerHTML = '<div class="slot-time notranslate" translate="no" style="font-size:14px;">' + t + '</div>';
       btn.onclick = () => selectPhysicianSlot(dateValue, t);
       slotGrid.appendChild(btn);
     });
@@ -4231,7 +4233,7 @@
         { weekday:'short', month:'short', day:'numeric' });
       const items = byDate[date].map(a =>
         '<div class="dash-protocol-row"><div><div class="name" style="font-size:13px;">'
-        + a.appointment_time + ' — ' + (a.type === 'physician_visit' ? 'Physician evaluation' : 'NP interview')
+        + a.appointment_time + ' — ' + (a.type === 'physician_visit' ? 'Physician visit' : 'Evaluation')
         + '</div><div class="meta">Ticket ' + (a.ticket_number || '—')
         + (a.np_user_id ? ' · ' + providerName(a.np_user_id) : '')
         + '</div></div><span class="rx-badge">' + (a.status || 'scheduled') + '</span></div>').join('');
@@ -5576,7 +5578,7 @@
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'slot-btn';
-      btn.innerHTML = '<div class="slot-time" style="font-size:15px;">' + t + '</div>';
+      btn.innerHTML = '<div class="slot-time notranslate" translate="no" style="font-size:15px;">' + t + '</div>';
       btn.onclick = () => selectSlot(dateValue, dateLabel.textContent, t);
       slotGrid.appendChild(btn);
     });
@@ -6155,10 +6157,19 @@
     'Maintain a Healthy Weight': 'Mantener un peso saludable',
     'Learn About GLP-1 Treatment': 'Conocer m\u00e1s sobre el GLP-1',
     'Not Sure Yet': 'Todav\u00eda no estoy segura',
+    'Schedule your physician evaluation': 'Programa tu evaluaci\u00f3n m\u00e9dica',
+    'Physician evaluation scheduled': 'Evaluaci\u00f3n m\u00e9dica programada',
+    'Evaluation scheduled': 'Evaluaci\u00f3n programada',
+    'Evaluation complete': 'Evaluaci\u00f3n completada',
+    'Evaluation completed': 'Evaluaci\u00f3n completada',
     'First month $35, then $70/month. Cancel anytime.': 'Primer mes $35, luego $70 al mes. Cancela cuando quieras.',
     '50% off first month': '50% de descuento el primer mes'
   };
   var ES_LONG = [
+    ['Every patient completes a required 15-minute evaluation with a licensed physician before any prescription is approved. Appointments run 8:00 AM \u2013 7:00 PM, every day.',
+     'Cada paciente completa una evaluaci\u00f3n obligatoria de 15 minutos con un m\u00e9dico licenciado antes de que se apruebe cualquier receta. Las citas son de 8:00 AM a 7:00 PM, todos los d\u00edas.'],
+    ['Your evaluation is complete. Your physician is finalising the review \u2014 your protocol will appear here once approved.',
+     'Tu evaluaci\u00f3n est\u00e1 completa. Tu m\u00e9dico est\u00e1 finalizando la revisi\u00f3n \u2014 tu protocolo aparecer\u00e1 aqu\u00ed una vez aprobado.'],
     ['Physician-evaluated GLP-1 therapy starting at $250 a month, all in. Your medication is prepared by a 503A compounding pharmacy that operates under strict quality regulations, and shipped directly to your home.',
      'Tratamiento con GLP-1 evaluado por m\u00e9dicos, desde $250 al mes, todo incluido. Tu medicamento lo prepara una farmacia de compuestos 503A que cumple con regulaciones estrictas de calidad, y te llega directo a tu casa.'],
     ['First month $35 (usually $70). Tirzepatide from $180/month. Semaglutide from $150/month.',
