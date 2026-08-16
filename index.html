@@ -910,6 +910,7 @@
           <span class="status-pill">Awaiting sign-off</span>
           <h3>Evaluation complete</h3>
           <p>Your evaluation is complete. Your physician is finalising the review — your protocol will appear here once approved.</p>
+          <div id="next-eval-card-await" style="display:none;border-radius:12px;padding:16px;margin-top:18px;"></div>
         </div>
 
         <div class="stage-view" id="stage-active" style="display:none;">
@@ -2539,6 +2540,10 @@
         td.textContent = appt.appointment_date + ' · ' + appt.appointment_time; }
       markPassedAppointment(appt.appointment_date, appt.appointment_time);
     }
+    if(stage === 'awaiting-approval'){
+      renderNextEvalCard('next-eval-card-await');
+    }
+
     if(stage === 'active' && history){
       renderNextEvalCard();
       const membershipPrice = MEMBERSHIP_PRICE[history.plan] || 0;
@@ -4519,8 +4524,11 @@
   // Membership includes one physician evaluation per month, and refills depend
   // on it. Without a prompt, a patient finishes month one and nothing brings
   // them back — so this computes when they're next due and pushes them to book.
-  async function renderNextEvalCard(){
-    const el = document.getElementById('next-eval-card');
+  async function renderNextEvalCard(targetId){
+    // Se usa en dos etapas: 'active' y 'awaiting-approval'. Sin esto un
+    // paciente que termina su evaluación no tiene forma de pedir otra cita
+    // mientras espera la aprobación del médico.
+    const el = document.getElementById(targetId || 'next-eval-card');
     if(!el || !supabaseClient || !currentUser) return;
     try{
       const { data } = await supabaseClient.from('appointments').select('*')
@@ -4570,7 +4578,9 @@
         soon: 'background:rgba(217,140,43,0.14);border:1px solid rgba(217,140,43,0.45);color:#8A5A12;',
         warn: 'background:rgba(196,60,60,0.10);border:1px solid rgba(196,60,60,0.40);color:#8C2F2F;'
       };
-      el.style.cssText = 'display:block;border-radius:12px;padding:16px;margin-bottom:18px;' + styles[tone];
+      el.style.cssText = 'display:block;border-radius:12px;padding:16px;'
+        + (el.id === 'next-eval-card' ? 'margin-bottom:18px;' : 'margin-top:18px;')
+        + styles[tone];
       el.innerHTML = '<b style="font-size:15px;">' + title + '</b>'
         + '<div style="font-size:13.5px;margin-top:4px;">' + body + '</div>'
         + (cta ? '<button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;margin-top:12px;" '
@@ -4582,13 +4592,27 @@
 
   // Sends the patient to the booking view wherever it lives in the dashboard.
   function openScheduler(){
-    const target = document.getElementById('physician-care-wrap')
-                || document.getElementById('stage-need-schedule');
-    if(target){
-      target.style.display = 'block';
-      target.scrollIntoView({ behavior:'smooth', block:'start' });
+    // Muestra el calendario y lo dibuja. Antes solo hacía visible el
+    // contenedor, así que aparecía vacío si nadie lo había renderizado.
+    const cal = document.getElementById('stage-need-schedule');
+    if(cal){
+      cal.style.display = 'block';
+      try{
+        calendarViewDate = new Date();
+        calendarSelectedDate = null;
+        const wrap = document.getElementById('np-slots-wrap');
+        if(wrap) wrap.style.display = 'none';
+        renderNPCalendar();
+      }catch(e){ console.error('[scheduler] no se pudo dibujar el calendario:', e); }
+      cal.scrollIntoView({ behavior:'smooth', block:'start' });
+      return;
     }
-    if(typeof loadPhysicianAppointment === 'function') loadPhysicianAppointment();
+    const alt = document.getElementById('physician-care-wrap');
+    if(alt){
+      alt.style.display = 'block';
+      alt.scrollIntoView({ behavior:'smooth', block:'start' });
+      if(typeof loadPhysicianAppointment === 'function') loadPhysicianAppointment();
+    }
   }
 
   // ====== PATIENT: MONTHLY EVALUATION PROMPT END ======
