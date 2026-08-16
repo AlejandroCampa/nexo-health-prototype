@@ -919,9 +919,33 @@
           <!-- Monthly evaluation prompt. Membership includes one physician
                evaluation per month and refills depend on it happening, so the
                patient needs to see this before they see their protocol. -->
+          <div id="order-confirmed" style="display:none;border-radius:12px;padding:18px 20px;margin-bottom:18px;
+               background:rgba(79,122,100,0.13);border:1px solid rgba(79,122,100,0.4);color:#2F5C46;">
+            <div style="font-size:16px;font-weight:600;margin-bottom:8px;">✓ Payment received</div>
+            <div id="order-confirmed-body" style="font-size:14px;line-height:1.6;"></div>
+            <button onclick="dismissOrderConfirmation()"
+                    style="margin-top:12px;background:none;border:none;padding:0;cursor:pointer;
+                           font-family:'Outfit',sans-serif;font-size:12.5px;color:#2F5C46;
+                           text-decoration:underline;opacity:0.8;">Dismiss</button>
+          </div>
+
           <div id="next-eval-card" style="display:none;border-radius:12px;padding:16px;margin-bottom:18px;"></div>
 
           <h3>Your protocol</h3>
+          <div style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;
+                      padding:13px 16px;margin-bottom:16px;">
+            <label for="med-coupon-input" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">Medication referral code</label>
+            <div style="display:flex;gap:8px;">
+              <input id="med-coupon-input" type="text" placeholder="NUVI-MED-XXXX-XXXX" autocomplete="off"
+                     style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:13px;
+                            text-transform:uppercase;padding:10px 12px;border:1px solid var(--line);
+                            border-radius:9px;background:var(--white);"
+                     onkeydown="if(event.key==='Enter'){event.preventDefault();applyMedCoupon();}">
+              <button class="btn btn-outline" style="width:auto;padding:9px 16px;font-size:13px;"
+                      onclick="applyMedCoupon()">Apply</button>
+            </div>
+            <div id="med-coupon-msg" style="font-size:12.5px;margin-top:7px;min-height:17px;"></div>
+          </div>
           <div id="active-med-list"></div>
           <div class="dash-protocol-row">
             <div class="name" style="font-weight:500;">Membership (<span id="active-plan-name">—</span>)</div>
@@ -1968,6 +1992,42 @@
   };
   let activeCoupon = null;
 
+  // ---- Cupón de medicamento ------------------------------------------------
+  // Separado de la membresía porque son cobros distintos. Igual que arriba, el
+  // cupón escoge un Payment Link fijo — nunca calcula un descuento en el
+  // navegador, así que alterar el código no reduce un cobro real.
+  const MED_COUPONS = {
+    'NUVI-MED-8A5R-JBBD': { link: 'PASTE_ZERO_MEDICATION_LINK_HERE',
+                            label: 'Complimentary medication', price: 0 }
+  };
+  let activeMedCoupon = null;
+
+  function applyMedCoupon(){
+    const input = document.getElementById('med-coupon-input');
+    const msg   = document.getElementById('med-coupon-msg');
+    if(!input || !msg) return;
+    const code = normaliseCode(input.value);
+    if(!code){ msg.textContent = ''; activeMedCoupon = null; return; }
+
+    const hit = MED_COUPONS[code];
+    if(!hit){
+      activeMedCoupon = null;
+      msg.style.color = '#B23A3A';
+      msg.textContent = 'That code isn\'t recognised.';
+      return;
+    }
+    if(hit.link.indexOf('PASTE_') === 0){
+      activeMedCoupon = null;
+      msg.style.color = '#B23A3A';
+      msg.textContent = 'That code isn\'t active yet. Please contact us.';
+      console.error('Med coupon', code, 'has no Stripe link configured.');
+      return;
+    }
+    activeMedCoupon = Object.assign({ code: code }, hit);
+    msg.style.color = 'var(--sage)';
+    msg.textContent = hit.label + ' applied — your next medication order is $' + hit.price + '.';
+  }
+
   // ---- Launch promotion --------------------------------------------------
   // First month at $35 for everyone, no code required. Set the end date and
   // it turns itself off — no deploy needed on the day it expires. Dates are
@@ -2545,6 +2605,7 @@
     }
 
     if(stage === 'active' && history){
+      showOrderConfirmation();
       renderNextEvalCard();
       const membershipPrice = MEMBERSHIP_PRICE[history.plan] || 0;
       let totalMedPrice = 0;
@@ -2839,9 +2900,18 @@
 
   function goToMedicationCheckout(kind, id, medication, price){
     if(!requireShippingAddress()) return;
-    // Route by price. If a dose produces a price with no matching Payment Link,
-    // fail loudly rather than sending the patient to a link for a different amount.
-    const link = MEDICATION_LINKS_BY_PRICE[Math.round(parseFloat(price))];
+    // Un cupón válido reemplaza el link normal. Se consume aquí para que no
+    // quede activo y aplique a un segundo pedido sin querer.
+    let link;
+    if(activeMedCoupon){
+      link = activeMedCoupon.link;
+      console.log('[med] cupón aplicado:', activeMedCoupon.code);
+      activeMedCoupon = null;
+    } else {
+      // Route by price. If a dose produces a price with no matching Payment Link,
+      // fail loudly rather than sending the patient to a link for a different amount.
+      link = MEDICATION_LINKS_BY_PRICE[Math.round(parseFloat(price))];
+    }
     if(link && link.indexOf('YOUR_') !== 0){
       // In Stripe, set this link's "after payment" redirect to:
       // <site-url>?order_paid=true&rx_kind=<kind>&rx_id=<id or blank for legacy>
@@ -6007,19 +6077,64 @@
     const order = pendingOrder;
     pendingOrder = null; // clear first so we never double-apply
     try{
+      // .select() para que un UPDATE bloqueado por RLS no pase por exitoso —
+      // el mismo fallo silencioso que tuvo el pago de la membresía.
+      let wrote = 0;
       if(order.kind === 'legacy' && currentHealthHistory){
-        await supabaseClient.from('health_history')
+        const { data, error } = await supabaseClient.from('health_history')
           .update({ purchased: true, purchased_at: new Date().toISOString() })
-          .eq('id', currentHealthHistory.id);
+          .eq('id', currentHealthHistory.id).select();
+        if(error) throw error;
+        wrote = (data || []).length;
       } else if(order.id){
-        await supabaseClient.from('prescriptions')
+        const { data, error } = await supabaseClient.from('prescriptions')
           .update({ purchased: true, purchased_at: new Date().toISOString() })
-          .eq('id', order.id);
+          .eq('id', order.id).select();
+        if(error) throw error;
+        wrote = (data || []).length;
       }
+      if(wrote === 0){
+        throw new Error('El pedido no se guardó: la base aceptó la petición pero no '
+          + 'cambió ninguna fila. Casi siempre es una política RLS bloqueando el update.');
+      }
+      console.log('[order] guardado, filas:', wrote);
+
+      // Marca para mostrar la confirmación una vez que la vista se redibuje.
+      try{ sessionStorage.setItem('nuviOrderConfirmed', '1'); }catch(e){}
+
       await loadPatientState();
     } catch(err){
-      console.error('Could not apply pending order:', err);
+      console.error('[order] no se pudo aplicar:', err);
+      pendingOrder = order;   // devolverlo para reintentar en la próxima carga
+      alert('Tu pago se procesó, pero no pudimos registrarlo en tu cuenta. '
+          + 'Escríbenos a info@nuviclinic.com y lo resolvemos enseguida — no vuelvas a pagar.');
     }
+  }
+
+  // Confirmación visible de que el medicamento viene en camino. Sin esto el
+  // paciente paga y regresa a una pantalla que se ve igual que antes.
+  function showOrderConfirmation(){
+    let flagged = false;
+    try{ flagged = sessionStorage.getItem('nuviOrderConfirmed') === '1'; }catch(e){}
+    if(!flagged) return;
+    const box = document.getElementById('order-confirmed');
+    const body = document.getElementById('order-confirmed-body');
+    if(!box || !body) return;
+    const med = (currentHealthHistory && currentHealthHistory.approved_medication) || 'Your medication';
+    const dose = (currentHealthHistory && currentHealthHistory.approved_dose) || '';
+    body.innerHTML = '<b>' + escapeHtml(med) + (dose ? ' · ' + escapeHtml(dose) : '') + '</b> is being prepared.'
+      + '<br><br>Your prescription has gone to our licensed compounding pharmacy. '
+      + 'They typically ship within 1 business day, and delivery takes about 2 days after that. '
+      + 'We\'ll email you a tracking number as soon as it leaves the pharmacy.'
+      + '<br><br>Keep it refrigerated when it arrives, and don\'t leave it in a hot car.';
+    box.style.display = 'block';
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function dismissOrderConfirmation(){
+    const box = document.getElementById('order-confirmed');
+    if(box) box.style.display = 'none';
+    try{ sessionStorage.removeItem('nuviOrderConfirmed'); }catch(e){}
   }
 
   document.addEventListener('keydown', (e)=>{
@@ -6181,6 +6296,7 @@
     'Maintain a Healthy Weight': 'Mantener un peso saludable',
     'Learn About GLP-1 Treatment': 'Conocer m\u00e1s sobre el GLP-1',
     'Not Sure Yet': 'Todav\u00eda no estoy segura',
+    'Medication referral code': 'C\u00f3digo de referido para medicamento',
     'Schedule your physician evaluation': 'Programa tu evaluaci\u00f3n m\u00e9dica',
     'Physician evaluation scheduled': 'Evaluaci\u00f3n m\u00e9dica programada',
     'Evaluation scheduled': 'Evaluaci\u00f3n programada',
