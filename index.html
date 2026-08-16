@@ -5842,9 +5842,19 @@
   (function checkForPaymentReturn(){
     const params = new URLSearchParams(window.location.search);
     if(params.get('paid') === 'true'){
-      pendingPaymentPlan = params.get('plan') || '';
+      pendingPaymentPlan = params.get('plan') || 'Basic';
+      // Survive a reload. Returning from Stripe on an expired session sends the
+      // patient through a magic link, which reloads the page — an in-memory
+      // variable would be lost and the payment silently never applied.
+      try{ sessionStorage.setItem('nuviPendingPayment', pendingPaymentPlan); }catch(e){}
       window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    } else {
+      try{
+        const saved = sessionStorage.getItem('nuviPendingPayment');
+        if(saved) pendingPaymentPlan = saved;
+      }catch(e){}
     }
+    if(pendingPaymentPlan) console.log('[payment] return detected, plan:', pendingPaymentPlan);
   })();
 
   // Same pattern, but for a medication purchase from the Store returning
@@ -5879,9 +5889,14 @@
     const plan = pendingPaymentPlan;
     pendingPaymentPlan = null; // clear first so we never double-apply or loop
     try{
-      await supabaseClient.from('health_history')
+      const { error: payErr } = await supabaseClient.from('health_history')
         .update({ paid: true, plan: plan, paid_at: new Date().toISOString() })
         .eq('id', currentHealthHistory.id);
+      if(payErr) throw payErr;
+      // Only forget it once the database confirms — a failed write would
+      // otherwise lose the payment with no way to recover it.
+      try{ sessionStorage.removeItem('nuviPendingPayment'); }catch(e){}
+      console.log('[payment] applied, plan:', plan);
 
       notify('payment', {
         name: currentHealthHistory.full_name,
@@ -5893,7 +5908,8 @@
 
       await loadPatientState();
     } catch(err){
-      console.error('Could not apply pending payment:', err);
+      console.error('[payment] could not apply:', err);
+      pendingPaymentPlan = plan;   // put it back so the next load retries
     }
   }
 
