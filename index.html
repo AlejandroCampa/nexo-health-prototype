@@ -2465,22 +2465,47 @@
     document.getElementById('faq-item-' + i).classList.toggle('open');
   }
 
-  // The dose-based calculator above is only an internal estimate — real
-  // billing happens through a fixed-price Stripe Payment Link, so the
-  // patient-facing price must always match what Stripe will actually charge,
-  // not the dynamically calculated number. Keep this in sync with the exact
-  // amount entered in Stripe for each medication.
-  // MUST match the actual amount on each Stripe Payment Link. If these drift
-  // apart, the patient sees one price and gets charged another.
-  const MEDICATION_CHECKOUT_PRICE = {
-    'Tirzepatide': 180,
-    'Semaglutide': 150
-  };
+  // Extrae el número de una dosis guardada como texto ("7.5 mg / week" -> 7.5).
+  // La dosis se guarda como string legible, pero para comparar dos recetas o
+  // recalcular un precio hace falta el número.
+  function parseDoseAmount(doseStr){
+    const m = String(doseStr == null ? '' : doseStr).match(/-?\d+(?:\.\d+)?/);
+    return m ? parseFloat(m[0]) : null;
+  }
 
+  // Firma canónica de una receta, para saber si dos son la misma.
+  // Compara el número, no el texto: "7.5 mg / week" y "7.50 mg / week" son
+  // la misma receta y no deben archivarse como si fueran distintas.
+  function rxSignature(medication, doseStr){
+    const n = parseDoseAmount(doseStr);
+    return String(medication || '') + '|' + (n == null ? '' : n);
+  }
+
+  // El precio que ve el paciente sale de la DOSIS aprobada, no de una tabla
+  // plana por medicamento.
+  //
+  // Antes esto devolvía un precio fijo por medicamento ($180 tirzepatida,
+  // $150 semaglutida) ignorando la dosis. Como goToMedicationCheckout enruta
+  // por precio, un protocolo de 7.5 mg (que vale $300) mostraba $180 y mandaba
+  // al paciente al Payment Link de $180: se facturaba $120 de menos por
+  // despacho y el expediente clínico no cuadraba con el cobro.
+  //
+  // Orden de preferencia:
+  //   1. El precio guardado en la receta. Ya lo calculó calcProtocolPrice en el
+  //      momento de aprobar, así que es el precio real de esa dosis y es el que
+  //      quedó en el expediente.
+  //   2. Si no hay precio guardado (registros viejos), el precio de la dosis
+  //      inicial del medicamento.
+  //
+  // Todo precio que salga de aquí tiene que existir en MEDICATION_LINKS_BY_PRICE.
+  // Si no existe, goToMedicationCheckout falla ruidosamente en vez de cobrar
+  // una cifra distinta a la que se le enseñó al paciente.
   function getDisplayPrice(medication, fallbackPrice){
-    return MEDICATION_CHECKOUT_PRICE.hasOwnProperty(medication)
-      ? MEDICATION_CHECKOUT_PRICE[medication]
-      : fallbackPrice;
+    const stored = parseFloat(fallbackPrice);
+    if(Number.isFinite(stored) && stored > 0) return Math.round(stored);
+    const info = MEDICATION_INFO[medication];
+    if(info) return calcProtocolPrice(medication, info.startingDoseMg);
+    return 0;
   }
 
   // ====== SESSION / DASHBOARD HANDLING ======
@@ -2924,6 +2949,15 @@
     360: 'https://buy.stripe.com/8x25kFghCbzKgdEaEZ9EI03',
     420: 'https://buy.stripe.com/00w6oJ7L67ju9Pg28t9EI01'
   };
+
+  // ¿Existe un Payment Link para este precio? Se usa para avisarle al médico
+  // ANTES de aprobar, no al paciente en el checkout. Si una dosis produce un
+  // precio sin link, el paciente llega a la tienda y no puede comprar; es mejor
+  // que el clínico lo sepa mientras todavía está en la consulta.
+  function hasPaymentLinkForPrice(price){
+    const p = Math.round(parseFloat(price));
+    return Number.isFinite(p) && Object.prototype.hasOwnProperty.call(MEDICATION_LINKS_BY_PRICE, p);
+  }
 
   // A prescription cannot be shipped without a complete address, so this is a
   // hard requirement on every purchase path — not just a form field. Older
@@ -5213,8 +5247,18 @@
       apptWrap.innerHTML = '<div class="form-section-title">Interview</div><p class="np-empty">Not scheduled yet.</p>';
     }
 
-    document.getElementById('np-approve-med').value = patient.approved_medication || 'Tirzepatide';
-    document.getElementById('np-approve-dose-mg').value = '2.5';
+    // Precargar la dosis VIGENTE del paciente, no un 2.5 fijo. Con el valor
+    // fijo, abrir la ficha de alguien que ya está en 7.5 mg mostraba 2.5 mg y
+    // $180 — parecía que el precio "no cambiaba", y peor: aprobar sin tocar el
+    // campo lo bajaba de dosis sin que nadie lo pidiera.
+    const medSel = document.getElementById('np-approve-med');
+    medSel.value = patient.approved_medication || 'Tirzepatide';
+    const currentDose = parseDoseAmount(patient.approved_dose);
+    const info = MEDICATION_INFO[medSel.value];
+    document.getElementById('np-approve-dose-mg').value =
+      (currentDose != null && currentDose > 0)
+        ? String(currentDose)
+        : String((info && info.startingDoseMg) != null ? info.startingDoseMg : 2.5);
     updateNPPricePreview();
 
     const { data: allRx } = await supabaseClient.from('prescriptions').select('*')
@@ -5338,39 +5382,106 @@
     const input = document.getElementById('np-approve-dose-mg');
     if(input) input.step = (unit === 'mcg') ? '25' : '0.1';
 
-    document.getElementById('np-price-preview').textContent =
+    const el = document.getElementById('np-price-preview');
+    el.textContent =
       med + ' at ' + dose + ' ' + unit + '/week → $' + price + '/mo' + (rateLabel ? ' (' + rateLabel + ')' : ' (flat rate)');
+
+    // Aviso de facturación: este precio se cobra por un Stripe Payment Link
+    // que se busca POR MONTO. Si no existe uno de ese monto, el paciente no va
+    // a poder comprar la receta. Mejor enterarse aquí que después.
+    const doseNum = parseFloat(dose);
+    if(!Number.isFinite(doseNum) || doseNum <= 0){
+      el.textContent = 'Enter a weekly dose to see the price.';
+      el.style.color = 'rgba(8,26,77,0.65)';
+    } else if(!hasPaymentLinkForPrice(price)){
+      el.textContent += '  ⚠ No Stripe Payment Link for $' + price
+        + ' — the patient will not be able to check out until one is added.';
+      el.style.color = '#b3261e';
+    } else {
+      el.style.color = 'rgba(8,26,77,0.65)';
+    }
   }
 
   async function npApprovePrescription(){
     if(!npCurrentPatientId) return;
     const med = document.getElementById('np-approve-med').value;
     const doseMg = document.getElementById('np-approve-dose-mg').value;
-    const price = calcProtocolPrice(med, doseMg);
+
+    // Una receta sin dosis válida no es una receta. Sin esto, un campo vacío
+    // se guardaba como " mg / week" a $0 y se mandaba a la farmacia así.
+    const doseNum = parseFloat(doseMg);
+    if(!Number.isFinite(doseNum) || doseNum <= 0){
+      alert('Enter a valid weekly dose before approving.');
+      return;
+    }
+
+    const unit = getMedUnit(med);
+    const newDose = doseNum + ' ' + unit + ' / week';
+    const price = calcProtocolPrice(med, doseNum);
+
+    if(!hasPaymentLinkForPrice(price)){
+      if(!confirm('There is no Stripe Payment Link for $' + price + '.\n\n'
+        + 'You can approve this prescription, but the patient will not be able to '
+        + 'pay for it until a $' + price + ' Payment Link is added.\n\nApprove anyway?')) return;
+    }
+
     try{
-      // Archivar la receta vigente antes de reemplazarla. health_history solo
-      // guarda una, así que sin esto el historial del paciente se pierde cada
-      // vez que el médico ajusta la dosis — y ese historial es parte del
-      // expediente, no un detalle de interfaz.
-      const { data: prev } = await supabaseClient.from('health_history')
+      // Archivar la receta vigente ANTES de reemplazarla, y NO seguir si el
+      // archivo no se guardó.
+      //
+      // health_history guarda una sola receta, así que este INSERT es la única
+      // copia que va a quedar de la dosis anterior. Antes el error del insert
+      // ni se leía: si la base lo rechazaba (RLS o un CHECK sobre status), el
+      // código seguía de largo y el UPDATE de abajo sobrescribía la receta
+      // vieja. Resultado: la receta anterior no aparecía en "Previous
+      // prescriptions" — se borraba, sin alerta y sin nada en consola.
+      const { data: prev, error: prevErr } = await supabaseClient.from('health_history')
         .select('user_id, approved_medication, approved_dose, approved_price, approved_at, purchased, purchased_at')
         .eq('id', npCurrentPatientId).maybeSingle();
+      if(prevErr) throw new Error('No se pudo leer la receta vigente, así que no se '
+        + 'aprobó nada (para no sobrescribirla a ciegas): ' + prevErr.message);
 
       if(prev && prev.approved_medication){
-        const sameRx = prev.approved_medication === med
-                    && prev.approved_dose === (doseMg + ' mg / week');
+        const sameRx = rxSignature(prev.approved_medication, prev.approved_dose)
+                    === rxSignature(med, newDose);
         if(!sameRx){
-          await supabaseClient.from('prescriptions').insert({
-            user_id: prev.user_id,
-            medication: prev.approved_medication,
-            dose: prev.approved_dose,
-            price: prev.approved_price,
-            status: 'superseded',
-            purchased: prev.purchased,
-            purchased_at: prev.purchased_at,
-            approved_at: prev.approved_at,
-            created_at: prev.approved_at || new Date().toISOString()
-          });
+          const { data: archived, error: archErr } = await supabaseClient
+            .from('prescriptions').insert({
+              user_id: prev.user_id,
+              medication: prev.approved_medication,
+              dose: prev.approved_dose,
+              price: prev.approved_price,
+              status: 'superseded',
+              cancelled: false,
+              purchased: prev.purchased,
+              purchased_at: prev.purchased_at,
+              approved_at: prev.approved_at,
+              created_at: prev.approved_at || new Date().toISOString()
+            }).select();
+
+          if(archErr){
+            // Cortar aquí a propósito. Es preferible no aprobar que aprobar
+            // borrando el expediente anterior.
+            throw new Error(
+              'No se archivó la receta anterior, así que no se aprobó la nueva '
+              + '(la anterior se habría perdido).\n\n'
+              + 'Error de la base: ' + (archErr.message || archErr.code || 'desconocido') + '\n\n'
+              + 'Causas típicas: falta una policy de INSERT en "prescriptions" para el '
+              + 'personal clínico, o la columna status tiene un CHECK que no incluye '
+              + '\'superseded\'.');
+          }
+          if(!archived || archived.length === 0){
+            // El INSERT no dio error pero no devolvió la fila. Suele ser RLS
+            // sin policy de SELECT — probablemente sí se guardó, pero no se
+            // puede confirmar, y el que decide es el clínico, no el código.
+            console.warn('[approve] el archivo de la receta anterior no se pudo confirmar');
+            if(!confirm('Could not confirm that the previous prescription was archived.\n\n'
+              + 'If it was not, that prescription will be lost when this one is saved.\n\n'
+              + 'Continue anyway?')) return;
+          } else {
+            console.log('[approve] receta anterior archivada:',
+              archived[0].medication, archived[0].dose, '→ superseded');
+          }
         }
       }
       // Una receta nueva es una compra nueva. Sin resetear estas banderas, la
@@ -5380,7 +5491,7 @@
       const { data: updated, error } = await supabaseClient.from('health_history').update({
         approved: true,
         approved_medication: med,
-        approved_dose: doseMg + ' mg / week',
+        approved_dose: newDose,
         approved_price: price,
         approved_notes: 'Approved by care team.',
         approved_at: new Date().toISOString(),
@@ -5402,7 +5513,15 @@
         const { data: retired, error: supErr } = await supabaseClient.from('prescriptions')
           .update({ status: 'superseded' })
           .eq('user_id', patientUid).eq('status', 'approved').select();
-        if(supErr) console.error('[approve] no se pudieron retirar las anteriores:', supErr);
+        if(supErr){
+          // Aquí la aprobación ya está guardada, así que no se puede abortar.
+          // Pero tampoco se puede callar: el paciente queda con dos recetas
+          // activas y el total mensual le suma las dos.
+          console.error('[approve] no se pudieron retirar las anteriores:', supErr);
+          alert('The prescription was approved, but the previous ones could not be retired.\n\n'
+            + 'The patient may see more than one active prescription and an inflated monthly total.\n\n'
+            + 'Database error: ' + (supErr.message || supErr.code || 'unknown'));
+        }
         else if((retired || []).length) console.log('[approve] recetas retiradas:', retired.length);
       }
 
