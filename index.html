@@ -2856,6 +2856,30 @@
 
     let approvedHtml = '';
 
+    // Recetas anteriores, ARRIBA de la vigente y en orden cronológico, para
+    // que se lea la progresión: 2.5 mg -> 7.5 mg. Van sin botón de comprar
+    // porque ya no están vigentes; están para que el paciente vea su
+    // historial sin tener que subir a "Your protocol".
+    const supersededRx = prescriptions
+      .filter(r => r.status === 'superseded')
+      .sort((a, b) => String(a.approved_at || a.created_at || '')
+                        .localeCompare(String(b.approved_at || b.created_at || '')));
+
+    supersededRx.forEach(r => {
+      const when = (r.approved_at || r.created_at)
+        ? new Date(r.approved_at || r.created_at).toLocaleDateString(undefined,
+            { year:'numeric', month:'short', day:'numeric' })
+        : null;
+      approvedHtml += '<div class="dash-protocol-row" style="opacity:0.6;">'
+        + '<div><div class="name">' + escapeHtml(r.medication || '') + '</div>'
+        + '<div class="meta">' + escapeHtml(r.dose || '') + '</div>'
+        + (when ? '<div class="meta" style="opacity:0.8;">Approved ' + when + '</div>' : '')
+        + '</div><div style="text-align:right;">'
+        + '<div class="meta" style="margin-bottom:6px;">$' + getDisplayPrice(r.medication, r.price) + '/mo</div>'
+        + '<span class="rx-badge" style="border-color:rgba(8,26,77,0.25);color:rgba(8,26,77,0.5);">Previous</span>'
+        + '</div></div>';
+    });
+
     // The original first prescription lives on health_history, not the new
     // prescriptions table — show it here too so the store is complete.
     if(history.approved_medication){
