@@ -949,6 +949,7 @@
             <div id="med-coupon-msg" style="font-size:12.5px;margin-top:7px;min-height:17px;"></div>
           </div>
           <div id="active-med-list"></div>
+          <div id="rx-history" style="display:none;"></div>
           <div class="dash-protocol-row">
             <div class="name" style="font-weight:500;">Membership (<span id="active-plan-name">—</span>)</div>
             <div class="meta" id="active-plan-price">—</div>
@@ -2620,13 +2621,29 @@
       let totalMedPrice = 0;
       let medListHtml = '';
 
+      // Fecha en que el médico aprobó cada receta. El paciente necesita
+      // distinguir la receta vigente de una anterior — sin fecha, dos dosis
+      // del mismo medicamento se ven idénticas y no sabe cuál está tomando.
+      const rxDate = (iso) => iso
+        ? new Date(iso).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })
+        : null;
+
+      const rxRow = (name, dose, price, approvedOn, isCurrent) =>
+        '<div class="dash-protocol-row"><div>'
+        + '<div class="name">' + escapeHtml(name)
+        + (isCurrent ? ' <span class="rx-badge" style="border-color:var(--sage);color:var(--sage);'
+                       + 'font-size:10px;padding:1px 7px;vertical-align:middle;">Current</span>' : '')
+        + '</div>'
+        + '<div class="meta">' + escapeHtml(dose || '') + '</div>'
+        + (approvedOn ? '<div class="meta" style="opacity:0.75;">Approved ' + approvedOn + '</div>' : '')
+        + '</div><div class="meta">$' + price + '/mo</div></div>';
+
       // The original prescription (health_history), if still active
       if(history.approved_medication && !history.cancelled){
         const p = getDisplayPrice(history.approved_medication, history.approved_price || 0);
         totalMedPrice += p;
-        medListHtml += '<div class="dash-protocol-row"><div><div class="name">' + history.approved_medication + '</div>'
-          + '<div class="meta">' + (history.approved_dose || '') + '</div></div>'
-          + '<div class="meta">$' + p + '/mo</div></div>';
+        medListHtml += rxRow(history.approved_medication, history.approved_dose, p,
+                             rxDate(history.approved_at), true);
       }
 
       // Any additional approved, non-cancelled prescriptions
@@ -2635,12 +2652,35 @@
       (extraRx || []).forEach(r => {
         const p = getDisplayPrice(r.medication, r.price || 0);
         totalMedPrice += p;
-        medListHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
-          + '<div class="meta">' + (r.dose || '') + '</div></div>'
-          + '<div class="meta">$' + p + '/mo</div></div>';
+        medListHtml += rxRow(r.medication, r.dose, p,
+                             rxDate(r.approved_at || r.created_at), false);
       });
 
       document.getElementById('active-med-list').innerHTML = medListHtml || '<p class="np-empty">No active prescriptions.</p>';
+
+      // Recetas anteriores. Se muestran con su fecha pero no cuentan en el
+      // total, porque ya no están vigentes.
+      const { data: pastRx } = await supabaseClient.from('prescriptions')
+        .select('*').eq('user_id', currentUser.id).eq('status', 'superseded')
+        .order('approved_at', { ascending: false });
+      const histEl = document.getElementById('rx-history');
+      if(histEl){
+        if((pastRx || []).length === 0){
+          histEl.style.display = 'none';
+        } else {
+          histEl.style.display = 'block';
+          histEl.innerHTML = '<div class="form-section-title" style="margin-top:22px;">Previous prescriptions</div>'
+            + (pastRx || []).map(r =>
+                '<div class="dash-protocol-row" style="opacity:0.72;"><div>'
+                + '<div class="name">' + escapeHtml(r.medication || '') + '</div>'
+                + '<div class="meta">' + escapeHtml(r.dose || '') + '</div>'
+                + '<div class="meta" style="opacity:0.8;">'
+                + (rxDate(r.approved_at || r.created_at) || 'date unknown')
+                + (r.purchased ? ' · purchased' : ' · not purchased') + '</div>'
+                + '</div><div class="meta">$' + (r.price || 0) + '</div></div>'
+              ).join('');
+        }
+      }
       document.getElementById('active-plan-name').textContent = history.plan || '—';
       document.getElementById('active-plan-price').textContent = '$' + membershipPrice + '/mo';
       document.getElementById('active-total-price').textContent = '$' + (membershipPrice + totalMedPrice) + '/mo';
@@ -5096,6 +5136,14 @@
       if(!approved){
         payEl.style.cssText='border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;background:var(--paper-warm);border:1px solid var(--line);';
         payEl.innerHTML='<b>Awaiting your review.</b> No prescription approved yet.';
+      } else if(bought && patient.purchased_at && patient.approved_at
+                 && new Date(patient.purchased_at) < new Date(patient.approved_at)){
+        // Compró, pero la receta cambió después. Esa compra fue de la receta
+        // anterior — no cubre la que está vigente ahora.
+        payEl.style.cssText='border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;background:rgba(217,140,43,0.14);border:1px solid rgba(217,140,43,0.45);color:#8A5A12;';
+        payEl.innerHTML='<b>Prescription changed since last payment.</b> '
+          + escapeHtml(patient.approved_medication || 'Prescription') + ' — ' + escapeHtml(patient.approved_dose || '')
+          + '<br><span style="font-size:12.5px;">The patient paid for a previous prescription. Do not submit this one until they pay for it.</span>';
       } else if(bought){
         payEl.style.cssText='border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.4);color:#2F5C46;';
         payEl.innerHTML='<b>✓ Medication PAID.</b> '
@@ -5300,14 +5348,64 @@
     const doseMg = document.getElementById('np-approve-dose-mg').value;
     const price = calcProtocolPrice(med, doseMg);
     try{
-      const { error } = await supabaseClient.from('health_history').update({
+      // Archivar la receta vigente antes de reemplazarla. health_history solo
+      // guarda una, así que sin esto el historial del paciente se pierde cada
+      // vez que el médico ajusta la dosis — y ese historial es parte del
+      // expediente, no un detalle de interfaz.
+      const { data: prev } = await supabaseClient.from('health_history')
+        .select('user_id, approved_medication, approved_dose, approved_price, approved_at, purchased, purchased_at')
+        .eq('id', npCurrentPatientId).maybeSingle();
+
+      if(prev && prev.approved_medication){
+        const sameRx = prev.approved_medication === med
+                    && prev.approved_dose === (doseMg + ' mg / week');
+        if(!sameRx){
+          await supabaseClient.from('prescriptions').insert({
+            user_id: prev.user_id,
+            medication: prev.approved_medication,
+            dose: prev.approved_dose,
+            price: prev.approved_price,
+            status: 'superseded',
+            purchased: prev.purchased,
+            purchased_at: prev.purchased_at,
+            approved_at: prev.approved_at,
+            created_at: prev.approved_at || new Date().toISOString()
+          });
+        }
+      }
+      // Una receta nueva es una compra nueva. Sin resetear estas banderas, la
+      // compra anterior del paciente hace que el panel diga "PAGADO" por un
+      // medicamento que nadie ha comprado — y el riesgo real es que alguien
+      // mande esa receta a la farmacia sin haber cobrado.
+      const { data: updated, error } = await supabaseClient.from('health_history').update({
         approved: true,
         approved_medication: med,
         approved_dose: doseMg + ' mg / week',
         approved_price: price,
-        approved_notes: 'Approved by care team.'
-      }).eq('id', npCurrentPatientId);
+        approved_notes: 'Approved by care team.',
+        approved_at: new Date().toISOString(),
+        purchased: false,
+        purchased_at: null
+      }).eq('id', npCurrentPatientId).select();
       if(error) throw error;
+      if(!updated || updated.length === 0){
+        throw new Error('La aprobación no se guardó: la base aceptó la petición pero no '
+          + 'cambió ninguna fila. Casi siempre es una política RLS bloqueando el update.');
+      }
+      console.log('[approve] guardado:', updated[0].approved_medication, updated[0].approved_dose);
+
+      // Retirar las recetas anteriores. Sin esto se quedan listadas como
+      // activas junto a la nueva, el total mensual las suma dos veces, y el
+      // paciente no sabe cuál está tomando.
+      const patientUid = (updated[0] && updated[0].user_id) || npCurrentPatientUserId;
+      if(patientUid){
+        const { data: retired, error: supErr } = await supabaseClient.from('prescriptions')
+          .update({ status: 'superseded' })
+          .eq('user_id', patientUid).eq('status', 'approved').select();
+        if(supErr) console.error('[approve] no se pudieron retirar las anteriores:', supErr);
+        else if((retired || []).length) console.log('[approve] recetas retiradas:', retired.length);
+      }
+
       closeModal('np-patient');
       await loadNPData();
     } catch(err){
@@ -6306,6 +6404,7 @@
     'Learn About GLP-1 Treatment': 'Conocer m\u00e1s sobre el GLP-1',
     'Not Sure Yet': 'Todav\u00eda no estoy segura',
     'Medication referral code': 'C\u00f3digo de referido para medicamento',
+    'Current': 'Vigente',
     'Schedule your physician evaluation': 'Programa tu evaluaci\u00f3n m\u00e9dica',
     'Physician evaluation scheduled': 'Evaluaci\u00f3n m\u00e9dica programada',
     'Evaluation scheduled': 'Evaluaci\u00f3n programada',
