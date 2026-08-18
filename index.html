@@ -2274,12 +2274,19 @@
       category: 'Weight management',
       description: 'Dual GLP-1/GIP agonist. The most effective option we offer for weight loss, dosed once weekly and titrated up gradually by your physician.',
       basePrice: 120, perMg: 24, unit: 'mg',
+      // Dosis semanal máxima de etiqueta (tirzepatida: 15 mg/sem). No es un
+      // límite duro — el clínico puede pasarse a propósito — pero arriba de
+      // esto la app pide confirmación explícita. Existe porque en producción
+      // se aprobó una receta de 103.4 mg/sem (6.9x el máximo) sin que nada la
+      // detuviera: casi seguro un dedazo de 10.34 o 1.034.
+      maxDoseMg: 15,
       launched: true, form: 'Compounded injectable, weekly', startingDose: '2.5 mg / wk', startingDoseMg: 2.5
     },
     'Semaglutide': {
       category: 'Weight management',
       description: 'GLP-1 agonist for appetite control and weight loss. Weekly injection, titrated gradually to limit side effects.',
       basePrice: 141, perMg: 37, unit: 'mg',
+      maxDoseMg: 2.4,   // semaglutida: 2.4 mg/sem de etiqueta
       launched: true, form: 'Compounded injectable, weekly', startingDose: '0.25 mg / wk', startingDoseMg: 0.25
     }
   };
@@ -5390,9 +5397,16 @@
     // que se busca POR MONTO. Si no existe uno de ese monto, el paciente no va
     // a poder comprar la receta. Mejor enterarse aquí que después.
     const doseNum = parseFloat(dose);
+    const maxDose = (MEDICATION_INFO[med] || {}).maxDoseMg;
     if(!Number.isFinite(doseNum) || doseNum <= 0){
       el.textContent = 'Enter a weekly dose to see the price.';
       el.style.color = 'rgba(8,26,77,0.65)';
+    } else if(maxDose && doseNum > maxDose){
+      // La dosis manda sobre el precio: si está fuera de rango, eso es lo
+      // que tiene que leer el clínico, no cuánto cuesta.
+      el.textContent = '⚠ ' + doseNum + ' ' + unit + '/week is above the labeled maximum for '
+        + med + ' (' + maxDose + ' ' + unit + '/week). Check for a typo before approving.';
+      el.style.color = '#b3261e';
     } else if(!hasPaymentLinkForPrice(price)){
       el.textContent += '  ⚠ No Stripe Payment Link for $' + price
         + ' — the patient will not be able to check out until one is added.';
@@ -5418,6 +5432,17 @@
     const unit = getMedUnit(med);
     const newDose = doseNum + ' ' + unit + ' / week';
     const price = calcProtocolPrice(med, doseNum);
+
+    // Freno de dosis. No bloquea al clínico —hay razones legítimas para salirse
+    // de etiqueta— pero obliga a confirmarlo a propósito. Sin esto ya pasó una
+    // receta de 103.4 mg/sem de tirzepatida a producción.
+    const maxDose = (MEDICATION_INFO[med] || {}).maxDoseMg;
+    if(maxDose && doseNum > maxDose){
+      if(!confirm(doseNum + ' ' + unit + '/week is ' + (doseNum / maxDose).toFixed(1)
+        + 'x the labeled maximum for ' + med + ' (' + maxDose + ' ' + unit + '/week).\n\n'
+        + 'If this is a typo, cancel and fix it — this dose goes on the prescription '
+        + 'that gets sent to the pharmacy.\n\nApprove ' + doseNum + ' ' + unit + '/week anyway?')) return;
+    }
 
     if(!hasPaymentLinkForPrice(price)){
       if(!confirm('There is no Stripe Payment Link for $' + price + '.\n\n'
