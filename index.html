@@ -2746,10 +2746,34 @@
                              rxDate(history.approved_at), true);
       }
 
-      // Any additional approved, non-cancelled prescriptions
-      const { data: extraRx } = await supabaseClient.from('prescriptions')
-        .select('*').eq('user_id', currentUser.id).eq('status', 'approved').eq('cancelled', false);
-      (extraRx || []).forEach(r => {
+      // Otras recetas activas. El total tiene que reflejar lo que el paciente
+      // está tomando AHORA, así que se filtra en el cliente en vez de confiar
+      // en que la base esté limpia:
+      //
+      //  · cancelled null cuenta como NO cancelada. Las recetas que pide el
+      //    paciente se insertan sin ese campo, y .eq('cancelled', false) las
+      //    dejaba fuera: desaparecían de la lista Y del total.
+      //  · Si quedó una receta vieja en 'approved' del MISMO medicamento que
+      //    el vigente (pasaba cuando el retire fallaba por RLS), no se suma.
+      //    Si no, el paciente ve $550 por un solo medicamento.
+      //  · Si hay varias del mismo medicamento, manda la más reciente.
+      const { data: extraRaw } = await supabaseClient.from('prescriptions')
+        .select('*').eq('user_id', currentUser.id).eq('status', 'approved');
+
+      const currentMed = String(history.approved_medication || '').toLowerCase();
+      const hasCurrent = !!history.approved_medication && !history.cancelled;
+      const newestByMed = {};
+      (extraRaw || []).forEach(r => {
+        if(r.cancelled === true) return;
+        const med = String(r.medication || '').toLowerCase();
+        if(hasCurrent && med && med === currentMed) return;
+        const when = String(r.approved_at || r.created_at || '');
+        const prev = newestByMed[med];
+        if(!prev || when > String(prev.approved_at || prev.created_at || '')) newestByMed[med] = r;
+      });
+
+      Object.keys(newestByMed).forEach(k => {
+        const r = newestByMed[k];
         const p = getDisplayPrice(r.medication, r.price || 0);
         totalMedPrice += p;
         medListHtml += rxRow(r.medication, r.dose, p,
@@ -5415,6 +5439,10 @@
         + (sent
             ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Sent to pharmacy</span>'
             : '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);margin-right:6px;">Approved</span><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;" onclick="markSentToPharmacy(\'legacy\',null)">Mark sent</button>')
+        + '<br><a href="javascript:void(0)" onclick="npVoidPrescription(\'legacy\',null,'
+        + JSON.stringify(patient.approved_medication || '').replace(/"/g, '&quot;') + ','
+        + JSON.stringify(patient.approved_dose || '').replace(/"/g, '&quot;') + ')"'
+        + ' style="font-size:11.5px;color:#B23A3A;">Remove prescription</a>'
         + '</div></div>';
     }
 
@@ -5427,6 +5455,10 @@
           + (sent
               ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Sent to pharmacy</span>'
               : '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);margin-right:6px;">Approved</span><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;" onclick="markSentToPharmacy(\'prescription\',\''+r.id+'\')">Mark sent</button>')
+          + '<br><a href="javascript:void(0)" onclick="npVoidPrescription(\'prescription\',\''+r.id+'\','
+          + JSON.stringify(r.medication || '').replace(/"/g, '&quot;') + ','
+          + JSON.stringify(r.dose || '').replace(/"/g, '&quot;') + ')"'
+          + ' style="font-size:11.5px;color:#B23A3A;">Remove prescription</a>'
           + '</div></div>';
       } else if(r.status === 'pending'){
         rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
@@ -5469,6 +5501,100 @@
       await loadNPData();
     } catch(err){
       alert('Could not approve: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // ====== RETIRAR UNA RECETA MAL HECHA ======
+  // Para cuando el médico se equivoca: dosis errada, medicamento errado,
+  // paciente equivocado. La receta desaparece de la vista del paciente y deja
+  // de contar en su total mensual.
+  //
+  // No se BORRA la fila: se marca 'voided' con motivo, autor y hora. Una
+  // receta emitida —aunque sea por error— es parte del expediente, y si el
+  // paciente ya la pagó o ya se mandó a la farmacia, el rastro de que existió
+  // y se retiró es justo lo que hay que poder enseñar después. Para el
+  // paciente el efecto es el mismo que borrarla: no la ve ni la puede comprar.
+  async function npVoidPrescription(kind, id, medication, dose){
+    if(!supabaseClient || !npCurrentPatientId) return;
+
+    const label = (medication || 'this prescription') + (dose ? ' — ' + dose : '');
+    if(!confirm('Remove ' + label + ' from this patient?\n\n'
+      + 'It disappears from their dashboard and stops counting toward their monthly total. '
+      + 'It stays in the chart marked as retracted.')) return;
+
+    const reason = prompt('Why is it being removed? (goes in the chart)', 'Prescribing error');
+    if(reason === null) return;
+    const note = String(reason).trim() || 'Prescribing error';
+    const stamp = new Date().toISOString();
+
+    try{
+      if(kind === 'legacy'){
+        // La receta vigente vive en health_history, que solo guarda una. Se
+        // archiva primero —igual que al cambiar de dosis— y solo si el archivo
+        // se guardó se limpia. Si no, se perdería sin rastro.
+        const { data: prev, error: prevErr } = await supabaseClient.from('health_history')
+          .select('user_id, approved_medication, approved_dose, approved_price, approved_at, purchased, purchased_at')
+          .eq('id', npCurrentPatientId).maybeSingle();
+        if(prevErr) throw prevErr;
+        if(!prev || !prev.approved_medication){ alert('There is no active prescription to remove.'); return; }
+
+        const { data: archived, error: archErr } = await supabaseClient.from('prescriptions').insert({
+          user_id: prev.user_id,
+          medication: prev.approved_medication,
+          dose: prev.approved_dose,
+          price: prev.approved_price,
+          status: 'voided',
+          cancelled: true,
+          cancel_reason: note,
+          purchased: prev.purchased,
+          purchased_at: prev.purchased_at,
+          approved_at: prev.approved_at,
+          created_at: prev.approved_at || stamp
+        }).select();
+        if(archErr){
+          throw new Error('No se archivó la receta, así que no se retiró (se habría '
+            + 'perdido el rastro).\n\nError de la base: ' + (archErr.message || archErr.code));
+        }
+        if(!archived || archived.length === 0){
+          if(!confirm('Could not confirm the prescription was archived.\n\n'
+            + 'If it was not, removing it now loses the record. Continue?')) return;
+        }
+
+        const { data: cleared, error: clrErr } = await supabaseClient.from('health_history').update({
+          approved: false,
+          approved_medication: null,
+          approved_dose: null,
+          approved_price: null,
+          approved_notes: 'Prescription retracted: ' + note,
+          approved_at: null,
+          purchased: false,
+          purchased_at: null,
+          submitted_to_pharmacy: false,
+          submitted_to_pharmacy_at: null
+        }).eq('id', npCurrentPatientId).select();
+        if(clrErr) throw clrErr;
+        if(!cleared || cleared.length === 0){
+          throw new Error('No se retiró: la base aceptó la petición pero no cambió '
+            + 'ninguna fila. Casi siempre es RLS.');
+        }
+      } else {
+        const { data: voided, error } = await supabaseClient.from('prescriptions').update({
+          status: 'voided',
+          cancelled: true,
+          cancel_reason: note,
+          submitted_to_pharmacy: false
+        }).eq('id', id).select();
+        if(error) throw error;
+        if(!voided || voided.length === 0){
+          throw new Error('No se retiró: la base no cambió ninguna fila. Casi siempre es RLS.');
+        }
+      }
+
+      console.log('[void] receta retirada:', label, '—', note);
+      await openNPPatientDetail(npCurrentPatientId);
+      await loadNPData();
+    } catch(err){
+      alert('Could not remove the prescription: ' + (err.message || 'unknown error'));
     }
   }
 
@@ -6657,9 +6783,30 @@
   #lang-toggle button[aria-current="true"]{
     background:var(--ink);color:var(--white);opacity:1;
   }
-  /* Google's own chrome — gone. */
-  #google_translate_element,.goog-te-banner-frame,.goog-te-gadget,
-  .skiptranslate,#goog-gt-tt,.goog-tooltip{display:none !important;}
+  /* Google's own chrome — gone.
+     Incluye el SPINNER, que es el círculo que giraba encima del logo mientras
+     traduce. Google mantiene dos generaciones de clases: las viejas
+     goog-te-* y las ofuscadas VIpgJd-*, y el spinner nuevo solo sale con las
+     segundas. Hay que tapar las dos o vuelve a aparecer. */
+  #google_translate_element,
+  .goog-te-banner-frame, .goog-te-gadget, .goog-te-gadget-icon,
+  .goog-te-menu-frame, .goog-te-menu-value, .goog-te-balloon-frame,
+  .goog-te-spinner-pos, .goog-te-spinner, .goog-te-spinner-animation,
+  .skiptranslate, iframe.skiptranslate,
+  #goog-gt-tt, #goog-gt-vt, .goog-tooltip, .goog-tooltip:hover,
+  [id^="goog-gt-"],
+  .VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+  .VIpgJd-ZVi9od-aZ2wEe-OiiCO,
+  .VIpgJd-ZVi9od-ORHb-OEVmcd,
+  .VIpgJd-ZVi9od-l4eHX-hSRGPd,
+  .VIpgJd-ZVi9od-vH1Gmf{display:none !important;}
+
+  /* OJO: estas envuelven el TEXTO traducido. Ponerles display:none borra
+     media página. Solo se les quita el resaltado. */
+  .goog-text-highlight,
+  .VIpgJd-yAWNEb-VIpgJd-fmcmS-sn54Q{
+    background:none !important;box-shadow:none !important;
+  }
   body{top:0 !important;position:static !important;}
   font[style]{background:none !important;box-shadow:none !important;}
   @media (max-width:640px){ #lang-toggle{bottom:12px;right:12px;} }
