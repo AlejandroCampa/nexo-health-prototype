@@ -934,20 +934,6 @@
           <div id="next-eval-card" style="display:none;border-radius:12px;padding:16px;margin-bottom:18px;"></div>
 
           <h3>Your protocol</h3>
-          <div style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;
-                      padding:13px 16px;margin-bottom:16px;">
-            <label for="med-coupon-input" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">Medication referral code</label>
-            <div style="display:flex;gap:8px;">
-              <input id="med-coupon-input" type="text" placeholder="NUVI-MED-XXXX-XXXX" autocomplete="off"
-                     style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:13px;
-                            text-transform:uppercase;padding:10px 12px;border:1px solid var(--line);
-                            border-radius:9px;background:var(--white);"
-                     onkeydown="if(event.key==='Enter'){event.preventDefault();applyMedCoupon();}">
-              <button class="btn btn-outline" style="width:auto;padding:9px 16px;font-size:13px;"
-                      onclick="applyMedCoupon()">Apply</button>
-            </div>
-            <div id="med-coupon-msg" style="font-size:12.5px;margin-top:7px;min-height:17px;"></div>
-          </div>
           <div id="active-med-list"></div>
           <div id="rx-history" style="display:none;"></div>
           <div class="dash-protocol-row">
@@ -1007,6 +993,23 @@
         <h3>Your prescriptions</h3>
         <p style="margin-bottom:16px;">You can only purchase medications you've been approved for — but there's no limit on how many prescriptions you can request as a member. Every request is reviewed on its own before it becomes purchasable.</p>
         <div id="store-approved-list"></div>
+
+        <!-- El cupón vive aquí, junto al botón de comprar. Antes estaba en
+             "Your protocol", lejos del momento en que el paciente paga. -->
+        <div style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;
+                    padding:13px 16px;margin:16px 0 4px;">
+          <label for="med-coupon-input" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">Medication referral code</label>
+          <div style="display:flex;gap:8px;">
+            <input id="med-coupon-input" type="text" placeholder="NUVI-MED-XXXX-XXXX" autocomplete="off"
+                   style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:13px;
+                          text-transform:uppercase;padding:10px 12px;border:1px solid var(--line);
+                          border-radius:9px;background:var(--white);"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();applyMedCoupon();}">
+            <button class="btn btn-outline" style="width:auto;padding:9px 16px;font-size:13px;"
+                    onclick="applyMedCoupon()">Apply</button>
+          </div>
+          <div id="med-coupon-msg" style="font-size:12.5px;margin-top:7px;min-height:17px;"></div>
+        </div>
 
         <div class="form-section-title">Requests awaiting review</div>
         <div id="store-pending-list"><p class="np-empty">None right now.</p></div>
@@ -1481,9 +1484,15 @@
     <div class="form-section-title">Approve prescription</div>
     <div class="two-col">
       <div class="field"><label>Medication</label>
-        <select id="np-approve-med" onchange="updateNPPricePreview()"></select>
+        <select id="np-approve-med" onchange="onNPMedChange()"></select>
       </div>
-      <div class="field"><label id="np-dose-label">Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" min="0" step="0.1" value="2.5" oninput="updateNPPricePreview()"></div>
+      <div class="field"><label>Protocol</label>
+        <select id="np-approve-tier" onchange="onNPTierChange()"></select>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="field"><label id="np-dose-label">Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" min="0" step="0.1" value="2.5" oninput="onNPDoseInput()"></div>
+      <div class="field"></div>
     </div>
     <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(8,26,77,0.65);margin:6px 0 14px;"></div>
     <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="npApprovePrescription()">Approve prescription</button>
@@ -2008,8 +2017,30 @@
   // navegador, así que alterar el código no reduce un cobro real.
   const MED_COUPONS = {
     'NUVI-MED-8A5R-JBBD': { link: 'PASTE_ZERO_MEDICATION_LINK_HERE',
-                            label: 'Complimentary medication', price: 0 }
+                            label: 'Complimentary medication', price: 0 },
+
+    // ---- CÓDIGO DE PRUEBA ($0) ----
+    // No abre Stripe. Salta directo a la URL de regreso que Stripe usaría
+    // (?order_paid=true&...), que es justo lo que hay que probar: que el
+    // pedido se marque como comprado y salga la confirmación.
+    //
+    // Ventaja sobre un Payment Link real de $0: no deja un backdoor de
+    // medicamento gratis en producción. Solo funciona para las cuentas de
+    // TEST_ACCOUNT_EMAILS; para cualquier otro paciente el código no existe.
+    'NUVI-MED-TEST-0000': { simulate: true,
+                            label: 'Test order (no payment)', price: 0 }
   };
+
+  // Cuentas que pueden usar códigos de prueba. Vacíalo antes de lanzar y el
+  // código de prueba deja de existir para todo el mundo.
+  const TEST_ACCOUNT_EMAILS = ['ale.campa6@gmail.com'];
+
+  function isTestAccount(){
+    const email = (currentUser && currentUser.email ? currentUser.email : '').trim().toLowerCase();
+    return !!email && TEST_ACCOUNT_EMAILS
+      .map(e => String(e).trim().toLowerCase()).indexOf(email) !== -1;
+  }
+
   let activeMedCoupon = null;
 
   function applyMedCoupon(){
@@ -2020,10 +2051,20 @@
     if(!code){ msg.textContent = ''; activeMedCoupon = null; return; }
 
     const hit = MED_COUPONS[code];
-    if(!hit){
+    // Un código de prueba en una cuenta que no es de prueba se comporta como
+    // si no existiera — mismo mensaje que un código inventado, para no
+    // anunciar que existe.
+    if(!hit || (hit.simulate && !isTestAccount())){
       activeMedCoupon = null;
       msg.style.color = '#B23A3A';
       msg.textContent = 'That code isn\'t recognised.';
+      return;
+    }
+    if(hit.simulate){
+      activeMedCoupon = Object.assign({ code: code }, hit);
+      msg.style.color = 'var(--amber-deep)';
+      msg.textContent = 'TEST MODE — "Buy" will skip Stripe and simulate a completed payment.';
+      console.warn('[med] cupón de prueba activo:', code, '— no se va a cobrar nada');
       return;
     }
     if(hit.link.indexOf('PASTE_') === 0){
@@ -2274,12 +2315,29 @@
       category: 'Weight management',
       description: 'Dual GLP-1/GIP agonist. The most effective option we offer for weight loss, dosed once weekly and titrated up gradually by your physician.',
       basePrice: 120, perMg: 24, unit: 'mg',
+      // Dosis semanal máxima de etiqueta (tirzepatida: 15 mg/sem). No es un
+      // límite duro — el clínico puede pasarse a propósito — pero arriba de
+      // esto la app pide confirmación explícita. Existe porque en producción
+      // se aprobó una receta de 103.4 mg/sem (6.9x el máximo) sin que nada la
+      // detuviera: casi seguro un dedazo de 10.34 o 1.034.
+      maxDoseMg: 15,
+      // Escalones del protocolo. Cada receta cubre 4 semanas, así que el vial
+      // se pide por miligramos TOTALES, no por dosis semanal — que es como lo
+      // cotiza la farmacia. El precio sale de aquí, no de la fórmula: el
+      // escalón de arriba se vende a $500, no a los $480 que daría lineal.
+      tiers: [
+        { totalMg: 10, doseMg: 2.5, price: 180, label: '10 mg total — 2.5 mg/wk × 4 wks' },
+        { totalMg: 20, doseMg: 5,   price: 240, label: '20 mg total — 5 mg/wk × 4 wks'   },
+        { totalMg: 30, doseMg: 7.5, price: 300, label: '30 mg total — 7.5 mg/wk × 4 wks' },
+        { totalMg: 60, doseMg: 15,  price: 500, label: '60 mg total — as directed by MD' }
+      ],
       launched: true, form: 'Compounded injectable, weekly', startingDose: '2.5 mg / wk', startingDoseMg: 2.5
     },
     'Semaglutide': {
       category: 'Weight management',
       description: 'GLP-1 agonist for appetite control and weight loss. Weekly injection, titrated gradually to limit side effects.',
       basePrice: 141, perMg: 37, unit: 'mg',
+      maxDoseMg: 2.4,   // semaglutida: 2.4 mg/sem de etiqueta
       launched: true, form: 'Compounded injectable, weekly', startingDose: '0.25 mg / wk', startingDoseMg: 0.25
     }
   };
@@ -2294,9 +2352,22 @@
     return (m && m.unit) ? m.unit : 'mg';
   }
 
+  // Devuelve el escalón cuyo doseMg coincide con la dosis dada, o null.
+  function findTier(medication, doseMg){
+    const m = MEDICATION_INFO[medication];
+    const d = parseFloat(doseMg);
+    if(!m || !m.tiers || !Number.isFinite(d)) return null;
+    return m.tiers.find(t => t.doseMg === d) || null;
+  }
+
   function calcProtocolPrice(medication, doseMg){
     const m = MEDICATION_INFO[medication];
     if(!m) return 0;
+    // Un escalón definido manda sobre la fórmula. La fórmula es lineal y el
+    // escalón de arriba no lo es ($500, no $480), así que si se dejara
+    // calcular se cobraría de menos.
+    const tier = findTier(medication, doseMg);
+    if(tier) return tier.price;
     const raw = m.basePrice + (m.perMg * (parseFloat(doseMg) || 0));
     // Round to the nearest $5 — keeps prices clean and keeps the number of
     // distinct Stripe Payment Links down as doses titrate up.
@@ -2374,7 +2445,11 @@
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:rgba(8,26,77,0.6);line-height:1.8;">'
       + m.form + '<br>'
       + 'Typical starting dose: ' + m.startingDose + '<br>'
-      + '$' + price + '/month — flat, any dose'
+      // El precio va por dosis, así que enseñar los escalones completos. Decir
+      // "flat, any dose" era falso y además escondía lo que cuesta titular.
+      + (m.tiers && m.tiers.length
+          ? m.tiers.map(t => t.label + ' — $' + t.price).join('<br>')
+          : 'Starting at $' + price + '/month — price varies with your dose')
       + '</div>'
       + '<div style="font-size:12.5px;margin-top:10px;">' + availability + '</div>';
   }
@@ -2465,22 +2540,47 @@
     document.getElementById('faq-item-' + i).classList.toggle('open');
   }
 
-  // The dose-based calculator above is only an internal estimate — real
-  // billing happens through a fixed-price Stripe Payment Link, so the
-  // patient-facing price must always match what Stripe will actually charge,
-  // not the dynamically calculated number. Keep this in sync with the exact
-  // amount entered in Stripe for each medication.
-  // MUST match the actual amount on each Stripe Payment Link. If these drift
-  // apart, the patient sees one price and gets charged another.
-  const MEDICATION_CHECKOUT_PRICE = {
-    'Tirzepatide': 180,
-    'Semaglutide': 150
-  };
+  // Extrae el número de una dosis guardada como texto ("7.5 mg / week" -> 7.5).
+  // La dosis se guarda como string legible, pero para comparar dos recetas o
+  // recalcular un precio hace falta el número.
+  function parseDoseAmount(doseStr){
+    const m = String(doseStr == null ? '' : doseStr).match(/-?\d+(?:\.\d+)?/);
+    return m ? parseFloat(m[0]) : null;
+  }
 
+  // Firma canónica de una receta, para saber si dos son la misma.
+  // Compara el número, no el texto: "7.5 mg / week" y "7.50 mg / week" son
+  // la misma receta y no deben archivarse como si fueran distintas.
+  function rxSignature(medication, doseStr){
+    const n = parseDoseAmount(doseStr);
+    return String(medication || '') + '|' + (n == null ? '' : n);
+  }
+
+  // El precio que ve el paciente sale de la DOSIS aprobada, no de una tabla
+  // plana por medicamento.
+  //
+  // Antes esto devolvía un precio fijo por medicamento ($180 tirzepatida,
+  // $150 semaglutida) ignorando la dosis. Como goToMedicationCheckout enruta
+  // por precio, un protocolo de 7.5 mg (que vale $300) mostraba $180 y mandaba
+  // al paciente al Payment Link de $180: se facturaba $120 de menos por
+  // despacho y el expediente clínico no cuadraba con el cobro.
+  //
+  // Orden de preferencia:
+  //   1. El precio guardado en la receta. Ya lo calculó calcProtocolPrice en el
+  //      momento de aprobar, así que es el precio real de esa dosis y es el que
+  //      quedó en el expediente.
+  //   2. Si no hay precio guardado (registros viejos), el precio de la dosis
+  //      inicial del medicamento.
+  //
+  // Todo precio que salga de aquí tiene que existir en MEDICATION_LINKS_BY_PRICE.
+  // Si no existe, goToMedicationCheckout falla ruidosamente en vez de cobrar
+  // una cifra distinta a la que se le enseñó al paciente.
   function getDisplayPrice(medication, fallbackPrice){
-    return MEDICATION_CHECKOUT_PRICE.hasOwnProperty(medication)
-      ? MEDICATION_CHECKOUT_PRICE[medication]
-      : fallbackPrice;
+    const stored = parseFloat(fallbackPrice);
+    if(Number.isFinite(stored) && stored > 0) return Math.round(stored);
+    const info = MEDICATION_INFO[medication];
+    if(info) return calcProtocolPrice(medication, info.startingDoseMg);
+    return 0;
   }
 
   // ====== SESSION / DASHBOARD HANDLING ======
@@ -2824,6 +2924,32 @@
 
     let approvedHtml = '';
 
+    // Recetas anteriores, ARRIBA de la vigente y en orden cronológico, para
+    // que se lea la progresión: 2.5 mg -> 7.5 mg. Van sin botón de comprar
+    // porque ya no están vigentes; están para que el paciente vea su
+    // historial sin tener que subir a "Your protocol".
+    const supersededRx = prescriptions
+      .filter(r => r.status === 'superseded')
+      .sort((a, b) => String(a.approved_at || a.created_at || '')
+                        .localeCompare(String(b.approved_at || b.created_at || '')));
+
+    supersededRx.forEach(r => {
+      const when = (r.approved_at || r.created_at)
+        ? new Date(r.approved_at || r.created_at).toLocaleDateString(undefined,
+            { year:'numeric', month:'short', day:'numeric' })
+        : null;
+      const p = getDisplayPrice(r.medication, r.price);
+      approvedHtml += renderStoreItem({
+        medication: r.medication, dose: r.dose, price: p,
+        previous: true, approvedOn: when,
+        purchased: r.purchased,
+        cancelled: r.cancelled,
+        cancelReason: r.cancel_reason,
+        onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "', " + p + ")",
+        onCancel: "openCancelRxModal('prescription', '" + r.id + "', '" + r.medication + "')"
+      });
+    });
+
     // The original first prescription lives on health_history, not the new
     // prescriptions table — show it here too so the store is complete.
     if(history.approved_medication){
@@ -2868,6 +2994,19 @@
   function renderStoreItem(item){
     const priceLabel = item.price ? ('$' + item.price + '/mo') : '—';
 
+    // Una receta anterior (el médico ya ajustó la dosis) se sigue pudiendo
+    // comprar mientras no se haya comprado: se recetó de verdad y el paciente
+    // tiene derecho a despacharla. Lo único que cambia es que se marca como
+    // anterior y se atenúa, para que no se confunda con la vigente.
+    const prevBadge = item.previous
+      ? '<span class="rx-badge" style="border-color:rgba(8,26,77,0.25);color:rgba(8,26,77,0.5);'
+        + 'margin-left:7px;font-size:10px;padding:1px 7px;vertical-align:middle;">Previous</span>'
+      : '';
+    const dateLine = item.approvedOn
+      ? '<div class="meta" style="opacity:0.75;">Approved ' + item.approvedOn + '</div>'
+      : '';
+    const rowStyle = item.previous ? ' style="opacity:0.72;"' : '';
+
     if(item.cancelled){
       return '<div class="dash-protocol-row">'
         + '<div><div class="name">' + item.medication + '</div><div class="meta">Cancelled' + (item.cancelReason ? ' — ' + item.cancelReason : '') + '</div></div>'
@@ -2887,8 +3026,10 @@
         + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(8,26,77,0.45);">Cancel</a>';
     }
 
-    return '<div class="dash-protocol-row">'
-      + '<div><div class="name">' + item.medication + '</div><div class="meta">' + (item.dose || '') + '</div></div>'
+    return '<div class="dash-protocol-row"' + rowStyle + '>'
+      + '<div><div class="name">' + item.medication + prevBadge + '</div>'
+      + '<div class="meta">' + (item.dose || '') + '</div>'
+      + dateLine + '</div>'
       + '<div style="text-align:right;">'
       + '<div class="meta" style="margin-bottom:6px;">' + priceLabel + '</div>'
       + actionHtml
@@ -2923,8 +3064,17 @@
     300: 'https://buy.stripe.com/5kQ8wR5CYcDO4uW4gB9EI04',
     360: 'https://buy.stripe.com/8x25kFghCbzKgdEaEZ9EI03',
     420: 'https://buy.stripe.com/00w6oJ7L67ju9Pg28t9EI01',
-    500: 'https://buy.stripe.com/cNi8wRghCfQ09Pg00l9EI0j'
+    500: 'https://buy.stripe.com/cNi8wRghCfQ09Pg00l9EI0j'   // 60 mg total — as directed by MD
   };
+
+  // ¿Existe un Payment Link para este precio? Se usa para avisarle al médico
+  // ANTES de aprobar, no al paciente en el checkout. Si una dosis produce un
+  // precio sin link, el paciente llega a la tienda y no puede comprar; es mejor
+  // que el clínico lo sepa mientras todavía está en la consulta.
+  function hasPaymentLinkForPrice(price){
+    const p = Math.round(parseFloat(price));
+    return Number.isFinite(p) && Object.prototype.hasOwnProperty.call(MEDICATION_LINKS_BY_PRICE, p);
+  }
 
   // A prescription cannot be shipped without a complete address, so this is a
   // hard requirement on every purchase path — not just a form field. Older
@@ -2953,6 +3103,25 @@
     // Un cupón válido reemplaza el link normal. Se consume aquí para que no
     // quede activo y aplique a un segundo pedido sin querer.
     let link;
+
+    // Cupón de prueba: saltar Stripe y volver directo a la URL de regreso,
+    // que es exactamente la que Stripe abriría al terminar el pago. Así se
+    // prueba applyPendingOrder() y la confirmación sin cobrar nada.
+    if(activeMedCoupon && activeMedCoupon.simulate){
+      if(!isTestAccount()){ activeMedCoupon = null; return; }  // cinturón y tirantes
+      const code = activeMedCoupon.code;
+      activeMedCoupon = null;
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.hash = '';
+      url.searchParams.set('order_paid', 'true');
+      url.searchParams.set('rx_kind', kind);
+      url.searchParams.set('rx_id', id || '');
+      console.warn('[med] PRUEBA', code, '— saltando Stripe, simulando regreso de pago:', url.toString());
+      window.location.href = url.toString();
+      return;
+    }
+
     if(activeMedCoupon){
       link = activeMedCoupon.link;
       console.log('[med] cupón aplicado:', activeMedCoupon.code);
@@ -5214,8 +5383,20 @@
       apptWrap.innerHTML = '<div class="form-section-title">Interview</div><p class="np-empty">Not scheduled yet.</p>';
     }
 
-    document.getElementById('np-approve-med').value = patient.approved_medication || 'Tirzepatide';
-    document.getElementById('np-approve-dose-mg').value = '2.5';
+    // Precargar la dosis VIGENTE del paciente, no un 2.5 fijo. Con el valor
+    // fijo, abrir la ficha de alguien que ya está en 7.5 mg mostraba 2.5 mg y
+    // $180 — parecía que el precio "no cambiaba", y peor: aprobar sin tocar el
+    // campo lo bajaba de dosis sin que nadie lo pidiera.
+    const medSel = document.getElementById('np-approve-med');
+    medSel.value = patient.approved_medication || 'Tirzepatide';
+    const currentDose = parseDoseAmount(patient.approved_dose);
+    const info = MEDICATION_INFO[medSel.value];
+    const startDose = (currentDose != null && currentDose > 0)
+      ? currentDose
+      : ((info && info.tiers && info.tiers.length) ? info.tiers[0].doseMg
+         : ((info && info.startingDoseMg) != null ? info.startingDoseMg : 2.5));
+    document.getElementById('np-approve-dose-mg').value = String(startDose);
+    populateNPTiers(startDose);
     updateNPPricePreview();
 
     const { data: allRx } = await supabaseClient.from('prescriptions').select('*')
@@ -5324,6 +5505,70 @@
     }
   }
 
+  // Llena el selector de escalones para el medicamento activo. Los
+  // medicamentos sin escalones definidos (semaglutida) caen en "Custom dose",
+  // que es el campo de mg de siempre.
+  function populateNPTiers(selectedDoseMg){
+    const med = document.getElementById('np-approve-med').value;
+    const sel = document.getElementById('np-approve-tier');
+    const info = MEDICATION_INFO[med] || {};
+    if(!sel) return;
+    sel.innerHTML = '';
+    (info.tiers || []).forEach(t => {
+      const o = document.createElement('option');
+      o.value = String(t.doseMg);
+      o.textContent = t.label + ' — $' + t.price;
+      sel.appendChild(o);
+    });
+    const custom = document.createElement('option');
+    custom.value = 'custom';
+    custom.textContent = 'Custom dose…';
+    sel.appendChild(custom);
+
+    const match = findTier(med, selectedDoseMg);
+    sel.value = match ? String(match.doseMg) : 'custom';
+    sel.disabled = false;
+    // Con un escalón escogido el campo de mg es de solo lectura: el punto de
+    // los escalones es que no se pueda teclear una dosis a mano por error.
+    const input = document.getElementById('np-approve-dose-mg');
+    if(input) input.readOnly = !!match;
+  }
+
+  // Al cambiar de medicamento, arrancar en su primer escalón (o su dosis
+  // inicial si no tiene escalones).
+  function onNPMedChange(){
+    const med = document.getElementById('np-approve-med').value;
+    const info = MEDICATION_INFO[med] || {};
+    const start = (info.tiers && info.tiers.length)
+      ? info.tiers[0].doseMg
+      : (info.startingDoseMg != null ? info.startingDoseMg : 2.5);
+    document.getElementById('np-approve-dose-mg').value = String(start);
+    populateNPTiers(start);
+    updateNPPricePreview();
+  }
+
+  function onNPTierChange(){
+    const sel = document.getElementById('np-approve-tier');
+    const input = document.getElementById('np-approve-dose-mg');
+    if(sel.value !== 'custom'){
+      input.value = sel.value;
+      input.readOnly = true;
+    } else {
+      input.readOnly = false;
+      input.focus();
+    }
+    updateNPPricePreview();
+  }
+
+  // Si el médico teclea una dosis a mano, el selector se sincroniza solo.
+  function onNPDoseInput(){
+    const med = document.getElementById('np-approve-med').value;
+    const sel = document.getElementById('np-approve-tier');
+    const match = findTier(med, document.getElementById('np-approve-dose-mg').value);
+    if(sel) sel.value = match ? String(match.doseMg) : 'custom';
+    updateNPPricePreview();
+  }
+
   function updateNPPricePreview(){
     const med = document.getElementById('np-approve-med').value;
     const dose = document.getElementById('np-approve-dose-mg').value;
@@ -5339,39 +5584,129 @@
     const input = document.getElementById('np-approve-dose-mg');
     if(input) input.step = (unit === 'mcg') ? '25' : '0.1';
 
-    document.getElementById('np-price-preview').textContent =
-      med + ' at ' + dose + ' ' + unit + '/week → $' + price + '/mo' + (rateLabel ? ' (' + rateLabel + ')' : ' (flat rate)');
+    const el = document.getElementById('np-price-preview');
+    // Con un escalón, enseñar el escalón — no la tarifa por mg. El escalón de
+    // arriba no sigue la fórmula ($500, no $480), así que poner "$24/mg + $120
+    // base" al lado de $500 se contradice solo.
+    const tier = findTier(med, dose);
+    const basis = tier ? tier.label : (rateLabel ? rateLabel : 'flat rate');
+    el.textContent =
+      med + ' at ' + dose + ' ' + unit + '/week → $' + price + '/mo (' + basis + ')';
+
+    // Aviso de facturación: este precio se cobra por un Stripe Payment Link
+    // que se busca POR MONTO. Si no existe uno de ese monto, el paciente no va
+    // a poder comprar la receta. Mejor enterarse aquí que después.
+    const doseNum = parseFloat(dose);
+    const maxDose = (MEDICATION_INFO[med] || {}).maxDoseMg;
+    if(!Number.isFinite(doseNum) || doseNum <= 0){
+      el.textContent = 'Enter a weekly dose to see the price.';
+      el.style.color = 'rgba(8,26,77,0.65)';
+    } else if(maxDose && doseNum > maxDose){
+      // La dosis manda sobre el precio: si está fuera de rango, eso es lo
+      // que tiene que leer el clínico, no cuánto cuesta.
+      el.textContent = '⚠ ' + doseNum + ' ' + unit + '/week is above the labeled maximum for '
+        + med + ' (' + maxDose + ' ' + unit + '/week). Check for a typo before approving.';
+      el.style.color = '#b3261e';
+    } else if(!hasPaymentLinkForPrice(price)){
+      el.textContent += '  ⚠ No Stripe Payment Link for $' + price
+        + ' — the patient will not be able to check out until one is added.';
+      el.style.color = '#b3261e';
+    } else {
+      el.style.color = 'rgba(8,26,77,0.65)';
+    }
   }
 
   async function npApprovePrescription(){
     if(!npCurrentPatientId) return;
     const med = document.getElementById('np-approve-med').value;
     const doseMg = document.getElementById('np-approve-dose-mg').value;
-    const price = calcProtocolPrice(med, doseMg);
+
+    // Una receta sin dosis válida no es una receta. Sin esto, un campo vacío
+    // se guardaba como " mg / week" a $0 y se mandaba a la farmacia así.
+    const doseNum = parseFloat(doseMg);
+    if(!Number.isFinite(doseNum) || doseNum <= 0){
+      alert('Enter a valid weekly dose before approving.');
+      return;
+    }
+
+    const unit = getMedUnit(med);
+    const newDose = doseNum + ' ' + unit + ' / week';
+    const price = calcProtocolPrice(med, doseNum);
+
+    // Freno de dosis. No bloquea al clínico —hay razones legítimas para salirse
+    // de etiqueta— pero obliga a confirmarlo a propósito. Sin esto ya pasó una
+    // receta de 103.4 mg/sem de tirzepatida a producción.
+    const maxDose = (MEDICATION_INFO[med] || {}).maxDoseMg;
+    if(maxDose && doseNum > maxDose){
+      if(!confirm(doseNum + ' ' + unit + '/week is ' + (doseNum / maxDose).toFixed(1)
+        + 'x the labeled maximum for ' + med + ' (' + maxDose + ' ' + unit + '/week).\n\n'
+        + 'If this is a typo, cancel and fix it — this dose goes on the prescription '
+        + 'that gets sent to the pharmacy.\n\nApprove ' + doseNum + ' ' + unit + '/week anyway?')) return;
+    }
+
+    if(!hasPaymentLinkForPrice(price)){
+      if(!confirm('There is no Stripe Payment Link for $' + price + '.\n\n'
+        + 'You can approve this prescription, but the patient will not be able to '
+        + 'pay for it until a $' + price + ' Payment Link is added.\n\nApprove anyway?')) return;
+    }
+
     try{
-      // Archivar la receta vigente antes de reemplazarla. health_history solo
-      // guarda una, así que sin esto el historial del paciente se pierde cada
-      // vez que el médico ajusta la dosis — y ese historial es parte del
-      // expediente, no un detalle de interfaz.
-      const { data: prev } = await supabaseClient.from('health_history')
+      // Archivar la receta vigente ANTES de reemplazarla, y NO seguir si el
+      // archivo no se guardó.
+      //
+      // health_history guarda una sola receta, así que este INSERT es la única
+      // copia que va a quedar de la dosis anterior. Antes el error del insert
+      // ni se leía: si la base lo rechazaba (RLS o un CHECK sobre status), el
+      // código seguía de largo y el UPDATE de abajo sobrescribía la receta
+      // vieja. Resultado: la receta anterior no aparecía en "Previous
+      // prescriptions" — se borraba, sin alerta y sin nada en consola.
+      const { data: prev, error: prevErr } = await supabaseClient.from('health_history')
         .select('user_id, approved_medication, approved_dose, approved_price, approved_at, purchased, purchased_at')
         .eq('id', npCurrentPatientId).maybeSingle();
+      if(prevErr) throw new Error('No se pudo leer la receta vigente, así que no se '
+        + 'aprobó nada (para no sobrescribirla a ciegas): ' + prevErr.message);
 
       if(prev && prev.approved_medication){
-        const sameRx = prev.approved_medication === med
-                    && prev.approved_dose === (doseMg + ' mg / week');
+        const sameRx = rxSignature(prev.approved_medication, prev.approved_dose)
+                    === rxSignature(med, newDose);
         if(!sameRx){
-          await supabaseClient.from('prescriptions').insert({
-            user_id: prev.user_id,
-            medication: prev.approved_medication,
-            dose: prev.approved_dose,
-            price: prev.approved_price,
-            status: 'superseded',
-            purchased: prev.purchased,
-            purchased_at: prev.purchased_at,
-            approved_at: prev.approved_at,
-            created_at: prev.approved_at || new Date().toISOString()
-          });
+          const { data: archived, error: archErr } = await supabaseClient
+            .from('prescriptions').insert({
+              user_id: prev.user_id,
+              medication: prev.approved_medication,
+              dose: prev.approved_dose,
+              price: prev.approved_price,
+              status: 'superseded',
+              cancelled: false,
+              purchased: prev.purchased,
+              purchased_at: prev.purchased_at,
+              approved_at: prev.approved_at,
+              created_at: prev.approved_at || new Date().toISOString()
+            }).select();
+
+          if(archErr){
+            // Cortar aquí a propósito. Es preferible no aprobar que aprobar
+            // borrando el expediente anterior.
+            throw new Error(
+              'No se archivó la receta anterior, así que no se aprobó la nueva '
+              + '(la anterior se habría perdido).\n\n'
+              + 'Error de la base: ' + (archErr.message || archErr.code || 'desconocido') + '\n\n'
+              + 'Causas típicas: falta una policy de INSERT en "prescriptions" para el '
+              + 'personal clínico, o la columna status tiene un CHECK que no incluye '
+              + '\'superseded\'.');
+          }
+          if(!archived || archived.length === 0){
+            // El INSERT no dio error pero no devolvió la fila. Suele ser RLS
+            // sin policy de SELECT — probablemente sí se guardó, pero no se
+            // puede confirmar, y el que decide es el clínico, no el código.
+            console.warn('[approve] el archivo de la receta anterior no se pudo confirmar');
+            if(!confirm('Could not confirm that the previous prescription was archived.\n\n'
+              + 'If it was not, that prescription will be lost when this one is saved.\n\n'
+              + 'Continue anyway?')) return;
+          } else {
+            console.log('[approve] receta anterior archivada:',
+              archived[0].medication, archived[0].dose, '→ superseded');
+          }
         }
       }
       // Una receta nueva es una compra nueva. Sin resetear estas banderas, la
@@ -5381,7 +5716,7 @@
       const { data: updated, error } = await supabaseClient.from('health_history').update({
         approved: true,
         approved_medication: med,
-        approved_dose: doseMg + ' mg / week',
+        approved_dose: newDose,
         approved_price: price,
         approved_notes: 'Approved by care team.',
         approved_at: new Date().toISOString(),
@@ -5403,7 +5738,15 @@
         const { data: retired, error: supErr } = await supabaseClient.from('prescriptions')
           .update({ status: 'superseded' })
           .eq('user_id', patientUid).eq('status', 'approved').select();
-        if(supErr) console.error('[approve] no se pudieron retirar las anteriores:', supErr);
+        if(supErr){
+          // Aquí la aprobación ya está guardada, así que no se puede abortar.
+          // Pero tampoco se puede callar: el paciente queda con dos recetas
+          // activas y el total mensual le suma las dos.
+          console.error('[approve] no se pudieron retirar las anteriores:', supErr);
+          alert('The prescription was approved, but the previous ones could not be retired.\n\n'
+            + 'The patient may see more than one active prescription and an inflated monthly total.\n\n'
+            + 'Database error: ' + (supErr.message || supErr.code || 'unknown'));
+        }
         else if((retired || []).length) console.log('[approve] recetas retiradas:', retired.length);
       }
 
