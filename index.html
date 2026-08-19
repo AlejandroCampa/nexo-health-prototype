@@ -2024,22 +2024,21 @@
     // (?order_paid=true&...), que es justo lo que hay que probar: que el
     // pedido se marque como comprado y salga la confirmación.
     //
-    // Ventaja sobre un Payment Link real de $0: no deja un backdoor de
-    // medicamento gratis en producción. Solo funciona para las cuentas de
-    // TEST_ACCOUNT_EMAILS; para cualquier otro paciente el código no existe.
+    // Se apaga poniendo TEST_MODE = false (arriba).
     'NUVI-MED-TEST-0000': { simulate: true,
                             label: 'Test order (no payment)', price: 0 }
   };
 
-  // Cuentas que pueden usar códigos de prueba. Vacíalo antes de lanzar y el
-  // código de prueba deja de existir para todo el mundo.
-  const TEST_ACCOUNT_EMAILS = ['ale.campa6@gmail.com'];
-
-  function isTestAccount(){
-    const email = (currentUser && currentUser.email ? currentUser.email : '').trim().toLowerCase();
-    return !!email && TEST_ACCOUNT_EMAILS
-      .map(e => String(e).trim().toLowerCase()).indexOf(email) !== -1;
-  }
+  // ┌──────────────────────────────────────────────────────────────────┐
+  // │  MODO PRUEBA                                                     │
+  // │                                                                  │
+  // │  true  = el código NUVI-MED-TEST-0000 funciona para cualquiera.  │
+  // │  false = ese código deja de existir.                             │
+  // │                                                                  │
+  // │  Cambia la palabra true por false el día que lances. Es lo       │
+  // │  único que hay que tocar.                                        │
+  // └──────────────────────────────────────────────────────────────────┘
+  const TEST_MODE = true;
 
   let activeMedCoupon = null;
 
@@ -2051,10 +2050,13 @@
     if(!code){ msg.textContent = ''; activeMedCoupon = null; return; }
 
     const hit = MED_COUPONS[code];
-    // Un código de prueba en una cuenta que no es de prueba se comporta como
-    // si no existiera — mismo mensaje que un código inventado, para no
-    // anunciar que existe.
-    if(!hit || (hit.simulate && !isTestAccount())){
+    if(!hit){
+      activeMedCoupon = null;
+      msg.style.color = '#B23A3A';
+      msg.textContent = 'That code isn\'t recognised.';
+      return;
+    }
+    if(hit.simulate && !TEST_MODE){
       activeMedCoupon = null;
       msg.style.color = '#B23A3A';
       msg.textContent = 'That code isn\'t recognised.';
@@ -3132,7 +3134,7 @@
     // que es exactamente la que Stripe abriría al terminar el pago. Así se
     // prueba applyPendingOrder() y la confirmación sin cobrar nada.
     if(activeMedCoupon && activeMedCoupon.simulate){
-      if(!isTestAccount()){ activeMedCoupon = null; return; }  // cinturón y tirantes
+      if(!TEST_MODE){ activeMedCoupon = null; return; }
       const code = activeMedCoupon.code;
       activeMedCoupon = null;
       const url = new URL(window.location.href);
