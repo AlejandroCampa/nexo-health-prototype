@@ -1093,7 +1093,7 @@
               <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(15,35,54,0.68);margin-bottom:8px;text-transform:uppercase;"></div>
               <div class="slot-grid" id="physician-slot-grid" style="grid-template-columns:1fr 1fr;"></div>
               <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(15,35,54,0.63);">No open times that day.</p>
-              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(15,35,54,0.68);">You've used both physician evaluations for this month — you can book again starting next month.</p>
+              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(15,35,54,0.68);">You've already had your evaluation this month — you can book next month's starting on the 1st.</p>
             </div>
           </div>
         </div>
@@ -2072,7 +2072,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 20ago-3';
+  const NUVI_BUILD = 'build 20ago-4';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -3745,7 +3745,7 @@
   const PHYSICIAN_DAY_START_HOUR = 9;
   const PHYSICIAN_DAY_END_HOUR = 17; // 5:00 PM
   const PHYSICIAN_BOOKING_WINDOW_DAYS = 60;
-  const PHYSICIAN_MAX_VISITS_PER_MONTH = 4;
+  const PHYSICIAN_MAX_VISITS_PER_MONTH = 1;   // una evaluación por mes, igual que la entrevista
 
   let physicianCalendarViewDate = new Date();
   let physicianCalendarSelectedDate = null;
@@ -3932,7 +3932,7 @@
     if(!supabaseClient || !currentUser) return;
 
     if(physicianVisitsInMonth(dateValue) >= PHYSICIAN_MAX_VISITS_PER_MONTH){
-      alert("You've already used both physician evaluations for that month.");
+      alert("You've already got an evaluation booked that month — one per month is the limit.");
       return;
     }
 
@@ -4954,18 +4954,47 @@
       const upcoming = appts.filter(a => a.status !== 'completed')
         .sort((a,b) => a.appointment_date.localeCompare(b.appointment_date))[0];
 
-      let tone, title, body, cta = true;
+      let tone, title, body, cta = true, ctaLabel = 'Book evaluation';
+
+      // El tope es una evaluación por mes calendario, así que la tarjeta se
+      // razona por MES, no solo por el ciclo de 28 días. El paciente tiene
+      // que saber dos cosas de un vistazo: si este mes ya está cubierto, y
+      // si le falta coordinar la del mes que viene.
+      const now = new Date();
+      const monthKey = d => d.slice(0, 7);                    // 'YYYY-MM'
+      const thisMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+      const nextMonthDate = new Date(now.getFullYear(), now.getMonth()+1, 1);
+      const nextMonthKey = nextMonthDate.getFullYear() + '-'
+                         + String(nextMonthDate.getMonth()+1).padStart(2,'0');
+      const monthName = d => d.toLocaleDateString(undefined,{month:'long'});
+      const usedThisMonth = appts.some(a => monthKey(a.appointment_date) === thisMonth);
+      const bookedNextMonth = appts.some(a => monthKey(a.appointment_date) === nextMonthKey);
 
       if(upcoming){
         tone = 'ok'; cta = false;
         title = 'Your next evaluation is booked';
-        body = new Date(upcoming.appointment_date + 'T00:00:00')
-                 .toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})
+        const when = new Date(upcoming.appointment_date + 'T00:00:00');
+        body = when.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})
                + ' at ' + upcoming.appointment_time + '.';
-      } else if(done.length === 0){
+        // Si la cita reservada es de ESTE mes, todavía le falta coordinar la
+        // del mes que viene. Decirlo aquí evita que se le pase el refill.
+        if(monthKey(upcoming.appointment_date) === thisMonth && !bookedNextMonth){
+          body += ' You still need to book ' + monthName(nextMonthDate)
+                + "'s — you can from " + monthName(nextMonthDate) + ' 1.';
+          tone = 'soon'; cta = true; ctaLabel = 'Book next month';
+        }
+      } else if(done.length === 0 && !usedThisMonth){
         tone = 'warn';
         title = 'Book your first evaluation';
         body = 'You need a physician evaluation before anything can be prescribed.';
+      } else if(usedThisMonth){
+        // Ya gastó la del mes y no tiene ninguna próxima: lo único que
+        // procede es la del mes que viene.
+        tone = 'ok'; cta = true; ctaLabel = 'Book next month';
+        title = monthName(now) + " is covered";
+        body = "You've had your evaluation this month — one per month is the limit. "
+             + 'Book ' + monthName(nextMonthDate) + "'s starting "
+             + monthName(nextMonthDate) + ' 1, before your supply runs out.';
       } else {
         const last = done[0];
         const due = new Date(last.appointment_date + 'T00:00:00');
@@ -4999,7 +5028,7 @@
       el.innerHTML = '<b style="font-size:15px;">' + title + '</b>'
         + '<div style="font-size:13.5px;margin-top:4px;">' + body + '</div>'
         + (cta ? '<button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;margin-top:12px;" '
-                 + 'onclick="openScheduler()">Book evaluation</button>' : '');
+                 + 'onclick="openScheduler()">' + ctaLabel + '</button>' : '');
     } catch(err){
       el.style.display = 'none';
     }
@@ -6228,11 +6257,10 @@
   }
 
   // ---- Tope de citas por paciente por mes ----------------------------------
-  // Antes no había ninguno: un paciente podía reservar la agenda entera del
-  // mes. El modelo es una evaluación por ciclo de 28 días antes de cada
-  // refill, así que 2 deja margen para una revisión extra sin permitir que
-  // una sola persona acapare los turnos.
-  const MAX_INTERVIEWS_PER_MONTH = 2;
+  // UNA por mes. Cada receta cubre 28 días y hace falta una evaluación antes
+  // de cada refill: una al mes es exactamente el ciclo, ni más ni menos.
+  // Antes no había tope y un paciente podía reservar la agenda entera del mes.
+  const MAX_INTERVIEWS_PER_MONTH = 1;
 
   // Se cuenta con un query, no con una lista en memoria: la pestaña puede
   // llevar horas abierta y el conteo tiene que ser el de ahora.
@@ -6375,11 +6403,13 @@
     if(usedThisMonth >= MAX_INTERVIEWS_PER_MONTH){
       slotGrid.innerHTML = '';
       if(limitMsg){
-        limitMsg.textContent = 'You already have ' + usedThisMonth + ' evaluation'
-          + (usedThisMonth === 1 ? '' : 's') + ' booked for '
-          + dateObj.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-          + ' — the limit is ' + MAX_INTERVIEWS_PER_MONTH + ' per month. '
-          + 'Pick a date next month, or cancel one of your existing appointments first.';
+        const mLabel = dateObj.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+        limitMsg.textContent = MAX_INTERVIEWS_PER_MONTH === 1
+          ? 'You already have an evaluation for ' + mLabel
+            + ' — one per month is the limit. Pick a date next month, or cancel that one first.'
+          : 'You already have ' + usedThisMonth + ' evaluations for ' + mLabel
+            + ' — the limit is ' + MAX_INTERVIEWS_PER_MONTH + ' per month. '
+            + 'Pick a date next month, or cancel one first.';
         limitMsg.style.display = 'block';
       }
       return;
@@ -6437,9 +6467,11 @@
       // pestaña.
       const used = await apptsInMonth(dateValue, 'np_interview');
       if(used >= MAX_INTERVIEWS_PER_MONTH){
-        alert('You already have ' + MAX_INTERVIEWS_PER_MONTH
-          + ' evaluations booked that month — that\'s the limit. '
-          + 'Cancel one first, or pick a date next month.');
+        alert(MAX_INTERVIEWS_PER_MONTH === 1
+          ? 'You already have an evaluation booked that month — one per month is the limit. '
+            + 'Cancel it first, or pick a date next month.'
+          : 'You already have ' + MAX_INTERVIEWS_PER_MONTH + ' evaluations booked that month — '
+            + 'that\'s the limit. Cancel one first, or pick a date next month.');
         selectCalendarDate(dateValue, new Date(dateValue + 'T00:00:00'));
         return;
       }
