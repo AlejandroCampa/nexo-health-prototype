@@ -5,7 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nuvi Clinic — Physician-Led Metabolic & Performance Medicine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Outfit:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Sora se queda para los títulos, como siempre. Inter entra para el cuerpo
+     (una grotesque neutra, más legible que la geométrica). IBM Plex Mono para
+     etiquetas y datos. Outfit sigue cargando porque hay estilos inline por
+     todo el archivo que la nombran directamente. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@500;600;700&family=Outfit:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
@@ -14,38 +18,54 @@
      coral accent, mint signal. Variable NAMES preserved (inline styles + JS
      depend on them). Mobile-first, Spanish-first (copy expands ~25%).
      ========================================================================= */
+  /* ====== TOKENS DE DISEÑO ======
+     Paleta sacada del prototipo en video: fondo hueso cálido, navy profundo
+     para texto y botones, teal apagado como único acento. Se cambian los
+     VALORES, no los nombres: cada estilo del archivo sigue apuntando a la
+     misma variable, así que el sitio entero se reviste sin tocar una línea
+     de JS ni un solo id.
+     El cian neón y el coral de antes quedaron fuera — eran lo que hacía que
+     no se leyera como una clínica. */
   :root{
-    --ink:#081A4D;            /* navy marino */
-    --ink-soft:#3D5480;
-    --ink-faint:rgba(8,26,77,0.58);
-    --paper:#5BE7FF;          /* neon cyan field */
-    --paper-warm:#33DCFF;     /* deeper cyan band */
-    --paper-quiet:#EAFBFF;    /* calm clinical wash */
-    --amber:#FF6F5E;          /* coral — primary accent */
-    --amber-deep:#D63F2E;     /* coral, legible on light */
-    --coral:#FF6F5E;
-    --coral-soft:rgba(255,111,94,0.14);
-    --mint:#00F5D0;
-    --teal:#00C2FF;           /* electric blue — secondary */
-    --teal-deep:#0A6E8C;
-    --sage:#0F6B57;
-    --line:rgba(8,26,77,0.14);
-    --line-soft:rgba(8,26,77,0.07);
+    --ink:#0F2336;            /* navy — texto y botones primarios */
+    --ink-soft:#3A4A66;
+    --ink-faint:rgba(15,35,54,0.68);
+    --paper:#F6F6F3;          /* hueso — fondo general */
+    --paper-warm:#F4EFEA;     /* banda cálida — cabeceras de tarjeta */
+    --paper-quiet:#FBFAF8;    /* lavado casi blanco */
+    --amber:#C9793F;          /* ámbar de aviso, ya no coral chillón */
+    --amber-deep:#9A5626;
+    --coral:#C9793F;
+    --coral-soft:rgba(201,121,63,0.12);
+    --mint:#EAF3F0;
+    --teal:#3F9786;           /* teal — acento único */
+    --teal-deep:#2C6D61;
+    --sage:#3F9786;
+    --line:rgba(15,35,54,0.13);
+    --line-soft:rgba(15,35,54,0.06);
     --white:#FFFFFF;
-    --shadow-sm:0 2px 4px -2px rgba(8,26,77,0.14);
-    --shadow-md:0 18px 40px -28px rgba(8,26,77,0.55);
-    --shadow-lg:0 46px 90px -48px rgba(8,26,77,0.62);
+    --shadow-sm:0 1px 2px rgba(15,35,54,0.05);
+    --shadow-md:0 14px 34px -26px rgba(15,35,54,0.42);
+    --shadow-lg:0 30px 70px -46px rgba(15,35,54,0.68);
     --ease:cubic-bezier(0.22,1,0.36,1);
-    --radius:22px;
+    --radius:16px;
     --maxw:1180px;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   }
+
+  /* Los títulos se quedan en Sora, la de siempre. Se probó una serif y no
+     gustó: en el titular grande se veía blanda y no como la marca.
+     Lo único que se redirige es el cuerpo, de Outfit a Inter — hay decenas
+     de estilos inline que nombran 'Outfit' a mano y perseguirlos uno por uno
+     era arriesgarse a saltarse alguno. */
+  [style*="Outfit"]{ font-family:var(--sans) !important; }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;scroll-padding-top:96px;}
   body{
     margin:0;
     background:var(--paper);
     color:var(--ink);
-    font-family:'Outfit',sans-serif;
+    font-family:var(--sans);
     font-size:16px;
     line-height:1.6;
     -webkit-font-smoothing:antialiased;
@@ -110,18 +130,18 @@
     .modal .btn{width:100%;}
     .rx-stamp,.rx-badge{white-space:normal;line-height:1.3;}
   }
-  .btn-primary{background:var(--ink);color:#EAFBFF;box-shadow:0 10px 24px -14px rgba(8,26,77,0.75);}
-  .btn-primary:hover{transform:translateY(-2px);background:#0B2467;box-shadow:0 20px 34px -18px rgba(8,26,77,0.8);}
+  .btn-primary{background:var(--ink);color:#F6F6F3;box-shadow:0 10px 24px -14px rgba(15,35,54,0.75);}
+  .btn-primary:hover{transform:translateY(-2px);background:#1B3B54;box-shadow:0 20px 34px -18px rgba(15,35,54,0.8);}
   .btn-primary:active{transform:translateY(0);}
-  .btn-outline{border-color:rgba(8,26,77,0.28);color:var(--ink);background:rgba(255,255,255,0.35);}
-  .btn-outline:hover{border-color:var(--ink);background:var(--ink);color:#EAFBFF;transform:translateY(-2px);}
+  .btn-outline{border-color:rgba(15,35,54,0.28);color:var(--ink);background:rgba(255,255,255,0.35);}
+  .btn-outline:hover{border-color:var(--ink);background:var(--ink);color:#F6F6F3;transform:translateY(-2px);}
   .menu-toggle{display:none;background:none;border:none;cursor:pointer;}
 
   /* ---- HERO --------------------------------------------------------------- */
   .hero{padding:clamp(40px,7vw,96px) 0 clamp(48px,7vw,88px);position:relative;overflow:hidden;}
   .hero-bg{position:absolute;inset:0;z-index:0;pointer-events:none;}
   .hero-bg img{width:100%;height:100%;object-fit:cover;object-position:center 62%;opacity:0.5;filter:saturate(0.9);}
-  .hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,245,208,0.55) 0%,rgba(0,245,208,0.30) 34%,rgba(234,251,255,0.72) 74%,var(--paper,#EAFBFF) 100%);}
+  .hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(63,151,134,0.55) 0%,rgba(63,151,134,0.30) 34%,rgba(234,251,255,0.72) 74%,var(--paper,#F6F6F3) 100%);}
   .hero .wrap{position:relative;z-index:2;}
   .hero::before{
     content:"℞";position:absolute;top:-8%;right:-4%;font-family:'Sora',sans-serif;
@@ -137,7 +157,7 @@
   .eyebrow{
     display:inline-flex;align-items:center;gap:9px;
     font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:0.12em;text-transform:uppercase;
-    color:var(--ink);background:rgba(255,255,255,0.62);border:1px solid rgba(8,26,77,0.10);
+    color:var(--ink);background:rgba(255,255,255,0.62);border:1px solid rgba(15,35,54,0.10);
     padding:8px 15px;border-radius:100px;margin-bottom:22px;
   }
   .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 4px var(--coral-soft);}
@@ -213,7 +233,7 @@
     border:1px solid var(--line);cursor:pointer;background:rgba(255,255,255,0.5);transition:all .2s var(--ease);
   }
   .filter:hover{border-color:var(--ink);}
-  .filter.active{background:var(--ink);color:#EAFBFF;border-color:var(--ink);}
+  .filter.active{background:var(--ink);color:#F6F6F3;border-color:var(--ink);}
   .protocol-grid{display:grid;grid-template-columns:1fr;gap:16px;max-width:880px;}
   .vial-art{display:flex;align-items:center;justify-content:center;height:104px;background:var(--paper-quiet);border-radius:12px;}
   .vial-card{
@@ -222,9 +242,9 @@
     display:flex;flex-direction:column;
   }
   .vial-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-md);border-color:var(--line);}
-  .vial-label{background:var(--ink);color:#EAFBFF;padding:22px 24px 20px;position:relative;}
+  .vial-label{background:var(--ink);color:#F6F6F3;padding:22px 24px 20px;position:relative;}
   .vial-label .cat{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--mint);}
-  .vial-label h3{font-family:'Sora',sans-serif;font-size:24px;font-weight:700;margin-top:6px;color:#EAFBFF;}
+  .vial-label h3{font-family:'Sora',sans-serif;font-size:24px;font-weight:700;margin-top:6px;color:#F6F6F3;}
   .vial-body{padding:22px 24px 24px;display:flex;flex-direction:column;flex:1;}
   .vial-spec{display:flex;justify-content:space-between;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:11px 0;border-bottom:1px solid var(--line-soft);color:var(--ink-soft);}
   .vial-spec:last-of-type{border-bottom:none;}
@@ -252,18 +272,18 @@
   .faq-a p{font-size:15px;color:var(--ink);opacity:0.8;line-height:1.75;padding:0 4px 24px 10px;max-width:760px;}
 
   /* ---- CLINICAL LEADERSHIP BAND ------------------------------------------ */
-  .lead-band{background:var(--ink);color:#EAFBFF;padding:clamp(48px,7vw,96px) 0;position:relative;overflow:hidden;}
+  .lead-band{background:var(--ink);color:#F6F6F3;padding:clamp(48px,7vw,96px) 0;position:relative;overflow:hidden;}
   .lead-band::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--mint),transparent);opacity:0.6;}
   .lead-grid{display:grid;grid-template-columns:1fr;gap:clamp(28px,4vw,56px);align-items:center;position:relative;z-index:1;}
   .lead-photo{border-radius:var(--radius);overflow:hidden;max-width:360px;border:1px solid rgba(255,255,255,0.16);box-shadow:var(--shadow-lg);}
   .lead-photo img{width:100%;height:100%;object-fit:cover;display:block;}
   .lead-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--mint);margin-bottom:14px;}
-  .lead-name{font-size:clamp(26px,4.6vw,42px);color:#EAFBFF;}
+  .lead-name{font-size:clamp(26px,4.6vw,42px);color:#F6F6F3;}
   .lead-name span{color:var(--mint);}
   .lead-role{font-size:15px;color:rgba(234,251,255,0.7);margin:8px 0 26px;}
   .lead-stats{display:flex;flex-direction:column;gap:10px;}
   .lead-stat{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:16px 18px;}
-  .lead-stat b{display:block;font-family:'Sora',sans-serif;font-size:26px;letter-spacing:-0.03em;color:#EAFBFF;}
+  .lead-stat b{display:block;font-family:'Sora',sans-serif;font-size:26px;letter-spacing:-0.03em;color:#F6F6F3;}
   .lead-stat span{font-size:13.5px;color:rgba(234,251,255,0.7);}
   .lead-claim{display:flex;align-items:center;gap:10px;font-size:14.5px;color:rgba(234,251,255,0.85);}
   .lead-claim::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--mint);}
@@ -272,12 +292,12 @@
   .tiers{display:grid;grid-template-columns:1fr;gap:20px;max-width:820px;margin:0 auto;}
   .tier{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:34px 26px;display:flex;flex-direction:column;transition:transform .35s var(--ease),box-shadow .35s var(--ease);}
   .tier:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
-  .tier.featured{background:var(--ink);color:#EAFBFF;border-color:var(--ink);position:relative;box-shadow:var(--shadow-lg);}
+  .tier.featured{background:var(--ink);color:#F6F6F3;border-color:var(--ink);position:relative;box-shadow:var(--shadow-lg);}
   .tier.featured .tier-name{color:var(--mint);}
   .tier.featured .tier-price span{color:rgba(234,251,255,0.65);}
   .tier.featured li{color:rgba(234,251,255,0.9);}
   .tier.featured p{color:rgba(234,251,255,0.7) !important;}
-  .tier-badge{position:absolute;top:-14px;right:22px;background:var(--coral) !important;color:var(--white) !important;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;padding:8px 14px;border-radius:100px;font-weight:600;box-shadow:0 10px 22px -10px rgba(8,26,77,0.7);}
+  .tier-badge{position:absolute;top:-14px;right:22px;background:var(--coral) !important;color:var(--white) !important;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;padding:8px 14px;border-radius:100px;font-weight:600;box-shadow:0 10px 22px -10px rgba(15,35,54,0.7);}
   .tier-name{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--amber-deep);margin-bottom:14px;}
   .tier-price{font-family:'Sora',sans-serif;font-size:clamp(38px,9vw,50px);font-weight:700;letter-spacing:-0.04em;margin-bottom:4px;line-height:1;}
   .tier-price span{font-family:'Outfit',sans-serif;font-size:15px;font-weight:500;opacity:0.6;letter-spacing:0;}
@@ -285,7 +305,7 @@
   .tier li{display:flex;gap:11px;padding:9px 0;font-size:15px;line-height:1.5;align-items:flex-start;}
   .tier li::before{content:"";flex:none;width:18px;height:18px;margin-top:2px;border-radius:50%;background:var(--coral-soft);
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23D63F2E' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;}
-  .tier.featured li::before{background-color:rgba(0,245,208,0.20);
+  .tier.featured li::before{background-color:rgba(63,151,134,0.20);
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2300F5D0' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");}
 
   /* ---- TRUST STRIP -------------------------------------------------------- */
@@ -296,17 +316,17 @@
   .trust-item p{margin:0;font-size:14px;color:var(--ink);opacity:0.75;line-height:1.6;}
 
   /* ---- FOOTER ------------------------------------------------------------- */
-  footer{padding:clamp(44px,6vw,72px) 0 32px;background:var(--ink);color:#EAFBFF;}
-  footer .logo{color:#EAFBFF;}
+  footer{padding:clamp(44px,6vw,72px) 0 32px;background:var(--ink);color:#F6F6F3;}
+  footer .logo{color:#F6F6F3;}
   .footer-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:32px;padding-bottom:32px;border-bottom:1px solid rgba(255,255,255,0.14);}
   .footer-cols{display:flex;gap:clamp(28px,6vw,64px);flex-wrap:wrap;}
   .footer-col h5{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--mint);margin:0 0 12px;}
   .footer-col a{display:block;font-size:14.5px;padding:6px 0;color:rgba(234,251,255,0.72);transition:color .2s var(--ease),transform .2s var(--ease);}
-  .footer-col a:hover{color:#EAFBFF;transform:translateX(3px);}
+  .footer-col a:hover{color:#F6F6F3;transform:translateX(3px);}
   .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:24px;flex-wrap:wrap;gap:12px;}
   .footer-bottom p{margin:0;font-size:12.5px;color:rgba(234,251,255,0.6);max-width:720px;line-height:1.65;}
-  .footer-bottom a{color:rgba(234,251,255,0.45) !important;}
-  .footer-legal-note{font-size:12px;color:rgba(234,251,255,0.45);margin-top:18px;line-height:1.65;max-width:900px;}
+  .footer-bottom a{color:rgba(246,246,243,0.62) !important;}
+  .footer-legal-note{font-size:12px;color:rgba(246,246,243,0.62);margin-top:18px;line-height:1.65;max-width:900px;}
 
   /* ---- RESPONSIVE (mobile-first upshifts) --------------------------------- */
   @media(min-width:700px){
@@ -375,7 +395,7 @@
 
   /* ---- MODALS ------------------------------------------------------------- */
   .modal-overlay{
-    position:fixed;inset:0;background:rgba(8,26,77,0.58);
+    position:fixed;inset:0;background:rgba(15,35,54,0.68);
     display:none;align-items:center;justify-content:center;
     padding:24px;z-index:200;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
   }
@@ -405,8 +425,8 @@
     background:var(--white);font-family:'Outfit',sans-serif;font-size:14.5px;color:var(--ink);
     transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
   }
-  .field input::placeholder,.field textarea::placeholder{color:rgba(8,26,77,0.38);}
-  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,245,208,0.28);}
+  .field input::placeholder,.field textarea::placeholder{color:rgba(15,35,54,0.52);}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,151,134,0.28);}
   .modal .btn{width:100%;margin-top:8px;}
   .modal-foot-link{display:block;text-align:center;margin-top:18px;font-size:13px;color:var(--ink-soft);}
   .modal-foot-link a{color:var(--amber-deep);font-weight:600;}
@@ -414,7 +434,7 @@
   .modal-icon-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
   .modal-plan-tag{
     display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:0.02em;
-    background:rgba(0,245,208,0.16);color:var(--amber-deep);padding:6px 13px;border-radius:100px;margin-bottom:20px;
+    background:rgba(63,151,134,0.16);color:var(--amber-deep);padding:6px 13px;border-radius:100px;margin-bottom:20px;
   }
   .modal-success{text-align:center;padding:12px 0;}
   .modal-success .check{
@@ -470,7 +490,7 @@
   .status-pill{
     display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;
     font-size:11px;text-transform:uppercase;letter-spacing:0.08em;
-    background:rgba(0,245,208,0.15);color:var(--amber-deep);padding:7px 14px;border-radius:100px;margin-bottom:18px;
+    background:rgba(63,151,134,0.15);color:var(--amber-deep);padding:7px 14px;border-radius:100px;margin-bottom:18px;
   }
   .status-pill.status-active{background:rgba(79,122,100,0.15);color:var(--sage);}
   .status-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
@@ -490,7 +510,7 @@
 
   /* ---- HEALTH HISTORY FORM ----------------------------------------------- */
   .consent-box{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;font-size:13.5px;line-height:1.7;transition:border-color .25s var(--ease),background .25s var(--ease);}
-  .consent-box:has(input:checked){border-color:var(--teal);background:rgba(0,245,208,0.08);}
+  .consent-box:has(input:checked){border-color:var(--teal);background:rgba(63,151,134,0.08);}
   .form-section-title{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--amber-deep);margin:32px 0 16px;display:flex;align-items:center;gap:12px;}
   .form-section-title::before{content:"";width:20px;height:1.5px;background:var(--amber);flex:none;}
   .form-section-title:first-of-type{margin-top:0;}
@@ -498,7 +518,7 @@
   .checkbox-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
   .checkbox-item{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;background:var(--white);border:1px solid var(--line);padding:13px 15px;border-radius:12px;cursor:pointer;line-height:1.45;transition:border-color .2s var(--ease),background .2s var(--ease);}
   .checkbox-item:hover{border-color:var(--teal);}
-  .checkbox-item:has(input:checked){border-color:var(--teal);background:rgba(0,245,208,0.08);}
+  .checkbox-item:has(input:checked){border-color:var(--teal);background:rgba(63,151,134,0.08);}
   .checkbox-item input{width:17px;height:17px;flex:none;margin-top:1px;accent-color:var(--teal-deep);}
   .flag-box{background:rgba(196,60,60,0.06);border:1px solid rgba(196,60,60,0.25);border-radius:14px;padding:18px 20px;margin-top:14px;}
   .flag-box p{font-size:12.5px;color:var(--ink-soft);margin:10px 0 0;line-height:1.55;}
@@ -508,7 +528,7 @@
   /* ---- SCHEDULER ---------------------------------------------------------- */
   .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;}
   .slot-btn{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:left;cursor:pointer;transition:all .2s var(--ease);font-family:'Outfit',sans-serif;}
-  .slot-btn:hover{border-color:var(--amber);background:rgba(0,245,208,0.08);transform:translateY(-2px);}
+  .slot-btn:hover{border-color:var(--amber);background:rgba(63,151,134,0.08);transform:translateY(-2px);}
   .slot-day{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.04em;}
   .slot-time{font-family:'Sora',sans-serif;font-weight:700;font-size:19px;margin-top:4px;color:var(--ink);}
   @media(max-width:700px){ .slot-grid{grid-template-columns:1fr 1fr;} }
@@ -534,7 +554,7 @@
   }
   .cal-day.empty{border:none;background:transparent;cursor:default;}
   .cal-day.disabled{opacity:0.28;cursor:default;background:var(--paper-warm);}
-  .cal-day.available:hover{border-color:var(--amber);background:rgba(0,245,208,0.1);transform:translateY(-2px);}
+  .cal-day.available:hover{border-color:var(--amber);background:rgba(63,151,134,0.1);transform:translateY(-2px);}
   .cal-day.selected{background:var(--ink);color:var(--paper);border-color:var(--ink);}
   .cal-day.today{border-color:var(--amber);font-weight:700;color:var(--amber-deep);}
 
@@ -542,35 +562,35 @@
   /* ---- people / member stories ---- */
   .hero-people{display:flex;align-items:center;gap:14px;margin-top:22px;}
   .hero-avatars{display:flex;}
-  .hero-avatars img{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2.5px solid #fff;margin-left:-12px;box-shadow:0 2px 10px rgba(8,26,77,0.18);}
+  .hero-avatars img{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2.5px solid #fff;margin-left:-12px;box-shadow:0 2px 10px rgba(15,35,54,0.18);}
   .hero-avatars img:first-child{margin-left:0;}
   .hero-people span{font-size:13.5px;line-height:1.4;color:var(--ink);opacity:0.75;max-width:230px;}
   .people-grid{display:grid;gap:20px;grid-template-columns:1fr;}
   @media(min-width:760px){.people-grid{grid-template-columns:repeat(3,1fr);gap:24px;}}
-  .person{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 0 rgba(8,26,77,0.08),0 18px 40px -28px rgba(8,26,77,0.45);transition:transform .35s cubic-bezier(.2,.7,.3,1),box-shadow .35s;}
-  .person:hover{transform:translateY(-4px);box-shadow:0 26px 50px -28px rgba(8,26,77,0.5);}
+  .person{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 0 rgba(15,35,54,0.08),0 18px 40px -28px rgba(15,35,54,0.68);transition:transform .35s cubic-bezier(.2,.7,.3,1),box-shadow .35s;}
+  .person:hover{transform:translateY(-4px);box-shadow:0 26px 50px -28px rgba(15,35,54,0.63);}
   .person-img{position:relative;aspect-ratio:4/5;overflow:hidden;background:#dff6fb;}
   .person-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.2,.7,.3,1);}
   .person:hover .person-img img{transform:scale(1.04);}
   .person-tag{position:absolute;left:14px;bottom:14px;background:rgba(255,255,255,0.94);backdrop-filter:blur(6px);border-radius:999px;padding:6px 13px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);}
   .person-body{padding:20px 20px 22px;}
   .person-body blockquote{margin:0 0 14px;font-size:16px;line-height:1.55;color:var(--ink);}
-  .person-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(8,26,77,0.55);}
-  .people-note{margin-top:26px;font-size:12.5px;line-height:1.6;color:rgba(8,26,77,0.6);max-width:720px;}
-  .visit-band{position:relative;border-radius:24px;overflow:hidden;display:grid;grid-template-columns:1fr;background:#fff;box-shadow:0 24px 60px -40px rgba(8,26,77,0.6);}
+  .person-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(15,35,54,0.66);}
+  .people-note{margin-top:26px;font-size:12.5px;line-height:1.6;color:rgba(15,35,54,0.68);max-width:720px;}
+  .visit-band{position:relative;border-radius:24px;overflow:hidden;display:grid;grid-template-columns:1fr;background:#fff;box-shadow:0 24px 60px -40px rgba(15,35,54,0.68);}
   @media(min-width:860px){.visit-band{grid-template-columns:1.05fr 1fr;align-items:stretch;}}
   .visit-band img{width:100%;height:100%;min-height:260px;object-fit:cover;display:block;}
   .visit-copy{padding:clamp(26px,4vw,46px);display:flex;flex-direction:column;justify-content:center;gap:14px;}
   .visit-copy h3{font-size:clamp(22px,3.2vw,32px);line-height:1.1;}
-  .visit-copy p{font-size:15.5px;line-height:1.65;color:rgba(8,26,77,0.78);}
+  .visit-copy p{font-size:15.5px;line-height:1.65;color:rgba(15,35,54,0.78);}
   .visit-copy ul{list-style:none;padding:0;margin:4px 0 0;display:grid;gap:9px;}
-  .visit-copy li{position:relative;padding-left:22px;font-size:14.5px;color:rgba(8,26,77,0.8);}
+  .visit-copy li{position:relative;padding-left:22px;font-size:14.5px;color:rgba(15,35,54,0.8);}
   .visit-copy li::before{content:"";position:absolute;left:0;top:7px;width:9px;height:9px;border-radius:50%;background:var(--coral);}
 </style>
 </head>
 <body>
 
-<div id="promo-bar" style="background:var(--ink);color:#EAFBFF;text-align:center;
+<div id="promo-bar" style="background:var(--ink);color:#F6F6F3;text-align:center;
      padding:11px 18px;font-size:13px;letter-spacing:0.01em;font-family:'Outfit',sans-serif;position:relative;z-index:60;">
   <span style="display:inline-flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:center;">
     <span style="width:6px;height:6px;border-radius:50%;background:var(--coral);flex:none;"></span>
@@ -831,7 +851,7 @@
           <span class="status-pill" style="background:rgba(196,60,60,0.1);color:#B23A3A;">Membership cancelled</span>
           <h3>Your membership is cancelled</h3>
           <p id="membership-cancelled-reason" style="margin-bottom:18px;"></p>
-          <p style="font-size:13px;color:rgba(8,26,77,0.55);margin-bottom:18px;">Cancelling here stops your access on our side — if you were charged after cancelling, contact us directly and we'll help sort out billing with Stripe.</p>
+          <p style="font-size:13px;color:rgba(15,35,54,0.66);margin-bottom:18px;">Cancelling here stops your access on our side — if you were charged after cancelling, contact us directly and we'll help sort out billing with Stripe.</p>
           <button class="btn btn-primary" style="width:auto;padding:13px 28px;" onclick="resubscribeMembership()">Resubscribe</button>
         </div>
 
@@ -875,9 +895,10 @@
           <div class="cal-weekday-row" id="np-calendar-weekdays"></div>
           <div class="cal-grid" id="np-calendar"></div>
           <div id="np-slots-wrap" style="display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--line);">
-            <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(8,26,77,0.6);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
+            <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(15,35,54,0.68);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
             <div class="slot-grid" id="np-slot-grid"></div>
-            <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(8,26,77,0.55);">No open times that day — try another date.</p>
+            <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(15,35,54,0.66);">No open times that day — try another date.</p>
+            <p id="np-limit-msg" style="display:none;font-size:13.5px;color:var(--amber-deep);"></p>
           </div>
         </div>
 
@@ -940,11 +961,10 @@
             <div class="name" style="font-weight:500;">Membership (<span id="active-plan-name">—</span>)</div>
             <div class="meta" id="active-plan-price">—</div>
           </div>
-          <div class="dash-protocol-row" style="border-top:1px solid var(--ink);margin-top:4px;">
-            <div class="name" style="font-family:'Sora',sans-serif;font-size:17px;">Total monthly</div>
-            <div class="name" id="active-total-price" style="font-family:'Sora',sans-serif;font-size:17px;">—</div>
-          </div>
-          <p id="active-med-notes" style="margin-top:14px;font-size:13px;color:rgba(8,26,77,0.55);"></p>
+          <!-- "Total monthly" quitado a propósito. Sumaba membresía +
+               medicamento en una sola cifra, y son cobros distintos que ni
+               siquiera se cobran el mismo día. Cada renglón enseña su precio. -->
+          <p id="active-med-notes" style="margin-top:14px;font-size:13px;color:rgba(15,35,54,0.66);"></p>
         </div>
 
       </div>
@@ -1015,7 +1035,7 @@
         <div id="store-pending-list"><p class="np-empty">None right now.</p></div>
 
         <div class="form-section-title">Request a new prescription</div>
-        <p style="font-size:13px;color:rgba(8,26,77,0.6);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
+        <p style="font-size:13px;color:rgba(15,35,54,0.68);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
         <div class="two-col">
           <div class="field"><label>Category</label>
             <select id="store-request-cat" onchange="onRequestCategoryChange()"></select>
@@ -1051,7 +1071,7 @@
             <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:'Outfit',sans-serif;font-size:14px;">
             <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="sendMessage()">Send</button>
           </div>
-          <p style="margin-top:12px;font-size:12.5px;color:rgba(8,26,77,0.5);">Messages are seen by your care team during business hours. This is not for emergencies — call 911 if you have a medical emergency.</p>
+          <p style="margin-top:12px;font-size:12.5px;color:rgba(15,35,54,0.63);">Messages are seen by your care team during business hours. This is not for emergencies — call 911 if you have a medical emergency.</p>
         </div>
 
         <div class="dash-card">
@@ -1070,10 +1090,10 @@
             <div class="cal-weekday-row" id="physician-calendar-weekdays"></div>
             <div class="cal-grid" id="physician-calendar"></div>
             <div id="physician-slots-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
-              <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(8,26,77,0.6);margin-bottom:8px;text-transform:uppercase;"></div>
+              <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(15,35,54,0.68);margin-bottom:8px;text-transform:uppercase;"></div>
               <div class="slot-grid" id="physician-slot-grid" style="grid-template-columns:1fr 1fr;"></div>
-              <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(8,26,77,0.5);">No open times that day.</p>
-              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(8,26,77,0.6);">You've used both physician evaluations for this month — you can book again starting next month.</p>
+              <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(15,35,54,0.63);">No open times that day.</p>
+              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(15,35,54,0.68);">You've used both physician evaluations for this month — you can book again starting next month.</p>
             </div>
           </div>
         </div>
@@ -1095,10 +1115,10 @@
           <div class="form-section-title">About you</div>
           <div class="field"><label>Full legal name</label><input id="hh-full-name" type="text" placeholder="As it appears on your ID" required></div>
           <div class="field"><label>Date of birth</label><input id="hh-dob" type="date" required></div>
-          <p style="font-size:12px;color:rgba(8,26,77,0.55);margin:-4px 0 4px;">Your name and date of birth must match your ID — the pharmacy requires them to fill a prescription.</p>
+          <p style="font-size:12px;color:rgba(15,35,54,0.66);margin:-4px 0 4px;">Your name and date of birth must match your ID — the pharmacy requires them to fill a prescription.</p>
 
           <div class="form-section-title">Shipping address</div>
-          <p style="font-size:12px;color:rgba(8,26,77,0.55);margin:-6px 0 12px;">Where we'll ship your medication. Our physicians are licensed in Puerto Rico, so we can only treat and ship to patients located here.</p>
+          <p style="font-size:12px;color:rgba(15,35,54,0.66);margin:-6px 0 12px;">Where we'll ship your medication. Our physicians are licensed in Puerto Rico, so we can only treat and ship to patients located here.</p>
           <div class="field"><label>Street address</label><input id="hh-address1" type="text" placeholder="123 Calle Principal"></div>
           <div class="field"><label>Apt / unit <span style="font-weight:400;opacity:0.6;">(optional)</span></label><input id="hh-address2" type="text" placeholder="Apt 4B"></div>
           <div class="two-col">
@@ -1176,9 +1196,9 @@
             <div class="field"><label>Height</label>
               <div style="display:flex;gap:8px;">
                 <input id="hh-height-ft" type="number" min="1" max="8" step="1" placeholder="5" style="width:70px;">
-                <span style="align-self:center;font-size:13px;color:rgba(8,26,77,0.5);">ft</span>
+                <span style="align-self:center;font-size:13px;color:rgba(15,35,54,0.63);">ft</span>
                 <input id="hh-height-in" type="number" min="0" max="11" step="1" placeholder="9" style="width:70px;">
-                <span style="align-self:center;font-size:13px;color:rgba(8,26,77,0.5);">in</span>
+                <span style="align-self:center;font-size:13px;color:rgba(15,35,54,0.63);">in</span>
               </div>
             </div>
             <div class="field"><label>Weight (lbs)</label><input id="hh-weight" type="number" min="50" max="1000" step="0.1" placeholder="180"></div>
@@ -1244,7 +1264,7 @@
           <button class="btn btn-primary" id="video-join-btn" onclick="joinVideoCall(currentAppointment ? currentAppointment.ticket_number : '', 'patient', 'video-local', 'video-remote', 'video-status')">Join meeting</button>
           <button class="btn btn-outline" onclick="leaveVideoCall('video-local','video-remote','video-status');hideVideoRoom()">Leave</button>
         </div>
-        <p style="margin-top:14px;font-size:12px;color:rgba(8,26,77,0.45);">Video connects browser-to-browser. On most home and mobile networks this works instantly — a small number of very restrictive corporate/school networks may need extra setup to connect.</p>
+        <p style="margin-top:14px;font-size:12px;color:rgba(15,35,54,0.68);">Video connects browser-to-browser. On most home and mobile networks this works instantly — a small number of very restrictive corporate/school networks may need extra setup to connect.</p>
       </div>
     </div>
 
@@ -1269,7 +1289,7 @@
 
         <div id="notif-panel" style="display:none;position:absolute;top:calc(100% + 10px);right:0;z-index:120;
              width:min(420px,calc(100vw - 40px));max-height:65vh;overflow-y:auto;background:var(--white);
-             border:1px solid var(--line);border-radius:16px;box-shadow:0 22px 50px -22px rgba(8,26,77,0.45);">
+             border:1px solid var(--line);border-radius:16px;box-shadow:0 22px 50px -22px rgba(15,35,54,0.68);">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;
                       padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--white);">
             <b style="font-size:14px;">Notifications</b>
@@ -1334,7 +1354,7 @@
             <h3 style="margin:0;">Clinic oversight</h3>
             <span class="status-pill status-active">Physician view</span>
           </div>
-          <p style="font-size:13px;color:rgba(8,26,77,0.6);margin-bottom:18px;">Every provider's working hours and the whole clinic's booked schedule.</p>
+          <p style="font-size:13px;color:rgba(15,35,54,0.68);margin-bottom:18px;">Every provider's working hours and the whole clinic's booked schedule.</p>
 
           <div class="form-section-title">Provider working hours</div>
           <div id="oversight-availability" style="margin-bottom:18px;"></div>
@@ -1361,7 +1381,7 @@
           </div>
 
           <div class="form-section-title">Clinic schedule — next 14 days</div>
-          <p style="font-size:12.5px;color:rgba(8,26,77,0.55);margin-bottom:10px;">Booked slots are removed from patient availability automatically.</p>
+          <p style="font-size:12.5px;color:rgba(15,35,54,0.66);margin-bottom:10px;">Booked slots are removed from patient availability automatically.</p>
           <div id="oversight-schedule" style="max-height:340px;overflow-y:auto;"></div>
 
           <div class="form-section-title">Provider hours logged — last 30 days</div>
@@ -1433,7 +1453,7 @@
     <div id="np-membership-status" style="font-size:13.5px;margin-bottom:10px;"></div>
     <button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13px;border-color:#B23A3A;color:#B23A3A;margin-bottom:20px;" onclick="npCancelMembership()">Cancel membership — medically ineligible</button>
 
-    <div class="form-section-title">Progress note <span style="font-weight:400;color:rgba(8,26,77,0.5);">(signed clinical documentation)</span></div>
+    <div class="form-section-title">Progress note <span style="font-weight:400;color:rgba(15,35,54,0.63);">(signed clinical documentation)</span></div>
     <div id="np-records-list" style="margin-bottom:14px;"></div>
 
     <details id="np-record-form" style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:22px;">
@@ -1458,7 +1478,7 @@
 
       <div class="field"><label>HPI — History of Present Illness</label>
         <textarea id="rec-s" rows="5" style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
-        <p style="font-size:12px;color:rgba(8,26,77,0.55);margin-top:6px;">Pre-filled from the patient's intake — edit as needed.</p>
+        <p style="font-size:12px;color:rgba(15,35,54,0.66);margin-top:6px;">Pre-filled from the patient's intake — edit as needed.</p>
       </div>
       <div class="field"><label>Assessment</label>
         <textarea id="rec-a" rows="3" placeholder="Obesity, responding appropriately to GLP-1 therapy. No contraindications identified..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
@@ -1471,10 +1491,10 @@
         <button class="btn btn-outline" style="width:auto;padding:9px 18px;" onclick="saveMedicalRecord(false)">Save draft</button>
         <button class="btn btn-primary" style="width:auto;padding:9px 18px;" onclick="saveMedicalRecord(true)">Sign &amp; save</button>
       </div>
-      <p style="font-size:12px;color:rgba(8,26,77,0.55);margin-top:10px;">A signed record cannot be edited — corrections are made by adding an amendment.</p>
+      <p style="font-size:12px;color:rgba(15,35,54,0.66);margin-top:10px;">A signed record cannot be edited — corrections are made by adding an amendment.</p>
     </details>
 
-    <div class="form-section-title">Clinical notes <span style="font-weight:400;color:rgba(8,26,77,0.5);">(staff only — never visible to patient)</span></div>
+    <div class="form-section-title">Clinical notes <span style="font-weight:400;color:rgba(15,35,54,0.63);">(staff only — never visible to patient)</span></div>
     <div id="np-clinical-notes-list" style="max-height:220px;overflow-y:auto;margin-bottom:12px;"></div>
     <div class="field"><label for="np-new-note">Add a note</label>
       <textarea id="np-new-note" rows="3" placeholder="e.g. discussed dose tolerance, plan to reassess at next visit..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
@@ -1494,7 +1514,7 @@
       <div class="field"><label id="np-dose-label">Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" min="0" step="0.1" value="2.5" oninput="onNPDoseInput()"></div>
       <div class="field"></div>
     </div>
-    <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(8,26,77,0.65);margin:6px 0 14px;"></div>
+    <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(15,35,54,0.72);margin:6px 0 14px;"></div>
     <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="npApprovePrescription()">Approve prescription</button>
 
     <div class="form-section-title">Message patient</div>
@@ -1688,7 +1708,16 @@
     </div>
     <div class="footer-bottom">
       <p>© 2026 Nuvi Clinic. Telehealth services provided by licensed physicians. Not for medical emergencies — call 911.</p>
-      <a href="javascript:void(0)" onclick="openModal('staff')" style="font-size:12px;color:rgba(8,26,77,0.4);">Staff login</a>
+      <a href="javascript:void(0)" onclick="openModal('staff')" style="font-size:12px;color:rgba(15,35,54,0.66);">Staff login</a>
+      <!-- Sello de versión. Sirve para saber de un vistazo QUÉ archivo está
+           corriendo el sitio, en vez de adivinar si un cambio subió o si el
+           navegador está sirviendo una copia vieja de caché. -->
+      <!-- El footer es navy oscuro: este texto va CLARO. En navy sobre navy
+           el sello quedaba invisible, y es justo lo que hay que poder leer
+           para saber qué versión está desplegada. -->
+      <span class="notranslate" translate="no" id="nuvi-build"
+            style="font-size:11px;color:rgba(246,246,243,0.55);margin-left:10px;
+                   font-family:'IBM Plex Mono',monospace;"></span>
     </div>
   </div>
 </footer>
@@ -1829,18 +1858,18 @@
 
     <div class="form-section-title">My medical information</div>
     <div id="settings-medical-info" style="background:var(--paper-warm);border-radius:12px;padding:16px;margin-bottom:8px;font-size:13px;line-height:1.8;"></div>
-    <p style="font-size:12px;color:rgba(8,26,77,0.5);margin-bottom:10px;">If something here is wrong, you can correct it yourself. Your care team sees the updated version.</p>
+    <p style="font-size:12px;color:rgba(15,35,54,0.63);margin-bottom:10px;">If something here is wrong, you can correct it yourself. Your care team sees the updated version.</p>
     <button class="btn btn-outline" style="width:auto;padding:10px 20px;margin-bottom:24px;" onclick="openHealthHistoryForEdit()">Review / edit my health history</button>
 
     <div class="form-section-title">Password</div>
-    <p style="font-size:13px;color:rgba(8,26,77,0.6);margin-bottom:12px;">You normally log in with an email link, but you can set a password here if you prefer.</p>
+    <p style="font-size:13px;color:rgba(15,35,54,0.68);margin-bottom:12px;">You normally log in with an email link, but you can set a password here if you prefer.</p>
     <div class="field"><label for="patient-cur-pass">Current password</label><input id="patient-cur-pass" type="password" placeholder="Leave blank if you've never set one"></div>
     <div class="field"><label for="patient-new-pass">New password</label><input id="patient-new-pass" type="password" placeholder="At least 6 characters"></div>
     <div class="field"><label for="patient-new-pass2">Confirm new password</label><input id="patient-new-pass2" type="password"></div>
     <button class="btn btn-outline" style="width:auto;padding:10px 20px;margin-bottom:24px;" onclick="changePassword('patient-new-pass','patient-new-pass2','patient-cur-pass',false)">Set password</button>
 
     <div class="form-section-title">Shipping & identity</div>
-    <p style="font-size:13px;color:rgba(8,26,77,0.6);margin-bottom:12px;">Required before any medication can be prescribed and shipped — the pharmacy needs this to fulfill your prescription.</p>
+    <p style="font-size:13px;color:rgba(15,35,54,0.68);margin-bottom:12px;">Required before any medication can be prescribed and shipped — the pharmacy needs this to fulfill your prescription.</p>
     <div class="field"><label for="settings-dob">Date of birth</label><input id="settings-dob" type="date"></div>
     <div class="field"><label for="settings-address1">Shipping address</label><input id="settings-address1" type="text" placeholder="Street address"></div>
     <div class="field"><label for="settings-address2">Apt / Suite (optional)</label><input id="settings-address2" type="text" placeholder="Optional"></div>
@@ -1855,7 +1884,7 @@
     <div id="settings-commitment-notice" style="display:none;background:var(--paper-warm);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.65;"></div>
     <div id="settings-cancel-section">
       <div class="form-section-title">Cancel membership</div>
-      <p style="font-size:13px;color:rgba(8,26,77,0.6);margin-bottom:12px;">This does <b>not</b> automatically cancel any recurring charge in Stripe — contact us to confirm billing has stopped too.</p>
+      <p style="font-size:13px;color:rgba(15,35,54,0.68);margin-bottom:12px;">This does <b>not</b> automatically cancel any recurring charge in Stripe — contact us to confirm billing has stopped too.</p>
       <div class="field"><label for="cancel-membership-reason">Reason</label>
         <select id="cancel-membership-reason">
           <option>Too expensive</option>
@@ -2039,6 +2068,20 @@
   // │  único que hay que tocar.                                        │
   // └──────────────────────────────────────────────────────────────────┘
   const TEST_MODE = true;
+
+  // Identifica esta versión del archivo. Sale abajo del todo en la página y
+  // en la consola. Si el sello no cambia después de subir un archivo nuevo,
+  // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
+  const NUVI_BUILD = 'build 20ago-3';
+  try{
+    console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
+                'color:#00A896;font-weight:bold');
+    window.NUVI_BUILD = NUVI_BUILD;
+    document.addEventListener('DOMContentLoaded', function(){
+      const el = document.getElementById('nuvi-build');
+      if(el) el.textContent = NUVI_BUILD + (TEST_MODE ? ' · TEST MODE' : '');
+    });
+  }catch(e){}
 
   let activeMedCoupon = null;
 
@@ -2283,7 +2326,15 @@
           email,
           options: {
             emailRedirectTo: window.location.origin + window.location.pathname,
-            data: { full_name: fullName, goal: goal, plan: plan, pending_intake: true }
+            // first_name va aparte porque las plantillas de correo de Supabase
+            // usan Go templates, y ahí no hay función para partir un string.
+            // Sin este campo el correo tendría que saludar con el nombre
+            // completo ("Hola Ana Rivera") en vez de solo el nombre.
+            data: {
+              full_name: fullName,
+              first_name: String(fullName || '').trim().split(/\s+/)[0] || '',
+              goal: goal, plan: plan, pending_intake: true
+            }
           }
         });
         if(error) throw error;
@@ -2438,13 +2489,13 @@
 
     const price = calcProtocolPrice(name, m.startingDoseMg);
     const availability = m.launched
-      ? '<span style="color:var(--sage);">Available now</span>'
+      ? '<span style="color:var(--teal-deep);font-weight:500;">Available now</span>'
       : '<span style="color:var(--amber-deep);">Not yet offered — you can still register interest</span>';
 
     box.innerHTML =
         '<div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:16px;font-weight:600;margin-bottom:6px;">' + name + '</div>'
       + '<p style="font-size:13.5px;line-height:1.65;margin-bottom:10px;">' + m.description + '</p>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:rgba(8,26,77,0.6);line-height:1.8;">'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:rgba(15,35,54,0.68);line-height:1.8;">'
       + m.form + '<br>'
       + 'Typical starting dose: ' + m.startingDose + '<br>'
       // El precio va por dosis, así que enseñar los escalones completos. Decir
@@ -2508,7 +2559,7 @@
         + '<div class="vial-art">' + (info.image
               ? '<img src="' + info.image + '" alt="' + name + '" style="max-height:86px;max-width:100%;object-fit:contain;">'
               : medArt(info)) + '</div>'
-        + '<p style="font-size:13px;color:rgba(8,26,77,0.6);margin:0 0 12px;">' + info.description + '</p>'
+        + '<p style="font-size:13px;color:rgba(15,35,54,0.68);margin:0 0 12px;">' + info.description + '</p>'
         + '<div class="vial-spec"><span>Form</span><b>' + info.form + '</b></div>'
         + '<div class="vial-spec"><span>Starting dose</span><b>' + info.startingDose + '</b></div>'
         + '<div class="vial-spec"><span>Pricing</span><b>By prescribed dose</b></div>'
@@ -2809,7 +2860,11 @@
       }
       document.getElementById('active-plan-name').textContent = history.plan || '—';
       document.getElementById('active-plan-price').textContent = '$' + membershipPrice + '/mo';
-      document.getElementById('active-total-price').textContent = '$' + (membershipPrice + totalMedPrice) + '/mo';
+      // El renglón de "Total monthly" se quitó del dashboard. Se deja el
+      // guard porque si el elemento no está, esto tiraba null y reventaba
+      // loadPatientState a la mitad — la tienda ni se llegaba a dibujar.
+      const totalEl = document.getElementById('active-total-price');
+      if(totalEl) totalEl.textContent = '$' + (membershipPrice + totalMedPrice) + '/mo';
       document.getElementById('active-med-notes').textContent = history.approved_notes || '';
     }
 
@@ -3025,7 +3080,7 @@
     // tiene derecho a despacharla. Lo único que cambia es que se marca como
     // anterior y se atenúa, para que no se confunda con la vigente.
     const prevBadge = item.previous
-      ? '<span class="rx-badge" style="border-color:rgba(8,26,77,0.25);color:rgba(8,26,77,0.5);'
+      ? '<span class="rx-badge" style="border-color:rgba(15,35,54,0.25);color:rgba(15,35,54,0.63);'
         + 'margin-left:7px;font-size:10px;padding:1px 7px;vertical-align:middle;">Previous</span>'
       : '';
     const dateLine = item.approvedOn
@@ -3042,14 +3097,14 @@
     let actionHtml;
     if(item.purchased){
       actionHtml = '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Order placed with pharmacy</span>'
-        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(8,26,77,0.45);">Cancel</a>';
+        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(15,35,54,0.68);">Cancel</a>';
     } else if(!hasCompleteShippingAddress(currentHealthHistory)){
       // Don't dangle a Buy button we're going to reject — say why up front.
       actionHtml = '<button class="btn btn-outline" style="width:auto;padding:7px 16px;font-size:13px;border-color:var(--amber);color:var(--amber-deep);" onclick="openHealthHistoryForEdit()">Add shipping address to order</button>'
-        + '<br><span style="font-size:11.5px;color:rgba(8,26,77,0.5);">Required before we can ship</span>';
+        + '<br><span style="font-size:11.5px;color:rgba(15,35,54,0.63);">Required before we can ship</span>';
     } else {
       actionHtml = '<button class="btn btn-primary" style="width:auto;padding:7px 16px;font-size:13px;" onclick="' + item.onBuy + '">Buy</button>'
-        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(8,26,77,0.45);">Cancel</a>';
+        + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(15,35,54,0.68);">Cancel</a>';
     }
 
     return '<div class="dash-protocol-row"' + rowStyle + '>'
@@ -3696,6 +3751,22 @@
   let physicianCalendarSelectedDate = null;
   let physicianExistingAppts = [];
 
+  // Igual que timesForWindow pero en pasos de 15 min, que es el largo de una
+  // cita de médico. Usar el paso del NP aquí dejaría huecos sin ofrecer.
+  function physicianTimesForWindow(startTime, endTime){
+    const [sh, sm] = String(startTime || '').split(':').map(Number);
+    const [eh, em] = String(endTime || '').split(':').map(Number);
+    if(![sh,sm,eh,em].every(Number.isFinite)) return [];
+    const slots = [];
+    let h = sh, m = sm;
+    while(h < eh || (h === eh && m < em)){
+      slots.push(formatSlotTime(h, m));
+      m += PHYSICIAN_SLOT_MINUTES;
+      if(m >= 60){ m -= 60; h++; }
+    }
+    return slots;
+  }
+
   function allPhysicianSlotTimes(){
     const slots = [];
     for(let h = PHYSICIAN_DAY_START_HOUR; h < PHYSICIAN_DAY_END_HOUR; h++){
@@ -3809,14 +3880,38 @@
       return;
     }
 
-    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(8,26,77,0.5);">Checking availability...</p>';
+    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(15,35,54,0.63);">Checking availability...</p>';
+
+    // Los horarios salen de la disponibilidad REAL de los médicos ese día de
+    // la semana. Antes se ofrecía 9am–5pm todos los días pasara lo que
+    // pasara: el paciente reservaba un domingo a las 4pm y no había nadie.
+    const availability = await loadNPAvailability();
+    const roster = await loadStaffRoster();
+    const weekday = new Date(dateValue + 'T00:00:00').getDay();
+
+    // Solo cuentan los médicos. Un NP disponible no habilita una cita de
+    // "physician evaluation".
+    const docWindows = (availability || []).filter(a => {
+      if(a.day_of_week !== weekday) return false;
+      const s = roster[a.np_user_id];
+      return s && (s.role === 'physician' || s.role === 'admin');
+    });
+
+    const docCountByTime = {};
+    docWindows.forEach(w => physicianTimesForWindow(w.start_time, w.end_time)
+      .forEach(t => { docCountByTime[t] = (docCountByTime[t] || 0) + 1; }));
 
     const { data: bookedRows } = await supabaseClient
       .from('appointments').select('appointment_time')
       .eq('type', 'physician_visit').eq('appointment_date', dateValue).neq('status', 'cancelled');
-    const bookedTimes = new Set((bookedRows || []).map(r => r.appointment_time));
+    const bookedCount = {};
+    (bookedRows || []).forEach(r => {
+      bookedCount[r.appointment_time] = (bookedCount[r.appointment_time] || 0) + 1;
+    });
 
-    const openTimes = allPhysicianSlotTimes().filter(t => !bookedTimes.has(t));
+    // Un turno sigue abierto mientras quede al menos un médico libre en él.
+    const openTimes = dropPastSlots(dateValue, allPhysicianSlotTimes().filter(t =>
+      docCountByTime[t] && (bookedCount[t] || 0) < docCountByTime[t]));
 
     slotGrid.innerHTML = '';
     if(openTimes.length === 0){
@@ -3864,6 +3959,11 @@
         type: 'physician_visit'
       });
       if(error) throw error;
+
+      notifyAppointmentBooked(null, await loadStaffRoster(),
+        new Date(dateValue + 'T00:00:00').toLocaleDateString(undefined,
+          { weekday:'long', month:'long', day:'numeric' }), time, ticket);
+
       await loadPhysicianAppointment();
     } catch(err){
       alert('Could not book that slot: ' + (err.message || 'unknown error'));
@@ -4558,7 +4658,7 @@
         + (a.np_user_id ? ' · ' + providerName(a.np_user_id) : '')
         + '</div></div><span class="rx-badge">' + (a.status || 'scheduled') + '</span></div>').join('');
       return '<div style="margin-bottom:12px;"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">'
-        + label + ' <span style="font-weight:400;color:rgba(8,26,77,0.5);">('
+        + label + ' <span style="font-weight:400;color:rgba(15,35,54,0.63);">('
         + byDate[date].length + ' booked)</span></div>' + items + '</div>';
     }).join('');
   }
@@ -5225,7 +5325,7 @@
         : '';
       return '<div style="border-bottom:1px solid var(--line);padding:10px 0;">'
         + '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:3px;">'
-        + '<span style="font-size:12px;color:rgba(8,26,77,0.5);">' + (n.author_name || 'Staff') + ' — ' + when + '</span>'
+        + '<span style="font-size:12px;color:rgba(15,35,54,0.63);">' + (n.author_name || 'Staff') + ' — ' + when + '</span>'
         + delBtn
         + '</div>'
         + '<div style="font-size:13.5px;white-space:pre-wrap;">' + n.note_text + '</div>'
@@ -5728,7 +5828,7 @@
     const maxDose = (MEDICATION_INFO[med] || {}).maxDoseMg;
     if(!Number.isFinite(doseNum) || doseNum <= 0){
       el.textContent = 'Enter a weekly dose to see the price.';
-      el.style.color = 'rgba(8,26,77,0.65)';
+      el.style.color = 'rgba(15,35,54,0.72)';
     } else if(maxDose && doseNum > maxDose){
       // La dosis manda sobre el precio: si está fuera de rango, eso es lo
       // que tiene que leer el clínico, no cuánto cuesta.
@@ -5740,7 +5840,7 @@
         + ' — the patient will not be able to check out until one is added.';
       el.style.color = '#b3261e';
     } else {
-      el.style.color = 'rgba(8,26,77,0.65)';
+      el.style.color = 'rgba(15,35,54,0.72)';
     }
   }
 
@@ -6117,6 +6217,59 @@
     return npAvailabilityCache;
   }
 
+  // Roster del personal, para saber el rol y a quién avisarle de una cita.
+  let staffRosterCache = null;
+  async function loadStaffRoster(){
+    if(staffRosterCache) return staffRosterCache;
+    const { data } = await supabaseClient.from('staff').select('*');
+    staffRosterCache = {};
+    (data || []).forEach(s => { staffRosterCache[s.user_id] = s; });
+    return staffRosterCache;
+  }
+
+  // ---- Tope de citas por paciente por mes ----------------------------------
+  // Antes no había ninguno: un paciente podía reservar la agenda entera del
+  // mes. El modelo es una evaluación por ciclo de 28 días antes de cada
+  // refill, así que 2 deja margen para una revisión extra sin permitir que
+  // una sola persona acapare los turnos.
+  const MAX_INTERVIEWS_PER_MONTH = 2;
+
+  // Se cuenta con un query, no con una lista en memoria: la pestaña puede
+  // llevar horas abierta y el conteo tiene que ser el de ahora.
+  async function apptsInMonth(dateValue, type){
+    if(!supabaseClient || !currentUser) return 0;
+    const month = dateValue.slice(0, 7);           // 'YYYY-MM'
+    const { data, error } = await supabaseClient.from('appointments')
+      .select('id')
+      .eq('user_id', currentUser.id).eq('type', type).neq('status', 'cancelled')
+      .gte('appointment_date', month + '-01').lte('appointment_date', month + '-31');
+    if(error){ console.error('[appt] no se pudo contar el mes:', error); return 0; }
+    return (data || []).length;
+  }
+
+  // Avisar al proveedor asignado. Va detached y con try/catch: una cita
+  // reservada nunca puede fallar porque el correo no salga.
+  function notifyAppointmentBooked(providerUserId, roster, dateLabel, time, ticket){
+    setTimeout(function(){
+      const prov = (roster && providerUserId) ? roster[providerUserId] : null;
+      notify('appointment_booked', {
+        name: (currentHealthHistory && currentHealthHistory.full_name)
+              || (currentUser && currentUser.email),
+        email: (currentHealthHistory && currentHealthHistory.email)
+               || (currentUser && currentUser.email)
+      }, {
+        date: dateLabel,
+        time: time,
+        ticket: ticket,
+        provider: prov ? prov.full_name : null,
+        // Sin email del proveedor, la Edge Function manda el aviso a la
+        // bandeja de la clínica. Para que llegue a cada médico por separado,
+        // hay que añadir una columna 'email' a la tabla staff.
+        providerEmail: prov ? (prov.email || null) : null
+      });
+    }, 0);
+  }
+
   function timesForWindow(startTime, endTime){
     const [sh, sm] = startTime.split(':').map(Number);
     const [eh, em] = endTime.split(':').map(Number);
@@ -6211,8 +6364,26 @@
 
     dateLabel.textContent = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     slotsWrap.style.display = 'block';
-    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(8,26,77,0.5);">Checking availability...</p>';
+    slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(15,35,54,0.63);">Checking availability...</p>';
     emptyMsg.style.display = 'none';
+
+    // Tope mensual. Se comprueba antes de enseñar horarios: no tiene sentido
+    // mostrar turnos que la reserva va a rechazar.
+    const limitMsg = document.getElementById('np-limit-msg');
+    if(limitMsg) limitMsg.style.display = 'none';
+    const usedThisMonth = await apptsInMonth(dateValue, 'np_interview');
+    if(usedThisMonth >= MAX_INTERVIEWS_PER_MONTH){
+      slotGrid.innerHTML = '';
+      if(limitMsg){
+        limitMsg.textContent = 'You already have ' + usedThisMonth + ' evaluation'
+          + (usedThisMonth === 1 ? '' : 's') + ' booked for '
+          + dateObj.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+          + ' — the limit is ' + MAX_INTERVIEWS_PER_MONTH + ' per month. '
+          + 'Pick a date next month, or cancel one of your existing appointments first.';
+        limitMsg.style.display = 'block';
+      }
+      return;
+    }
 
     const availability = await loadNPAvailability();
     const weekday = dateObj.getDay();
@@ -6261,6 +6432,18 @@
     if(!supabaseClient || !currentUser) return;
     const ticket = 'SH-' + Math.random().toString(36).slice(2,8).toUpperCase();
     try{
+      // Segundo chequeo del tope, justo antes de insertar. El primero fue al
+      // pintar los horarios; entre medio el paciente pudo reservar en otra
+      // pestaña.
+      const used = await apptsInMonth(dateValue, 'np_interview');
+      if(used >= MAX_INTERVIEWS_PER_MONTH){
+        alert('You already have ' + MAX_INTERVIEWS_PER_MONTH
+          + ' evaluations booked that month — that\'s the limit. '
+          + 'Cancel one first, or pick a date next month.');
+        selectCalendarDate(dateValue, new Date(dateValue + 'T00:00:00'));
+        return;
+      }
+
       // Re-check right before booking to close the race-condition window where
       // two patients could both click the same open slot within moments of
       // each other (last-write-wins isn't good enough for real appointments).
@@ -6300,6 +6483,9 @@
         np_user_id: assignedNP
       });
       if(error) throw error;
+
+      // Avisarle al proveedor que le entró una cita nueva.
+      notifyAppointmentBooked(assignedNP, await loadStaffRoster(), dateLabel, time, ticket);
 
       if(emailjsReady && window.emailjs){
         try{
@@ -6774,7 +6960,7 @@
     position:fixed;bottom:18px;right:18px;z-index:400;
     display:inline-flex;padding:3px;gap:2px;
     background:var(--white);border:1px solid var(--line);border-radius:100px;
-    box-shadow:0 8px 24px -12px rgba(8,26,77,0.45);
+    box-shadow:0 8px 24px -12px rgba(15,35,54,0.68);
   }
   #lang-toggle button{
     font-family:'Outfit',sans-serif;font-size:12.5px;font-weight:600;letter-spacing:0.04em;
@@ -6812,6 +6998,103 @@
   body{top:0 !important;position:static !important;}
   font[style]{background:none !important;box-shadow:none !important;}
   @media (max-width:640px){ #lang-toggle{bottom:12px;right:12px;} }
+
+  /* ==================================================================
+     RESKIN — componentes al lenguaje visual del prototipo.
+     Va al final a propósito: son overrides sobre las reglas de arriba,
+     así no hay que editar decenas de declaraciones una por una, que es
+     donde se rompen las cosas. Solo cambia cómo se ve: ningún id, ningún
+     handler, ninguna estructura.
+     ================================================================== */
+
+  /* Botones: rectángulo redondeado, no píldora. Sin salto en hover — el
+     prototipo es quieto, y un formulario médico no debe rebotar. */
+  .btn{
+    border-radius:10px !important;
+    font-family:var(--sans) !important;
+    font-weight:600 !important;
+    letter-spacing:0 !important;
+    border-width:1px !important;
+  }
+  .btn-primary{
+    background:var(--ink) !important; color:#FFFFFF !important;
+    box-shadow:none !important; border-color:var(--ink) !important;
+  }
+  .btn-primary:hover{ background:#1B3B54 !important; transform:none !important; box-shadow:none !important; }
+  .btn-outline{
+    background:var(--white) !important; color:var(--ink) !important;
+    border-color:var(--line) !important;
+  }
+  .btn-outline:hover{
+    background:var(--paper-quiet) !important; color:var(--ink) !important;
+    border-color:var(--ink-faint) !important; transform:none !important;
+  }
+
+  /* Campos: borde fino, foco teal discreto. */
+  .field input, .field select, .field textarea{
+    border-radius:10px !important;
+    font-family:var(--sans) !important;
+    background:var(--white) !important;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    border-color:var(--teal) !important;
+    box-shadow:0 0 0 3px rgba(63,151,134,0.16) !important;
+  }
+  .field label{ font-weight:500; }
+
+  /* Opciones como tarjetas de ancho completo. Seleccionada = borde teal y
+     un tinte apenas perceptible, igual que en el video. */
+  .checkbox-item{
+    border-radius:10px !important;
+    background:var(--white) !important;
+    font-family:var(--sans) !important;
+  }
+  .checkbox-item:hover{ border-color:var(--ink-faint) !important; }
+  .checkbox-item:has(input:checked){
+    border-color:var(--teal) !important;
+    background:rgba(63,151,134,0.07) !important;
+    box-shadow:inset 0 0 0 1px var(--teal);
+  }
+  .checkbox-item input{ accent-color:var(--teal) !important; }
+
+  /* Etiqueta de sección: mayúsculas espaciadas en teal con el guion corto
+     delante. Antes era ámbar y competía con todo lo demás. */
+  .form-section-title{ color:var(--teal-deep) !important; }
+  .form-section-title::before{ background:var(--teal) !important; }
+
+  /* Tarjetas y títulos */
+  .dash-card{ border-radius:14px !important; box-shadow:var(--shadow-sm); }
+  .dash-card h3{ font-size:21px !important; }
+  .status-pill,
+  .status-pill.status-active{
+    background:rgba(63,151,134,0.11) !important; color:var(--teal-deep) !important;
+    letter-spacing:0.1em;
+  }
+  /* El teal claro no alcanza contraste sobre fondo hueso; en texto pequeño
+     siempre va el tono profundo. El teal claro queda para bordes y rellenos. */
+  .rx-badge{ background:rgba(63,151,134,0.10); color:var(--teal-deep) !important;
+             border-color:var(--teal) !important; }
+  .rx-badge[style*="--sage"], .rx-badge[style*="sage"]{ color:var(--teal-deep) !important; }
+
+  /* Turnos de cita */
+  .slot-btn{
+    border-radius:10px !important; font-family:var(--sans) !important;
+    text-align:center !important;
+  }
+  .slot-btn:hover{
+    border-color:var(--teal) !important; background:rgba(63,151,134,0.07) !important;
+    transform:none !important;
+  }
+  .slot-time{ font-family:var(--sans) !important; font-weight:600 !important; font-size:15px !important; }
+
+  .ticket-card{ background:var(--ink) !important; border-radius:14px !important; }
+  .ticket-card::before{ background:var(--teal) !important; }
+
+  /* Barra de progreso del intake */
+  #hh-progress-bar{ background:var(--teal) !important; }
+  #hh-progress{ letter-spacing:0.1em; text-transform:uppercase; font-size:11px; }
+
+
 </style>
 
 <script>
