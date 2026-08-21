@@ -2072,7 +2072,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 20ago-4';
+  const NUVI_BUILD = 'build 21ago-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -6877,24 +6877,51 @@
       // .select() para que un UPDATE bloqueado por RLS no pase por exitoso —
       // el mismo fallo silencioso que tuvo el pago de la membresía.
       let wrote = 0;
+      let bought = null;   // datos del recibo
       if(order.kind === 'legacy' && currentHealthHistory){
         const { data, error } = await supabaseClient.from('health_history')
           .update({ purchased: true, purchased_at: new Date().toISOString() })
           .eq('id', currentHealthHistory.id).select();
         if(error) throw error;
         wrote = (data || []).length;
+        if(wrote) bought = { medication: data[0].approved_medication,
+                             dose: data[0].approved_dose,
+                             price: data[0].approved_price };
       } else if(order.id){
         const { data, error } = await supabaseClient.from('prescriptions')
           .update({ purchased: true, purchased_at: new Date().toISOString() })
           .eq('id', order.id).select();
         if(error) throw error;
         wrote = (data || []).length;
+        if(wrote) bought = { medication: data[0].medication,
+                             dose: data[0].dose,
+                             price: data[0].price };
       }
       if(wrote === 0){
         throw new Error('El pedido no se guardó: la base aceptó la petición pero no '
           + 'cambió ninguna fila. Casi siempre es una política RLS bloqueando el update.');
       }
       console.log('[order] guardado, filas:', wrote);
+
+      // Recibo del medicamento. Va detached: si el correo falla, la compra ya
+      // quedó registrada y el paciente no puede quedarse sin su pedido por eso.
+      if(bought){
+        const hh = currentHealthHistory || {};
+        setTimeout(function(){
+          notify('med_payment', {
+            name: hh.full_name || (currentUser && currentUser.email),
+            email: hh.email || (currentUser && currentUser.email)
+          }, {
+            medication: bought.medication,
+            dose: bought.dose,
+            amount: '$' + getDisplayPrice(bought.medication, bought.price),
+            receipt: 'NV-' + (order.id ? String(order.id).slice(0,8).toUpperCase()
+                                       : 'RX' + Date.now().toString(36).slice(-6).toUpperCase()),
+            shipTo: hh.shipping_address1, shipCity: hh.shipping_city,
+            shipState: hh.shipping_state, shipZip: hh.shipping_zip
+          });
+        }, 0);
+      }
 
       // Marca para mostrar la confirmación una vez que la vista se redibuje.
       try{ sessionStorage.setItem('nuviOrderConfirmed', '1'); }catch(e){}
