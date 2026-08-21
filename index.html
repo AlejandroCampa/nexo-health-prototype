@@ -2006,14 +2006,37 @@
   // Calls the 'notify' Edge Function, which holds the Resend key server-side.
   // Deliberately fire-and-forget: a failed notification must never block a
   // signup or a payment. Failures are logged, not surfaced to the patient.
+  // Nombre EXACTO de la Edge Function en Supabase. Supabase le pone un nombre
+  // random al crearla ("swift-responder", "clever-otter"...) y ese es el que
+  // vale — si esto no coincide, la llamada va a una función que no existe:
+  // no sale correo, y tampoco aparece nada en los logs, porque nunca llega.
+  // Si algún día la renombras en Supabase, cambia esta línea y ya.
+  const NOTIFY_FUNCTION = 'swift-responder';
+
+  // Se llama con fetch en vez de functions.invoke(), y con Content-Type
+  // text/plain sin cabeceras extra. Eso lo convierte en una "simple request":
+  // el navegador NO manda preflight OPTIONS.
+  //
+  // Importa porque el preflight era lo que estaba fallando. Con Verify JWT
+  // encendido, el gateway de Supabase rechaza el OPTIONS (que va sin auth)
+  // antes de que la función corra, y el navegador solo dice "CORS" sin decir
+  // por qué. Sin preflight, ese punto de fallo desaparece.
+  // La función lee el body con req.json(), que no mira el Content-Type.
   async function notify(event, patient, data){
-    if(!supabaseClient) return;
+    if(!SUPABASE_URL || !SUPABASE_URL.startsWith('http')) return;
+    const url = SUPABASE_URL.replace(/\/+$/, '') + '/functions/v1/' + NOTIFY_FUNCTION;
     try{
-      await supabaseClient.functions.invoke('notify', {
-        body: { event: event, patient: patient || {}, data: data || {} }
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },  // sin esto vuelve el preflight
+        body: JSON.stringify({ event: event, patient: patient || {}, data: data || {} })
       });
+      const txt = await res.text().catch(() => '');
+      if(res.ok) console.log('[notify] ' + event + ' OK →', txt.slice(0,200));
+      else console.error('[notify] ' + event + ' — la función respondió ' + res.status + ':', txt.slice(0,300));
     } catch(err){
-      console.error('notify(' + event + ') failed:', err);
+      console.error('[notify] ' + event + ' — no se pudo llamar a ' + url
+        + '. Revisa que el slug sea correcto y que Verify JWT esté apagado.', err);
     }
   }
 
@@ -2072,7 +2095,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 21ago-1';
+  const NUVI_BUILD = 'build 21ago-3';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
