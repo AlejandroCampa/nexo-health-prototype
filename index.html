@@ -931,6 +931,25 @@
           <span class="status-pill">Awaiting sign-off</span>
           <h3>Evaluation complete</h3>
           <p>Your evaluation is complete. Your physician is finalising the review — your protocol will appear here once approved.</p>
+
+          <!-- Volver a entrar a la llamada. Antes, en cuanto el médico marcaba
+               la entrevista como completa, la sala desaparecía para el paciente
+               y no había forma de volver. Si el médico le dio por error, o si
+               la llamada se cayó, los dos quedaban fuera sin salida.
+               Solo sale el mismo día de la cita: pasado eso, ya no es un
+               accidente, es una cita nueva. -->
+          <div id="rejoin-card" style="display:none;background:var(--paper-warm);
+               border:1px solid var(--line);border-left:3px solid var(--teal);
+               border-radius:0 12px 12px 0;padding:15px 18px;margin-top:18px;">
+            <div style="font-size:14.5px;font-weight:600;margin-bottom:4px;">Call ended early?</div>
+            <div style="font-size:13.5px;color:rgba(15,35,54,0.68);margin-bottom:12px;">
+              If your visit was cut short or ended by mistake, you can go back in.
+              Your physician can rejoin from their side too.
+            </div>
+            <button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;"
+                    onclick="patientRejoinCall()">Rejoin the call</button>
+          </div>
+
           <div id="next-eval-card-await" style="display:none;border-radius:12px;padding:16px;margin-top:18px;"></div>
         </div>
 
@@ -2162,7 +2181,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 21ago-4';
+  const NUVI_BUILD = 'build 22ago-2';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -2854,6 +2873,11 @@
       markPassedAppointment(appt.appointment_date, appt.appointment_time);
     }
     if(stage === 'awaiting-approval'){
+      // La cita se marcó completa, pero si fue HOY todavía se puede volver a
+      // entrar: puede haber sido un click por error o una llamada caída.
+      const rejoin = document.getElementById('rejoin-card');
+      if(rejoin) rejoin.style.display = apptIsToday(appt) ? 'block' : 'none';
+
       renderNextEvalCard('next-eval-card-await');
     }
 
@@ -4875,6 +4899,13 @@
       });
       if(error) throw error;
 
+      // Avisar igual que en la reserva del paciente. Antes solo notificaba
+      // cuando reservaba el paciente: una cita puesta desde el panel clínico
+      // no le llegaba a nadie por correo.
+      notifyAppointmentBooked(assignedNP, await loadStaffRoster(),
+        new Date(dateValue + 'T00:00:00').toLocaleDateString(undefined,
+          { weekday:'long', month:'long', day:'numeric' }), time, ticket);
+
       // Drop a message into the patient's thread so they see it on their
       // dashboard — this is our reminder channel until SMS is wired up.
       try{
@@ -5632,8 +5663,16 @@
         + '<div style="font-size:13.5px;">Ticket ' + appt.ticket_number + ' — ' + appt.appointment_date + ' ' + appt.appointment_time + ' — status: <b>' + appt.status + '</b></div>'
         + '<div style="display:flex;gap:8px;margin-top:8px;">'
         + '<button class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:13px;" onclick="document.getElementById(\'np-video-wrap\').style.display=\'block\';joinVideoCall(\''+appt.ticket_number+'\',\'staff\',\'np-video-local\',\'np-video-remote\',\'np-video-status\')">Join meeting</button>'
-        + (appt.status === 'scheduled' ? '<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npMarkInterviewComplete(\''+appt.id+'\')">Mark interview complete</button>' : '')
-        + '</div>';
+        + (appt.status === 'scheduled'
+            ? '<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npMarkInterviewComplete(\''+appt.id+'\')">Mark interview complete</button>'
+            // Deshacer un "completar" accidental. Sin esto, un click por error
+            // dejaba al paciente sin poder volver a entrar a su propia consulta.
+            : '<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npReopenInterview(\''+appt.id+'\')">Reopen interview</button>')
+        + '</div>'
+        + (appt.status === 'completed'
+            ? '<div style="font-size:12.5px;color:rgba(15,35,54,0.63);margin-top:7px;">'
+              + 'Marked complete by mistake? Reopen it and both of you can rejoin.</div>'
+            : '');
     } else {
       apptWrap.innerHTML = '<div class="form-section-title">Interview</div><p class="np-empty">Not scheduled yet.</p>';
     }
@@ -5848,6 +5887,26 @@
       await openNPPatientDetail(npCurrentPatientId);
     } catch(err){
       alert('Could not update: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // Revertir la entrevista a 'scheduled'. El caso real: el médico le da a
+  // "completar" sin querer y el paciente pierde el acceso a la sala.
+  async function npReopenInterview(apptId){
+    if(!confirm('Reopen this interview?\n\nIt goes back to scheduled and the patient '
+      + 'can rejoin the call.')) return;
+    try{
+      const { data, error } = await supabaseClient.from('appointments')
+        .update({ status: 'scheduled' }).eq('id', apptId).select();
+      if(error) throw error;
+      if(!data || data.length === 0){
+        throw new Error('No se reabrió: la base no cambió ninguna fila. Casi siempre es RLS.');
+      }
+      console.log('[appt] entrevista reabierta:', apptId);
+      await openNPPatientDetail(npCurrentPatientId);
+      await loadNPData();
+    } catch(err){
+      alert('Could not reopen the interview: ' + (err.message || 'unknown error'));
     }
   }
 
@@ -6646,6 +6705,25 @@
 
   function hideVideoRoom(){
     document.getElementById('video-room-wrap').style.display = 'none';
+  }
+
+  // ---- Volver a entrar a la llamada ----------------------------------------
+  // Se ofrece mientras la cita sea de HOY. Una entrevista marcada como completa
+  // por error, o una llamada que se cayó, se arregla volviendo a entrar — no
+  // sacando otra cita. Pasado el día ya no es un accidente.
+  function apptIsToday(appt){
+    if(!appt || !appt.appointment_date) return false;
+    const now = new Date();
+    const hoy = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0')
+              + '-' + String(now.getDate()).padStart(2,'0');
+    return String(appt.appointment_date).slice(0,10) === hoy;
+  }
+
+  function patientRejoinCall(){
+    if(!currentAppointment){ alert('No appointment found to rejoin.'); return; }
+    showVideoRoom();
+    joinVideoCall(currentAppointment.ticket_number, 'patient',
+                  'video-local', 'video-remote', 'video-status');
   }
 
   // Free public STUN servers only — no TURN relay. Connects instantly on the
