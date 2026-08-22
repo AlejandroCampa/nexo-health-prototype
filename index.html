@@ -1167,6 +1167,16 @@
           <div class="field"><label>Date of birth</label><input id="hh-dob" type="date" required></div>
           <p style="font-size:12px;color:rgba(15,35,54,0.66);margin:-4px 0 4px;">Your name and date of birth must match your ID — the pharmacy requires them to fill a prescription.</p>
 
+          <!-- La farmacia exige el número de licencia para despachar. Va aquí,
+               junto al nombre y la fecha de nacimiento, que es lo que verifican
+               contra la identificación. -->
+          <div class="field" style="margin-top:12px;">
+            <label>Driver's license number</label>
+            <input id="hh-drivers-license" type="text" autocomplete="off"
+                   placeholder="As it appears on your license" required>
+          </div>
+          <p style="font-size:12px;color:rgba(15,35,54,0.66);margin:-4px 0 4px;">Required by the pharmacy to verify your identity before dispensing. If you don't drive, any government-issued ID number works.</p>
+
           <div class="form-section-title">Shipping address</div>
           <p style="font-size:12px;color:rgba(15,35,54,0.66);margin:-6px 0 12px;">Where we'll ship your medication. Our physicians are licensed in Puerto Rico, so we can only treat and ship to patients located here.</p>
           <div class="field"><label>Street address</label><input id="hh-address1" type="text" placeholder="123 Calle Principal"></div>
@@ -2181,7 +2191,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 22ago-5';
+  const NUVI_BUILD = 'build 22ago-8';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -3323,6 +3333,12 @@
     if(activeMedCoupon && activeMedCoupon.simulate){
       if(!TEST_MODE){ activeMedCoupon = null; return; }
       const code = activeMedCoupon.code;
+      // Registrar el descuento antes de salir: el recibo tiene que decir lo
+      // que se cobró, no el precio de lista. Sin esto el paciente paga $0 y
+      // recibe un recibo de $180.
+      try{ sessionStorage.setItem('nuviMedCoupon', JSON.stringify({
+        code: code, charged: activeMedCoupon.price, listPrice: price,
+        label: activeMedCoupon.label })); }catch(e){}
       activeMedCoupon = null;
       const url = new URL(window.location.href);
       url.search = '';
@@ -3338,6 +3354,9 @@
     if(activeMedCoupon){
       link = activeMedCoupon.link;
       console.log('[med] cupón aplicado:', activeMedCoupon.code);
+      try{ sessionStorage.setItem('nuviMedCoupon', JSON.stringify({
+        code: activeMedCoupon.code, charged: activeMedCoupon.price, listPrice: price,
+        label: activeMedCoupon.label })); }catch(e){}
       activeMedCoupon = null;
     } else {
       // Route by price. If a dose produces a price with no matching Payment Link,
@@ -3580,6 +3599,13 @@
       const dob = document.getElementById('hh-dob');
       if(name && !name.value.trim()){ alert('Please enter your full legal name.'); name.focus(); return; }
       if(dob && !dob.value){ alert('Please enter your date of birth.'); dob.focus(); return; }
+      const dl = document.getElementById('hh-drivers-license');
+      if(dl && !dl.value.trim()){
+        alert('Please enter your driver\'s license number.\n\n'
+            + 'The pharmacy requires it to verify your identity before dispensing. '
+            + 'If you don\'t drive, any government-issued ID number works.');
+        dl.focus(); return;
+      }
       const addr = document.getElementById('hh-address1');
       const city = document.getElementById('hh-city');
       const st = document.getElementById('hh-state');
@@ -3697,7 +3723,14 @@
           'Height / Weight: <b>' + heightStr + ' / ' + (history.weight_lbs || '—') + ' lbs</b>',
           'Conditions: <b>' + (((history.conditions||[]).join(', ')) || 'None reported') + (history.conditions_other ? ', ' + history.conditions_other : '') + '</b>',
           'Surgical history: <b>' + (history.surgical_history || '—') + '</b>',
-          'Allergies: <b>' + (history.allergies || '—') + '</b>',
+          'Driver\'s license: <b>' + (history.drivers_license || '—') + '</b>',
+          'Allergies: <b>' + (history.allergies || '—')
+            + (history.allergy_reaction ? ' (' + history.allergy_reaction + ')' : '') + '</b>',
+          'Medications: <b>' + (history.medications || '—') + '</b>',
+          'Interacts with GLP-1: <b>'
+            + ((history.interacting_meds && history.interacting_meds.length)
+                ? history.interacting_meds.join(', ') : 'none reported') + '</b>',
+          'Used a GLP-1 before: <b>' + (history.glp1_before ? ('Yes' + (history.glp1_which ? ' — ' + history.glp1_which : '')) : 'No') + '</b>',
           'Alcohol: <b>' + (history.alcohol_use || '—') + '</b> · Smoking: <b>' + (history.smoking_use || '—') + '</b>',
           'Family history: <b>' + (((history.family_history||[]).join(', ')) || 'None reported') + '</b>',
           history.approved_medication ? ('Current prescription: <b>' + history.approved_medication + ' — ' + (history.approved_dose || '') + '</b>') : 'Current prescription: <b>None yet</b>'
@@ -5661,7 +5694,17 @@
       'Goal: ' + (patient.goal || '—'),
       'Conditions: ' + (((patient.conditions||[]).join(', ')) || 'None reported') + (patient.conditions_other ? ' + ' + patient.conditions_other : ''),
       'Surgical history: ' + (patient.surgical_history || '—'),
-      'Allergies: ' + (patient.allergies || '—'),
+      'Allergies: ' + (patient.allergies || '—')
+        + (patient.allergy_reaction ? ' — reaction: ' + patient.allergy_reaction : ''),
+      // Lo que toma ahora. Sin esto el prescriptor firma a ciegas: un GLP-1
+      // encima de insulina o una sulfonilurea es hipoglucemia esperando pasar.
+      'Current medications: ' + (patient.medications || '—'),
+      'Interacts with GLP-1: ' + (((patient.interacting_meds||[]).length && !((patient.interacting_meds||[]).length===1 && patient.interacting_meds[0]==='None of these'))
+          ? '⚠️ ' + patient.interacting_meds.join(', ') + ' — needs dose adjustment'
+          : 'none reported'),
+      'Used a GLP-1 before: ' + (patient.glp1_before ? ('YES' + (patient.glp1_which ? ' — ' + patient.glp1_which : ' — no detail given')) : 'No'),
+      // La farmacia no despacha sin esto.
+      "Driver's license: " + (patient.drivers_license || '⚠️ not on file — pharmacy will reject'),
       'Alcohol: ' + (patient.alcohol_use || '—') + ' · Smoking: ' + (patient.smoking_use || '—') + ' · Substances: ' + (patient.substance_use || '—'),
       'Height / Weight: ' + (patient.height_ft ? (patient.height_ft + "'" + (patient.height_in || 0) + '"') : '—') + ' / ' + (patient.weight_lbs || '—') + ' lbs',
       'Family history: ' + (((patient.family_history||[]).join(', ')) || 'None reported'),
@@ -6277,6 +6320,16 @@
       conditions_other: document.getElementById('hh-conditions-other').value,
       surgical_history: document.getElementById('hh-surgical').value,
       allergies: document.getElementById('hh-allergies').value,
+      allergy_reaction: document.getElementById('hh-allergy-reaction').value,
+      // La farmacia lo exige para despachar.
+      drivers_license: document.getElementById('hh-drivers-license').value.trim(),
+      // Medicamentos. Estos campos ya estaban en el formulario pero no se
+      // guardaban: el paciente decía que toma insulina y se perdía.
+      medications: document.getElementById('hh-medications').value,
+      glp1_before: document.getElementById('hh-glp1-yes').checked,
+      glp1_which: document.getElementById('hh-glp1-which').value,
+      interacting_meds: Array.from(
+        document.querySelectorAll('#hh-interacting-meds input:checked')).map(i => i.value),
       alcohol_use: document.getElementById('hh-alcohol').value,
       smoking_use: document.getElementById('hh-smoking').value,
       substance_use: document.getElementById('hh-substances').value,
@@ -7122,13 +7175,28 @@
       if(bought){
         const hh = currentHealthHistory || {};
         setTimeout(function(){
+          // ¿Se usó un cupón? Entonces el recibo lleva el precio de lista, el
+          // descuento, y el total real — no el precio de lista a secas.
+          let medCoupon = null;
+          try{
+            const raw = sessionStorage.getItem('nuviMedCoupon');
+            if(raw) medCoupon = JSON.parse(raw);
+            sessionStorage.removeItem('nuviMedCoupon');
+          }catch(e){}
+          const listPrice = getDisplayPrice(bought.medication, bought.price);
+          const charged = medCoupon && medCoupon.charged != null
+            ? Number(medCoupon.charged) : listPrice;
+
           notify('med_payment', {
             name: hh.full_name || (currentUser && currentUser.email),
             email: hh.email || (currentUser && currentUser.email)
           }, {
             medication: bought.medication,
             dose: bought.dose,
-            amount: '$' + getDisplayPrice(bought.medication, bought.price),
+            amount: '$' + charged,
+            listPrice: medCoupon ? ('$' + listPrice) : null,
+            discount: medCoupon ? ('-$' + (listPrice - charged)) : null,
+            coupon: medCoupon ? (medCoupon.label || medCoupon.code) : null,
             receipt: 'NV-' + (order.id ? String(order.id).slice(0,8).toUpperCase()
                                        : 'RX' + Date.now().toString(36).slice(-6).toUpperCase()),
             shipTo: hh.shipping_address1, shipCity: hh.shipping_city,
