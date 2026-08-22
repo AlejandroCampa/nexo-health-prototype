@@ -2181,7 +2181,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 22ago-4';
+  const NUVI_BUILD = 'build 22ago-5';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -2318,6 +2318,14 @@
     const chosen = currentCheckout().plan;
     const link = STRIPE_LINKS[chosen];
     if(link && link.indexOf('PASTE_') !== 0 && link.indexOf('YOUR_') !== 0){
+      // Guardar a QUÉ link mandamos al paciente, antes de salir. Al volver,
+      // esto manda sobre el ?plan= de la URL.
+      //
+      // Por qué: ese parámetro lo pone el redirect que se configura a mano en
+      // cada Payment Link de Stripe. Si el link de $0 quedó con el redirect
+      // del de $70, el paciente paga $0 y el recibo dice $70. El sitio sí
+      // sabe cuál abrió — no hay razón para fiarse de la URL.
+      try{ sessionStorage.setItem('nuviCheckoutPlan', chosen); }catch(e){}
       window.location.href = link;
     } else {
       // LIVE: never silently mark a membership paid. If the Stripe link is
@@ -6956,7 +6964,19 @@
   (function checkForPaymentReturn(){
     const params = new URLSearchParams(window.location.search);
     if(params.get('paid') === 'true'){
-      pendingPaymentPlan = params.get('plan') || 'Basic';
+      // El plan que guardamos al salir gana sobre el de la URL. La URL depende
+      // de cómo esté configurado el redirect en Stripe; lo guardado es lo que
+      // este sitio realmente abrió.
+      let planFromUrl = params.get('plan') || 'Basic';
+      let planChosen = null;
+      try{ planChosen = sessionStorage.getItem('nuviCheckoutPlan'); }catch(e){}
+      if(planChosen && planChosen !== planFromUrl){
+        console.warn('[payment] la URL dice plan=' + planFromUrl + ' pero abrimos el link de '
+          + planChosen + '. Se usa ' + planChosen
+          + '. Revisa el redirect de ese Payment Link en Stripe.');
+      }
+      pendingPaymentPlan = planChosen || planFromUrl;
+      try{ sessionStorage.removeItem('nuviCheckoutPlan'); }catch(e){}
       // Survive a reload. Returning from Stripe on an expired session sends the
       // patient through a magic link, which reloads the page — an in-memory
       // variable would be lost and the payment silently never applied.
