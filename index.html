@@ -2181,7 +2181,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 22ago-3';
+  const NUVI_BUILD = 'build 22ago-4';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -2466,6 +2466,16 @@
   // These numbers are estimates from public market research, not your real
   // pharmacy's cost sheet — swap in real numbers once you have a contract.
   const MEMBERSHIP_PRICE = { Basic: 70 };
+
+  // Lo que Stripe cobra REALMENTE según el Payment Link que se usó. El recibo
+  // sale de aquí, no del cupón: al volver de Stripe la página recarga y
+  // activeCoupon ya es null, así que un pago de $35 se reportaba como $70.
+  // El plan sí sobrevive la recarga (va en sessionStorage), y es el que
+  // determina qué link se abrió.
+  const PLAN_CHARGED = { Basic: 70, Promo35: 35, Comped: 0 };
+  const PLAN_LABEL   = { Basic: 'Basic membership',
+                         Promo35: 'Basic membership — first month promo',
+                         Comped: 'Complimentary membership' };
 
   // Single source of truth for every medication — powers the NP approval
   // dropdown, the patient Store, AND the public logged-out catalog below.
@@ -7033,12 +7043,18 @@
       // Only now, and detached, so a failed or undeployed function can never
       // interfere with the payment flow.
       setTimeout(function(){
+        // El monto sale del PLAN que se cobró, no de activeCoupon: ese ya se
+        // perdió en la recarga que hace Stripe al devolver al paciente.
+        const charged = (PLAN_CHARGED[plan] != null) ? PLAN_CHARGED[plan] : 70;
         notify('payment', {
           name: currentHealthHistory && currentHealthHistory.full_name,
           email: (currentHealthHistory && currentHealthHistory.email) || (currentUser && currentUser.email)
         }, {
-          amount: activeCoupon ? ('$' + activeCoupon.price) : '$70',
-          coupon: activeCoupon ? activeCoupon.code : null
+          amount: '$' + charged,
+          plan: PLAN_LABEL[plan] || 'Basic membership',
+          coupon: plan === 'Promo35' ? 'Launch promo — first month'
+                : (plan === 'Comped' ? 'Complimentary access' : null),
+          date: new Date().toISOString()
         });
       }, 0);
     } catch(err){
