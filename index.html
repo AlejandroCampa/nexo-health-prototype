@@ -33,14 +33,39 @@
     --paper:#F6F6F3;          /* hueso — fondo general */
     --paper-warm:#F4EFEA;     /* banda cálida — cabeceras de tarjeta */
     --paper-quiet:#FBFAF8;    /* lavado casi blanco */
-    --amber:#C9793F;          /* ámbar de aviso, ya no coral chillón */
-    --amber-deep:#9A5626;
-    --coral:#C9793F;
-    --coral-soft:rgba(201,121,63,0.12);
+    /* ---- SIN NARANJA ----
+       Los tres tokens naranjas apuntan ahora al azul del nautilus. Se cambian
+       aquí y no en los ~30 sitios que los usan: para eso existen los tokens.
+       Va el AZUL y no el aqua porque casi todos estos usos son texto o
+       filetes finos sobre fondo claro, y el aqua sobre hueso da 1.48:1 —
+       desaparece. Donde el fondo es navy oscuro (el ticket) sí va el aqua,
+       y eso se resuelve más abajo caso por caso. */
+    --amber:#144CEE;
+    --amber-deep:#0F37BE;
+    --coral:#144CEE;
+    --coral-soft:rgba(20,76,238,0.12);
     --mint:#EAF3F0;
     --teal:#3F9786;           /* teal — acento único */
     --teal-deep:#2C6D61;
     --sage:#3F9786;
+
+    /* ---- AZUL DEL NAUTILUS ----
+       Muestreados del PNG del logo, no elegidos a ojo. El #144CEE es el
+       contorno de la concha y da 6.37:1 con texto blanco, así que aguanta
+       ser fondo de botón. El cian #01E0FE da 1.60:1 — con letra blanca
+       encima es ilegible, así que sólo se usa como brillo, borde o
+       detalle, nunca como relleno de algo que lleve texto claro. */
+    --brand:#01E0FE;          /* CIAN NEÓN del logo — relleno de botones */
+    --brand-hi:#22E8FF;       /* hover: un punto más brillante */
+    --brand-mint:#00F5D0;     /* menta del logo — cierre del degradado */
+    --brand-ink:#0A1A2F;      /* el texto que va ENCIMA del aqua */
+    --brand-glow:rgba(1,224,254,0.55);
+    /* El aqua sobre blanco es invisible (1.48:1), así que el texto de marca
+       en fondo claro usa el azul del contorno de la concha, que da 6.37:1.
+       Aqua = relleno con letra oscura. Azul = letra sobre claro. Nunca al revés. */
+    --brand-blue:#144CEE;
+    --brand-blue-deep:#0F37BE;
+
     --line:rgba(15,35,54,0.13);
     --line-soft:rgba(15,35,54,0.06);
     --white:#FFFFFF;
@@ -130,11 +155,11 @@
     .modal .btn{width:100%;}
     .rx-stamp,.rx-badge{white-space:normal;line-height:1.3;}
   }
-  .btn-primary{background:var(--ink);color:#F6F6F3;box-shadow:0 10px 24px -14px rgba(15,35,54,0.75);}
-  .btn-primary:hover{transform:translateY(-2px);background:#1B3B54;box-shadow:0 20px 34px -18px rgba(15,35,54,0.8);}
+  .btn-primary{background:linear-gradient(135deg,var(--brand) 0%,var(--brand-mint) 100%);color:var(--brand-ink);box-shadow:0 8px 26px -8px var(--brand-glow);}
+  .btn-primary:hover{transform:translateY(-2px);background:linear-gradient(135deg,var(--brand-hi) 0%,var(--brand-mint) 100%);box-shadow:0 14px 40px -10px var(--brand-glow);}
   .btn-primary:active{transform:translateY(0);}
   .btn-outline{border-color:rgba(15,35,54,0.28);color:var(--ink);background:rgba(255,255,255,0.35);}
-  .btn-outline:hover{border-color:var(--ink);background:var(--ink);color:#F6F6F3;transform:translateY(-2px);}
+  .btn-outline:hover{border-color:var(--brand);background:var(--brand);color:var(--brand-ink);transform:translateY(-2px);}
   .menu-toggle{display:none;background:none;border:none;cursor:pointer;}
 
   /* ---- HERO --------------------------------------------------------------- */
@@ -164,7 +189,7 @@
   .hero h1{font-size:clamp(40px,8.4vw,76px);line-height:0.98;letter-spacing:-0.04em;}
   .hero h1 em{
     font-style:normal;color:var(--ink);position:relative;white-space:nowrap;
-    background-image:linear-gradient(var(--coral),var(--coral));background-repeat:no-repeat;
+    background-image:linear-gradient(90deg,var(--brand-blue),var(--brand));background-repeat:no-repeat;
     background-position:0 96%;background-size:100% 8px;
   }
   .hero p.lede{font-size:clamp(16.5px,1.5vw,19px);line-height:1.62;color:var(--ink);opacity:0.82;max-width:520px;margin:24px 0 32px;}
@@ -183,24 +208,68 @@
   .hero-proof b{display:block;font-family:'Sora',sans-serif;font-size:22px;letter-spacing:-0.03em;}
   .hero-proof span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);}
 
-  /* prescription pad visual — reads like a real signed clinical document */
-  .rx-pad{
+  /* ---- ESCALERA DE DOSIS (hero) ----------------------------------------
+     Reemplaza la tarjeta de "receta". Aquella imitaba un documento firmado,
+     usaba mono en todo (parecía un recibo, no medicina), y sus filas
+     etiqueta/valor se partían en tres líneas al traducirse al español.
+     Esta usa una rejilla de columnas fijas, así que el texto largo no
+     descuadra nada, y el dato es real. */
+  .ladder{
     background:var(--white);border:1px solid var(--line);border-radius:20px;
-    padding:28px 24px;box-shadow:var(--shadow-lg);
-    position:relative;transition:transform .5s var(--ease);
+    padding:26px 26px 22px;box-shadow:var(--shadow-lg);
+    position:relative;overflow:hidden;
   }
-  .rx-pad:hover{transform:translateY(-5px);}
-  .rx-pad::before{
-    content:"℞";
-    position:absolute;top:20px;right:22px;font-family:'Sora',sans-serif;font-size:38px;color:var(--coral);opacity:0.95;line-height:1;
+  /* Filo superior con el degradado del logo: azul → cian → menta. */
+  .ladder::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--brand-blue) 0%,var(--brand) 55%,var(--brand-mint) 100%);
   }
-  .rx-pad-head{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding-right:52px;max-width:100%;letter-spacing:0.14em;text-transform:uppercase;color:var(--teal-deep);margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--line);}
-  .rx-line{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px dashed var(--line);font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);}
-  .rx-line:last-of-type{border-bottom:none;}
-  .rx-line b{font-weight:600;color:var(--ink);text-align:right;}
-  .rx-sig{margin-top:18px;padding-top:16px;border-top:1.5px solid var(--ink);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
-  .rx-sig-name{font-family:'Sora',sans-serif;font-style:italic;font-weight:600;font-size:17px;color:var(--ink);flex:1 1 auto;min-width:0;}
-  .rx-stamp{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.08em;color:var(--sage);border:1.5px solid var(--sage);padding:5px 9px;border-radius:6px;transform:rotate(-4deg);white-space:nowrap;}
+  .ladder-head{margin-bottom:22px;}
+  .ladder-eyebrow{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+    letter-spacing:0.16em;text-transform:uppercase;color:var(--brand-blue);
+    margin-bottom:10px;
+  }
+  .ladder-title{
+    font-family:'Sora',sans-serif;font-size:19px;line-height:1.3;font-weight:600;
+    letter-spacing:-0.02em;color:var(--ink);margin:0;text-wrap:balance;
+  }
+
+  .ladder-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;}
+  /* Columnas fijas: barra · mes · dosis · precio. Nada de space-between,
+     que es lo que hacía que los valores largos se fueran a otra línea. */
+  .ladder-step{
+    display:grid;grid-template-columns:16px 1fr;
+    align-items:start;gap:13px;
+    padding:13px 0;border-bottom:1px solid var(--line-soft);
+  }
+  .ladder-step:last-child{border-bottom:none;}
+  /* La barrita que crece: hace visible la titulación sin explicarla. */
+  /* Marcador de viñeta. Ya no codifica magnitud de dosis — eso se quitó —
+     así que es sólo un punto de anclaje con el aqua de la marca. */
+  .ladder-mark{
+    width:9px;height:9px;border-radius:50%;justify-self:center;margin-top:7px;
+    background:linear-gradient(135deg,var(--brand-mint) 0%,var(--brand) 100%);
+    box-shadow:0 0 9px rgba(1,224,254,0.8);
+  }
+  .ladder-text{
+    font-size:13.5px;line-height:1.55;color:var(--ink-soft);
+  }
+  .ladder-text b{
+    display:block;font-weight:600;color:var(--ink);font-size:14px;margin-bottom:2px;
+  }
+
+  .ladder-foot{
+    margin:18px 0 0;padding-top:16px;border-top:1px solid var(--line);
+    font-size:13px;line-height:1.6;color:var(--ink-soft);
+  }
+
+  @media (max-width:420px){
+    .ladder{padding:22px 18px 18px;}
+    .ladder-step{grid-template-columns:14px 1fr;gap:11px;}
+    /* En pantallas estrechas el precio baja bajo la dosis en vez de
+       apretujarse en una cuarta columna que ya no cabe. */
+  }
 
   /* ---- SECTION HEADERS ---------------------------------------------------- */
   .section{padding:clamp(56px,8vw,110px) 0;position:relative;}
@@ -233,7 +302,7 @@
     border:1px solid var(--line);cursor:pointer;background:rgba(255,255,255,0.5);transition:all .2s var(--ease);
   }
   .filter:hover{border-color:var(--ink);}
-  .filter.active{background:var(--ink);color:#F6F6F3;border-color:var(--ink);}
+  .filter.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);}
   .protocol-grid{display:grid;grid-template-columns:1fr;gap:16px;max-width:880px;}
   .vial-art{display:flex;align-items:center;justify-content:center;height:104px;background:var(--paper-quiet);border-radius:12px;}
   .vial-card{
@@ -344,8 +413,7 @@
     .navlinks{display:flex;}
     .hero-grid{grid-template-columns:1.15fr 0.85fr;}
     .hero-grid > div{max-width:none;}
-    .rx-pad{padding:34px 32px;transform:rotate(1.2deg);}
-    .rx-pad:hover{transform:rotate(0deg) translateY(-5px);}
+    .ladder{padding:32px 30px 26px;}
     .trust-grid{grid-template-columns:repeat(4,1fr);}
     .lead-grid{grid-template-columns:0.8fr 1.2fr;}
   }
@@ -366,9 +434,8 @@
     .hero-ctas{display:grid;grid-template-columns:1fr;gap:10px;}
     .hero-ctas .btn{width:100%;padding:15px 20px;}
     .hero::before{font-size:60vw;top:-2%;right:-12%;opacity:0.22;}
-    .rx-pad{padding:22px 18px;}
-    .rx-line{font-size:11.5px;gap:10px;}
-    .rx-pad-head{font-size:9.5px;padding-right:44px;}
+    .ladder{padding:20px 16px 16px;}
+    .ladder-title{font-size:17px;}
     .hero-proof{grid-template-columns:1fr 1fr;}
     .tier{padding:28px 20px;}
     .footer-top{flex-direction:column;}
@@ -386,7 +453,7 @@
   .hero-grid > div:first-child > *:nth-child(3){animation-delay:.16s;}
   .hero-grid > div:first-child > *:nth-child(4){animation-delay:.23s;}
   .hero-grid > div:first-child > *:nth-child(5){animation-delay:.3s;}
-  .rx-pad{animation:nuviRise .85s var(--ease) .3s both;}
+  .ladder{animation:nuviRise .85s var(--ease) .3s both;}
   .hero-proof{animation:nuviRise .85s var(--ease) .42s both;}
 
   @media (prefers-reduced-motion: reduce){
@@ -534,8 +601,8 @@
   @media(max-width:700px){ .slot-grid{grid-template-columns:1fr 1fr;} }
 
   .ticket-card{background:var(--ink);color:var(--paper);border-radius:16px;padding:28px;text-align:center;margin:18px 0;position:relative;overflow:hidden;}
-  .ticket-card::before{content:"";position:absolute;top:0;left:0;width:100%;height:3px;background:var(--amber);}
-  .ticket-number{font-family:'IBM Plex Mono',monospace;font-size:28px;letter-spacing:0.08em;color:var(--amber);margin:10px 0;}
+  .ticket-card::before{content:"";position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--brand-blue),var(--brand),var(--brand-mint));}
+  .ticket-number{font-family:'IBM Plex Mono',monospace;font-size:28px;letter-spacing:0.08em;color:var(--brand);margin:10px 0;}
 
   /* ---- VIDEO ROOM --------------------------------------------------------- */
   .video-shell{background:#0B1420;border-radius:16px;overflow:hidden;position:relative;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;}
@@ -555,7 +622,7 @@
   .cal-day.empty{border:none;background:transparent;cursor:default;}
   .cal-day.disabled{opacity:0.28;cursor:default;background:var(--paper-warm);}
   .cal-day.available:hover{border-color:var(--amber);background:rgba(63,151,134,0.1);transform:translateY(-2px);}
-  .cal-day.selected{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .cal-day.selected{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);}
   .cal-day.today{border-color:var(--amber);font-weight:700;color:var(--amber-deep);}
 
 
@@ -639,17 +706,45 @@
         </div>
       </div>
       <div>
-        <div class="rx-pad">
-          <div class="rx-pad-head">Nuvi Clinic · San Juan, PR · Telehealth order</div>
-          <div class="rx-line"><span>Patient</span><b>Evaluated online</b></div>
-          <div class="rx-line"><span>Therapy</span><b>Tirzepatide / Semaglutide</b></div>
-          <div class="rx-line"><span>Titration</span><b>Physician-directed</b></div>
-          <div class="rx-line"><span>Pharmacy</span><b>503A compounding partner</b></div>
-          <div class="rx-line"><span>Delivery</span><b>2-day, to your door</b></div>
-          <div class="rx-sig">
-            <span class="rx-sig-name">Licensed physician</span>
-            <span class="rx-stamp">Licensed in Puerto Rico</span>
+        <!-- La escalera de dosis. Sustituye a la "receta" simulada que había
+             antes: aquella fingía ser un documento clínico firmado, se
+             desmaquetaba al traducir, y Google convertía "503A compounding
+             partner" en "socio de capitalización". Esto es información real
+             — los mismos escalones y precios que MEDICATION_INFO — y es lo
+             que el visitante viene a averiguar. -->
+        <!-- Sin dosis y sin precios a propósito. La dosis exacta la decide el
+             médico en la consulta, y enseñar una tabla de escalones invita al
+             paciente a pedir la que le parezca — que es justo lo que este
+             producto evita ("no self-selected dosing"). Aquí va el criterio
+             clínico, no el catálogo. -->
+        <div class="ladder">
+          <div class="ladder-head">
+            <span class="ladder-eyebrow">Physician-directed care</span>
+            <h3 class="ladder-title">Your dose goes up slowly, and only when your physician says so.</h3>
           </div>
+
+          <ul class="ladder-steps">
+            <li class="ladder-step">
+              <span class="ladder-mark"></span>
+              <span class="ladder-text"><b>A physician decides, not a form.</b>
+                You meet a doctor licensed in Puerto Rico over video before anything is prescribed.</span>
+            </li>
+            <li class="ladder-step">
+              <span class="ladder-mark"></span>
+              <span class="ladder-text"><b>Your dose is theirs to set.</b>
+                It starts where your history says it should and moves only when your physician moves it.</span>
+            </li>
+            <li class="ladder-step">
+              <span class="ladder-mark"></span>
+              <span class="ladder-text"><b>Filled by a licensed pharmacy.</b>
+                Prepared for you individually and shipped to your door — nothing off a shelf.</span>
+            </li>
+            <li class="ladder-step">
+              <span class="ladder-mark"></span>
+              <span class="ladder-text"><b>A visit before every refill.</b>
+                No automatic renewals and no standing orders. You are seen again each time.</span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -2261,7 +2356,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 23ago-2';
+  const NUVI_BUILD = 'build 23ago-7';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -7380,7 +7475,7 @@
   }
   #lang-toggle button:hover{opacity:0.85;}
   #lang-toggle button[aria-current="true"]{
-    background:var(--ink);color:var(--white);opacity:1;
+    background:var(--brand);color:var(--brand-ink);opacity:1;
   }
   /* Google's own chrome — gone.
      Incluye el SPINNER, que es el círculo que giraba encima del logo mientras
@@ -7428,17 +7523,20 @@
     border-width:1px !important;
   }
   .btn-primary{
-    background:var(--ink) !important; color:#FFFFFF !important;
-    box-shadow:none !important; border-color:var(--ink) !important;
+    background:linear-gradient(135deg,var(--brand) 0%,var(--brand-mint) 100%) !important;
+    color:var(--brand-ink) !important;
+    box-shadow:0 8px 26px -10px var(--brand-glow) !important;
+    border-color:transparent !important;
   }
-  .btn-primary:hover{ background:#1B3B54 !important; transform:none !important; box-shadow:none !important; }
+  .btn-primary:hover{ background:linear-gradient(135deg,var(--brand-hi) 0%,var(--brand-mint) 100%) !important;
+    transform:none !important; box-shadow:0 12px 34px -8px var(--brand-glow) !important; }
   .btn-outline{
     background:var(--white) !important; color:var(--ink) !important;
     border-color:var(--line) !important;
   }
   .btn-outline:hover{
-    background:var(--paper-quiet) !important; color:var(--ink) !important;
-    border-color:var(--ink-faint) !important; transform:none !important;
+    background:rgba(1,224,254,0.12) !important; color:var(--brand-ink) !important;
+    border-color:var(--brand) !important; transform:none !important;
   }
 
   /* Campos: borde fino, foco teal discreto. */
@@ -7499,7 +7597,7 @@
   .slot-time{ font-family:var(--sans) !important; font-weight:600 !important; font-size:15px !important; }
 
   .ticket-card{ background:var(--ink) !important; border-radius:14px !important; }
-  .ticket-card::before{ background:var(--teal) !important; }
+  .ticket-card::before{ background:linear-gradient(90deg,var(--brand-blue),var(--brand),var(--brand-mint)) !important; }
 
   /* Barra de progreso del intake */
   #hh-progress-bar{ background:var(--teal) !important; }
