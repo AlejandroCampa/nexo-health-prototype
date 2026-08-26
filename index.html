@@ -1279,7 +1279,7 @@
           <div class="two-col">
             <div class="field"><label>City</label><input id="hh-city" type="text" placeholder="San Juan"></div>
             <div class="field"><label>State / territory</label>
-              <select id="hh-state"><option value="PR">Puerto Rico</option></select>
+              <select id="hh-state"><!-- se llena desde SERVED_STATES al arrancar --></select>
             </div>
           </div>
           <div class="field" style="max-width:200px;"><label>ZIP code</label><input id="hh-zip" type="text" inputmode="numeric" maxlength="5" placeholder="00901"></div>
@@ -1806,13 +1806,13 @@
     <p>You must be 18 or older and physically located in a jurisdiction where our providers are licensed. You agree to give accurate and complete health information — our providers rely on it to make safe decisions about your care.</p>
     <h3>Your responsibility for the information you give us</h3>
     <p>Our providers make clinical decisions based on what you tell us. You agree that the health information you provide — including conditions, medications, allergies, surgical history, substance use, and family history — is true, accurate, and complete, and that you have not withheld anything relevant. You agree to promptly update us if anything changes.</p>
-    <p>Withholding or misstating health information can lead to a prescribing decision that would not otherwise have been made, and can cause serious harm. To the fullest extent permitted by law, Nuvi Clinic is not responsible for adverse outcomes that result from information you failed to disclose or misrepresented. [PLACEHOLDER — counsel should review this clause and confirm what is enforceable in Puerto Rico; liability for professional negligence generally cannot be disclaimed.]</p>
+    <p>Withholding or misstating health information can lead to a prescribing decision that would not otherwise have been made, and can cause serious harm. To the fullest extent permitted by law, Nuvi Clinic is not responsible for adverse outcomes that result from information you failed to disclose or misrepresented.</p>
 
     <h3>No guarantee of treatment</h3>
     <p>Completing an intake or paying a membership fee does not guarantee you will be prescribed any medication. If our provider determines a treatment isn't clinically appropriate for you, it will not be prescribed.</p>
     <h3>Membership, billing, and cancellation</h3>
-    <p>Membership is $70 per month, billed monthly. Medication is billed separately based on what your physician prescribes. New members join under a three-month initial commitment beginning on the date of first payment; after that, you can cancel at any time from Settings. Cancelling stops future charges and does not prorate the month already paid.</p>
-    <p>Compounded medication is prepared individually for you and cannot be returned or reused, so medication charges are non-refundable once the prescription has been transmitted to the pharmacy. If a physician declines to treat you, your membership payment is refunded in full. If a physician determines during your initial commitment that you should stop treatment for medical reasons, the commitment no longer applies. Full details are in our <a href="#page-refunds">Refund Policy</a>.</p>
+    <p>Membership is $70 per month, billed monthly. Medication is billed separately based on what your physician prescribes. There is no minimum commitment. You can cancel at any time from Settings, and cancelling stops all future charges. The month already paid is not prorated — your access runs to the end of the period you paid for.</p>
+    <p>Compounded medication is prepared individually for you and cannot be returned or reused, so medication charges are non-refundable once the prescription has been transmitted to the pharmacy. If a physician declines to treat you, your membership payment is refunded in full. Full details are in our <a href="#page-refunds">Refund Policy</a>.</p>
     <h3>Compounded medications</h3>
     <p>Some medications we prescribe are compounded by a licensed 503A compounding pharmacy operating under state and federal quality regulations. Each preparation is made individually against your physician's prescription.</p>
     <p class="info-contact">Questions: <b>info@nuviclinic.com</b>.</p>
@@ -1876,26 +1876,26 @@
      Stripe como política vigente, y una política que se anuncia como
      borrador no vinculante no sirve para eso.
      Lo que dice aquí tiene que coincidir con lo que el producto hace de
-     verdad: COMMITMENT_MONTHS controla el compromiso inicial, y si ese
-     número cambia hay que cambiar el texto de abajo el mismo día.
+     verdad. Hoy COMMITMENT_MONTHS = 0, o sea sin compromiso: si alguien lo
+     vuelve a subir, este texto y el de #page-terms mienten desde ese
+     momento y hay que corregirlos el mismo día.
      =================================================================== -->
 <section class="info-page" id="page-refunds">
   <div class="wrap" style="max-width:780px;">
     <a href="#" class="info-back">← Back to home</a>
     <h1>Refund Policy</h1>
-    <p class="info-lead">Last updated: August 23, 2026</p>
+    <p class="info-lead">Last updated: August 25, 2026</p>
 
     <p>We bill two separate things, and they work differently. Your membership pays for clinical
     care. Medication is billed on its own, only when a physician prescribes it. This page explains
     what happens to each one if you want your money back.</p>
 
     <h3>Membership</h3>
-    <p>Membership is $70 per month and is billed monthly to the card you used at signup. New
-    members join under a three-month initial commitment, which begins on the date of your first
-    payment. During those three months the membership cannot be cancelled from your account.</p>
-    <p>After the initial three months, you can cancel at any time from Settings in your patient
-    dashboard. Cancelling stops all future charges immediately. The month already paid for is not
-    prorated or refunded — your access continues until the end of the period you paid for.</p>
+    <p>Membership is $70 per month and is billed monthly to the card you used at signup.
+    There is no minimum commitment.</p>
+    <p>You can cancel at any time from Settings in your patient dashboard. Cancelling stops all
+    future charges immediately. The month already paid for is not prorated or refunded — your
+    access continues until the end of the period you paid for.</p>
 
     <h3>Medication</h3>
     <p>Compounded medication is prepared individually for you, against your physician's
@@ -1911,11 +1911,6 @@
     evaluates you and determines that treatment is not clinically appropriate, we refund your
     membership payment in full and you are not charged for medication. This applies whether the
     decision is made at your first evaluation or a later one.</p>
-
-    <h3>If you become medically ineligible</h3>
-    <p>If, during your initial three-month commitment, your physician determines that you should
-    stop treatment for medical reasons, the commitment no longer applies. Tell us and we will
-    cancel your membership without requiring you to wait out the remaining months.</p>
 
     <h3>Duplicate and incorrect charges</h3>
     <p>If you were charged twice for the same thing, charged after cancelling, or charged an amount
@@ -2356,7 +2351,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 23ago-7';
+  const NUVI_BUILD = 'build 25ago-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -3476,7 +3471,7 @@
            && String(h.shipping_zip || '').trim());
     // An address outside Puerto Rico is not a shippable address for us —
     // catches anyone whose record predates this restriction, or who moved.
-    return complete && isPuertoRicoAddress(h.shipping_state, h.shipping_zip);
+    return complete && isServedAddress(h.shipping_state, h.shipping_zip);
   }
 
   function requireShippingAddress(){
@@ -3784,11 +3779,16 @@
       // legally evaluate or prescribe for a patient located elsewhere. The
       // dropdown already restricts the state, but the ZIP is free text and is
       // what the pharmacy actually ships against — so it gets checked properly.
-      if(!isPuertoRicoAddress(st ? st.value : '', zip ? zip.value : '')){
-        alert('We can only treat patients located in Puerto Rico right now.\n\n'
-            + 'Our physicians are licensed here, and we cannot legally evaluate or '
-            + 'prescribe for patients outside Puerto Rico. Please check your ZIP code.\n\n'
-            + 'Puerto Rico ZIP codes run 006xx, 007xx and 009xx.');
+      if(!isServedAddress(st ? st.value : '', zip ? zip.value : '')){
+        const donde = SERVED_STATES.map(x => x.name).join(' and ');
+        const elegido = servedStateFor(st ? st.value : '');
+        alert(elegido
+          ? ('That ZIP code doesn\'t look like it\'s in ' + elegido.name + '.\n\n'
+             + 'The pharmacy ships against this address, so it has to match the '
+             + 'state you selected. Please check your ZIP code.')
+          : ('We can only treat patients located in ' + donde + ' right now.\n\n'
+             + 'Our physicians are licensed there, and we cannot legally evaluate or '
+             + 'prescribe for patients elsewhere.'));
         if(zip) zip.focus();
         return;
       }
@@ -3946,7 +3946,14 @@
 
   // Shared helper so the patient view and the cancel action can never
   // disagree about whether the commitment period is still running.
-  const COMMITMENT_MONTHS = 3;
+  // 0 = sin compromiso inicial; el paciente cancela cuando quiera.
+  // Estuvo en 3, pero la página pública, la tarjeta de precio y los Terms
+  // decían cosas distintas, y lo que se le prometió al paciente que ya pagó
+  // fue "cancel anytime". Con 0, getCommitmentStatus nunca queda activo y
+  // ni el aviso ni el bloqueo de cancelación llegan a salir.
+  // Para reactivarlo: pon 3 aquí Y corrige el texto de #page-terms y
+  // #page-refunds, que ahora dicen que no hay compromiso.
+  const COMMITMENT_MONTHS = 0;
   function getCommitmentStatus(history){
     if(!history || !history.paid || !history.paid_at){
       return { active: false, endsOn: null, daysLeft: 0 };
@@ -3992,7 +3999,7 @@
     // only thing enforcing a billing commitment.
     const commit = getCommitmentStatus(currentHealthHistory);
     if(commit.active){
-      alert('You\'re still in your initial 3-month commitment, which ends on ' + commit.endsOn + '.\n\nIf your provider has determined treatment isn\'t appropriate for you, message your care team — they can cancel it for you.');
+      alert('You\'re still in your initial ' + COMMITMENT_MONTHS + '-month commitment, which ends on ' + commit.endsOn + '.\n\nIf your provider has determined treatment isn\'t appropriate for you, message your care team — they can cancel it for you.');
       return;
     }
 
@@ -5150,14 +5157,41 @@
   // Checking the ZIP rather than trusting the state field matters because the
   // ZIP is what the pharmacy ships against — a mismatched pair would mean a
   // package leaving the jurisdiction our physicians are licensed in.
-  function isPuertoRicoAddress(state, zip){
+  // ┌────────────────────────────────────────────────────────────────┐
+  // │  DÓNDE SE ATIENDE                                              │
+  // │                                                                │
+  // │  Añadir un estado aquí NO basta para poder atenderlo: hace     │
+  // │  falta un médico con licencia de ESE estado y una farmacia     │
+  // │  autorizada a despachar allí. Esto sólo abre la puerta en la   │
+  // │  aplicación; la autorización legal va por fuera.               │
+  // │                                                                │
+  // │  El dropdown del intake y esta validación salen de la misma    │
+  // │  lista, para que no puedan decir cosas distintas.              │
+  // └────────────────────────────────────────────────────────────────┘
+  const SERVED_STATES = [
+    { code:'PR', name:'Puerto Rico', zips:[[601,795],[901,988]] },
+    { code:'MD', name:'Maryland',    zips:[[20331,21930]] }
+  ];
+
+  function servedStateFor(state){
     const st = String(state || '').trim().toUpperCase();
-    if(st && st !== 'PR' && st !== 'PUERTO RICO') return false;
+    return SERVED_STATES.find(s => s.code === st || s.name.toUpperCase() === st) || null;
+  }
+
+  // El dropdown ya limita el estado, pero el ZIP es texto libre y es contra
+  // lo que la farmacia despacha de verdad — así que se valida en serio, y
+  // contra el rango del estado que el paciente eligió.
+  function isServedAddress(state, zip){
+    const hit = servedStateFor(state);
+    if(!hit) return false;
     const digits = String(zip || '').replace(/\D/g, '').slice(0, 5);
     if(digits.length !== 5) return false;
     const n = parseInt(digits, 10);
-    return (n >= 601 && n <= 795) || (n >= 901 && n <= 988);
+    return hit.zips.some(([lo, hi]) => n >= lo && n <= hi);
   }
+
+  // Nombre viejo, por si algo externo todavía lo llama.
+  function isPuertoRicoAddress(state, zip){ return isServedAddress(state, zip); }
 
   // ====== PATIENT SEARCH ======
   // Filters the rendered list client-side. Fast at clinic scale and avoids a
@@ -7439,6 +7473,15 @@
       document.getElementById('marketing-content').classList.remove('hidden-for-dashboard');
     }
   }
+  // El dropdown de estado se construye desde SERVED_STATES, no a mano, para
+  // que añadir un estado sea un solo cambio y no dos que se desincronizan.
+  (function fillStateDropdown(){
+    const sel = document.getElementById('hh-state');
+    if(!sel) return;
+    sel.innerHTML = SERVED_STATES
+      .map(x => '<option value="' + x.code + '">' + x.name + '</option>').join('');
+  })();
+
   window.addEventListener('hashchange', routeInfoPages);
 
   // ====== STARTUP ======
