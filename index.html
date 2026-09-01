@@ -624,11 +624,15 @@
 
 
   /* ---- people / member stories ---- */
-  .hero-people{display:flex;align-items:center;gap:14px;margin-top:22px;}
-  .hero-avatars{display:flex;}
-  .hero-avatars img{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2.5px solid #fff;margin-left:-12px;box-shadow:0 2px 10px rgba(15,35,54,0.18);}
-  .hero-avatars img:first-child{margin-left:0;}
-  .hero-people span{font-size:13.5px;line-height:1.4;color:var(--ink);opacity:0.75;max-width:230px;}
+  .hero-cred{
+    display:inline-flex;align-items:center;gap:10px;margin-top:22px;
+    padding:9px 15px 9px 12px;border-radius:100px;
+    background:rgba(255,255,255,0.72);border:1px solid var(--line);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    font-size:13.5px;font-weight:500;color:var(--ink);max-width:100%;
+  }
+  .hero-cred svg{width:17px;height:17px;flex:none;color:var(--brand-blue);}
+  .hero-cred span{line-height:1.35;}
   .people-grid{display:grid;gap:20px;grid-template-columns:1fr;}
   @media(min-width:760px){.people-grid{grid-template-columns:repeat(3,1fr);gap:24px;}}
   .person{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 0 rgba(15,35,54,0.08),0 18px 40px -28px rgba(15,35,54,0.68);transition:transform .35s cubic-bezier(.2,.7,.3,1),box-shadow .35s;}
@@ -686,20 +690,25 @@
     <div class="hero-grid">
       <div>
         <span class="eyebrow">Puerto Rico · 100% online</span>
-        <h1>Weight loss<br><em>with your prescription.</em></h1>
+        <h1>Weight loss,<br><em>prescribed by a doctor.</em></h1>
         <p class="lede">See a licensed physician online in Puerto Rico. If GLP-1 treatment is right for you, it ships to your door.</p>
         <div class="hero-ctas">
           <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake')">Start your evaluation</a>
           <a class="btn btn-outline" href="#protocols">See treatments</a>
         </div>
         <p class="hero-note">First month $35 (usually $70). Tirzepatide from $180/month. Semaglutide from $150/month.</p>
-        <div class="hero-people">
-          <div class="hero-avatars">
-            <img src="data:image/jpeg;base64,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" alt="Nuvi Clinic patient" width="40" height="40">
-            <img src="data:image/jpeg;base64,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" alt="Nuvi Clinic patient" width="40" height="40">
-            <img src="data:image/jpeg;base64,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" alt="Nuvi Clinic patient" width="40" height="40">
-          </div>
-          <span>Treating patients across Puerto Rico.</span>
+        <!-- El stack de avatares se quitó: las fotos eran generadas y se notaba.
+             Para una clínica que es PROPIEDAD de sus médicos, la señal de
+             confianza no son caras anónimas de stock — es quién firma la receta.
+             Eso además no necesita ninguna foto. -->
+        <div class="hero-cred">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 2.5 4.5 5.8v5.4c0 4.4 3.1 8.5 7.5 9.8 4.4-1.3 7.5-5.4 7.5-9.8V5.8L12 2.5Z"
+                  fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="m8.8 11.9 2.2 2.2 4.2-4.4" fill="none" stroke="currentColor"
+                  stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Founded and run by physicians licensed in Puerto Rico.</span>
         </div>
       </div>
       <div>
@@ -2336,7 +2345,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 25ago-4';
+  const NUVI_BUILD = 'build 25ago-7';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -3910,17 +3919,16 @@
       cancelledNotice.style.display = 'none';
       cancelSection.style.display = (history && history.paid) ? 'block' : 'none';
 
-      // Initial commitment period: treatment is titrated over months, so
-      // members commit to the first 3 billing cycles. The one exception —
-      // a provider determining treatment isn't clinically appropriate — is
-      // deliberately handled by staff, not self-served here, so a patient
-      // can't declare their own medical ineligibility to exit early.
+      // Con COMMITMENT_MONTHS = 0 esto no se muestra nunca: getCommitmentStatus
+      // devuelve active:false siempre. Se deja montado y leyendo la constante
+      // para que, si alguien reactiva el compromiso, el aviso salga correcto
+      // sin tener que reescribirlo.
       const commit = getCommitmentStatus(history);
       if(commit.active){
         commitNotice.style.display = 'block';
-        commitNotice.innerHTML = '<b>You\'re in your initial 3-month commitment.</b><br>'
+        commitNotice.innerHTML = '<b>You\'re in your initial ' + COMMITMENT_MONTHS + '-month commitment.</b><br>'
           + 'It ends on <b>' + commit.endsOn + '</b> (' + commit.daysLeft + ' days left). '
-          + 'Weight management medication is titrated gradually — most people don\'t see their full result until around month three, which is why the first three months are a commitment rather than month-to-month.'
+          + 'Weight management medication is titrated gradually, and most people don\'t see their full result right away — which is why the first months are a commitment rather than month-to-month.'
           + '<br><br>If your provider has determined that treatment isn\'t appropriate for you, that\'s an exception to this — message your care team and they\'ll take care of it.';
         cancelSection.style.display = 'none';
       }
@@ -5758,13 +5766,13 @@
     }
   }
 
-  // Staff-side override of the 3-month commitment. This exists specifically
-  // for the clinical exception: a provider has determined treatment isn't
-  // appropriate, so the patient shouldn't be held to the commitment. Kept on
-  // the staff side on purpose — patients can't self-declare ineligibility.
+  // Cancelación por criterio clínico: el médico determinó que el paciente no
+  // debe seguir en tratamiento. Vive del lado del personal a propósito —
+  // deja la razón escrita en el expediente, que es lo que la distingue de que
+  // el propio paciente cancele desde Ajustes.
   async function npCancelMembership(){
     if(!supabaseClient || !npCurrentPatientId) return;
-    const note = prompt('Cancelling this membership on clinical grounds (overrides the 3-month commitment).\n\nBriefly, why is this patient not eligible to continue?');
+    const note = prompt('Cancelling this membership on clinical grounds.\n\nBriefly, why is this patient not eligible to continue? This is recorded in their chart.');
     if(note === null) return;
     if(!note.trim()){ alert('A reason is required.'); return; }
     try{
@@ -7696,8 +7704,8 @@
   // automatic version is grammatically fine but reads stiff in Spanish.
   // Applied after Google Translate runs, so ours wins.
   var ES_COPY = {
-    'Weight loss': 'Baja de peso',
-    'with your prescription.': 'con tu receta m\u00e9dica.',
+    'Weight loss,': 'Baja de peso,',
+    'prescribed by a doctor.': 'con receta m\u00e9dica.',
     'Puerto Rico \u00b7 100% online': 'Puerto Rico \u00b7 100% en l\u00ednea',
     'Start your evaluation': 'Comienza tu evaluaci\u00f3n',
     'See treatments': 'Ver tratamientos',
@@ -7726,7 +7734,6 @@
     'First month $35, then $70/month. Cancel anytime.': 'Primer mes $35, luego $70 al mes. Cancela cuando quieras.',
     '50% off first month': '50% de descuento el primer mes',
     'Physician-directed care': 'Bajo criterio m\u00e9dico',
-    'Treating patients across Puerto Rico.': 'Atendemos pacientes en todo Puerto Rico.'
   };
   var ES_LONG = [
     ['Every patient completes a required 15-minute evaluation with a licensed physician before any prescription is approved. Appointments run 8:00 AM \u2013 7:00 PM, every day.',
@@ -7735,7 +7742,8 @@
      'Tu evaluaci\u00f3n est\u00e1 completa. Tu m\u00e9dico est\u00e1 finalizando la revisi\u00f3n \u2014 tu protocolo aparecer\u00e1 aqu\u00ed una vez aprobado.'],
     ['See a licensed physician online in Puerto Rico. If GLP-1 treatment is right for you, it ships to your door.',
      'Consulta a un m\u00e9dico licenciado en l\u00ednea, en Puerto Rico. Si el tratamiento con GLP-1 es para ti, te llega a tu casa.'],
-    ['Treating patients across Puerto Rico.', 'Atendemos pacientes en todo Puerto Rico.'],
+    ['Founded and run by physicians licensed in Puerto Rico.',
+     'Fundada y dirigida por m\u00e9dicos licenciados en Puerto Rico.'],
     ['A physician decides, not a form.', 'Decide un m\u00e9dico, no un formulario.'],
     ['Your dose is theirs to set, not yours.', 'La dosis la pone tu m\u00e9dico, no t\u00fa.'],
     ['Filled by a licensed pharmacy, shipped to you.', 'La despacha una farmacia licenciada y te llega a casa.'],
