@@ -408,8 +408,14 @@
   }
   @media(min-width:1000px){
     .navlinks{display:flex;}
-    .hero-grid{grid-template-columns:1.15fr 0.85fr;}
-    .hero-grid > div{max-width:none;}
+    /* El hero era de dos columnas: texto a la izquierda, la tarjeta de la
+       escalera a la derecha. Quitada la tarjeta, el texto quedaba metido en
+       la columna de 1.15fr con 0.85fr de vacío al lado. Ahora una sola
+       columna, y el max-width:660px de .hero-grid > div mantiene la línea
+       legible en pantalla ancha en vez de estirarla de borde a borde.
+       Si algún día vuelve una tarjeta al lado, hay que reponer:
+         .hero-grid{grid-template-columns:1.15fr 0.85fr;}
+         .hero-grid > div{max-width:none;} */
     .ladder{padding:32px 30px 26px;}
     .trust-grid{grid-template-columns:repeat(4,1fr);}
     .lead-grid{grid-template-columns:0.8fr 1.2fr;}
@@ -690,7 +696,7 @@
     <div class="hero-grid">
       <div>
         <span class="eyebrow">Puerto Rico · 100% online</span>
-        <h1>Weight loss,<br><em>prescribed by a doctor.</em></h1>
+        <h1>Weight loss medication,<br><em>personalized for you.</em></h1>
         <p class="lede">See a licensed physician online in Puerto Rico. If GLP-1 treatment is right for you, it ships to your door.</p>
         <div class="hero-ctas">
           <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake')">Start your evaluation</a>
@@ -709,36 +715,6 @@
                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span>Founded and run by physicians licensed in Puerto Rico.</span>
-        </div>
-      </div>
-      <div>
-        <!-- La escalera de dosis. Sustituye a la "receta" simulada que había
-             antes: aquella fingía ser un documento clínico firmado, se
-             desmaquetaba al traducir, y Google convertía "503A compounding
-             partner" en "socio de capitalización". Esto es información real
-             — los mismos escalones y precios que MEDICATION_INFO — y es lo
-             que el visitante viene a averiguar. -->
-        <!-- Sin dosis y sin precios a propósito. La dosis exacta la decide el
-             médico en la consulta, y enseñar una tabla de escalones invita al
-             paciente a pedir la que le parezca — que es justo lo que este
-             producto evita ("no self-selected dosing"). Aquí va el criterio
-             clínico, no el catálogo. -->
-        <div class="ladder">
-          <div class="ladder-head">
-            <span class="ladder-eyebrow">Physician-directed care</span>
-            <h3 class="ladder-title">Your dose goes up slowly, and only when your physician says so.</h3>
-          </div>
-
-          <ul class="ladder-steps">
-            <li class="ladder-step"><span class="ladder-mark"></span>
-              <span class="ladder-text">A physician decides, not a form.</span></li>
-            <li class="ladder-step"><span class="ladder-mark"></span>
-              <span class="ladder-text">Your dose is theirs to set, not yours.</span></li>
-            <li class="ladder-step"><span class="ladder-mark"></span>
-              <span class="ladder-text">Filled by a licensed pharmacy, shipped to you.</span></li>
-            <li class="ladder-step"><span class="ladder-mark"></span>
-              <span class="ladder-text">A visit before every refill. No auto-renewals.</span></li>
-          </ul>
         </div>
       </div>
     </div>
@@ -1090,30 +1066,6 @@
       </div>
     </div>
 
-    <!-- WEIGHT GOAL & TRACKER: all members -->
-    <div id="weight-tracker-wrap" style="display:none;margin-top:22px;">
-      <div class="dash-card">
-        <span class="status-pill status-active">Progress</span>
-        <h3>Weight goal & tracker</h3>
-        <p style="margin-bottom:18px;">Log your weight weekly to see real progress over time — this is for you, your care team can see it too.</p>
-
-        <div class="two-col" style="align-items:flex-end;margin-bottom:20px;">
-          <div class="field"><label>Target weight (lbs)</label><input id="target-weight-input" type="number" min="50" max="1000" step="0.1" placeholder="e.g. 180"></div>
-          <button class="btn btn-outline" style="width:auto;padding:11px 20px;" onclick="saveTargetWeight()">Save goal</button>
-        </div>
-
-        <div id="weight-chart-wrap" style="margin-bottom:20px;"></div>
-
-        <div class="form-section-title">Log this week's weight</div>
-        <div class="two-col" style="align-items:flex-end;">
-          <div class="field"><label>Weight (lbs)</label><input id="log-weight-input" type="number" min="50" max="1000" step="0.1" placeholder="e.g. 195"></div>
-          <button class="btn btn-primary" style="width:auto;padding:11px 20px;" onclick="logWeight()">Log weight</button>
-        </div>
-
-        <div id="weight-log-list" style="margin-top:20px;"></div>
-      </div>
-    </div>
-
     <!-- STORE: buy approved prescriptions, request new ones -->
     <div id="store-wrap" style="display:none;margin-top:22px;">
       <div class="dash-card">
@@ -1164,6 +1116,30 @@
         </div>
         <div class="field"><label>Anything your care team should know?</label><input id="store-request-notes" type="text" placeholder="Optional"></div>
         <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="requestNewPrescription()">Submit request</button>
+      </div>
+    </div>
+
+    <!-- WEIGHT GOAL & TRACKER: all members -->
+    <div id="weight-tracker-wrap" style="display:none;margin-top:22px;">
+      <div class="dash-card">
+        <span class="status-pill status-active">Progress</span>
+        <h3>Weight goal & tracker</h3>
+        <p style="margin-bottom:18px;">Log your weight weekly to see real progress over time — this is for you, your care team can see it too.</p>
+
+        <div class="two-col" style="align-items:flex-end;margin-bottom:20px;">
+          <div class="field"><label>Target weight (lbs)</label><input id="target-weight-input" type="number" min="50" max="1000" step="0.1" placeholder="e.g. 180"></div>
+          <button class="btn btn-outline" style="width:auto;padding:11px 20px;" onclick="saveTargetWeight()">Save goal</button>
+        </div>
+
+        <div id="weight-chart-wrap" style="margin-bottom:20px;"></div>
+
+        <div class="form-section-title">Log this week's weight</div>
+        <div class="two-col" style="align-items:flex-end;">
+          <div class="field"><label>Weight (lbs)</label><input id="log-weight-input" type="number" min="50" max="1000" step="0.1" placeholder="e.g. 195"></div>
+          <button class="btn btn-primary" style="width:auto;padding:11px 20px;" onclick="logWeight()">Log weight</button>
+        </div>
+
+        <div id="weight-log-list" style="margin-top:20px;"></div>
       </div>
     </div>
 
@@ -2345,7 +2321,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 25ago-7';
+  const NUVI_BUILD = 'build 2sep-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -7704,8 +7680,12 @@
   // automatic version is grammatically fine but reads stiff in Spanish.
   // Applied after Google Translate runs, so ours wins.
   var ES_COPY = {
-    'Weight loss,': 'Baja de peso,',
-    'prescribed by a doctor.': 'con receta m\u00e9dica.',
+    // El titular va partido en dos nodos de texto (el h1 y su <em>), y
+    // applySpanishCopy() casa nodo por nodo con igualdad exacta. Por eso son
+    // dos entradas y no una. En espa\u00f1ol se cae la coma: "Manejo de peso /
+    // personalizado" se lee de corrido, con coma no.
+    'Weight loss medication,': 'Manejo de peso',
+    'personalized for you.': 'personalizado.',
     'Puerto Rico \u00b7 100% online': 'Puerto Rico \u00b7 100% en l\u00ednea',
     'Start your evaluation': 'Comienza tu evaluaci\u00f3n',
     'See treatments': 'Ver tratamientos',
@@ -7724,6 +7704,9 @@
     'Maintain a Healthy Weight': 'Mantener un peso saludable',
     'Learn About GLP-1 Treatment': 'Conocer m\u00e1s sobre el GLP-1',
     'Not Sure Yet': 'Todav\u00eda no estoy segura',
+    // Google Translate lee "Store" como el verbo y lo pone "Almacenar".
+    // Es la tienda del paciente, no un almac\u00e9n.
+    'Store': 'Tienda',
     'Medication referral code': 'C\u00f3digo de referido para medicamento',
     'Current': 'Vigente',
     'Schedule your physician evaluation': 'Programa tu evaluaci\u00f3n m\u00e9dica',
@@ -7733,7 +7716,6 @@
     'Evaluation completed': 'Evaluaci\u00f3n completada',
     'First month $35, then $70/month. Cancel anytime.': 'Primer mes $35, luego $70 al mes. Cancela cuando quieras.',
     '50% off first month': '50% de descuento el primer mes',
-    'Physician-directed care': 'Bajo criterio m\u00e9dico',
   };
   var ES_LONG = [
     ['Every patient completes a required 15-minute evaluation with a licensed physician before any prescription is approved. Appointments run 8:00 AM \u2013 7:00 PM, every day.',
@@ -7744,12 +7726,6 @@
      'Consulta a un m\u00e9dico licenciado en l\u00ednea, en Puerto Rico. Si el tratamiento con GLP-1 es para ti, te llega a tu casa.'],
     ['Founded and run by physicians licensed in Puerto Rico.',
      'Fundada y dirigida por m\u00e9dicos licenciados en Puerto Rico.'],
-    ['A physician decides, not a form.', 'Decide un m\u00e9dico, no un formulario.'],
-    ['Your dose is theirs to set, not yours.', 'La dosis la pone tu m\u00e9dico, no t\u00fa.'],
-    ['Filled by a licensed pharmacy, shipped to you.', 'La despacha una farmacia licenciada y te llega a casa.'],
-    ['A visit before every refill. No auto-renewals.', 'Una consulta antes de cada repuesto. Sin renovaciones autom\u00e1ticas.'],
-    ['Your dose goes up slowly, and only when your physician says so.',
-     'Tu dosis sube despacio, y s\u00f3lo cuando tu m\u00e9dico lo indica.'],
     ['First month $35 (usually $70). Tirzepatide from $180/month. Semaglutide from $150/month.',
      'Primer mes $35 (normalmente $70). Tirzepatida desde $180. Semaglutida desde $150.'],
     ['Takes about 5 minutes. A licensed physician reviews your answers before your consultation.',
