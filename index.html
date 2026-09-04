@@ -2327,7 +2327,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 2sep-3';
+  const NUVI_BUILD = 'build 2sep-4';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -2664,6 +2664,21 @@
       description: 'GLP-1 agonist for appetite control and weight loss. Weekly injection, titrated gradually to limit side effects.',
       basePrice: 141, perMg: 37, unit: 'mg',
       maxDoseMg: 2.4,   // semaglutida: 2.4 mg/sem de etiqueta
+      // Escalones de la titulación estándar de semaglutida: 0.25 → 0.5 → 1.0
+      // → 1.7 → 2.4 mg/sem. NO son precios nuevos: cada uno es exactamente lo
+      // que ya devolvía calcProtocolPrice con basePrice 141 + perMg 37, y los
+      // cinco ya tienen su Payment Link en MEDICATION_LINKS_BY_PRICE
+      // (150, 160, 180, 205, 230). Escribirlos aquí sólo los hace visibles en
+      // la tarjeta pública; no cambia ni un centavo de lo que se cobra.
+      // Si algún día se toca un precio, hay que crear su link antes: sin link
+      // el paciente llega a la tienda y no puede comprar.
+      tiers: [
+        { totalMg: 1,   doseMg: 0.25, price: 150, label: '1 mg total — 0.25 mg/wk × 4 wks' },
+        { totalMg: 2,   doseMg: 0.5,  price: 160, label: '2 mg total — 0.5 mg/wk × 4 wks'  },
+        { totalMg: 4,   doseMg: 1,    price: 180, label: '4 mg total — 1 mg/wk × 4 wks'    },
+        { totalMg: 6.8, doseMg: 1.7,  price: 205, label: '6.8 mg total — 1.7 mg/wk × 4 wks'},
+        { totalMg: 9.6, doseMg: 2.4,  price: 230, label: '9.6 mg total — 2.4 mg/wk × 4 wks'}
+      ],
       launched: true, form: 'Compounded injectable, weekly', startingDose: '0.25 mg / wk', startingDoseMg: 0.25
     }
   };
@@ -2862,7 +2877,11 @@
               : medArt(info)) + '</div>'
         + '<p style="font-size:13px;color:rgba(15,35,54,0.68);margin:0 0 12px;">' + info.description + '</p>'
         + '<div class="vial-spec"><span>Form</span><b>' + info.form + '</b></div>'
-        + '<div class="vial-spec"><span>Starting dose</span><b>' + info.startingDose + '</b></div>'
+        // "Starting dose" repite el primer escalón cuando hay tabla, y además
+        // insinúa que todo el mundo arranca ahí — que no es cierto: quien ya
+        // venía con un GLP-1 no vuelve a empezar desde abajo.
+        + (info.tiers && info.tiers.length ? ''
+            : '<div class="vial-spec"><span>Starting dose</span><b>' + info.startingDose + '</b></div>')
         + doseTableHtml(info)
         + '<div class="vial-foot"><div class="price"><span style="font-size:13px;font-weight:500;opacity:0.65;display:block;line-height:1.2;">Starting at</span>$' + startingPrice + '<span> /month</span></div><span class="rx-badge">Rx only</span></div>'
         + '</div></div>';
