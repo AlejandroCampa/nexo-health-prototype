@@ -329,6 +329,42 @@
   .price{font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:-0.03em;color:var(--ink);}
   .price span{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;color:var(--ink-soft);}
   .rx-badge{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;background:var(--coral-soft);color:var(--amber-deep);padding:6px 10px;border-radius:100px;white-space:nowrap;}
+  /* ---- ESCALERA DE PRECIOS DEL CATÁLOGO ----------------------------------
+     Antes la tarjeta pública sólo decía "Starting at $180" y el resto de los
+     escalones sólo se veían dentro de la cuenta. Los precios salen de
+     MEDICATION_INFO[...].tiers, la misma fuente que cobra el checkout, así
+     que la página no puede quedar desfasada del precio real.
+     Ojo: sólo se pinta si el medicamento TIENE tiers. Semaglutida no los
+     tiene (usa basePrice + perMg), así que esa tarjeta sigue con el
+     "desde $X" de siempre en vez de inventarse una tabla. */
+  .dose-table{margin:16px 0 4px;border:1px solid var(--line-soft);border-radius:14px;overflow:hidden;}
+  .dose-table-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--paper-warm);padding:9px 14px;
+    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;
+    text-transform:uppercase;color:var(--ink-soft);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .dose-row{
+    display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline;
+    padding:11px 14px;border-bottom:1px solid var(--line-soft);
+  }
+  .dose-row:last-child{border-bottom:none;}
+  .dose-row:nth-child(even){background:rgba(15,35,54,0.015);}
+  .dose-mg{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.2;}
+  .dose-mg em{font-style:normal;font-weight:400;font-size:12px;color:var(--ink-soft);}
+  .dose-price{
+    font-family:var(--display);font-size:19px;font-weight:600;color:var(--ink);
+    letter-spacing:-0.01em;white-space:nowrap;
+  }
+  .dose-sub{
+    grid-column:1 / 2;
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.04em;
+    color:var(--ink-soft);opacity:0.85;
+  }
+  .dose-note{
+    margin:10px 0 0;font-size:11.5px;line-height:1.5;color:var(--ink-soft);
+  }
   .protocol-disclaimer{margin-top:26px;font-size:13px;color:var(--ink);opacity:0.7;line-height:1.65;max-width:880px;}
   .fda-disclaimer{margin-top:32px;padding:20px 22px;background:var(--white);border:1px solid var(--line-soft);border-left:3px solid var(--coral);border-radius:16px;font-size:13.5px;color:var(--ink);opacity:0.9;line-height:1.7;max-width:880px;}
   .fda-disclaimer b{color:var(--ink);}
@@ -706,13 +742,19 @@
     <div class="hero-grid">
       <div>
         <span class="eyebrow">Puerto Rico · 100% online</span>
-        <h1>Weight loss medication,<br><em>personalized for you.</em></h1>
-        <p class="lede">See a licensed physician online in Puerto Rico. If GLP-1 treatment is right for you, it ships to your door.</p>
+        <!-- translate="no": Google traducía este titular por su cuenta y el
+             texto dejaba de casar con ES_COPY, así que nuestra versión ya no
+             lo pisaba y salía la suya. Marcado así, Google no lo toca y el
+             español lo pone applySpanishCopy() palabra por palabra.
+             Sin <br> y sin punto final: tiene que leerse exactamente
+             "Manejo de peso personalizado". -->
+        <h1 class="notranslate" translate="no">Weight loss medication <em>personalized for you</em></h1>
+        <p class="lede">Your monthly membership covers your physician evaluation, treatment monitoring, prescriptions for medication and labs, and 24/7 support for questions about your treatment.</p>
         <div class="hero-ctas">
           <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake')">Start your evaluation</a>
           <a class="btn btn-outline" href="#protocols">See treatments</a>
         </div>
-        <p class="hero-note">First month $35 (usually $70). Tirzepatide from $180/month. Semaglutide from $150/month.</p>
+        <p class="hero-note">Membership is $35 your first month, then $70 a month. If you qualify for treatment, medication is an added cost, starting at $45 per weekly dose (tirzepatide 2.5 mg).</p>
         <!-- El stack de avatares se quitó: las fotos eran generadas y se notaba.
              Para una clínica que es PROPIEDAD de sus médicos, la señal de
              confianza no son caras anónimas de stock — es quién firma la receta.
@@ -881,7 +923,6 @@
     <div class="dash-head">
       <div>
         <h1 id="dash-welcome">Welcome</h1>
-        <p>Here's where things stand with your care.</p>
       </div>
       <div style="display:flex;align-items:center;gap:12px;">
         <button class="account-icon-btn" onclick="openSettingsModal()" title="My account" aria-label="My account">
@@ -1145,30 +1186,6 @@
             <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="sendMessage()">Send</button>
           </div>
           <p style="margin-top:12px;font-size:12.5px;color:rgba(15,35,54,0.63);">Messages are seen by your care team during business hours. This is not for emergencies — call 911 if you have a medical emergency.</p>
-        </div>
-
-        <div class="dash-card">
-          <span class="status-pill status-active">Included</span>
-          <h3>Physician evaluations</h3>
-          <p style="margin-bottom:14px;">Book a 15-minute check-in with your care team whenever you need one — up to 4 per month. Most members use one after each dose change to talk through how they're feeling.</p>
-
-          <div id="physician-appt-list" style="margin-bottom:14px;"></div>
-
-          <div id="physician-calendar-wrap">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <button type="button" class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:12px;" onclick="physicianCalendarShiftMonth(-1)">←</button>
-              <div id="physician-calendar-month-label" style="font-family:var(--display);font-size:15px;"></div>
-              <button type="button" class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:12px;" onclick="physicianCalendarShiftMonth(1)">→</button>
-            </div>
-            <div class="cal-weekday-row" id="physician-calendar-weekdays"></div>
-            <div class="cal-grid" id="physician-calendar"></div>
-            <div id="physician-slots-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
-              <div id="physician-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(15,35,54,0.68);margin-bottom:8px;text-transform:uppercase;"></div>
-              <div class="slot-grid" id="physician-slot-grid" style="grid-template-columns:1fr 1fr;"></div>
-              <p id="physician-slots-empty" style="display:none;font-size:13px;color:rgba(15,35,54,0.63);">No open times that day.</p>
-              <p id="physician-limit-msg" style="display:none;font-size:13px;color:rgba(15,35,54,0.68);">You've already had your evaluation this month — you can book next month's starting on the 1st.</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -2310,7 +2327,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 2sep-2';
+  const NUVI_BUILD = 'build 2sep-3';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -2792,6 +2809,34 @@
       + '</svg>';
   }
 
+  // La escalera de precios de la tarjeta pública. Lee los MISMOS tiers que
+  // usa el checkout, así que si mañana cambia un precio en MEDICATION_INFO,
+  // la página cambia con él — no hay una segunda lista que mantener a mano.
+  // Sin tiers no se inventa nada: se devuelve la fila de siempre.
+  function doseTableHtml(info){
+    if(!info.tiers || !info.tiers.length){
+      return '<div class="vial-spec"><span>Pricing</span><b>By prescribed dose</b></div>';
+    }
+    const unit = info.unit || 'mg';
+    const rows = info.tiers.map(function(t){
+      // El label de MEDICATION_INFO repite la dosis semanal, que ya sale
+      // grande a la izquierda ("2.5 mg / week ... 2.5 mg/wk"). Aquí sólo
+      // hace falta lo que el label añade: cuánto vial es en total.
+      const sub = t.totalMg + ' ' + unit + ' total \u00b7 4 weeks';
+      return '<div class="dose-row">'
+        + '<span class="dose-mg">' + t.doseMg + ' ' + unit + '<em> / week</em></span>'
+        + '<b class="dose-price">$' + t.price + '</b>'
+        + '<span class="dose-sub">' + sub + '</span>'
+        + '</div>';
+    }).join('');
+    return '<div class="dose-table">'
+      + '<div class="dose-table-head"><span>Dose</span><span>Per 4 weeks</span></div>'
+      + rows
+      + '</div>'
+      + '<p class="dose-note">Your physician decides which step you start on and when you move up. '
+      + 'Membership is billed separately.</p>';
+  }
+
   function renderCatalog(activeCategory){
     const grid = document.getElementById('catalog-grid');
     const filtersWrap = document.getElementById('catalog-filters');
@@ -2818,14 +2863,13 @@
         + '<p style="font-size:13px;color:rgba(15,35,54,0.68);margin:0 0 12px;">' + info.description + '</p>'
         + '<div class="vial-spec"><span>Form</span><b>' + info.form + '</b></div>'
         + '<div class="vial-spec"><span>Starting dose</span><b>' + info.startingDose + '</b></div>'
-        + '<div class="vial-spec"><span>Pricing</span><b>By prescribed dose</b></div>'
+        + doseTableHtml(info)
         + '<div class="vial-foot"><div class="price"><span style="font-size:13px;font-weight:500;opacity:0.65;display:block;line-height:1.2;">Starting at</span>$' + startingPrice + '<span> /month</span></div><span class="rx-badge">Rx only</span></div>'
         + '</div></div>';
     }).join('');
   }
 
   const FAQ_ITEMS = [
-    { q: "How does this actually work?", a: "You start a free intake and submit your health history. Once that's reviewed, you complete a short evaluation with a licensed physician. Once approved, your medication is compounded by a licensed pharmacy and shipped to your home — no in-person visit required." },
     { q: "Is this available outside Puerto Rico?", a: "We are shipping to Puerto Rico at the moment. Expanding elsewhere requires physician licensure in each jurisdiction, so it happens deliberately rather than all at once." },
     { q: "What does \"compounded medication\" mean?", a: "Compounded medications are prepared by a licensed 503A compounding pharmacy under an individual prescription from your physician. These pharmacies operate under strict state and federal quality regulations, and every preparation is made specifically for you." },
     { q: "Can I ask for a different medication later?", a: "Yes — each request is reviewed individually by your physician before it's approved, the same way your first one was." },
@@ -4082,7 +4126,18 @@
     return slots;
   }
 
+  // La tarjeta de "Physician evaluations" se quitó del dashboard del paciente.
+  // Toda esta maquinaria se queda montada — reponer la tarjeta es volver a
+  // pegar el HTML y nada más — pero sin ella en el DOM cada getElementById de
+  // aquí devuelve null. Si no se corta aquí, la línea de physician-slots-wrap
+  // revienta, la promesa de loadPatientState queda rechazada, y lo que venga
+  // después en el dashboard deja de pintarse sin un solo error visible.
+  function physicianCardPresent(){
+    return !!document.getElementById('physician-calendar-wrap');
+  }
+
   async function loadPhysicianAppointment(){
+    if(!physicianCardPresent()) return;
     if(!supabaseClient || !currentUser) return;
     const { data } = await supabaseClient.from('appointments').select('*')
       .eq('user_id', currentUser.id).eq('type', 'physician_visit').neq('status', 'cancelled')
@@ -4098,6 +4153,7 @@
 
   function renderPhysicianApptList(){
     const wrap = document.getElementById('physician-appt-list');
+    if(!wrap) return;
     if(physicianExistingAppts.length === 0){
       wrap.innerHTML = '';
       return;
@@ -4112,6 +4168,7 @@
   }
 
   function physicianCalendarShiftMonth(delta){
+    if(!physicianCardPresent()) return;
     physicianCalendarViewDate.setMonth(physicianCalendarViewDate.getMonth() + delta);
     renderPhysicianCalendar();
   }
@@ -4173,6 +4230,9 @@
     const emptyMsg = document.getElementById('physician-slots-empty');
     const limitMsg = document.getElementById('physician-limit-msg');
     const dateLabel = document.getElementById('physician-slots-date-label');
+    // Misma razón que en loadPhysicianAppointment: sin la tarjeta en el DOM
+    // todo esto es null y la función revienta a mitad.
+    if(!slotsWrap || !slotGrid || !dateLabel) return;
 
     dateLabel.textContent = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     slotsWrap.style.display = 'block';
@@ -7673,8 +7733,8 @@
     // applySpanishCopy() casa nodo por nodo con igualdad exacta. Por eso son
     // dos entradas y no una. En espa\u00f1ol se cae la coma: "Manejo de peso /
     // personalizado" se lee de corrido, con coma no.
-    'Weight loss medication,': 'Manejo de peso',
-    'personalized for you.': 'personalizado.',
+    'Weight loss medication': 'Manejo de peso',
+    'personalized for you': 'personalizado',
     'Puerto Rico \u00b7 100% online': 'Puerto Rico \u00b7 100% en l\u00ednea',
     'Start your evaluation': 'Comienza tu evaluaci\u00f3n',
     'See treatments': 'Ver tratamientos',
@@ -7696,6 +7756,7 @@
     // Google Translate lee "Store" como el verbo y lo pone "Almacenar".
     // Es la tienda del paciente, no un almac\u00e9n.
     'Store': 'Tienda',
+    'Per 4 weeks': 'Por 4 semanas',
     'Medication referral code': 'C\u00f3digo de referido para medicamento',
     'Current': 'Vigente',
     'Schedule your physician evaluation': 'Programa tu evaluaci\u00f3n m\u00e9dica',
@@ -7711,15 +7772,17 @@
      'Cada paciente completa una evaluaci\u00f3n obligatoria de 15 minutos con un m\u00e9dico licenciado antes de que se apruebe cualquier receta. Las citas son de 8:00 AM a 7:00 PM, todos los d\u00edas.'],
     ['Your evaluation is complete. Your physician is finalising the review \u2014 your protocol will appear here once approved.',
      'Tu evaluaci\u00f3n est\u00e1 completa. Tu m\u00e9dico est\u00e1 finalizando la revisi\u00f3n \u2014 tu protocolo aparecer\u00e1 aqu\u00ed una vez aprobado.'],
-    ['See a licensed physician online in Puerto Rico. If GLP-1 treatment is right for you, it ships to your door.',
-     'Consulta a un m\u00e9dico licenciado en l\u00ednea, en Puerto Rico. Si el tratamiento con GLP-1 es para ti, te llega a tu casa.'],
+    ['Your monthly membership covers your physician evaluation, treatment monitoring, prescriptions for medication and labs, and 24/7 support for questions about your treatment.',
+     'La membresía mensual incluye evaluación médica, monitoreo del tratamiento, recetas de medicamentos y laboratorios, y consultoría 24/7 en caso de tener preguntas sobre el tratamiento.'],
     ['Founded and run by physicians licensed in Puerto Rico.',
      'Fundada y dirigida por m\u00e9dicos licenciados en Puerto Rico.'],
     ['Online evaluation. No waiting rooms, no pharmacy trips \u2014 your medication ships straight to your home.',
      'Evaluaci\u00f3n online, no filas a m\u00e9dicos, no visitas a farmacias, medicamentos enviados directo a tu casa.'],
     ['Chat with clinical staff, 24/7', 'Chat con personal cl\u00ednico 24/7'],
-    ['First month $35 (usually $70). Tirzepatide from $180/month. Semaglutide from $150/month.',
-     'Primer mes $35 (normalmente $70). Tirzepatida desde $180. Semaglutida desde $150.'],
+    ['Your physician decides which step you start on and when you move up. Membership is billed separately.',
+     'Tu médico decide en qué escalón empiezas y cuándo subes. La membresía se cobra aparte.'],
+    ['Membership is $35 your first month, then $70 a month. If you qualify for treatment, medication is an added cost, starting at $45 per weekly dose (tirzepatide 2.5 mg).',
+     'El primer mes de membresía son $35 y luego $70 mensual. En caso de cualificar para tratamiento, el medicamento tiene costo adicional empezando en $45 la dosis semanal (tirzepatida 2.5 mg).'],
     ['Takes about 5 minutes. A licensed physician reviews your answers before your consultation.',
      'Toma unos 5 minutos. Un m\u00e9dico licenciado revisa tus respuestas antes de tu consulta.'],
     ['Prices below are starting prices at the typical starting dose. Your actual cost depends on the dose your physician prescribes. Nothing ships without a physician evaluation and an individual prescription.',
