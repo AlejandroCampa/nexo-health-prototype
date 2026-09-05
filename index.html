@@ -622,6 +622,73 @@
   .dash-sidebar-item{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--line);font-size:14px;}
   .dash-sidebar-item:last-child{border-bottom:none;}
   .dash-logout{margin-top:24px;}
+
+  /* ---- BURBUJA DE CHAT -----------------------------------------------------
+     Fija abajo a la derecha. El texto se esconde en móvil y queda sólo el
+     icono: una píldora ancha tapa medio pulgar de pantalla. */
+  .chat-bubble{
+    position:fixed;right:20px;bottom:20px;z-index:60;
+    display:flex;align-items:center;gap:11px;
+    padding:13px 20px 13px 16px;border:none;border-radius:100px;cursor:pointer;
+    background:linear-gradient(135deg,var(--brand) 0%,var(--brand-mint) 100%);
+    /* Texto oscuro sobre el aqua: en blanco da 1.6:1 y no se lee. */
+    color:var(--brand-ink);
+    box-shadow:0 10px 30px -8px var(--brand-glow), 0 2px 8px rgba(10,26,47,0.18);
+    font-family:var(--sans);text-align:left;
+    transition:transform .25s var(--ease), box-shadow .25s var(--ease);
+  }
+  .chat-bubble:hover{transform:translateY(-2px);box-shadow:0 16px 38px -10px var(--brand-glow), 0 3px 10px rgba(10,26,47,0.2);}
+  .chat-bubble:focus-visible{outline:3px solid var(--brand-blue);outline-offset:3px;}
+  .chat-bubble[hidden]{display:none;}
+  .chat-bubble svg{width:22px;height:22px;flex:none;}
+  .chat-bubble-text{display:flex;flex-direction:column;line-height:1.25;}
+  .chat-bubble-text b{font-size:14px;font-weight:600;}
+  .chat-bubble-text em{font-style:normal;font-size:11.5px;opacity:0.72;}
+  @media(max-width:560px){
+    .chat-bubble{right:14px;bottom:14px;padding:14px;}
+    .chat-bubble-text{display:none;}
+  }
+  @media print{ .chat-bubble{display:none;} }
+
+  /* ---- TABS DEL DASHBOARD DEL PACIENTE ------------------------------------
+     La barra hace scroll horizontal en móvil en vez de partirse en dos
+     líneas: con cuatro tabs y "Prescriptions" de por medio, envolver deja
+     un tab suelto abajo que parece un error. */
+  .dash-tabs{
+    display:flex;gap:4px;margin:-20px 0 28px;padding-bottom:2px;
+    border-bottom:1px solid var(--line);
+    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  }
+  .dash-tabs::-webkit-scrollbar{display:none;}
+  .dash-tab{
+    flex:none;appearance:none;background:none;border:none;cursor:pointer;
+    font-family:var(--sans);font-size:14.5px;font-weight:500;color:var(--ink-soft);
+    padding:12px 16px;margin-bottom:-1px;white-space:nowrap;
+    border-bottom:2px solid transparent;border-radius:8px 8px 0 0;
+    transition:color .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
+  }
+  .dash-tab:hover{color:var(--ink);background:rgba(15,35,54,0.035);}
+  /* El foco de teclado tiene que verse: se navega con flechas. */
+  .dash-tab:focus-visible{outline:2px solid var(--brand-blue);outline-offset:-2px;}
+  .dash-tab[aria-selected="true"]{
+    color:var(--ink);font-weight:600;border-bottom-color:var(--brand-blue);
+  }
+  /* Un tab sin nada que enseñar no se pinta. Ver refreshPatientTabs(). */
+  /* Punto de aviso: hay una receta aprobada sin pagar detrás de este tab. */
+  .dash-tab[data-alert]{position:relative;}
+  .dash-tab[data-alert]::after{
+    content:"";position:absolute;top:9px;right:7px;
+    width:7px;height:7px;border-radius:50%;background:var(--coral);
+  }
+  .dash-tab[hidden]{display:none;}
+  .dash-panel[hidden]{display:none;}
+  /* Las secciones traían margin-top para separarse entre ellas. Dentro de un
+     panel la primera ya no necesita ese hueco. */
+  .dash-panel > [style*="margin-top:22px"]:first-child{margin-top:0 !important;}
+  @media(max-width:560px){
+    .dash-tabs{margin:-8px -22px 22px;padding:0 22px 2px;}
+    .dash-tab{font-size:13.5px;padding:11px 13px;}
+  }
   @media(max-width:860px){ .dash-grid{grid-template-columns:1fr;} }
 
   /* ---- HEALTH HISTORY FORM ----------------------------------------------- */
@@ -749,7 +816,7 @@
              Sin <br> y sin punto final: tiene que leerse exactamente
              "Manejo de peso personalizado". -->
         <h1 class="notranslate" translate="no">Weight loss medication <em>personalized for you</em></h1>
-        <p class="lede">Your monthly membership covers your physician evaluation, treatment monitoring, prescriptions for medication and labs, and 24/7 support for questions about your treatment.</p>
+        <p class="lede">Your monthly membership covers your physician evaluation, treatment monitoring, prescriptions for medication and labs, and answers to your questions within 24–48 hours.</p>
         <div class="hero-ctas">
           <a class="btn btn-primary" href="javascript:void(0)" onclick="openModal('intake')">Start your evaluation</a>
           <a class="btn btn-outline" href="#protocols">See treatments</a>
@@ -816,7 +883,7 @@
         <p>A private video evaluation with a physician licensed in Puerto Rico — no waiting room, no referral, no travel.</p>
         <ul>
           <li>Online evaluation. No waiting rooms, no pharmacy trips — your medication ships straight to your home.</li>
-          <li>Chat with clinical staff, 24/7</li>
+          <li>Message your care team in Spanish or English — we reply within 24–48 hours.</li>
         </ul>
       </div>
     </div>
@@ -828,7 +895,7 @@
     <div class="section-head">
       <span class="section-eyebrow">Medications</span>
       <h2>What we treat — and what we prescribe for it.</h2>
-      <p>Prices below are starting prices at the typical starting dose. Your actual cost depends on the dose your physician prescribes. Nothing ships without a physician evaluation and an individual prescription.</p>
+      <p>Medication we ship to your home.</p>
     </div>
 
     <div class="protocol-filters" id="catalog-filters"></div>
@@ -846,7 +913,7 @@
   <div class="wrap">
     <div class="section-head">
       <span class="section-eyebrow">FAQ</span>
-      <h2>Everything you need to know.</h2>
+      <h2>What you need to know.</h2>
       <p>The real questions people ask before starting — no login required to read any of this.</p>
     </div>
     <div id="faq-list"></div>
@@ -932,263 +999,309 @@
       </div>
     </div>
 
-    <div class="dash-grid">
-      <div class="dash-card" id="stage-card">
-
-        <div class="stage-view" id="stage-need-history">
-          <span class="status-pill">Action needed</span>
-          <h3>Complete your health history</h3>
-          <p style="margin-bottom:16px;">Before you can schedule your interview, we need your medical history, goals, and a quick safety screening. Takes about 5 minutes.</p>
-          <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showHistoryForm()">Start health history</button>
-        </div>
-
-        <div class="stage-view" id="stage-membership-cancelled" style="display:none;">
-          <span class="status-pill" style="background:rgba(196,60,60,0.1);color:#B23A3A;">Membership cancelled</span>
-          <h3>Your membership is cancelled</h3>
-          <p id="membership-cancelled-reason" style="margin-bottom:18px;"></p>
-          <p style="font-size:13px;color:rgba(15,35,54,0.66);margin-bottom:18px;">Cancelling here stops your access on our side — if you were charged after cancelling, contact us directly and we'll help sort out billing with Stripe.</p>
-          <button class="btn btn-primary" style="width:auto;padding:13px 28px;" onclick="resubscribeMembership()">Resubscribe</button>
-        </div>
-
-        <div class="stage-view" id="stage-need-payment" style="display:none;">
-          <span class="status-pill status-active">History received</span>
-          <h3>Start your membership</h3>
-          <p style="margin-bottom:16px;">Your physician reviews your history once you're enrolled. Continue to book your evaluation.</p>
-          <div class="dash-card" style="padding:20px;max-width:420px;border-color:var(--amber);">
-            <div class="tier-name" style="margin-bottom:8px;">Initial evaluation &amp; ongoing care</div>
-            <div class="tier-price" id="checkout-price" style="font-size:28px;">$70<span style="font-family:var(--sans);font-size:13px;opacity:0.6;">/mo</span></div>
-            <p id="checkout-note" style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;">Cancel anytime.</p>
-            <p style="margin:10px 0 16px;font-size:13px;">Physician evaluations every 28 days, prescription management, and messaging. Medication billed separately. No minimum commitment.</p>
-
-            <div style="border-top:1px solid var(--line);padding-top:14px;margin-bottom:16px;">
-              <label for="coupon-input" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">Have a referral code?</label>
-              <div style="display:flex;gap:8px;">
-                <input id="coupon-input" type="text" placeholder="NUVI-XXXX-XXXX" autocomplete="off"
-                       style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:13px;
-                              text-transform:uppercase;padding:10px 12px;border:1px solid var(--line);
-                              border-radius:9px;background:var(--white);"
-                       onkeydown="if(event.key==='Enter'){event.preventDefault();applyCoupon();}">
-                <button class="btn btn-outline" style="width:auto;padding:9px 16px;font-size:13px;"
-                        onclick="applyCoupon()">Apply</button>
-              </div>
-              <div id="coupon-msg" style="font-size:12.5px;margin-top:7px;min-height:17px;"></div>
-            </div>
-
-            <button class="btn btn-primary" style="width:100%;" onclick="goToCheckout('Basic')">Continue</button>
-          </div>
-        </div>
-
-        <div class="stage-view" id="stage-need-schedule" style="display:none;">
-          <span class="status-pill status-active">History received</span>
-          <h3>Schedule your physician evaluation</h3>
-          <p style="margin-bottom:18px;">Every patient completes a required 15-minute evaluation with a licensed physician before any prescription is approved. Appointments run 8:00 AM – 7:00 PM, every day.</p>
-          <div id="np-calendar-nav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(-1)">←</button>
-            <div id="np-calendar-month-label" style="font-family:var(--display);font-size:16px;"></div>
-            <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(1)">→</button>
-          </div>
-          <div class="cal-weekday-row" id="np-calendar-weekdays"></div>
-          <div class="cal-grid" id="np-calendar"></div>
-          <div id="np-slots-wrap" style="display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--line);">
-            <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(15,35,54,0.68);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
-            <div class="slot-grid" id="np-slot-grid"></div>
-            <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(15,35,54,0.66);">No open times that day — try another date.</p>
-            <p id="np-limit-msg" style="display:none;font-size:13.5px;color:var(--amber-deep);"></p>
-          </div>
-        </div>
-
-        <div class="stage-view" id="stage-scheduled" style="display:none;">
-          <span class="status-pill status-active">Evaluation scheduled</span>
-          <h3>You're booked</h3>
-          <div class="ticket-card">
-            <div class="mono" style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.7;">Ticket number</div>
-            <div class="ticket-number" id="ticket-number-display">—</div>
-            <div class="mono" style="font-size:13px;" id="ticket-datetime-display">—</div>
-          </div>
-          <div id="appt-passed-note" style="display:none;background:rgba(217,140,43,0.14);
-               border:1px solid rgba(217,140,43,0.45);border-radius:12px;padding:14px 16px;
-               margin-bottom:16px;font-size:13.5px;color:#8A5A12;">
-            <b>This appointment time has passed.</b><br>
-            If you missed it or booked the wrong time, reschedule below — it takes a moment
-            and nothing else about your account changes.
-          </div>
-
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showVideoRoom()">Join video evaluation</button>
-            <button class="btn btn-outline" style="width:auto;padding:12px 24px;" onclick="rescheduleAppointment()">Reschedule</button>
-          </div>
-          <p style="font-size:12.5px;color:var(--ink-soft);margin-top:12px;">
-            Need to change your time? Reschedule above, or message your care team.
-          </p>
-        </div>
-
-        <div class="stage-view" id="stage-awaiting-approval" style="display:none;">
-          <span class="status-pill">Awaiting sign-off</span>
-          <h3>Evaluation complete</h3>
-          <p>Your evaluation is complete. Your physician is finalising the review — your protocol will appear here once approved.</p>
-
-          <!-- Volver a entrar a la llamada. Antes, en cuanto el médico marcaba
-               la entrevista como completa, la sala desaparecía para el paciente
-               y no había forma de volver. Si el médico le dio por error, o si
-               la llamada se cayó, los dos quedaban fuera sin salida.
-               Solo sale el mismo día de la cita: pasado eso, ya no es un
-               accidente, es una cita nueva. -->
-          <div id="rejoin-card" style="display:none;background:var(--paper-warm);
-               border:1px solid var(--line);border-left:3px solid var(--teal);
-               border-radius:0 12px 12px 0;padding:15px 18px;margin-top:18px;">
-            <div style="font-size:14.5px;font-weight:600;margin-bottom:4px;">Call ended early?</div>
-            <div style="font-size:13.5px;color:rgba(15,35,54,0.68);margin-bottom:12px;">
-              If your visit was cut short or ended by mistake, you can go back in.
-              Your physician can rejoin from their side too.
-            </div>
-            <button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;"
-                    onclick="patientRejoinCall()">Rejoin the call</button>
-          </div>
-
-          <div id="next-eval-card-await" style="display:none;border-radius:12px;padding:16px;margin-top:18px;"></div>
-        </div>
-
-        <div class="stage-view" id="stage-active" style="display:none;">
-          <span class="status-pill status-active">Active</span>
-
-          <!-- Evaluation prompt. Each prescription covers 28 days, not a calendar
-               month, so a monthly cadence would leave 2-3 uncovered days each cycle. Refills
-               depend on this happening, so the patient sees it before their physician
-               evaluation per month and refills depend on it happening, so the
-               patient needs to see this before they see their protocol. -->
-          <div id="order-confirmed" style="display:none;border-radius:12px;padding:18px 20px;margin-bottom:18px;
-               background:rgba(79,122,100,0.13);border:1px solid rgba(79,122,100,0.4);color:#2F5C46;">
-            <div style="font-size:16px;font-weight:600;margin-bottom:8px;">✓ Payment received</div>
-            <div id="order-confirmed-body" style="font-size:14px;line-height:1.6;"></div>
-            <button onclick="dismissOrderConfirmation()"
-                    style="margin-top:12px;background:none;border:none;padding:0;cursor:pointer;
-                           font-family:var(--sans);font-size:12.5px;color:#2F5C46;
-                           text-decoration:underline;opacity:0.8;">Dismiss</button>
-          </div>
-
-          <div id="next-eval-card" style="display:none;border-radius:12px;padding:16px;margin-bottom:18px;"></div>
-
-          <h3>Your protocol</h3>
-          <div id="active-med-list"></div>
-          <div id="rx-history" style="display:none;"></div>
-          <div class="dash-protocol-row">
-            <div class="name" style="font-weight:500;">Membership (<span id="active-plan-name">—</span>)</div>
-            <div class="meta" id="active-plan-price">—</div>
-          </div>
-          <!-- "Total monthly" quitado a propósito. Sumaba membresía +
-               medicamento en una sola cifra, y son cobros distintos que ni
-               siquiera se cobran el mismo día. Cada renglón enseña su precio. -->
-          <p id="active-med-notes" style="margin-top:14px;font-size:13px;color:rgba(15,35,54,0.66);"></p>
-        </div>
-
-      </div>
-
-      <div class="dash-card">
-        <h3>Getting started</h3>
-        <ul class="dash-checklist">
-          <li><span class="dash-check-icon done">✓</span> Account created</li>
-          <li><span class="dash-check-icon pending" id="check-history">•</span> Health history submitted</li>
-          <li><span class="dash-check-icon pending" id="check-paid">•</span> Plan selected & paid</li>
-          <li><span class="dash-check-icon pending" id="check-scheduled">•</span> Physician evaluation scheduled</li>
-          <li><span class="dash-check-icon pending" id="check-interview">•</span> Evaluation completed</li>
-          <li><span class="dash-check-icon pending" id="check-approved">•</span> Prescription approved</li>
-        </ul>
-      </div>
+    <!-- ===== TABS DEL PACIENTE =====
+         Los paneles SÓLO agrupan; no tocan el display de las secciones de
+         dentro. loadPatientState() sigue siendo el único que decide si
+         store-wrap o weight-tracker-wrap se ven — si se ocultara la sección
+         desde aquí, las dos lógicas se pelearían y ganaría la última que
+         corriera. Panel oculto = no se ve nada suyo; panel visible = se ve
+         lo que loadPatientState haya dejado visible. -->
+    <div class="dash-tabs" id="dash-tabs" role="tablist" aria-label="Secciones de tu cuenta">
+      <button type="button" class="dash-tab" role="tab" id="tab-home"
+              data-panel="panel-home" aria-controls="panel-home"
+              onclick="showPatientTab('home')">My care</button>
+      <button type="button" class="dash-tab" role="tab" id="tab-rx"
+              data-panel="panel-rx" aria-controls="panel-rx"
+              onclick="showPatientTab('rx')">Prescriptions</button>
+      <button type="button" class="dash-tab" role="tab" id="tab-progress"
+              data-panel="panel-progress" aria-controls="panel-progress"
+              onclick="showPatientTab('progress')">Progress</button>
+      <button type="button" class="dash-tab" role="tab" id="tab-messages"
+              data-panel="panel-messages" aria-controls="panel-messages"
+              onclick="showPatientTab('messages')">Messages</button>
+      <button type="button" class="dash-tab" role="tab" id="tab-labs"
+              data-panel="panel-labs" aria-controls="panel-labs"
+              onclick="showPatientTab('labs')">Labs</button>
     </div>
 
-    <!-- STORE: buy approved prescriptions, request new ones -->
-    <div id="store-wrap" style="display:none;margin-top:22px;">
-      <div class="dash-card">
-        <span class="status-pill status-active">Store</span>
-        <h3>Your prescriptions</h3>
-        <p style="margin-bottom:16px;">You can only purchase medications you've been approved for — but there's no limit on how many prescriptions you can request as a member. Every request is reviewed on its own before it becomes purchasable.</p>
-        <div id="store-approved-list"></div>
-
-        <!-- El cupón vive aquí, junto al botón de comprar. Antes estaba en
-             "Your protocol", lejos del momento en que el paciente paga. -->
-        <div style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;
-                    padding:13px 16px;margin:16px 0 4px;">
-          <label for="med-coupon-input" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">Medication referral code</label>
-          <div style="display:flex;gap:8px;">
-            <input id="med-coupon-input" type="text" placeholder="NUVI-MED-XXXX-XXXX" autocomplete="off"
-                   style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:13px;
-                          text-transform:uppercase;padding:10px 12px;border:1px solid var(--line);
-                          border-radius:9px;background:var(--white);"
-                   onkeydown="if(event.key==='Enter'){event.preventDefault();applyMedCoupon();}">
-            <button class="btn btn-outline" style="width:auto;padding:9px 16px;font-size:13px;"
-                    onclick="applyMedCoupon()">Apply</button>
-          </div>
-          <div id="med-coupon-msg" style="font-size:12.5px;margin-top:7px;min-height:17px;"></div>
-        </div>
-
-        <div class="form-section-title">Requests awaiting review</div>
-        <div id="store-pending-list"><p class="np-empty">None right now.</p></div>
-
-        <div class="form-section-title">Request a new prescription</div>
-        <p style="font-size:13px;color:rgba(15,35,54,0.68);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
-        <div class="two-col">
-          <div class="field"><label>Category</label>
-            <select id="store-request-cat" onchange="onRequestCategoryChange()"></select>
-          </div>
-          <div class="field"><label>Medication</label>
-            <select id="store-request-med" onchange="onRequestMedChange()"></select>
-          </div>
-        </div>
-        <div id="store-request-detail" style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;"></div>
-        <div class="field"><label>Goal</label>
-          <select id="store-request-goal">
-            <option>Weight Loss</option>
-            <option>Improve Metabolic Health</option>
-            <option>Maintain a Healthy Weight</option>
-            <option>Learn About GLP-1 Treatment</option>
-            <option>Not Sure Yet</option>
-          </select>
-        </div>
-        <div class="field"><label>Anything your care team should know?</label><input id="store-request-notes" type="text" placeholder="Optional"></div>
-        <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="requestNewPrescription()">Submit request</button>
-      </div>
-    </div>
-
-    <!-- WEIGHT GOAL & TRACKER: all members -->
-    <div id="weight-tracker-wrap" style="display:none;margin-top:22px;">
-      <div class="dash-card">
-        <span class="status-pill status-active">Progress</span>
-        <h3>Weight goal & tracker</h3>
-        <p style="margin-bottom:18px;">Log your weight weekly to see real progress over time — this is for you, your care team can see it too.</p>
-
-        <div class="two-col" style="align-items:flex-end;margin-bottom:20px;">
-          <div class="field"><label>Target weight (lbs)</label><input id="target-weight-input" type="number" min="50" max="1000" step="0.1" placeholder="e.g. 180"></div>
-          <button class="btn btn-outline" style="width:auto;padding:11px 20px;" onclick="saveTargetWeight()">Save goal</button>
-        </div>
-
-        <div id="weight-chart-wrap" style="margin-bottom:20px;"></div>
-
-        <div class="form-section-title">Log this week's weight</div>
-        <div class="two-col" style="align-items:flex-end;">
-          <div class="field"><label>Weight (lbs)</label><input id="log-weight-input" type="number" min="50" max="1000" step="0.1" placeholder="e.g. 195"></div>
-          <button class="btn btn-primary" style="width:auto;padding:11px 20px;" onclick="logWeight()">Log weight</button>
-        </div>
-
-        <div id="weight-log-list" style="margin-top:20px;"></div>
-      </div>
-    </div>
-
-    <!-- PREMIUM: ONGOING CARE ACCESS -->
-    <div id="premium-care-wrap" style="display:none;margin-top:22px;">
+    <div class="dash-panel" id="panel-home" role="tabpanel" aria-labelledby="tab-home">
       <div class="dash-grid">
-        <div class="dash-card">
-          <span class="status-pill status-active">Included</span>
-          <h3>Message your care team</h3>
-          <p style="margin-bottom:14px;">Message your care team — ask questions between visits and get a reply without waiting for your next appointment.</p>
-          <div id="message-thread" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
-          <div style="display:flex;gap:8px;">
-            <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:var(--sans);font-size:14px;">
-            <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="sendMessage()">Send</button>
+        <div class="dash-card" id="stage-card">
+
+          <div class="stage-view" id="stage-need-history">
+            <span class="status-pill">Action needed</span>
+            <h3>Complete your health history</h3>
+            <p style="margin-bottom:16px;">Before you can schedule your interview, we need your medical history, goals, and a quick safety screening. Takes about 5 minutes.</p>
+            <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showHistoryForm()">Start health history</button>
           </div>
-          <p style="margin-top:12px;font-size:12.5px;color:rgba(15,35,54,0.63);">Messages are seen by your care team during business hours. This is not for emergencies — call 911 if you have a medical emergency.</p>
+
+          <div class="stage-view" id="stage-membership-cancelled" style="display:none;">
+            <span class="status-pill" style="background:rgba(196,60,60,0.1);color:#B23A3A;">Membership cancelled</span>
+            <h3>Your membership is cancelled</h3>
+            <p id="membership-cancelled-reason" style="margin-bottom:18px;"></p>
+            <p style="font-size:13px;color:rgba(15,35,54,0.66);margin-bottom:18px;">Cancelling here stops your access on our side — if you were charged after cancelling, contact us directly and we'll help sort out billing with Stripe.</p>
+            <button class="btn btn-primary" style="width:auto;padding:13px 28px;" onclick="resubscribeMembership()">Resubscribe</button>
+          </div>
+
+          <div class="stage-view" id="stage-need-payment" style="display:none;">
+            <span class="status-pill status-active">History received</span>
+            <h3>Start your membership</h3>
+            <p style="margin-bottom:16px;">Your physician reviews your history once you're enrolled. Continue to book your evaluation.</p>
+            <div class="dash-card" style="padding:20px;max-width:420px;border-color:var(--amber);">
+              <div class="tier-name" style="margin-bottom:8px;">Initial evaluation &amp; ongoing care</div>
+              <div class="tier-price" id="checkout-price" style="font-size:28px;">$70<span style="font-family:var(--sans);font-size:13px;opacity:0.6;">/mo</span></div>
+              <p id="checkout-note" style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;">Cancel anytime.</p>
+              <p style="margin:10px 0 16px;font-size:13px;">Physician evaluations every 28 days, prescription management, and messaging. Medication billed separately. No minimum commitment.</p>
+
+              <div style="border-top:1px solid var(--line);padding-top:14px;margin-bottom:16px;">
+                <label for="coupon-input" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">Have a referral code?</label>
+                <div style="display:flex;gap:8px;">
+                  <input id="coupon-input" type="text" placeholder="NUVI-XXXX-XXXX" autocomplete="off"
+                         style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:13px;
+                                text-transform:uppercase;padding:10px 12px;border:1px solid var(--line);
+                                border-radius:9px;background:var(--white);"
+                         onkeydown="if(event.key==='Enter'){event.preventDefault();applyCoupon();}">
+                  <button class="btn btn-outline" style="width:auto;padding:9px 16px;font-size:13px;"
+                          onclick="applyCoupon()">Apply</button>
+                </div>
+                <div id="coupon-msg" style="font-size:12.5px;margin-top:7px;min-height:17px;"></div>
+              </div>
+
+              <button class="btn btn-primary" style="width:100%;" onclick="goToCheckout('Basic')">Continue</button>
+            </div>
+          </div>
+
+          <div class="stage-view" id="stage-need-schedule" style="display:none;">
+            <span class="status-pill status-active">History received</span>
+            <h3>Schedule your physician evaluation</h3>
+            <p style="margin-bottom:18px;">Every patient completes a required 15-minute evaluation with a licensed physician before any prescription is approved. Appointments run 8:00 AM – 7:00 PM, every day.</p>
+            <div id="np-calendar-nav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(-1)">←</button>
+              <div id="np-calendar-month-label" style="font-family:var(--display);font-size:16px;"></div>
+              <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="calendarShiftMonth(1)">→</button>
+            </div>
+            <div class="cal-weekday-row" id="np-calendar-weekdays"></div>
+            <div class="cal-grid" id="np-calendar"></div>
+            <div id="np-slots-wrap" style="display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--line);">
+              <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(15,35,54,0.68);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
+              <div class="slot-grid" id="np-slot-grid"></div>
+              <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(15,35,54,0.66);">No open times that day — try another date.</p>
+              <p id="np-limit-msg" style="display:none;font-size:13.5px;color:var(--amber-deep);"></p>
+            </div>
+          </div>
+
+          <div class="stage-view" id="stage-scheduled" style="display:none;">
+            <span class="status-pill status-active">Evaluation scheduled</span>
+            <h3>You're booked</h3>
+            <div class="ticket-card">
+              <div class="mono" style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.7;">Ticket number</div>
+              <div class="ticket-number" id="ticket-number-display">—</div>
+              <div class="mono" style="font-size:13px;" id="ticket-datetime-display">—</div>
+            </div>
+            <div id="appt-passed-note" style="display:none;background:rgba(217,140,43,0.14);
+                 border:1px solid rgba(217,140,43,0.45);border-radius:12px;padding:14px 16px;
+                 margin-bottom:16px;font-size:13.5px;color:#8A5A12;">
+              <b>This appointment time has passed.</b><br>
+              If you missed it or booked the wrong time, reschedule below — it takes a moment
+              and nothing else about your account changes.
+            </div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-primary" style="width:auto;padding:12px 24px;" onclick="showVideoRoom()">Join video evaluation</button>
+              <button class="btn btn-outline" style="width:auto;padding:12px 24px;" onclick="rescheduleAppointment()">Reschedule</button>
+            </div>
+            <p style="font-size:12.5px;color:var(--ink-soft);margin-top:12px;">
+              Need to change your time? Reschedule above, or message your care team.
+            </p>
+          </div>
+
+          <div class="stage-view" id="stage-awaiting-approval" style="display:none;">
+            <span class="status-pill">Awaiting sign-off</span>
+            <h3>Evaluation complete</h3>
+            <p>Your evaluation is complete. Your physician is finalising the review — your protocol will appear here once approved.</p>
+
+            <!-- Volver a entrar a la llamada. Antes, en cuanto el médico marcaba
+                 la entrevista como completa, la sala desaparecía para el paciente
+                 y no había forma de volver. Si el médico le dio por error, o si
+                 la llamada se cayó, los dos quedaban fuera sin salida.
+                 Solo sale el mismo día de la cita: pasado eso, ya no es un
+                 accidente, es una cita nueva. -->
+            <div id="rejoin-card" style="display:none;background:var(--paper-warm);
+                 border:1px solid var(--line);border-left:3px solid var(--teal);
+                 border-radius:0 12px 12px 0;padding:15px 18px;margin-top:18px;">
+              <div style="font-size:14.5px;font-weight:600;margin-bottom:4px;">Call ended early?</div>
+              <div style="font-size:13.5px;color:rgba(15,35,54,0.68);margin-bottom:12px;">
+                If your visit was cut short or ended by mistake, you can go back in.
+                Your physician can rejoin from their side too.
+              </div>
+              <button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;"
+                      onclick="patientRejoinCall()">Rejoin the call</button>
+            </div>
+
+            <div id="next-eval-card-await" style="display:none;border-radius:12px;padding:16px;margin-top:18px;"></div>
+          </div>
+
+          <div class="stage-view" id="stage-active" style="display:none;">
+            <span class="status-pill status-active">Active</span>
+
+            <!-- Evaluation prompt. Each prescription covers 28 days, not a calendar
+                 month, so a monthly cadence would leave 2-3 uncovered days each cycle. Refills
+                 depend on this happening, so the patient sees it before their physician
+                 evaluation per month and refills depend on it happening, so the
+                 patient needs to see this before they see their protocol. -->
+            <div id="order-confirmed" style="display:none;border-radius:12px;padding:18px 20px;margin-bottom:18px;
+                 background:rgba(79,122,100,0.13);border:1px solid rgba(79,122,100,0.4);color:#2F5C46;">
+              <div style="font-size:16px;font-weight:600;margin-bottom:8px;">✓ Payment received</div>
+              <div id="order-confirmed-body" style="font-size:14px;line-height:1.6;"></div>
+              <button onclick="dismissOrderConfirmation()"
+                      style="margin-top:12px;background:none;border:none;padding:0;cursor:pointer;
+                             font-family:var(--sans);font-size:12.5px;color:#2F5C46;
+                             text-decoration:underline;opacity:0.8;">Dismiss</button>
+            </div>
+
+            <div id="next-eval-card" style="display:none;border-radius:12px;padding:16px;margin-bottom:18px;"></div>
+
+            <h3>Your protocol</h3>
+            <div id="active-med-list"></div>
+            <div id="rx-history" style="display:none;"></div>
+            <div class="dash-protocol-row">
+              <div class="name" style="font-weight:500;">Membership (<span id="active-plan-name">—</span>)</div>
+              <div class="meta" id="active-plan-price">—</div>
+            </div>
+            <!-- "Total monthly" quitado a propósito. Sumaba membresía +
+                 medicamento en una sola cifra, y son cobros distintos que ni
+                 siquiera se cobran el mismo día. Cada renglón enseña su precio. -->
+            <p id="active-med-notes" style="margin-top:14px;font-size:13px;color:rgba(15,35,54,0.66);"></p>
+          </div>
+
+        </div>
+
+        <div class="dash-card">
+          <h3>Getting started</h3>
+          <ul class="dash-checklist">
+            <li><span class="dash-check-icon done">✓</span> Account created</li>
+            <li><span class="dash-check-icon pending" id="check-history">•</span> Health history submitted</li>
+            <li><span class="dash-check-icon pending" id="check-paid">•</span> Plan selected & paid</li>
+            <li><span class="dash-check-icon pending" id="check-scheduled">•</span> Physician evaluation scheduled</li>
+            <li><span class="dash-check-icon pending" id="check-interview">•</span> Evaluation completed</li>
+            <li><span class="dash-check-icon pending" id="check-approved">•</span> Prescription approved</li>
+          </ul>
         </div>
       </div>
     </div>
+
+    <div class="dash-panel" id="panel-rx" role="tabpanel" aria-labelledby="tab-rx">
+      <!-- STORE: buy approved prescriptions, request new ones -->
+      <div id="store-wrap" style="display:none;margin-top:22px;">
+        <div class="dash-card">
+          <span class="status-pill status-active">Store</span>
+          <h3>Your prescriptions</h3>
+          <p style="margin-bottom:16px;">You can only purchase medications you've been approved for — but there's no limit on how many prescriptions you can request as a member. Every request is reviewed on its own before it becomes purchasable.</p>
+          <div id="store-approved-list"></div>
+
+          <!-- El cupón vive aquí, junto al botón de comprar. Antes estaba en
+               "Your protocol", lejos del momento en que el paciente paga. -->
+          <div style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;
+                      padding:13px 16px;margin:16px 0 4px;">
+            <label for="med-coupon-input" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">Medication referral code</label>
+            <div style="display:flex;gap:8px;">
+              <input id="med-coupon-input" type="text" placeholder="NUVI-MED-XXXX-XXXX" autocomplete="off"
+                     style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:13px;
+                            text-transform:uppercase;padding:10px 12px;border:1px solid var(--line);
+                            border-radius:9px;background:var(--white);"
+                     onkeydown="if(event.key==='Enter'){event.preventDefault();applyMedCoupon();}">
+              <button class="btn btn-outline" style="width:auto;padding:9px 16px;font-size:13px;"
+                      onclick="applyMedCoupon()">Apply</button>
+            </div>
+            <div id="med-coupon-msg" style="font-size:12.5px;margin-top:7px;min-height:17px;"></div>
+          </div>
+
+          <div class="form-section-title">Requests awaiting review</div>
+          <div id="store-pending-list"><p class="np-empty">None right now.</p></div>
+
+          <div class="form-section-title">Request a new prescription</div>
+          <p style="font-size:13px;color:rgba(15,35,54,0.68);margin-bottom:14px;">Interested in something for a different goal? Request as many as you'd like — your care team reviews each one individually, same as your first prescription, and nothing ships until it's approved.</p>
+          <div class="two-col">
+            <div class="field"><label>Category</label>
+              <select id="store-request-cat" onchange="onRequestCategoryChange()"></select>
+            </div>
+            <div class="field"><label>Medication</label>
+              <select id="store-request-med" onchange="onRequestMedChange()"></select>
+            </div>
+          </div>
+          <div id="store-request-detail" style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;"></div>
+          <div class="field"><label>Goal</label>
+            <select id="store-request-goal">
+              <option>Weight Loss</option>
+              <option>Improve Metabolic Health</option>
+              <option>Maintain a Healthy Weight</option>
+              <option>Learn About GLP-1 Treatment</option>
+              <option>Not Sure Yet</option>
+            </select>
+          </div>
+          <div class="field"><label>Anything your care team should know?</label><input id="store-request-notes" type="text" placeholder="Optional"></div>
+          <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="requestNewPrescription()">Submit request</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-panel" id="panel-progress" role="tabpanel" aria-labelledby="tab-progress">
+      <!-- WEIGHT GOAL & TRACKER: all members -->
+      <div id="weight-tracker-wrap" style="display:none;margin-top:22px;">
+        <div class="dash-card">
+          <span class="status-pill status-active">Progress</span>
+          <h3>Weight goal & tracker</h3>
+          <p style="margin-bottom:18px;">Log your weight weekly to see real progress over time — this is for you, your care team can see it too.</p>
+
+          <div class="two-col" style="align-items:flex-end;margin-bottom:20px;">
+            <div class="field"><label>Target weight (lbs)</label><input id="target-weight-input" type="number" min="50" max="1000" step="0.1" placeholder="e.g. 180"></div>
+            <button class="btn btn-outline" style="width:auto;padding:11px 20px;" onclick="saveTargetWeight()">Save goal</button>
+          </div>
+
+          <div id="weight-chart-wrap" style="margin-bottom:20px;"></div>
+
+          <div class="form-section-title">Log this week's weight</div>
+          <div class="two-col" style="align-items:flex-end;">
+            <div class="field"><label>Weight (lbs)</label><input id="log-weight-input" type="number" min="50" max="1000" step="0.1" placeholder="e.g. 195"></div>
+            <button class="btn btn-primary" style="width:auto;padding:11px 20px;" onclick="logWeight()">Log weight</button>
+          </div>
+
+          <div id="weight-log-list" style="margin-top:20px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-panel" id="panel-messages" role="tabpanel" aria-labelledby="tab-messages">
+      <!-- PREMIUM: ONGOING CARE ACCESS -->
+      <div id="premium-care-wrap" style="display:none;margin-top:22px;">
+        <div class="dash-grid">
+          <div class="dash-card">
+            <span class="status-pill status-active">Included</span>
+            <h3>Message your care team</h3>
+            <p style="margin-bottom:14px;">Message your care team — ask questions between visits and get a reply without waiting for your next appointment.</p>
+            <div id="message-thread" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
+            <div style="display:flex;gap:8px;">
+              <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:var(--sans);font-size:14px;">
+              <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="sendMessage()">Send</button>
+            </div>
+            <p style="margin-top:12px;font-size:12.5px;color:rgba(15,35,54,0.63);">We reply within 24–48 hours. Write in Spanish or English — whichever you prefer.</p>
+            <p style="margin-top:8px;font-size:12.5px;color:#B23A3A;line-height:1.55;">This is not for emergencies. Call 911 if you have a medical emergency.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-panel" id="panel-labs" role="tabpanel" aria-labelledby="tab-labs" hidden>
+      <div id="labs-wrap" style="margin-top:22px;">
+        <div class="dash-card">
+          <span class="status-pill status-active">Records</span>
+          <h3>Lab results &amp; documents</h3>
+          <p style="margin-bottom:16px;">Bloodwork, imaging, or anything else your physician should see.</p>
+          <div id="dash-labs-mount"></div>
+        </div>
+      </div>
+    </div>
+
 
     <div id="history-form-wrap" style="display:none;margin-top:22px;">
       <div class="dash-card">
@@ -1406,6 +1519,19 @@
           </div>
 
           </div>
+          <!-- PASO 7 — LABORATORIOS.
+               Opcional a propósito: obligar a subir un PDF aquí bloquearía el
+               alta de todo el que no tenga labs a mano, que son casi todos.
+               El mismo bloque vive también en el dashboard (panel de Labs)
+               para las pruebas que traiga después. -->
+          <div class="hh-step" data-step="7" style="display:none;">
+          <div class="form-section-title">Lab results <span style="font-weight:400;opacity:0.6;">(optional)</span></div>
+          <p style="font-size:13px;color:var(--ink-soft);margin:-6px 0 14px;line-height:1.6;">
+            If you have recent bloodwork, upload it here and your physician will
+            review it before your evaluation. You can also add labs later from
+            your account — you don't need them to continue.</p>
+          <div id="hh-labs-mount"></div>
+          </div>
 
           <div style="display:flex;gap:12px;align-items:center;margin-top:28px;flex-wrap:wrap;">
             <button class="btn btn-outline" type="button" id="hh-back" style="width:auto;padding:12px 24px;" onclick="hhStep(-1)">← Back</button>
@@ -1437,6 +1563,27 @@
 
   </div>
 </section>
+<!-- ===== BURBUJA DE CHAT =====
+     No es un chat aparte: es un atajo al mismo hilo de mensajes que ya
+     existe en el tab de Mensajes. Duplicar la conversación en dos sitios
+     habría significado dos listas que se desincronizan y un paciente que
+     escribe en una y el médico contesta en la otra.
+     Vive fuera de #dashboard para poder ir en position:fixed sin que
+     ningún overflow de un padre la recorte. showPatientChat() la esconde
+     sola si no hay sesión de paciente. -->
+<button type="button" id="chat-bubble" class="chat-bubble" hidden
+        onclick="openPatientChat()"
+        aria-label="Message your care team — Spanish or English">
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"
+          fill="none" stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <span class="chat-bubble-text">
+    <b>¿Preguntas?</b>
+    <em>Español / English</em>
+  </span>
+</button>
 
 <section id="np-dashboard">
   <div class="wrap">
@@ -1474,109 +1621,139 @@
       </div>
     </div>
 
-    <!-- CO-SIGNATURE QUEUE — licensed physicians only -->
-    <div id="cosign-queue-wrap" style="display:none;margin-bottom:22px;">
-      <div class="dash-grid" style="grid-template-columns:1fr;">
-        <div class="dash-card" style="border-color:var(--amber-deep);">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
-            <h3 style="margin:0;">Notes awaiting your co-signature</h3>
-            <span id="cosign-count" class="status-pill" style="background:var(--amber-deep);color:var(--white);">0</span>
-          </div>
-          <p style="font-size:13px;color:var(--ink-soft);margin-bottom:16px;">Written by a provider practising under your supervision. Review each one before countersigning — your signature attests to the clinical content.</p>
-          <div id="cosign-list"></div>
-        </div>
-      </div>
+    <!-- ===== TABS DEL DASHBOARD CLÍNICO =====
+         Mismo trato que en el del paciente: los paneles sólo agrupan. Quién
+         puede VER la consola de admin o la cola de co-firma lo sigue
+         decidiendo el código de roles (renderAdminConsole, etc.) sobre el
+         display de cada sección. Si esto lo tocara, un NP podría acabar
+         viendo la consola de admin por un cambio de pestaña. -->
+    <div class="dash-tabs" id="np-tabs" role="tablist" aria-label="Secciones del panel clínico">
+      <button type="button" class="dash-tab" role="tab" id="nptab-patients"
+              data-panel="nppanel-patients" aria-controls="nppanel-patients"
+              onclick="showStaffTab('patients')">Patients</button>
+      <button type="button" class="dash-tab" role="tab" id="nptab-schedule"
+              data-panel="nppanel-schedule" aria-controls="nppanel-schedule"
+              onclick="showStaffTab('schedule')">Schedule</button>
+      <button type="button" class="dash-tab" role="tab" id="nptab-oversight"
+              data-panel="nppanel-oversight" aria-controls="nppanel-oversight"
+              onclick="showStaffTab('oversight')">Oversight</button>
+      <button type="button" class="dash-tab" role="tab" id="nptab-admin"
+              data-panel="nppanel-admin" aria-controls="nppanel-admin"
+              onclick="showStaffTab('admin')">Admin</button>
     </div>
 
-    <!-- ADMIN CONSOLE — role 'admin' only. Backend view across every role. -->
-    <div id="admin-console" style="display:none;margin-bottom:22px;">
-      <div class="dash-grid" style="grid-template-columns:1fr;">
-        <div class="dash-card" style="border-color:var(--ink);">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
-            <h3 style="margin:0;">Admin console</h3>
-            <span class="status-pill" style="background:var(--ink);color:var(--white);">Super admin</span>
-          </div>
-          <p style="font-size:13px;color:var(--ink-soft);margin-bottom:18px;">System-wide view. Visible only to admin accounts.</p>
-
-          <div class="form-section-title">At a glance</div>
-          <div id="admin-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;"></div>
-
-          <div class="form-section-title">Staff &amp; roles</div>
-          <div id="admin-roster" style="margin-bottom:20px;"></div>
-
-          <div class="form-section-title">Funnel</div>
-          <div id="admin-funnel" style="margin-bottom:20px;"></div>
-
-          <div class="form-section-title">Data health</div>
-          <div id="admin-health" style="margin-bottom:8px;"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PHYSICIAN OVERSIGHT — only rendered for role physician/admin -->
-    <div id="physician-oversight" style="display:none;margin-bottom:22px;">
+    <div class="dash-panel" id="nppanel-patients" role="tabpanel" aria-labelledby="nptab-patients" hidden>
       <div class="dash-grid" style="grid-template-columns:1fr;">
         <div class="dash-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
-            <h3 style="margin:0;">Clinic oversight</h3>
-            <span class="status-pill status-active">Physician view</span>
+          <h3 style="margin-bottom:14px;">All patients</h3>
+          <div style="margin-bottom:12px;">
+            <input id="np-patient-search" type="search" placeholder="Search patients by name or email…"
+                   oninput="filterPatientList()"
+                   style="width:100%;font-family:inherit;font-size:14px;padding:11px 14px;
+                          border:1px solid var(--line);border-radius:10px;background:var(--white);">
+            <div id="np-search-count" style="font-size:12px;color:var(--ink-soft);margin-top:6px;"></div>
           </div>
-          <p style="font-size:13px;color:rgba(15,35,54,0.68);margin-bottom:18px;">Every provider's working hours and the whole clinic's booked schedule.</p>
+          <div id="np-patient-list"></div>
+        </div>
+      </div>
+    </div>
 
-          <div class="form-section-title">Provider working hours</div>
-          <div id="oversight-availability" style="margin-bottom:18px;"></div>
+    <div class="dash-panel" id="nppanel-schedule" role="tabpanel" aria-labelledby="nptab-schedule" hidden>
+      <div class="dash-grid" style="grid-template-columns:1fr;margin-bottom:22px;">
+        <div class="dash-card">
+          <h3 style="margin-bottom:14px;">Today's & upcoming interviews</h3>
+          <div id="np-appointment-list" style="font-size:14px;"></div>
+        </div>
+      </div>
+    </div>
 
-          <div class="form-section-title">Set / change hours</div>
-          <div class="two-col">
-            <div class="field"><label>Provider</label><select id="avail-provider"></select></div>
-            <div class="field"><label>Day</label>
-              <select id="avail-day">
-                <option value="0">Sunday</option><option value="1">Monday</option>
-                <option value="2">Tuesday</option><option value="3">Wednesday</option>
-                <option value="4">Thursday</option><option value="5">Friday</option>
-                <option value="6">Saturday</option>
-              </select>
+    <div class="dash-panel" id="nppanel-oversight" role="tabpanel" aria-labelledby="nptab-oversight" hidden>
+      <!-- CO-SIGNATURE QUEUE — licensed physicians only -->
+      <div id="cosign-queue-wrap" style="display:none;margin-bottom:22px;">
+        <div class="dash-grid" style="grid-template-columns:1fr;">
+          <div class="dash-card" style="border-color:var(--amber-deep);">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
+              <h3 style="margin:0;">Notes awaiting your co-signature</h3>
+              <span id="cosign-count" class="status-pill" style="background:var(--amber-deep);color:var(--white);">0</span>
             </div>
+            <p style="font-size:13px;color:var(--ink-soft);margin-bottom:16px;">Written by a provider practising under your supervision. Review each one before countersigning — your signature attests to the clinical content.</p>
+            <div id="cosign-list"></div>
           </div>
-          <div class="two-col">
-            <div class="field"><label>Start</label><input id="avail-start" type="time" value="08:00"></div>
-            <div class="field"><label>End</label><input id="avail-end" type="time" value="17:00"></div>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
-            <button class="btn btn-primary" style="width:auto;padding:10px 20px;" onclick="saveAvailability()">Save hours</button>
-            <button class="btn btn-outline" style="width:auto;padding:10px 20px;" onclick="clearAvailabilityForDay()">Clear this day</button>
-          </div>
+        </div>
+      </div>
 
-          <div class="form-section-title">Clinic schedule — next 14 days</div>
-          <p style="font-size:12.5px;color:rgba(15,35,54,0.66);margin-bottom:10px;">Booked slots are removed from patient availability automatically.</p>
-          <div id="oversight-schedule" style="max-height:340px;overflow-y:auto;"></div>
+      <!-- PHYSICIAN OVERSIGHT — only rendered for role physician/admin -->
+      <div id="physician-oversight" style="display:none;margin-bottom:22px;">
+        <div class="dash-grid" style="grid-template-columns:1fr;">
+          <div class="dash-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
+              <h3 style="margin:0;">Clinic oversight</h3>
+              <span class="status-pill status-active">Physician view</span>
+            </div>
+            <p style="font-size:13px;color:rgba(15,35,54,0.68);margin-bottom:18px;">Every provider's working hours and the whole clinic's booked schedule.</p>
 
-          <div class="form-section-title">Provider hours logged — last 30 days</div>
-          <div id="oversight-timesheets"></div>
+            <div class="form-section-title">Provider working hours</div>
+            <div id="oversight-availability" style="margin-bottom:18px;"></div>
+
+            <div class="form-section-title">Set / change hours</div>
+            <div class="two-col">
+              <div class="field"><label>Provider</label><select id="avail-provider"></select></div>
+              <div class="field"><label>Day</label>
+                <select id="avail-day">
+                  <option value="0">Sunday</option><option value="1">Monday</option>
+                  <option value="2">Tuesday</option><option value="3">Wednesday</option>
+                  <option value="4">Thursday</option><option value="5">Friday</option>
+                  <option value="6">Saturday</option>
+                </select>
+              </div>
+            </div>
+            <div class="two-col">
+              <div class="field"><label>Start</label><input id="avail-start" type="time" value="08:00"></div>
+              <div class="field"><label>End</label><input id="avail-end" type="time" value="17:00"></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
+              <button class="btn btn-primary" style="width:auto;padding:10px 20px;" onclick="saveAvailability()">Save hours</button>
+              <button class="btn btn-outline" style="width:auto;padding:10px 20px;" onclick="clearAvailabilityForDay()">Clear this day</button>
+            </div>
+
+            <div class="form-section-title">Clinic schedule — next 14 days</div>
+            <p style="font-size:12.5px;color:rgba(15,35,54,0.66);margin-bottom:10px;">Booked slots are removed from patient availability automatically.</p>
+            <div id="oversight-schedule" style="max-height:340px;overflow-y:auto;"></div>
+
+            <div class="form-section-title">Provider hours logged — last 30 days</div>
+            <div id="oversight-timesheets"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="dash-grid" style="grid-template-columns:1fr;margin-bottom:22px;">
-      <div class="dash-card">
-        <h3 style="margin-bottom:14px;">Today's & upcoming interviews</h3>
-        <div id="np-appointment-list" style="font-size:14px;"></div>
+    <div class="dash-panel" id="nppanel-admin" role="tabpanel" aria-labelledby="nptab-admin" hidden>
+      <!-- ADMIN CONSOLE — role 'admin' only. Backend view across every role. -->
+      <div id="admin-console" style="display:none;margin-bottom:22px;">
+        <div class="dash-grid" style="grid-template-columns:1fr;">
+          <div class="dash-card" style="border-color:var(--ink);">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
+              <h3 style="margin:0;">Admin console</h3>
+              <span class="status-pill" style="background:var(--ink);color:var(--white);">Super admin</span>
+            </div>
+            <p style="font-size:13px;color:var(--ink-soft);margin-bottom:18px;">System-wide view. Visible only to admin accounts.</p>
+
+            <div class="form-section-title">At a glance</div>
+            <div id="admin-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;"></div>
+
+            <div class="form-section-title">Staff &amp; roles</div>
+            <div id="admin-roster" style="margin-bottom:20px;"></div>
+
+            <div class="form-section-title">Funnel</div>
+            <div id="admin-funnel" style="margin-bottom:20px;"></div>
+
+            <div class="form-section-title">Data health</div>
+            <div id="admin-health" style="margin-bottom:8px;"></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="dash-grid" style="grid-template-columns:1fr;">
-      <div class="dash-card">
-        <h3 style="margin-bottom:14px;">All patients</h3>
-        <div style="margin-bottom:12px;">
-          <input id="np-patient-search" type="search" placeholder="Search patients by name or email…"
-                 oninput="filterPatientList()"
-                 style="width:100%;font-family:inherit;font-size:14px;padding:11px 14px;
-                        border:1px solid var(--line);border-radius:10px;background:var(--white);">
-          <div id="np-search-count" style="font-size:12px;color:var(--ink-soft);margin-top:6px;"></div>
-        </div>
-        <div id="np-patient-list"></div>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -1619,6 +1796,9 @@
     </details>
     <div id="np-membership-status" style="font-size:13.5px;margin-bottom:10px;"></div>
     <button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13px;border-color:#B23A3A;color:#B23A3A;margin-bottom:20px;" onclick="npCancelMembership()">Cancel membership — medically ineligible</button>
+
+    <div class="form-section-title">Labs &amp; documents <span style="font-weight:400;color:rgba(15,35,54,0.63);">(uploaded by the patient)</span></div>
+    <div id="np-labs-list" style="margin-bottom:20px;"></div>
 
     <div class="form-section-title">Progress note <span style="font-weight:400;color:rgba(15,35,54,0.63);">(signed clinical documentation)</span></div>
     <div id="np-records-list" style="margin-bottom:14px;"></div>
@@ -2327,7 +2507,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 2sep-4';
+  const NUVI_BUILD = 'build 2sep-6';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -2889,12 +3069,11 @@
   }
 
   const FAQ_ITEMS = [
-    { q: "Is this available outside Puerto Rico?", a: "We are shipping to Puerto Rico at the moment. Expanding elsewhere requires physician licensure in each jurisdiction, so it happens deliberately rather than all at once." },
     { q: "What does \"compounded medication\" mean?", a: "Compounded medications are prepared by a licensed 503A compounding pharmacy under an individual prescription from your physician. These pharmacies operate under strict state and federal quality regulations, and every preparation is made specifically for you." },
     { q: "Can I ask for a different medication later?", a: "Yes — each request is reviewed individually by your physician before it's approved, the same way your first one was." },
     { q: "Is there a minimum commitment?", a: "No minimum commitment. Membership is month to month." },
     { q: "How do I cancel?", a: "You can cancel at any time from your account Settings." },
-    { q: "How fast can I actually get started?", a: "Your medication can be ordered within 1 day and shipped within 3 days after subscribing." }
+    { q: "How fast can I actually get started?", a: "You can be evaluated by a physician within 1 day of subscribing. Your medication can be ordered the same day and ships within 3 days." }
   ];
 
   function renderFAQ(){
@@ -3213,7 +3392,384 @@
     } else {
       document.getElementById('premium-care-wrap').style.display = 'none';
     }
+
+    // Los laboratorios se montan una vez y se recargan en cada pasada.
+    mountLabWidgets();
+    refreshChatBubble();
+
+    // Los tabs se recalculan al final, cuando ya está decidido qué
+    // secciones se ven. Antes de esto la respuesta sería la de la carga
+    // anterior.
+    refreshPatientTabs();
   }
+
+  // ====== BURBUJA DE CHAT ======
+  // Atajo, no un segundo chat: lleva al tab de Mensajes y pone el cursor en
+  // el campo. Un hilo, una fuente de verdad.
+  function openPatientChat(){
+    const dash = document.getElementById('dashboard');
+    // El dashboard se enseña con la clase 'visible', no con style.display.
+    if(!dash || !dash.classList.contains('visible')) return;
+    if(document.getElementById('premium-care-wrap').style.display === 'none'){
+      // Todavía no tiene acceso a mensajería (no ha pagado o le cancelaron).
+      alert('Messaging opens up once your membership is active. '
+          + 'If you need help before that, write to us at hola@nuviclinic.com.');
+      return;
+    }
+    showPatientTab('messages');
+    const card = document.getElementById('premium-care-wrap');
+    if(card && card.scrollIntoView) card.scrollIntoView({ behavior:'smooth', block:'start' });
+    const input = document.getElementById('message-input');
+    if(input) setTimeout(function(){ input.focus(); }, 350);
+  }
+
+  // La burbuja sólo existe para un paciente con sesión. Ni en la página
+  // pública ni en el dashboard clínico: al médico no le sirve de nada.
+  function refreshChatBubble(){
+    const b = document.getElementById('chat-bubble');
+    if(!b) return;
+    const dash = document.getElementById('dashboard');
+    b.hidden = !(dash && dash.classList.contains('visible'));
+  }
+
+  // ====== TABS DEL DASHBOARD CLÍNICO ======
+  // Misma regla que en el del paciente: estos tabs NUNCA tocan el display de
+  // admin-console, cosign-queue-wrap ni physician-oversight. Eso lo decide el
+  // código de roles. Aquí sólo se esconde y se enseña el panel contenedor —
+  // si no, un cambio de pestaña podría enseñarle a un NP la consola de admin.
+  const STAFF_TABS = [
+    { id:'patients',  panel:'nppanel-patients'  },
+    { id:'schedule',  panel:'nppanel-schedule'  },
+    { id:'oversight', panel:'nppanel-oversight' },
+    { id:'admin',     panel:'nppanel-admin'     }
+  ];
+  let activeStaffTab = 'patients';
+
+  function showStaffTab(id){
+    const t = STAFF_TABS.find(x => x.id === id);
+    if(!t) return;
+    activeStaffTab = id;
+    STAFF_TABS.forEach(function(x){
+      const btn = document.getElementById('nptab-' + x.id);
+      const pan = document.getElementById(x.panel);
+      const on  = (x.id === id);
+      if(btn){
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        btn.tabIndex = on ? 0 : -1;
+      }
+      if(pan) pan.hidden = !on;
+    });
+  }
+
+  function refreshStaffTabs(){
+    const bar = document.getElementById('np-tabs');
+    if(!bar) return;
+
+    const visibles = [];
+    STAFF_TABS.forEach(function(x){
+      const btn = document.getElementById('nptab-' + x.id);
+      const hay = tabPanelHasContent(x.panel);
+      if(btn) btn.hidden = !hay;
+      if(hay) visibles.push(x.id);
+    });
+
+    // Notas esperando co-firma: eso es trabajo clínico pendiente y una nota
+    // sin firmar es un problema de expediente, no una notificación más.
+    // Con tabs se quedaría escondida, así que se marca.
+    const ovBtn = document.getElementById('nptab-oversight');
+    if(ovBtn){
+      const cq = document.getElementById('cosign-queue-wrap');
+      const cnt = document.getElementById('cosign-count');
+      const pend = cnt ? parseInt(cnt.textContent, 10) : 0;
+      const hayCola = !!(cq && cq.style.display !== 'none' && pend > 0);
+      if(hayCola) ovBtn.setAttribute('data-alert','1');
+      else ovBtn.removeAttribute('data-alert');
+    }
+
+    if(visibles.length === 0){
+      STAFF_TABS.forEach(function(x){
+        const pan = document.getElementById(x.panel);
+        if(pan) pan.hidden = true;
+      });
+      bar.hidden = true;
+      return;
+    }
+    bar.hidden = false;
+    showStaffTab(visibles.indexOf(activeStaffTab) > -1 ? activeStaffTab : visibles[0]);
+  }
+
+  // ====== LABORATORIOS DEL PACIENTE ======
+  // El bucket 'lab-documents' es PRIVADO, al revés que 'staff-avatars'.
+  // Un avatar con URL pública no le importa a nadie; un panel metabólico con
+  // el nombre del paciente es PHI, y una URL pública de Supabase la abre
+  // cualquiera que la tenga, sin sesión. Por eso aquí no se usa nunca
+  // getPublicUrl(): para verlo se pide un createSignedUrl que caduca.
+  const LAB_BUCKET = 'lab-documents';
+  const LAB_MAX_BYTES = 15 * 1024 * 1024;
+  const LAB_TYPES = {
+    'application/pdf':'pdf', 'image/jpeg':'jpg', 'image/png':'png',
+    'image/heic':'heic', 'image/heif':'heif', 'image/webp':'webp'
+  };
+
+  function labMountHtml(idPrefix){
+    return ''
+      + '<div id="' + idPrefix + '-list" style="margin-bottom:14px;"></div>'
+      + '<input id="' + idPrefix + '-file" type="file" style="display:none;" '
+      +   'accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp" '
+      +   'onchange="uploadLabDocument(this,\'' + idPrefix + '\')">'
+      + '<button type="button" class="btn btn-outline" style="width:auto;padding:10px 20px;" '
+      +   'onclick="document.getElementById(\'' + idPrefix + '-file\').click()">Add a document</button>'
+      + '<div id="' + idPrefix + '-msg" style="font-size:12.5px;color:var(--ink-soft);margin-top:10px;line-height:1.55;">'
+      +   'PDF, JPG or PNG. Up to 15 MB each.</div>';
+  }
+
+  // Los dos sitios (paso 7 del historial y panel de Labs) montan lo mismo.
+  function mountLabWidgets(){
+    [['hh-labs-mount','hh-labs'], ['dash-labs-mount','dash-labs']].forEach(function(pair){
+      const host = document.getElementById(pair[0]);
+      if(host && !host.dataset.mounted){
+        host.innerHTML = labMountHtml(pair[1]);
+        host.dataset.mounted = '1';
+      }
+    });
+    loadLabDocuments();
+  }
+
+  function labMsg(prefix, text, bad){
+    const el = document.getElementById(prefix + '-msg');
+    if(!el) return;
+    el.textContent = text;
+    el.style.color = bad ? '#B23A3A' : 'var(--ink-soft)';
+  }
+
+  async function loadLabDocuments(){
+    if(!supabaseClient || !currentUser) return;
+    let rows = [];
+    try{
+      const { data, error } = await supabaseClient.from('lab_documents')
+        .select('*').eq('user_id', currentUser.id)
+        .order('uploaded_at', { ascending:false });
+      if(error) throw error;
+      rows = data || [];
+    }catch(err){
+      // Si la tabla todavía no existe (falta correr el SQL), se dice, no se
+      // deja el hueco en blanco haciendo creer que no subió nada.
+      ['hh-labs','dash-labs'].forEach(function(pfx){
+        const el = document.getElementById(pfx + '-list');
+        if(el) el.innerHTML = '<p class="np-empty">Could not load your documents. '
+          + 'If this keeps happening, message your care team.</p>';
+      });
+      console.error('[labs] no se pudo leer lab_documents:', err);
+      return;
+    }
+
+    const html = rows.length === 0
+      ? '<p class="np-empty">No documents yet.</p>'
+      : rows.map(function(r){
+          const kb = r.file_size ? Math.max(1, Math.round(r.file_size / 1024)) : null;
+          const when = r.uploaded_at
+            ? new Date(r.uploaded_at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})
+            : '';
+          return '<div class="dash-protocol-row">'
+            + '<div><div class="name">' + escapeHtml(r.file_name || 'Document') + '</div>'
+            + '<div class="meta">' + when + (kb ? ' · ' + kb + ' KB' : '') + '</div></div>'
+            + '<button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:12.5px;" '
+            +   'onclick="openLabDocument(\'' + r.id + '\')">View</button>'
+            + '</div>';
+        }).join('');
+
+    ['hh-labs','dash-labs'].forEach(function(pfx){
+      const el = document.getElementById(pfx + '-list');
+      if(el) el.innerHTML = html;
+    });
+  }
+
+  async function uploadLabDocument(input, prefix){
+    const file = input.files && input.files[0];
+    input.value = '';
+    if(!file) return;
+    if(!supabaseClient || !currentUser){ labMsg(prefix, 'You need to be signed in.', true); return; }
+
+    const ext = LAB_TYPES[file.type];
+    if(!ext){
+      labMsg(prefix, 'That file type isn\'t supported. Use PDF, JPG or PNG.', true);
+      return;
+    }
+    if(file.size > LAB_MAX_BYTES){
+      labMsg(prefix, 'That file is ' + Math.round(file.size/1024/1024) + ' MB — the limit is 15 MB.', true);
+      return;
+    }
+
+    labMsg(prefix, 'Uploading ' + file.name + '…');
+    // La ruta arranca con el user_id: la storage policy usa ese primer
+    // segmento para que nadie escriba ni lea en la carpeta de otro.
+    const safe = String(file.name || 'document').replace(/[^\w.\- ]+/g, '_').slice(0, 80);
+    const path = currentUser.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+
+    try{
+      const { error: upErr } = await supabaseClient.storage
+        .from(LAB_BUCKET).upload(path, file, { contentType: file.type, upsert: false });
+      if(upErr) throw upErr;
+
+      const { error: dbErr } = await supabaseClient.from('lab_documents').insert({
+        user_id: currentUser.id,
+        file_path: path,
+        file_name: safe,
+        file_size: file.size,
+        content_type: file.type
+      });
+      if(dbErr){
+        // El archivo ya está arriba pero sin fila nadie lo va a encontrar.
+        // Se borra para no dejar basura huérfana en el bucket.
+        await supabaseClient.storage.from(LAB_BUCKET).remove([path]).catch(function(){});
+        throw dbErr;
+      }
+
+      labMsg(prefix, 'Uploaded. Your care team can see it now.');
+      await loadLabDocuments();
+      // Avisar al equipo: un lab que nadie mira no sirve de nada.
+      notify('lab_uploaded', {
+        name: (currentHealthHistory && currentHealthHistory.full_name) || currentUser.email,
+        email: currentUser.email
+      }, { fileName: safe });
+    }catch(err){
+      labMsg(prefix, 'Upload failed: ' + (err.message || 'unknown error'), true);
+      console.error('[labs] fallo la subida:', err);
+    }
+  }
+
+  // Nunca una URL pública: un enlace firmado que caduca en 60 segundos.
+  async function openLabDocument(id){
+    if(!supabaseClient) return;
+    try{
+      const { data: row, error } = await supabaseClient.from('lab_documents')
+        .select('file_path').eq('id', id).maybeSingle();
+      if(error || !row) throw (error || new Error('Document not found.'));
+      const { data: signed, error: sErr } = await supabaseClient.storage
+        .from(LAB_BUCKET).createSignedUrl(row.file_path, 60);
+      if(sErr) throw sErr;
+      window.open(signed.signedUrl, '_blank', 'noopener');
+    }catch(err){
+      alert('Could not open that document: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // ====== TABS DEL DASHBOARD DEL PACIENTE ======
+  // Regla de oro: estos tabs NUNCA tocan el display de store-wrap,
+  // weight-tracker-wrap ni premium-care-wrap. Ese sigue siendo trabajo
+  // exclusivo de loadPatientState(). Los tabs sólo enseñan y esconden el
+  // PANEL que las contiene. Si las dos lógicas escribieran sobre el mismo
+  // elemento, ganaría la última en correr y el paciente vería la tienda
+  // antes de que le aprueben nada — o no la vería nunca.
+  const PATIENT_TABS = [
+    { id:'home',     panel:'panel-home'     },
+    { id:'rx',       panel:'panel-rx'       },
+    { id:'progress', panel:'panel-progress' },
+    { id:'messages', panel:'panel-messages' },
+    { id:'labs',     panel:'panel-labs'     }
+  ];
+  let activePatientTab = 'home';
+
+  // Un panel "tiene algo" si alguno de sus hijos directos no está en
+  // display:none. Se mira el style inline a propósito, no el computado:
+  // el código escribe inline, y el computado de un hijo dentro de un panel
+  // oculto no es fiable para esto. Lo usan los dos dashboards.
+  function tabPanelHasContent(panelId){
+    const p = document.getElementById(panelId);
+    if(!p) return false;
+    return Array.from(p.children).some(el => el.style.display !== 'none');
+  }
+
+  // El historial médico y la videollamada son vistas de pantalla completa:
+  // mientras una esté abierta, la barra de tabs estorba y se esconde.
+  function patientTakeoverOpen(){
+    return ['history-form-wrap','video-room-wrap'].some(function(id){
+      const el = document.getElementById(id);
+      return el && el.style.display === 'block';
+    });
+  }
+
+  function showPatientTab(id){
+    const t = PATIENT_TABS.find(x => x.id === id);
+    if(!t) return;
+    activePatientTab = id;
+    PATIENT_TABS.forEach(function(x){
+      const btn = document.getElementById('tab-' + x.id);
+      const pan = document.getElementById(x.panel);
+      const on  = (x.id === id);
+      if(btn){
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        btn.tabIndex = on ? 0 : -1;
+      }
+      if(pan) pan.hidden = !on;
+    });
+  }
+
+  function refreshPatientTabs(){
+    const bar = document.getElementById('dash-tabs');
+    if(!bar) return;
+
+    if(patientTakeoverOpen()){
+      bar.hidden = true;
+      PATIENT_TABS.forEach(function(x){
+        const pan = document.getElementById(x.panel);
+        if(pan) pan.hidden = true;
+      });
+      return;
+    }
+    bar.hidden = false;
+
+    // Un tab cuyo panel está vacío no se enseña. Al principio sólo hay
+    // "My care": la tienda aparece cuando aprueban, progreso cuando pagan.
+    const visibles = [];
+    PATIENT_TABS.forEach(function(x){
+      const btn = document.getElementById('tab-' + x.id);
+      const hay = tabPanelHasContent(x.panel);
+      if(btn) btn.hidden = !hay;
+      if(hay) visibles.push(x.id);
+    });
+
+    // Con una sola página el paciente veía el botón de comprar al hacer
+    // scroll. Con tabs cae en "My care" y la receta aprobada que todavía no
+    // ha pagado se le queda escondida detrás de una pestaña. El puntito lo
+    // dice sin secuestrarle la navegación.
+    const rxBtn = document.getElementById('tab-rx');
+    if(rxBtn){
+      const h = currentHealthHistory;
+      const pendiente = !!(h && h.approved && !h.purchased && !h.membership_cancelled);
+      if(pendiente) rxBtn.setAttribute('data-alert', '1');
+      else rxBtn.removeAttribute('data-alert');
+    }
+
+    if(visibles.length === 0){
+      PATIENT_TABS.forEach(function(x){
+        const pan = document.getElementById(x.panel);
+        if(pan) pan.hidden = true;
+      });
+      return;
+    }
+    // Si el tab en el que estaba se quedó sin contenido (canceló la
+    // membresía estando en Progreso, por ejemplo), lo movemos al primero
+    // que sí tenga algo en vez de dejarle la pantalla en blanco.
+    showPatientTab(visibles.indexOf(activePatientTab) > -1 ? activePatientTab : visibles[0]);
+  }
+
+  // Flechas para moverse entre tabs, que es lo que espera un lector de
+  // pantalla cuando hay role="tablist".
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const el = document.activeElement;
+    if(!el || !el.classList || !el.classList.contains('dash-tab')) return;
+    // Vale para las dos barras: se toman los hermanos del tab enfocado.
+    const abiertos = Array.from(el.parentElement.querySelectorAll('.dash-tab'))
+      .filter(b => !b.hidden);
+    const i = abiertos.indexOf(el);
+    if(i < 0) return;
+    const sig = abiertos[(i + (e.key === 'ArrowRight' ? 1 : abiertos.length - 1)) % abiertos.length];
+    sig.focus();
+    sig.click();
+    e.preventDefault();
+  });
 
   // ====== STORE ======
   // ====== WEIGHT GOAL & TRACKER ======
@@ -3737,9 +4293,9 @@
   // Bump this whenever the consent wording changes, so it's always provable
   // which version of the text a given patient actually agreed to.
   const CONSENT_VERSION = '2026-08-02.v1';
-  const HH_STEP_NAMES = ['Consent & terms', 'About you & shipping', 'Medical history', 'Surgical, allergies & habits', 'Body markers', 'Family history'];
+  const HH_STEP_NAMES = ['Consent & terms', 'About you & shipping', 'Medical history', 'Surgical, allergies & habits', 'Body markers', 'Family history', 'Lab results'];
   let hhCurrentStep = 1;
-  const HH_TOTAL_STEPS = 6;
+  const HH_TOTAL_STEPS = 7;
 
   function hhShowStep(n){
     hhCurrentStep = Math.min(Math.max(n, 1), HH_TOTAL_STEPS);
@@ -3838,6 +4394,9 @@
     // there's nothing to go back to and hiding the form would strand them.
     if(currentHealthHistory && currentHealthHistory.id){
       document.getElementById('history-form-wrap').style.display = 'none';
+      // Devolver los tabs y volver a "My care", que es donde estaba.
+      refreshPatientTabs();
+      showPatientTab('home');
       document.getElementById('stage-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
       alert('Please complete your health history to continue — your care team needs it before anything can be prescribed.');
@@ -3888,6 +4447,10 @@
     closeModal('settings');
     document.getElementById('history-form-wrap').style.display = 'block';
     hhShowStep(1);
+    // El historial se come la pantalla: esconder la barra de tabs.
+    refreshPatientTabs();
+    document.getElementById('history-form-wrap')
+      .scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
   function openSettingsModal(){
@@ -4357,6 +4920,7 @@
   function showMarketing(){
     document.getElementById('marketing-content').classList.remove('hidden-for-dashboard');
     document.getElementById('dashboard').classList.remove('visible');
+    if(typeof refreshChatBubble === 'function') refreshChatBubble();
     document.getElementById('np-dashboard').classList.remove('visible');
     document.getElementById('nav-cta').style.display = 'flex';
   }
@@ -4807,6 +5371,7 @@
       }).eq('id', recordId);
       if(error) throw error;
       await loadCosignQueue();
+      if(typeof refreshStaffTabs === 'function') refreshStaffTabs();
       if(npCurrentPatientUserId) await loadMedicalRecords(npCurrentPatientUserId);
     } catch(err){
       alert('Could not co-sign: ' + (err.message || 'unknown error'));
@@ -5266,6 +5831,7 @@
     currentStaffName = staffRow.full_name || user.email;
     document.getElementById('marketing-content').classList.add('hidden-for-dashboard');
     document.getElementById('dashboard').classList.remove('visible');
+    if(typeof refreshChatBubble === 'function') refreshChatBubble();
     document.getElementById('np-dashboard').classList.add('visible');
     document.getElementById('nav-cta').style.display = 'none';
     document.getElementById('np-welcome').textContent = 'Welcome, ' + currentStaffName;
@@ -5278,6 +5844,9 @@
     await initAdminConsole(staffRow);
     await initCosign(staffRow);
     await initNotifications(staffRow);
+    // Al final del todo: los tres init de arriba son los que deciden qué
+    // secciones puede ver este rol, y los tabs se calculan a partir de eso.
+    refreshStaffTabs();
   }
 
   async function loadNPData(){
@@ -5541,6 +6110,40 @@
   // Signed records are immutable — corrections are made by adding an
   // amendment, which is how medical records are legally supposed to work.
   let currentPatientRecord = null;
+
+  // Los labs que subió el paciente, en la ficha del clínico. Igual que del
+  // lado del paciente: nada de URLs públicas, se firma cada apertura.
+  async function loadPatientLabsForStaff(patientUserId){
+    const wrap = document.getElementById('np-labs-list');
+    if(!wrap || !patientUserId || !supabaseClient) return;
+    wrap.innerHTML = '<p class="np-empty">Loading…</p>';
+    try{
+      const { data, error } = await supabaseClient.from('lab_documents')
+        .select('*').eq('user_id', patientUserId)
+        .order('uploaded_at', { ascending:false });
+      if(error) throw error;
+      const rows = data || [];
+      if(rows.length === 0){
+        wrap.innerHTML = '<p class="np-empty">The patient has not uploaded any labs.</p>';
+        return;
+      }
+      wrap.innerHTML = rows.map(function(r){
+        const kb = r.file_size ? Math.max(1, Math.round(r.file_size/1024)) : null;
+        const when = r.uploaded_at
+          ? new Date(r.uploaded_at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})
+          : '';
+        return '<div class="dash-protocol-row">'
+          + '<div><div class="name">' + escapeHtml(r.file_name || 'Document') + '</div>'
+          + '<div class="meta">' + when + (kb ? ' \u00b7 ' + kb + ' KB' : '') + '</div></div>'
+          + '<button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:12.5px;" '
+          +   'onclick="openLabDocument(\'' + r.id + '\')">Open</button>'
+          + '</div>';
+      }).join('');
+    }catch(err){
+      console.error('[labs] staff no pudo leer lab_documents:', err);
+      wrap.innerHTML = '<p class="np-empty">Could not load this patient\'s documents.</p>';
+    }
+  }
 
   async function loadMedicalRecords(patientUserId){
     const wrap = document.getElementById('np-records-list');
@@ -5852,6 +6455,7 @@
     npCurrentPatientUserId = patient.user_id;
     loadClinicalNotes(patient.user_id);
     loadMedicalRecords(patient.user_id);
+    loadPatientLabsForStaff(patient.user_id);
     renderEvalTracker(patient.user_id);
     {
       const fu = document.getElementById('fu-date');
@@ -6722,23 +7326,90 @@
     return staffRosterCache;
   }
 
-  // ---- Tope de citas por paciente por mes ----------------------------------
-  // UNA por mes. Cada receta cubre 28 días y hace falta una evaluación antes
-  // de cada refill: una al mes es exactamente el ciclo, ni más ni menos.
-  // Antes no había tope y un paciente podía reservar la agenda entera del mes.
-  const MAX_INTERVIEWS_PER_MONTH = 1;
+  // ---- Cadencia de evaluaciones: 28 DÍAS, no "una al mes" ------------------
+  // Cada receta cubre 4 semanas. El mes de calendario NO es 4 semanas, y
+  // contar por mes fallaba en las dos direcciones: quien reservaba el 31 de
+  // enero podía volver a reservar el 1 de febrero (un día después), y quien
+  // reservaba el 2 de enero no podía coger el 30 aunque ya tocara.
+  //
+  // Y había algo peor. El query decía:
+  //     .lte('appointment_date', month + '-31')
+  // Ese '-31' se le pegaba a TODOS los meses. En febrero, abril, junio,
+  // septiembre y noviembre eso es una fecha que no existe y Postgres
+  // responde: date/time field value out of range: "2026-09-31".
+  // El catch devolvía 0, así que el tope no fallaba cerrado sino ABIERTO:
+  // cinco meses al año un paciente podía reservar las evaluaciones que
+  // quisiera. Contando en días desaparece la aritmética de meses y con ella
+  // el bug.
+  //
+  // El margen existe porque si el día 28 no hay turno libre, el paciente se
+  // queda sin medicamento esperando agenda. Cuatro días de holgura lo evitan
+  // sin acortar el ciclo de verdad. Para hacerlo estricto: pon 0 aquí.
+  const EVAL_BOOKING_GRACE_DAYS = 4;
 
-  // Se cuenta con un query, no con una lista en memoria: la pestaña puede
-  // llevar horas abierta y el conteo tiene que ser el de ahora.
-  async function apptsInMonth(dateValue, type){
-    if(!supabaseClient || !currentUser) return 0;
-    const month = dateValue.slice(0, 7);           // 'YYYY-MM'
+  function daysBetween(aISO, bISO){
+    const a = new Date(aISO + 'T00:00:00');
+    const b = new Date(bISO + 'T00:00:00');
+    return Math.round((b - a) / 86400000);
+  }
+
+  function addDaysISO(iso, n){
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Devuelve null si puede reservar ese día, o un objeto explicando por qué no.
+  // Se consulta contra la base y no contra memoria: la pestaña puede llevar
+  // horas abierta y el paciente pudo reservar desde el teléfono.
+  async function evaluationBookingBlock(dateValue, type){
+    if(!supabaseClient || !currentUser) return null;
+
+    // Sin rango de fechas en el query: así no hay ninguna fecha construida a
+    // mano que Postgres pueda rechazar.
     const { data, error } = await supabaseClient.from('appointments')
-      .select('id')
-      .eq('user_id', currentUser.id).eq('type', type).neq('status', 'cancelled')
-      .gte('appointment_date', month + '-01').lte('appointment_date', month + '-31');
-    if(error){ console.error('[appt] no se pudo contar el mes:', error); return 0; }
-    return (data || []).length;
+      .select('appointment_date')
+      .eq('user_id', currentUser.id).eq('type', type).neq('status', 'cancelled');
+
+    if(error){
+      // Falla CERRADO. Antes devolvía 0 y dejaba pasar cualquier reserva.
+      // Es mejor un "vuelve a intentar" que un paciente con dos evaluaciones
+      // y dos recetas en el mismo ciclo.
+      console.error('[appt] no se pudieron leer las citas:', error);
+      return { error:true };
+    }
+
+    const fechas = (data || []).map(r => r.appointment_date).filter(Boolean).sort();
+    if(fechas.length === 0) return null;
+
+    const minimo = EVAL_CYCLE_DAYS - EVAL_BOOKING_GRACE_DAYS;
+
+    // Se mira la cita MÁS CERCANA en el tiempo, en cualquier dirección, no
+    // sólo la última. Un paciente que ya tiene una el 5 de septiembre no
+    // debería poder colar otra el 1 de septiembre: la regla es que dos
+    // evaluaciones estén separadas por el ciclo, no que la nueva vaya
+    // después de la anterior.
+    let cerca = null, dist = Infinity;
+    fechas.forEach(function(f){
+      const d = Math.abs(daysBetween(f, dateValue));
+      if(d < dist){ dist = d; cerca = f; }
+    });
+    if(dist >= minimo) return null;
+
+    const esPosterior = daysBetween(cerca, dateValue) >= 0;
+    return {
+      ultima: cerca,
+      // Si la cita cercana es futura, "antes" no sirve de nada: lo que hay
+      // que decirle es a partir de cuándo puede, contando desde esa.
+      desde: addDaysISO(cerca, minimo),
+      faltan: minimo - dist,
+      esPosterior: esPosterior
+    };
+  }
+
+  function fechaLegible(iso){
+    return new Date(iso + 'T00:00:00')
+      .toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
   }
 
   // Avisar al proveedor asignado. Va detached y con try/catch: una cita
@@ -6861,21 +7532,21 @@
     slotGrid.innerHTML = '<p style="font-size:13px;color:rgba(15,35,54,0.63);">Checking availability...</p>';
     emptyMsg.style.display = 'none';
 
-    // Tope mensual. Se comprueba antes de enseñar horarios: no tiene sentido
-    // mostrar turnos que la reserva va a rechazar.
+    // Cadencia de 28 días. Se comprueba antes de enseñar horarios: no tiene
+    // sentido mostrar turnos que la reserva va a rechazar.
     const limitMsg = document.getElementById('np-limit-msg');
     if(limitMsg) limitMsg.style.display = 'none';
-    const usedThisMonth = await apptsInMonth(dateValue, 'np_interview');
-    if(usedThisMonth >= MAX_INTERVIEWS_PER_MONTH){
+    const bloqueo = await evaluationBookingBlock(dateValue, 'np_interview');
+    if(bloqueo){
       slotGrid.innerHTML = '';
       if(limitMsg){
-        const mLabel = dateObj.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-        limitMsg.textContent = MAX_INTERVIEWS_PER_MONTH === 1
-          ? 'You already have an evaluation for ' + mLabel
-            + ' — one per month is the limit. Pick a date next month, or cancel that one first.'
-          : 'You already have ' + usedThisMonth + ' evaluations for ' + mLabel
-            + ' — the limit is ' + MAX_INTERVIEWS_PER_MONTH + ' per month. '
-            + 'Pick a date next month, or cancel one first.';
+        limitMsg.textContent = bloqueo.error
+          ? 'We could not check your appointment history just now. Please try again in a moment.'
+          : 'Your medication covers ' + EVAL_CYCLE_DAYS + ' days, so evaluations are every '
+            + EVAL_CYCLE_DAYS + ' days. You already have one on '
+            + fechaLegible(bloqueo.ultima) + ', so the earliest you can book is '
+            + fechaLegible(bloqueo.desde)
+            + '. If you need to be seen sooner, message your care team.';
         limitMsg.style.display = 'block';
       }
       return;
@@ -6928,16 +7599,16 @@
     if(!supabaseClient || !currentUser) return;
     const ticket = 'SH-' + Math.random().toString(36).slice(2,8).toUpperCase();
     try{
-      // Segundo chequeo del tope, justo antes de insertar. El primero fue al
-      // pintar los horarios; entre medio el paciente pudo reservar en otra
-      // pestaña.
-      const used = await apptsInMonth(dateValue, 'np_interview');
-      if(used >= MAX_INTERVIEWS_PER_MONTH){
-        alert(MAX_INTERVIEWS_PER_MONTH === 1
-          ? 'You already have an evaluation booked that month — one per month is the limit. '
-            + 'Cancel it first, or pick a date next month.'
-          : 'You already have ' + MAX_INTERVIEWS_PER_MONTH + ' evaluations booked that month — '
-            + 'that\'s the limit. Cancel one first, or pick a date next month.');
+      // Segundo chequeo, justo antes de insertar. El primero fue al pintar los
+      // horarios; entre medio el paciente pudo reservar en otra pestaña.
+      const bloqueo2 = await evaluationBookingBlock(dateValue, 'np_interview');
+      if(bloqueo2){
+        alert(bloqueo2.error
+          ? 'We could not confirm your appointment history. Nothing was booked — please try again.'
+          : 'You already have an evaluation on ' + fechaLegible(bloqueo2.ultima) + '.\n\n'
+            + 'Evaluations are every ' + EVAL_CYCLE_DAYS + ' days because that is how long your '
+            + 'medication lasts, so the earliest you can book is ' + fechaLegible(bloqueo2.desde)
+            + '.\n\nIf you need to be seen sooner, message your care team.');
         selectCalendarDate(dateValue, new Date(dateValue + 'T00:00:00'));
         return;
       }
@@ -7007,11 +7678,15 @@
   // ====== VIDEO ROOM (real two-way video via WebRTC, signaled through Supabase Realtime) ======
   function showVideoRoom(){
     document.getElementById('video-room-wrap').style.display = 'block';
+    // La videollamada también es pantalla completa: fuera los tabs mientras
+    // dure. Nadie quiere cambiar de pestaña en mitad de una consulta.
+    if(typeof refreshPatientTabs === 'function') refreshPatientTabs();
     document.getElementById('video-room-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function hideVideoRoom(){
     document.getElementById('video-room-wrap').style.display = 'none';
+    if(typeof refreshPatientTabs === 'function') refreshPatientTabs();
   }
 
   // ---- Volver a entrar a la llamada ----------------------------------------
@@ -7775,6 +8450,13 @@
     // Google Translate lee "Store" como el verbo y lo pone "Almacenar".
     // Es la tienda del paciente, no un almac\u00e9n.
     'Store': 'Tienda',
+    // Etiquetas de los tabs del paciente.
+    'My care': 'Mi tratamiento',
+    'Prescriptions': 'Recetas',
+    'Progress': 'Progreso',
+    'Labs': 'Laboratorios',
+    'Messages': 'Mensajes',
+    'What you need to know.': 'Lo que necesitas saber',
     'Per 4 weeks': 'Por 4 semanas',
     'Medication referral code': 'C\u00f3digo de referido para medicamento',
     'Current': 'Vigente',
@@ -7791,21 +8473,31 @@
      'Cada paciente completa una evaluaci\u00f3n obligatoria de 15 minutos con un m\u00e9dico licenciado antes de que se apruebe cualquier receta. Las citas son de 8:00 AM a 7:00 PM, todos los d\u00edas.'],
     ['Your evaluation is complete. Your physician is finalising the review \u2014 your protocol will appear here once approved.',
      'Tu evaluaci\u00f3n est\u00e1 completa. Tu m\u00e9dico est\u00e1 finalizando la revisi\u00f3n \u2014 tu protocolo aparecer\u00e1 aqu\u00ed una vez aprobado.'],
-    ['Your monthly membership covers your physician evaluation, treatment monitoring, prescriptions for medication and labs, and 24/7 support for questions about your treatment.',
-     'La membresía mensual incluye evaluación médica, monitoreo del tratamiento, recetas de medicamentos y laboratorios, y consultoría 24/7 en caso de tener preguntas sobre el tratamiento.'],
+    ['Your monthly membership covers your physician evaluation, treatment monitoring, prescriptions for medication and labs, and answers to your questions within 24–48 hours.',
+     'La membresía mensual incluye evaluación médica, monitoreo del tratamiento, recetas de medicamentos y laboratorios, y respuesta a tus preguntas en 24–48 horas.'],
     ['Founded and run by physicians licensed in Puerto Rico.',
      'Fundada y dirigida por m\u00e9dicos licenciados en Puerto Rico.'],
     ['Online evaluation. No waiting rooms, no pharmacy trips \u2014 your medication ships straight to your home.',
      'Evaluaci\u00f3n online, no filas a m\u00e9dicos, no visitas a farmacias, medicamentos enviados directo a tu casa.'],
-    ['Chat with clinical staff, 24/7', 'Chat con personal cl\u00ednico 24/7'],
+    ['We reply within 24–48 hours. Write in Spanish or English — whichever you prefer.',
+     'Contestamos en 24–48 horas. Escribe en español o en inglés, como prefieras.'],
+    ['This is not for emergencies. Call 911 if you have a medical emergency.',
+     'Esto no es para emergencias. Llama al 911 si tienes una emergencia médica.'],
+    ['If you have recent bloodwork, upload it here and your physician will review it before your evaluation. You can also add labs later from your account — you don\'t need them to continue.',
+     'Si tienes laboratorios recientes, súbelos aquí y tu médico los revisa antes de tu evaluación. También los puedes añadir después desde tu cuenta — no hacen falta para seguir.'],
+    ['Bloodwork, imaging, or anything else your physician should see.',
+     'Laboratorios, imágenes, o cualquier documento que tu médico deba ver.'],
+    ['Message your care team in Spanish or English — we reply within 24–48 hours.',
+     'Escríbele a tu equipo médico en español o inglés — contestamos en 24–48 horas.'],
+    ['Medication we ship to your home.', 'Medicamentos que enviamos a su casa.'],
+    ['You can be evaluated by a physician within 1 day of subscribing. Your medication can be ordered the same day and ships within 3 days.',
+     'Puedes evaluarte con un médico en 1 día luego de suscribirte. El medicamento se puede pedir ese mismo día y llega en 3 días.'],
     ['Your physician decides which step you start on and when you move up. Membership is billed separately.',
      'Tu médico decide en qué escalón empiezas y cuándo subes. La membresía se cobra aparte.'],
     ['Membership is $35 your first month, then $70 a month. If you qualify for treatment, medication is an added cost, starting at $45 per weekly dose (tirzepatide 2.5 mg).',
      'El primer mes de membresía son $35 y luego $70 mensual. En caso de cualificar para tratamiento, el medicamento tiene costo adicional empezando en $45 la dosis semanal (tirzepatida 2.5 mg).'],
     ['Takes about 5 minutes. A licensed physician reviews your answers before your consultation.',
      'Toma unos 5 minutos. Un m\u00e9dico licenciado revisa tus respuestas antes de tu consulta.'],
-    ['Prices below are starting prices at the typical starting dose. Your actual cost depends on the dose your physician prescribes. Nothing ships without a physician evaluation and an individual prescription.',
-     'Los precios que ves son precios de inicio, en la dosis inicial t\u00edpica. Tu costo real depende de la dosis que te recete tu m\u00e9dico. Nada se env\u00eda sin una evaluaci\u00f3n m\u00e9dica y una receta individual.']
   ];
 
   function applySpanishCopy(){
