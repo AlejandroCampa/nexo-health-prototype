@@ -1112,19 +1112,14 @@
               <p id="checkout-note" style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;">Cancel anytime.</p>
               <p style="margin:10px 0 16px;font-size:13px;">Physician evaluations every 28 days, prescription management, and messaging. Medication billed separately. No minimum commitment.</p>
 
-              <div style="border-top:1px solid var(--line);padding-top:14px;margin-bottom:16px;">
-                <label for="coupon-input" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">Have a referral code?</label>
-                <div style="display:flex;gap:8px;">
-                  <input id="coupon-input" type="text" placeholder="NUVI-XXXX-XXXX" autocomplete="off"
-                         style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:13px;
-                                text-transform:uppercase;padding:10px 12px;border:1px solid var(--line);
-                                border-radius:9px;background:var(--white);"
-                         onkeydown="if(event.key==='Enter'){event.preventDefault();applyCoupon();}">
-                  <button class="btn btn-outline" style="width:auto;padding:9px 16px;font-size:13px;"
-                          onclick="applyCoupon()">Apply</button>
-                </div>
-                <div id="coupon-msg" style="font-size:12.5px;margin-top:7px;min-height:17px;"></div>
-              </div>
+              <!-- El campo de cupón se quitó de aquí a propósito.
+                   Ahora el código se escribe EN LA PÁGINA DE STRIPE, no en
+                   la nuestra: Payment Links trae promotion codes de fábrica.
+                   Con eso el código nunca pasa por este sitio — ni por el
+                   HTML, ni por nuestra base, ni por una Edge Function. Y los
+                   topes, la caducidad y el conteo de canjes los lleva Stripe.
+                   Para activarlo: en cada Payment Link, "Allow promotion
+                   codes". Los códigos se crean en Stripe → Coupons. -->
 
               <button class="btn btn-primary" style="width:100%;" onclick="goToCheckout('Basic')">Continue</button>
             </div>
@@ -1257,22 +1252,9 @@
           <p style="margin-bottom:16px;">You can only purchase medications you've been approved for — but there's no limit on how many prescriptions you can request as a member. Every request is reviewed on its own before it becomes purchasable.</p>
           <div id="store-approved-list"></div>
 
-          <!-- El cupón vive aquí, junto al botón de comprar. Antes estaba en
-               "Your protocol", lejos del momento en que el paciente paga. -->
-          <div style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;
-                      padding:13px 16px;margin:16px 0 4px;">
-            <label for="med-coupon-input" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">Medication referral code</label>
-            <div style="display:flex;gap:8px;">
-              <input id="med-coupon-input" type="text" placeholder="NUVI-MED-XXXX-XXXX" autocomplete="off"
-                     style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:13px;
-                            text-transform:uppercase;padding:10px 12px;border:1px solid var(--line);
-                            border-radius:9px;background:var(--white);"
-                     onkeydown="if(event.key==='Enter'){event.preventDefault();applyMedCoupon();}">
-              <button class="btn btn-outline" style="width:auto;padding:9px 16px;font-size:13px;"
-                      onclick="applyMedCoupon()">Apply</button>
-            </div>
-            <div id="med-coupon-msg" style="font-size:12.5px;margin-top:7px;min-height:17px;"></div>
-          </div>
+          <!-- Aquí había otro campo de cupón. Mismo motivo: el código va
+               en la página de Stripe, con "Allow promotion codes" activado
+               en cada Payment Link de medicamento. -->
 
           <div class="form-section-title">Requests awaiting review</div>
           <div id="store-pending-list"><p class="np-empty">None right now.</p></div>
@@ -2537,6 +2519,11 @@
   // nunca sabe qué códigos existen ni qué desbloquean: sólo recibe un sí o
   // un no. Si la función no responde, se rechaza — el fallo va cerrado.
   // La lista vive en la tabla `coupons` de Supabase (ver coupons-setup.sql).
+  // activeCoupon y activeMedCoupon se quedan SIEMPRE en null: el descuento
+  // ya no lo decide este sitio. El paciente escribe el código en la página
+  // de Stripe y Stripe lo aplica. Se dejan declarados porque currentCheckout()
+  // y la rama de la tienda los consultan, y así no hay que tocar esas dos
+  // funciones — si algún día vuelve un descuento local, este es el sitio.
   let activeCoupon = null;
 
   // ---- Cupón de medicamento ------------------------------------------------
@@ -2553,7 +2540,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 2sep-11';
+  const NUVI_BUILD = 'build 2sep-13';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -2569,27 +2556,6 @@
   // tiene la lista, así que no hay nada que leer en el HTML ni nada que
   // adivinar mirando el código. Si la función no responde, se rechaza: es
   // preferible un cupón legítimo que no entra a una receta regalada.
-  async function applyMedCoupon(){
-    const input = document.getElementById('med-coupon-input');
-    const msg   = document.getElementById('med-coupon-msg');
-    if(!input || !msg) return;
-    const code = normaliseCode(input.value);
-    activeMedCoupon = null;
-    if(!code){ msg.textContent = ''; return; }
-
-    msg.style.color = 'var(--ink-soft)';
-    msg.textContent = 'Checking…';
-    const res = await verifyCouponWithServer(code, 'medication');
-
-    if(!res.valid){
-      msg.style.color = '#B23A3A';
-      msg.textContent = res.message || 'That code isn\'t recognised.';
-      return;
-    }
-    activeMedCoupon = { code: code, link: res.link, price: res.price, label: res.label };
-    msg.style.color = 'var(--sage)';
-    msg.textContent = res.label + ' applied — your next medication order is $' + res.price + '.';
-  }
 
   // ---- Launch promotion --------------------------------------------------
   // First month at $35 for everyone, no code required. Set the end date and
@@ -2622,30 +2588,6 @@
     return String(code || '').trim().toUpperCase().replace(/\s+/g, '');
   }
 
-  async function applyCoupon(){
-    const input = document.getElementById('coupon-input');
-    const msg   = document.getElementById('coupon-msg');
-    if(!input || !msg) return;
-    const code = normaliseCode(input.value);
-    activeCoupon = null;
-    if(!code){ msg.textContent = ''; updateCheckoutPrice(); return; }
-
-    msg.style.color = 'var(--ink-soft)';
-    msg.textContent = 'Checking…';
-    const res = await verifyCouponWithServer(code, 'membership');
-
-    if(!res.valid){
-      msg.style.color = '#B23A3A';
-      msg.textContent = res.message || 'That code isn\'t recognised.';
-      updateCheckoutPrice();
-      return;
-    }
-    // El servidor manda también QUÉ plan aplica; el navegador no lo decide.
-    activeCoupon = { code: code, plan: res.plan, price: res.price, label: res.label };
-    msg.style.color = 'var(--sage)';
-    msg.textContent = res.label + ' applied.';
-    updateCheckoutPrice();
-  }
 
   // Único punto por donde se valida un código. Llama a la Edge Function
   // 'verify-coupon', que consulta la tabla `coupons` con la service key.
@@ -2655,30 +2597,6 @@
   //   NO  — no impide que alguien pruebe códigos a lo bruto. Por eso la
   //         función limita los intentos por usuario del lado del servidor,
   //         que es el único sitio donde ese límite significa algo.
-  async function verifyCouponWithServer(code, kind){
-    if(!SUPABASE_URL || !SUPABASE_URL.startsWith('http')){
-      return { valid:false, message:'Codes can\'t be checked right now. Please try again later.' };
-    }
-    try{
-      const url = SUPABASE_URL.replace(/\/+$/, '') + '/functions/v1/verify-coupon';
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-        body: JSON.stringify({ code: code, kind: kind,
-                               user_id: (currentUser && currentUser.id) || null })
-      });
-      if(!res.ok){
-        console.error('[coupon] la función respondió', res.status);
-        return { valid:false, message:'Codes can\'t be checked right now. Please try again later.' };
-      }
-      const data = await res.json();
-      return data && data.valid ? data : { valid:false, message: (data && data.message) || null };
-    }catch(err){
-      // Falla CERRADO. Si no se pudo comprobar, no se aplica.
-      console.error('[coupon] no se pudo verificar:', err);
-      return { valid:false, message:'Codes can\'t be checked right now. Please try again later.' };
-    }
-  }
 
   function updateCheckoutPrice(){
     const el = document.getElementById('checkout-price');
@@ -2743,9 +2661,14 @@
   // cual en el webhook. Es el hilo que le permite al servidor saber QUIÉN
   // pagó y POR QUÉ, sin fiarse de nada que diga el navegador al volver.
   // Formato: v1:<user_id>:<kind>:<id>
-  function stripeLinkFor(link, kind, id){
+  // Formato: v2:<user_id>:<kind>:<id>:<codigo de cupon o vacio>
+  // El cupón viaja hasta aquí porque el contador de usos lo incrementa el
+  // WEBHOOK, no la validación. Validar no es canjear: el paciente puede
+  // escribir el código, ver que sirve y no comprar. Si se contara al
+  // validar, un cupón de un uso se quemaría sin que nadie pagara.
+  function stripeLinkFor(link, kind, id, cupon){
     if(!link || !currentUser) return link;
-    const ref = ['v1', currentUser.id, kind || '', id || ''].join(':');
+    const ref = ['v2', currentUser.id, kind || '', id || '', cupon || ''].join(':');
     const sep = link.indexOf('?') > -1 ? '&' : '?';
     return link + sep + 'client_reference_id=' + encodeURIComponent(ref);
   }
@@ -2764,7 +2687,8 @@
       // del de $70, el paciente paga $0 y el recibo dice $70. El sitio sí
       // sabe cuál abrió — no hay razón para fiarse de la URL.
       try{ sessionStorage.setItem('nuviCheckoutPlan', chosen); }catch(e){}
-      window.location.href = stripeLinkFor(link, 'membership', chosen);
+      window.location.href = stripeLinkFor(link, 'membership', chosen,
+        activeCoupon && activeCoupon.code);
     } else {
       // LIVE: never silently mark a membership paid. If the Stripe link is
       // missing or misconfigured, that is a real fault and must surface, not
@@ -4200,8 +4124,10 @@
     // Eliminada. Ni siquiera un cupón de $0 salta el checkout: para eso
     // existe un Payment Link de $0 en Stripe, que sí deja rastro.
 
+    let cuponUsado = null;
     if(activeMedCoupon){
       link = activeMedCoupon.link;
+      cuponUsado = activeMedCoupon.code;   // se limpia abajo; hay que guardarlo ya
       console.log('[med] cupón aplicado:', activeMedCoupon.code);
       try{ sessionStorage.setItem('nuviMedCoupon', JSON.stringify({
         code: activeMedCoupon.code, charged: activeMedCoupon.price, listPrice: price,
@@ -4216,7 +4142,7 @@
       // El redirect de vuelta ya NO es lo que marca la compra como pagada:
       // sólo sirve para enseñarle al paciente la pantalla de confirmación.
       // Quien la marca es el webhook de Stripe, con la service key.
-      window.location.href = stripeLinkFor(link, kind, id);
+      window.location.href = stripeLinkFor(link, kind, id, cuponUsado);
     } else {
       // LIVE: never silently mark medication as ordered. A prescription must
       // not be recorded as purchased unless payment actually went through.
