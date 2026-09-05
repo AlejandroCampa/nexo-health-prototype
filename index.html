@@ -3,7 +3,66 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nuvi Clinic — Physician-Led Metabolic & Performance Medicine</title>
+<title>Nuvi Clinic — Physician-Led Metabolic &amp; Performance Medicine</title>
+
+<!-- ===== SEO / REDES =====
+     Google mostraba nuviclinic.com sin descripción ("No information is
+     available for this page"). Eso NO se arregla aquí: pasa porque el
+     robots.txt del hosting le prohíbe entrar, y si no puede entrar tampoco
+     puede leer estas etiquetas. Primero se sube el robots.txt correcto
+     (ver robots.txt en el repo), y ENTONCES esto empieza a servir.
+
+     Ojo con la descripción: la escribe Google a partir de la página si le
+     parece mejor que la nuestra. Por eso importa que el texto de la portada
+     diga lo mismo que este meta.
+
+     La página se sirve en inglés y el español lo pone el widget de Google
+     Translate del lado del cliente, con una cookie que Googlebot no tiene.
+     O sea: lo que Google indexa es el INGLÉS. Por eso lang="en" y por eso
+     estos metas van en inglés, aunque el paciente de Puerto Rico vea
+     español. Si algún día quieres posicionar en español de verdad, hace
+     falta servir HTML en español en su propia URL (/es/), no traducir con
+     JavaScript. -->
+<meta name="description" content="Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $35 the first month, then $70/month. Care in Spanish and English.">
+<link rel="canonical" href="https://nuviclinic.com/">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nuvi Clinic">
+<meta property="og:title" content="Nuvi Clinic — Weight loss medication, personalized for you">
+<meta property="og:description" content="Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $35 the first month, then $70/month. Care in Spanish and English.">
+<meta property="og:url" content="https://nuviclinic.com/">
+<!-- SUBE ESTE ARCHIVO. 1200x630 px, JPG o PNG. Sin él, compartir el enlace
+     por WhatsApp o Facebook no enseña tarjeta, sólo el texto pelado — y a
+     una clínica que crece por referido eso le cuesta clics. No sirve un
+     data: URI: las redes necesitan una URL de verdad que puedan descargar. -->
+<meta property="og:image" content="https://nuviclinic.com/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="es_PR">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Nuvi Clinic — Weight loss medication, personalized for you">
+<meta name="twitter:description" content="Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $35 the first month, then $70/month. Care in Spanish and English.">
+<meta name="twitter:image" content="https://nuviclinic.com/og-image.jpg">
+
+<!-- Datos estructurados. A propósito NO lleva dirección, teléfono, horario
+     ni reseñas: inventar cualquiera de esas cosas es motivo de penalización
+     de Google y, peor, es mentira. Cuando tengas los datos reales, se
+     añaden aquí. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "MedicalClinic",
+  "name": "Nuvi Clinic",
+  "url": "https://nuviclinic.com/",
+  "description": "Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $35 the first month, then $70/month. Care in Spanish and English.",
+  "medicalSpecialty": "Endocrine",
+  "areaServed": { "@type": "AdministrativeArea", "name": "Puerto Rico" },
+  "availableLanguage": ["es", "en"]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <!-- Lora para los títulos, Manrope para el cuerpo, IBM Plex Mono para
      etiquetas y datos. Lora y Manrope son el par ALTERNO: las de primera
@@ -1009,19 +1068,19 @@
     <div class="dash-tabs" id="dash-tabs" role="tablist" aria-label="Secciones de tu cuenta">
       <button type="button" class="dash-tab" role="tab" id="tab-home"
               data-panel="panel-home" aria-controls="panel-home"
-              onclick="showPatientTab('home')">My care</button>
+              onclick="showPatientTab('home', true)\">My care</button>
       <button type="button" class="dash-tab" role="tab" id="tab-rx"
               data-panel="panel-rx" aria-controls="panel-rx"
-              onclick="showPatientTab('rx')">Prescriptions</button>
+              onclick="showPatientTab('rx', true)\">Prescriptions</button>
       <button type="button" class="dash-tab" role="tab" id="tab-progress"
               data-panel="panel-progress" aria-controls="panel-progress"
-              onclick="showPatientTab('progress')">Progress</button>
+              onclick="showPatientTab('progress', true)\">Progress</button>
       <button type="button" class="dash-tab" role="tab" id="tab-messages"
               data-panel="panel-messages" aria-controls="panel-messages"
-              onclick="showPatientTab('messages')">Messages</button>
+              onclick="showPatientTab('messages', true)\">Messages</button>
       <button type="button" class="dash-tab" role="tab" id="tab-labs"
               data-panel="panel-labs" aria-controls="panel-labs"
-              onclick="showPatientTab('labs')">Labs</button>
+              onclick="showPatientTab('labs', true)\">Labs</button>
     </div>
 
     <div class="dash-panel" id="panel-home" role="tabpanel" aria-labelledby="tab-home">
@@ -1142,7 +1201,6 @@
           </div>
 
           <div class="stage-view" id="stage-active" style="display:none;">
-            <span class="status-pill status-active">Active</span>
 
             <!-- Evaluation prompt. Each prescription covers 28 days, not a calendar
                  month, so a monthly cadence would leave 2-3 uncovered days each cycle. Refills
@@ -2507,7 +2565,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 2sep-6';
+  const NUVI_BUILD = 'build 2sep-8';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
                 'color:#00A896;font-weight:bold');
@@ -3669,6 +3727,10 @@
     { id:'labs',     panel:'panel-labs'     }
   ];
   let activePatientTab = 'home';
+  // ¿El paciente eligió pestaña a mano en esta visita? Si sí, no se le
+  // vuelve a mover: nada peor que estar mirando algo y que la pantalla
+  // salte sola porque loadPatientState corrió otra vez.
+  let patientTabChosenByUser = false;
 
   // Un panel "tiene algo" si alguno de sus hijos directos no está en
   // display:none. Se mira el style inline a propósito, no el computado:
@@ -3689,9 +3751,10 @@
     });
   }
 
-  function showPatientTab(id){
+  function showPatientTab(id, porElUsuario){
     const t = PATIENT_TABS.find(x => x.id === id);
     if(!t) return;
+    if(porElUsuario) patientTabChosenByUser = true;
     activePatientTab = id;
     PATIENT_TABS.forEach(function(x){
       const btn = document.getElementById('tab-' + x.id);
@@ -3729,16 +3792,24 @@
       if(hay) visibles.push(x.id);
     });
 
-    // Con una sola página el paciente veía el botón de comprar al hacer
-    // scroll. Con tabs cae en "My care" y la receta aprobada que todavía no
-    // ha pagado se le queda escondida detrás de una pestaña. El puntito lo
-    // dice sin secuestrarle la navegación.
+    // Receta aprobada y sin pagar: eso es lo PRIMERO que tiene que ver al
+    // volver después de la evaluación. Antes, con una sola página, el botón
+    // de comprar aparecía bajando con scroll; con pestañas se quedaría
+    // escondido detrás de una, y eso es una venta que no ocurre.
+    //
+    // El salto sólo pasa si NO ha tocado las pestañas él mismo en esta
+    // visita. En cuanto elige una, manda él hasta que recargue.
     const rxBtn = document.getElementById('tab-rx');
+    let saltar = false;
     if(rxBtn){
       const h = currentHealthHistory;
       const pendiente = !!(h && h.approved && !h.purchased && !h.membership_cancelled);
-      if(pendiente) rxBtn.setAttribute('data-alert', '1');
-      else rxBtn.removeAttribute('data-alert');
+      if(pendiente){
+        rxBtn.setAttribute('data-alert', '1');
+        saltar = !patientTabChosenByUser && !rxBtn.hidden;
+      } else {
+        rxBtn.removeAttribute('data-alert');
+      }
     }
 
     if(visibles.length === 0){
@@ -3751,6 +3822,7 @@
     // Si el tab en el que estaba se quedó sin contenido (canceló la
     // membresía estando en Progreso, por ejemplo), lo movemos al primero
     // que sí tenga algo en vez de dejarle la pantalla en blanco.
+    if(saltar){ showPatientTab('rx'); return; }
     showPatientTab(visibles.indexOf(activePatientTab) > -1 ? activePatientTab : visibles[0]);
   }
 
@@ -4920,6 +4992,7 @@
   function showMarketing(){
     document.getElementById('marketing-content').classList.remove('hidden-for-dashboard');
     document.getElementById('dashboard').classList.remove('visible');
+    patientTabChosenByUser = false;
     if(typeof refreshChatBubble === 'function') refreshChatBubble();
     document.getElementById('np-dashboard').classList.remove('visible');
     document.getElementById('nav-cta').style.display = 'flex';
@@ -5831,6 +5904,7 @@
     currentStaffName = staffRow.full_name || user.email;
     document.getElementById('marketing-content').classList.add('hidden-for-dashboard');
     document.getElementById('dashboard').classList.remove('visible');
+    patientTabChosenByUser = false;
     if(typeof refreshChatBubble === 'function') refreshChatBubble();
     document.getElementById('np-dashboard').classList.add('visible');
     document.getElementById('nav-cta').style.display = 'none';
@@ -5930,6 +6004,11 @@
     // Se usa en dos etapas: 'active' y 'awaiting-approval'. Sin esto un
     // paciente que termina su evaluación no tiene forma de pedir otra cita
     // mientras espera la aprobación del médico.
+    //
+    // Esta tarjeta razonaba por MES de calendario ("una al mes es el
+    // límite"), que era la regla vieja y ya no existe: la cadencia son 28
+    // días. Se dejó igual al cambiar el tope y quedó diciéndole al paciente
+    // una cosa mientras el calendario hacía otra.
     const el = document.getElementById(targetId || 'next-eval-card');
     if(!el || !supabaseClient || !currentUser) return;
     try{
@@ -5942,52 +6021,34 @@
         .sort((a,b) => a.appointment_date.localeCompare(b.appointment_date))[0];
 
       let tone, title, body, cta = true, ctaLabel = 'Book evaluation';
+      let mover = null;          // id de la cita que se puede mover
 
-      // El tope es una evaluación por mes calendario, así que la tarjeta se
-      // razona por MES, no solo por el ciclo de 28 días. El paciente tiene
-      // que saber dos cosas de un vistazo: si este mes ya está cubierto, y
-      // si le falta coordinar la del mes que viene.
-      const now = new Date();
-      const monthKey = d => d.slice(0, 7);                    // 'YYYY-MM'
-      const thisMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-      const nextMonthDate = new Date(now.getFullYear(), now.getMonth()+1, 1);
-      const nextMonthKey = nextMonthDate.getFullYear() + '-'
-                         + String(nextMonthDate.getMonth()+1).padStart(2,'0');
-      const monthName = d => d.toLocaleDateString(undefined,{month:'long'});
-      const usedThisMonth = appts.some(a => monthKey(a.appointment_date) === thisMonth);
-      const bookedNextMonth = appts.some(a => monthKey(a.appointment_date) === nextMonthKey);
+      const fmt = iso => new Date(iso + 'T00:00:00')
+        .toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+      const fmtCorto = d => d.toLocaleDateString(undefined,{month:'long',day:'numeric'});
 
       if(upcoming){
         tone = 'ok'; cta = false;
+        mover = upcoming.id;
         title = 'Your next evaluation is booked';
-        const when = new Date(upcoming.appointment_date + 'T00:00:00');
-        body = when.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})
-               + ' at ' + upcoming.appointment_time + '.';
-        // Si la cita reservada es de ESTE mes, todavía le falta coordinar la
-        // del mes que viene. Decirlo aquí evita que se le pase el refill.
-        if(monthKey(upcoming.appointment_date) === thisMonth && !bookedNextMonth){
-          body += ' You still need to book ' + monthName(nextMonthDate)
-                + "'s — you can from " + monthName(nextMonthDate) + ' 1.';
-          tone = 'soon'; cta = true; ctaLabel = 'Book next month';
-        }
-      } else if(done.length === 0 && !usedThisMonth){
+        body = fmt(upcoming.appointment_date) + ' at ' + upcoming.appointment_time + '.';
+      } else if(done.length === 0){
         tone = 'warn';
         title = 'Book your first evaluation';
         body = 'You need a physician evaluation before anything can be prescribed.';
-      } else if(usedThisMonth){
-        // Ya gastó la del mes y no tiene ninguna próxima: lo único que
-        // procede es la del mes que viene.
-        tone = 'ok'; cta = true; ctaLabel = 'Book next month';
-        title = monthName(now) + " is covered";
-        body = "You've had your evaluation this month — one per month is the limit. "
-             + 'Book ' + monthName(nextMonthDate) + "'s starting "
-             + monthName(nextMonthDate) + ' 1, before your supply runs out.';
       } else {
         const last = done[0];
         const due = new Date(last.appointment_date + 'T00:00:00');
         due.setDate(due.getDate() + EVAL_CYCLE_DAYS);
         const days = Math.round((due - new Date()) / 86400000);
-        const dueStr = due.toLocaleDateString(undefined,{month:'long',day:'numeric'});
+        const dueStr = fmtCorto(due);
+        // La primera fecha reservable, con el mismo margen que usa el
+        // calendario. Si aquí dijera otra cosa, el paciente pulsaría el
+        // botón y le saldría un "todavía no".
+        const abre = new Date(last.appointment_date + 'T00:00:00');
+        abre.setDate(abre.getDate() + EVAL_CYCLE_DAYS - EVAL_BOOKING_GRACE_DAYS);
+        const puedeYa = new Date() >= abre;
+
         if(days < 0){
           tone = 'warn';
           title = 'Your evaluation is overdue';
@@ -5999,8 +6060,12 @@
         } else {
           tone = 'ok';
           title = 'Next evaluation due ' + dueStr;
-          body = 'Book it before your current supply runs out. Each prescription covers 28 days.';
-          cta = true;
+          body = 'Each prescription covers ' + EVAL_CYCLE_DAYS + ' days, so evaluations are every '
+               + EVAL_CYCLE_DAYS + ' days. ';
+          body += puedeYa
+            ? 'You can book it now.'
+            : 'Booking opens ' + fmtCorto(abre) + '.';
+          cta = puedeYa;
         }
       }
 
@@ -6015,9 +6080,50 @@
       el.innerHTML = '<b style="font-size:15px;">' + title + '</b>'
         + '<div style="font-size:13.5px;margin-top:4px;">' + body + '</div>'
         + (cta ? '<button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;margin-top:12px;" '
-                 + 'onclick="openScheduler()">' + ctaLabel + '</button>' : '');
+                 + 'onclick="openScheduler()">' + ctaLabel + '</button>' : '')
+        // Con la cita ya reservada el paciente se quedaba sin salida: ni
+        // moverla ni cancelarla. Terminaba escribiéndole al equipo para algo
+        // que puede resolver solo en dos clics.
+        + (mover ? '<button type="button" class="btn btn-outline" '
+                 + 'style="width:auto;padding:8px 16px;font-size:13px;margin-top:12px;" '
+                 + 'onclick="rescheduleEvaluation(\'' + mover + '\')">Need to move it?</button>' : '');
     } catch(err){
       el.style.display = 'none';
+    }
+  }
+
+  // Mover una cita = cancelar la que hay y abrir el calendario. Tiene que ir
+  // en ese orden: si se abriera el calendario primero, la cita vieja seguiría
+  // contando y la regla de los 28 días bloquearía todas las fechas cercanas,
+  // que son justo las que el paciente quiere.
+  async function rescheduleEvaluation(apptId){
+    if(!supabaseClient || !currentUser || !apptId) return;
+    if(!confirm('Move your evaluation?\n\nWe\'ll release the time you have now and take you '
+              + 'to the calendar to pick a new one. Your current time is not held while you choose.')) return;
+    try{
+      const { data: row } = await supabaseClient.from('appointments')
+        .select('*').eq('id', apptId).eq('user_id', currentUser.id).maybeSingle();
+
+      const { error } = await supabaseClient.from('appointments')
+        .update({ status: 'cancelled' })
+        .eq('id', apptId).eq('user_id', currentUser.id);
+      if(error) throw error;
+
+      // El proveedor lo tenía en su agenda: si no se avisa, se queda
+      // esperando a alguien que no va a aparecer.
+      if(row){
+        notify('appointment_cancelled', {
+          name: (currentHealthHistory && currentHealthHistory.full_name) || currentUser.email,
+          email: currentUser.email
+        }, { date: row.appointment_date, time: row.appointment_time,
+             ticket: row.ticket_number, reason: 'patient rescheduling' });
+      }
+
+      await loadPatientState();
+      openScheduler();
+    }catch(err){
+      alert('We could not move that appointment: ' + (err.message || 'unknown error')
+          + '\n\nYour original time is unchanged. Please try again or message your care team.');
     }
   }
 
@@ -8454,6 +8560,7 @@
     'My care': 'Mi tratamiento',
     'Prescriptions': 'Recetas',
     'Progress': 'Progreso',
+    'Need to move it?': '¿Necesitas moverla?',
     'Labs': 'Laboratorios',
     'Messages': 'Mensajes',
     'What you need to know.': 'Lo que necesitas saber',
@@ -8487,6 +8594,10 @@
      'Si tienes laboratorios recientes, súbelos aquí y tu médico los revisa antes de tu evaluación. También los puedes añadir después desde tu cuenta — no hacen falta para seguir.'],
     ['Bloodwork, imaging, or anything else your physician should see.',
      'Laboratorios, imágenes, o cualquier documento que tu médico deba ver.'],
+    ['Your next evaluation is booked', 'Tu próxima evaluación está reservada'],
+    ['Book your first evaluation', 'Reserva tu primera evaluación'],
+    ['Your evaluation is overdue', 'Tu evaluación está vencida'],
+    ['Book your next evaluation', 'Reserva tu próxima evaluación'],
     ['Message your care team in Spanish or English — we reply within 24–48 hours.',
      'Escríbele a tu equipo médico en español o inglés — contestamos en 24–48 horas.'],
     ['Medication we ship to your home.', 'Medicamentos que enviamos a su casa.'],
