@@ -2523,98 +2523,72 @@
     Comped:     'https://buy.stripe.com/8x28wRc1m9rCbXo14p9EI0i'                       // $0 — comped access
   };
 
-  // ---- Coupon codes ----------------------------------------------------
-  // Codes are matched case-insensitively and whitespace-trimmed. They select
-  // a Stripe link; they do NOT compute a discount client-side. Anyone reading
-  // the source can see the codes, which is why the real protection is that
-  // each code opens a fixed-price Stripe link rather than altering a price.
-  const COUPONS = {
-    'NUVI-AB7O-M0HA': { plan: 'Comped', label: 'Complimentary membership', price: 0 }
-  };
+  // ---- Códigos de referido -------------------------------------------------
+  // AQUÍ YA NO HAY NINGÚN CÓDIGO, Y NO PUEDE VOLVER A HABERLO.
+  //
+  // Estaban escritos en este archivo, que es exactamente lo mismo que
+  // publicarlos: cualquiera con Ctrl+U los leía y los usaba. El de
+  // medicamento dejaba una receta en $0. No hay forma de "esconderlos" en el
+  // navegador — ofuscar, hashear o partirlos en trozos sólo cambia cuánto
+  // tarda alguien en sacarlos, y con 8 caracteres una GPU los saca en
+  // minutos.
+  //
+  // Ahora el código viaja al servidor y el servidor decide. El navegador
+  // nunca sabe qué códigos existen ni qué desbloquean: sólo recibe un sí o
+  // un no. Si la función no responde, se rechaza — el fallo va cerrado.
+  // La lista vive en la tabla `coupons` de Supabase (ver coupons-setup.sql).
   let activeCoupon = null;
 
   // ---- Cupón de medicamento ------------------------------------------------
   // Separado de la membresía porque son cobros distintos. Igual que arriba, el
   // cupón escoge un Payment Link fijo — nunca calcula un descuento en el
   // navegador, así que alterar el código no reduce un cobro real.
-  const MED_COUPONS = {
-    'NUVI-MED-8A5R-JBBD': { link: 'PASTE_ZERO_MEDICATION_LINK_HERE',
-                            label: 'Complimentary medication', price: 0 },
 
-    // ---- CÓDIGO DE PRUEBA ($0) ----
-    // No abre Stripe. Salta directo a la URL de regreso que Stripe usaría
-    // (?order_paid=true&...), que es justo lo que hay que probar: que el
-    // pedido se marque como comprado y salga la confirmación.
-    //
-    // Se apaga poniendo TEST_MODE = false (arriba).
-    'NUVI-MED-TEST-0000': { simulate: true,
-                            label: 'Test order (no payment)', price: 0 }
-  };
 
-  // ┌──────────────────────────────────────────────────────────────────┐
-  // │  MODO PRUEBA                                                     │
-  // │                                                                  │
-  // │  true  = el código NUVI-MED-TEST-0000 funciona para cualquiera.  │
-  // │  false = ese código deja de existir.                             │
-  // │                                                                  │
-  // │  Cambia la palabra true por false el día que lances. Es lo       │
-  // │  único que hay que tocar.                                        │
-  // └──────────────────────────────────────────────────────────────────┘
-  const TEST_MODE = true;
+  // TEST_MODE se eliminó. Encendido, el código NUVI-MED-TEST-0000 marcaba
+  // una compra como pagada sin pasar por Stripe — y llevaba meses en `true`
+  // en producción. Para probar el flujo de pago se usa el modo de prueba de
+  // Stripe con sus propias claves, no un atajo dentro de la app real.
 
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 2sep-9';
+  const NUVI_BUILD = 'build 2sep-10';
   try{
-    console.log('%c[nuvi] ' + NUVI_BUILD + ' · TEST_MODE=' + TEST_MODE,
-                'color:#00A896;font-weight:bold');
+    console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
     document.addEventListener('DOMContentLoaded', function(){
       const el = document.getElementById('nuvi-build');
-      if(el) el.textContent = NUVI_BUILD + (TEST_MODE ? ' · TEST MODE' : '');
+      if(el) el.textContent = NUVI_BUILD;
     });
   }catch(e){}
 
   let activeMedCoupon = null;
 
-  function applyMedCoupon(){
+  // El código se manda al servidor y el servidor contesta. El navegador no
+  // tiene la lista, así que no hay nada que leer en el HTML ni nada que
+  // adivinar mirando el código. Si la función no responde, se rechaza: es
+  // preferible un cupón legítimo que no entra a una receta regalada.
+  async function applyMedCoupon(){
     const input = document.getElementById('med-coupon-input');
     const msg   = document.getElementById('med-coupon-msg');
     if(!input || !msg) return;
     const code = normaliseCode(input.value);
-    if(!code){ msg.textContent = ''; activeMedCoupon = null; return; }
+    activeMedCoupon = null;
+    if(!code){ msg.textContent = ''; return; }
 
-    const hit = MED_COUPONS[code];
-    if(!hit){
-      activeMedCoupon = null;
+    msg.style.color = 'var(--ink-soft)';
+    msg.textContent = 'Checking…';
+    const res = await verifyCouponWithServer(code, 'medication');
+
+    if(!res.valid){
       msg.style.color = '#B23A3A';
-      msg.textContent = 'That code isn\'t recognised.';
+      msg.textContent = res.message || 'That code isn\'t recognised.';
       return;
     }
-    if(hit.simulate && !TEST_MODE){
-      activeMedCoupon = null;
-      msg.style.color = '#B23A3A';
-      msg.textContent = 'That code isn\'t recognised.';
-      return;
-    }
-    if(hit.simulate){
-      activeMedCoupon = Object.assign({ code: code }, hit);
-      msg.style.color = 'var(--amber-deep)';
-      msg.textContent = 'TEST MODE — "Buy" will skip Stripe and simulate a completed payment.';
-      console.warn('[med] cupón de prueba activo:', code, '— no se va a cobrar nada');
-      return;
-    }
-    if(hit.link.indexOf('PASTE_') === 0){
-      activeMedCoupon = null;
-      msg.style.color = '#B23A3A';
-      msg.textContent = 'That code isn\'t active yet. Please contact us.';
-      console.error('Med coupon', code, 'has no Stripe link configured.');
-      return;
-    }
-    activeMedCoupon = Object.assign({ code: code }, hit);
+    activeMedCoupon = { code: code, link: res.link, price: res.price, label: res.label };
     msg.style.color = 'var(--sage)';
-    msg.textContent = hit.label + ' applied — your next medication order is $' + hit.price + '.';
+    msg.textContent = res.label + ' applied — your next medication order is $' + res.price + '.';
   }
 
   // ---- Launch promotion --------------------------------------------------
@@ -2648,33 +2622,62 @@
     return String(code || '').trim().toUpperCase().replace(/\s+/g, '');
   }
 
-  function applyCoupon(){
+  async function applyCoupon(){
     const input = document.getElementById('coupon-input');
     const msg   = document.getElementById('coupon-msg');
     if(!input || !msg) return;
     const code = normaliseCode(input.value);
-    if(!code){ msg.textContent = ''; activeCoupon = null; updateCheckoutPrice(); return; }
+    activeCoupon = null;
+    if(!code){ msg.textContent = ''; updateCheckoutPrice(); return; }
 
-    const hit = COUPONS[code];
-    if(!hit){
-      activeCoupon = null;
+    msg.style.color = 'var(--ink-soft)';
+    msg.textContent = 'Checking…';
+    const res = await verifyCouponWithServer(code, 'membership');
+
+    if(!res.valid){
       msg.style.color = '#B23A3A';
-      msg.textContent = 'That code isn\'t recognised.';
+      msg.textContent = res.message || 'That code isn\'t recognised.';
       updateCheckoutPrice();
       return;
     }
-    if(STRIPE_LINKS[hit.plan].indexOf('PASTE_') === 0){
-      activeCoupon = null;
-      msg.style.color = '#B23A3A';
-      msg.textContent = 'That code isn\'t active yet. Please contact us.';
-      console.error('Coupon', code, 'has no Stripe link configured for plan', hit.plan);
-      updateCheckoutPrice();
-      return;
-    }
-    activeCoupon = Object.assign({ code: code }, hit);
+    // El servidor manda también QUÉ plan aplica; el navegador no lo decide.
+    activeCoupon = { code: code, plan: res.plan, price: res.price, label: res.label };
     msg.style.color = 'var(--sage)';
-    msg.textContent = hit.label + ' applied.';
+    msg.textContent = res.label + ' applied.';
     updateCheckoutPrice();
+  }
+
+  // Único punto por donde se valida un código. Llama a la Edge Function
+  // 'verify-coupon', que consulta la tabla `coupons` con la service key.
+  //
+  // Ojo con lo que esto SÍ y NO resuelve:
+  //   SÍ  — los códigos dejan de estar en el HTML: ya no se pueden leer.
+  //   NO  — no impide que alguien pruebe códigos a lo bruto. Por eso la
+  //         función limita los intentos por usuario del lado del servidor,
+  //         que es el único sitio donde ese límite significa algo.
+  async function verifyCouponWithServer(code, kind){
+    if(!SUPABASE_URL || !SUPABASE_URL.startsWith('http')){
+      return { valid:false, message:'Codes can\'t be checked right now. Please try again later.' };
+    }
+    try{
+      const url = SUPABASE_URL.replace(/\/+$/, '') + '/functions/v1/verify-coupon';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify({ code: code, kind: kind,
+                               user_id: (currentUser && currentUser.id) || null })
+      });
+      if(!res.ok){
+        console.error('[coupon] la función respondió', res.status);
+        return { valid:false, message:'Codes can\'t be checked right now. Please try again later.' };
+      }
+      const data = await res.json();
+      return data && data.valid ? data : { valid:false, message: (data && data.message) || null };
+    }catch(err){
+      // Falla CERRADO. Si no se pudo comprobar, no se aplica.
+      console.error('[coupon] no se pudo verificar:', err);
+      return { valid:false, message:'Codes can\'t be checked right now. Please try again later.' };
+    }
   }
 
   function updateCheckoutPrice(){
@@ -4140,26 +4143,11 @@
     // Cupón de prueba: saltar Stripe y volver directo a la URL de regreso,
     // que es exactamente la que Stripe abriría al terminar el pago. Así se
     // prueba applyPendingOrder() y la confirmación sin cobrar nada.
-    if(activeMedCoupon && activeMedCoupon.simulate){
-      if(!TEST_MODE){ activeMedCoupon = null; return; }
-      const code = activeMedCoupon.code;
-      // Registrar el descuento antes de salir: el recibo tiene que decir lo
-      // que se cobró, no el precio de lista. Sin esto el paciente paga $0 y
-      // recibe un recibo de $180.
-      try{ sessionStorage.setItem('nuviMedCoupon', JSON.stringify({
-        code: code, charged: activeMedCoupon.price, listPrice: price,
-        label: activeMedCoupon.label })); }catch(e){}
-      activeMedCoupon = null;
-      const url = new URL(window.location.href);
-      url.search = '';
-      url.hash = '';
-      url.searchParams.set('order_paid', 'true');
-      url.searchParams.set('rx_kind', kind);
-      url.searchParams.set('rx_id', id || '');
-      console.warn('[med] PRUEBA', code, '— saltando Stripe, simulando regreso de pago:', url.toString());
-      window.location.href = url.toString();
-      return;
-    }
+    // Aquí vivía la rama de "simulate": con TEST_MODE encendido, el código
+    // de prueba se saltaba Stripe por completo y se auto-redirigía a
+    // ?order_paid=true, o sea que marcaba la compra como pagada sin cobrar.
+    // Eliminada. Ni siquiera un cupón de $0 salta el checkout: para eso
+    // existe un Payment Link de $0 en Stripe, que sí deja rastro.
 
     if(activeMedCoupon){
       link = activeMedCoupon.link;
