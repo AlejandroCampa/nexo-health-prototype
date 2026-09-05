@@ -2553,7 +2553,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 2sep-10';
+  const NUVI_BUILD = 'build 2sep-11';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -2699,6 +2699,57 @@
     }
   }
 
+  // ====== ESPERAR AL WEBHOOK ======
+  // Stripe manda el webhook en paralelo al redirect del paciente, así que al
+  // volver la fila puede tardar un par de segundos en estar marcada. Se
+  // consulta unas cuantas veces antes de rendirse.
+  //
+  // Si no llega, NO se marca nada por nuestra cuenta: se le dice al paciente
+  // que su pago se está confirmando. Un cobro real que tarda diez segundos en
+  // reflejarse es una molestia; una compra marcada sin cobro es dinero que no
+  // entra y medicamento que sale.
+  const CONFIRM_TRIES = 6;
+  const CONFIRM_WAIT_MS = 1500;
+
+  async function waitForServerConfirmation(predicado, etiqueta){
+    if(!supabaseClient || !currentUser) return { ok:false, row:null, rx:null };
+    for(let i = 0; i < CONFIRM_TRIES; i++){
+      try{
+        const { data: hh } = await supabaseClient.from('health_history')
+          .select('*').eq('user_id', currentUser.id)
+          .order('created_at', { ascending:false }).limit(1);
+        const row = (hh && hh[0]) || null;
+
+        const { data: rxs } = await supabaseClient.from('prescriptions')
+          .select('*').eq('user_id', currentUser.id);
+
+        if(predicado(row, rxs)){
+          console.log('[' + etiqueta + '] confirmado por el servidor, intento ' + (i+1));
+          if(row) currentHealthHistory = row;
+          return { ok:true, row: row, rx: (rxs || []).find(r => r.purchased) || null };
+        }
+      }catch(err){
+        console.error('[' + etiqueta + '] error consultando la confirmación:', err);
+      }
+      if(i < CONFIRM_TRIES - 1) await new Promise(r => setTimeout(r, CONFIRM_WAIT_MS));
+    }
+    console.warn('[' + etiqueta + '] el servidor no confirmó en '
+      + (CONFIRM_TRIES * CONFIRM_WAIT_MS / 1000) + ' s');
+    return { ok:false, row:null, rx:null };
+  }
+
+  // ====== IDENTIFICAR LA COMPRA ANTE STRIPE ======
+  // Los Payment Links aceptan ?client_reference_id=... y lo devuelven tal
+  // cual en el webhook. Es el hilo que le permite al servidor saber QUIÉN
+  // pagó y POR QUÉ, sin fiarse de nada que diga el navegador al volver.
+  // Formato: v1:<user_id>:<kind>:<id>
+  function stripeLinkFor(link, kind, id){
+    if(!link || !currentUser) return link;
+    const ref = ['v1', currentUser.id, kind || '', id || ''].join(':');
+    const sep = link.indexOf('?') > -1 ? '&' : '?';
+    return link + sep + 'client_reference_id=' + encodeURIComponent(ref);
+  }
+
   function goToCheckout(plan){
     // Coupon beats promo beats standard. The browser only picks a link —
     // Stripe decides what is actually charged.
@@ -2713,7 +2764,7 @@
       // del de $70, el paciente paga $0 y el recibo dice $70. El sitio sí
       // sabe cuál abrió — no hay razón para fiarse de la URL.
       try{ sessionStorage.setItem('nuviCheckoutPlan', chosen); }catch(e){}
-      window.location.href = link;
+      window.location.href = stripeLinkFor(link, 'membership', chosen);
     } else {
       // LIVE: never silently mark a membership paid. If the Stripe link is
       // missing or misconfigured, that is a real fault and must surface, not
@@ -4162,9 +4213,10 @@
       link = MEDICATION_LINKS_BY_PRICE[Math.round(parseFloat(price))];
     }
     if(link && link.indexOf('YOUR_') !== 0){
-      // In Stripe, set this link's "after payment" redirect to:
-      // <site-url>?order_paid=true&rx_kind=<kind>&rx_id=<id or blank for legacy>
-      window.location.href = link;
+      // El redirect de vuelta ya NO es lo que marca la compra como pagada:
+      // sólo sirve para enseñarle al paciente la pantalla de confirmación.
+      // Quien la marca es el webhook de Stripe, con la service key.
+      window.location.href = stripeLinkFor(link, kind, id);
     } else {
       // LIVE: never silently mark medication as ordered. A prescription must
       // not be recorded as purchased unless payment actually went through.
@@ -8091,21 +8143,23 @@
     const plan = pendingPaymentPlan;
     pendingPaymentPlan = null; // clear first so we never double-apply or loop
     try{
-      // .select() makes the update return the rows it changed. Without it an
-      // UPDATE blocked by a row-level-security policy returns success having
-      // written nothing — which looks identical to a real write and is why
-      // this failed silently.
-      const { data: updated, error: payErr } = await supabaseClient.from('health_history')
-        .update({ paid: true, plan: plan, paid_at: new Date().toISOString() })
-        .eq('id', currentHealthHistory.id)
-        .select();
-      if(payErr) throw payErr;
-      if(!updated || updated.length === 0){
-        throw new Error('The payment was not saved. The database accepted the request '
-          + 'but changed no rows — this is almost always a row-level-security policy '
-          + 'blocking the update. Row id: ' + currentHealthHistory.id);
+      // EL NAVEGADOR YA NO MARCA LA MEMBRESÍA COMO PAGADA.
+      //
+      // Aquí había .update({ paid: true }). Como el paciente es dueño de su
+      // fila, RLS lo permitía — y por eso bastaba con escribir ?paid=true en
+      // la barra de direcciones para tener membresía gratis. RLS decide de
+      // QUIÉN es el dato; si hubo cobro sólo lo sabe Stripe.
+      //
+      // Ahora lo escribe el webhook stripe-webhook con la service key, tras
+      // verificar la firma. Aquí sólo se espera a que llegue.
+      const conf = await waitForServerConfirmation(h => !!(h && h.paid), 'membership');
+      const updated = conf.ok && conf.row ? [conf.row] : [];
+      if(!conf.ok){
+        alert('Your payment is still being confirmed. This usually takes a few '
+            + 'seconds — refresh in a moment.\n\nIf it does not appear, message '
+            + 'your care team before paying again.');
       }
-      console.log('[payment] rows updated:', updated.length, updated[0]);
+      console.log('[payment] confirmado por el servidor:', conf.ok);
       // Only forget it once the database confirms — a failed write would
       // otherwise lose the payment with no way to recover it.
       try{ sessionStorage.removeItem('nuviPendingPayment'); }catch(e){}
@@ -8148,32 +8202,35 @@
     try{
       // .select() para que un UPDATE bloqueado por RLS no pase por exitoso —
       // el mismo fallo silencioso que tuvo el pago de la membresía.
-      let wrote = 0;
-      let bought = null;   // datos del recibo
-      if(order.kind === 'legacy' && currentHealthHistory){
-        const { data, error } = await supabaseClient.from('health_history')
-          .update({ purchased: true, purchased_at: new Date().toISOString() })
-          .eq('id', currentHealthHistory.id).select();
-        if(error) throw error;
-        wrote = (data || []).length;
-        if(wrote) bought = { medication: data[0].approved_medication,
-                             dose: data[0].approved_dose,
-                             price: data[0].approved_price };
-      } else if(order.id){
-        const { data, error } = await supabaseClient.from('prescriptions')
-          .update({ purchased: true, purchased_at: new Date().toISOString() })
-          .eq('id', order.id).select();
-        if(error) throw error;
-        wrote = (data || []).length;
-        if(wrote) bought = { medication: data[0].medication,
-                             dose: data[0].dose,
-                             price: data[0].price };
+      // Igual que en la membresía: el navegador NO marca la compra.
+      // Con ?order_paid=true&rx_kind=legacy en la URL, cualquier paciente con
+      // sesión se despachaba una receta de $500 sin pagar un centavo. RLS lo
+      // permitía porque es su propia fila — RLS decide de quién es el dato,
+      // no si hubo cobro. Eso lo marca ahora el webhook de Stripe.
+      let bought = null;
+      const espera = await waitForServerConfirmation(
+        (h, rxs) => order.kind === 'legacy'
+          ? !!(h && h.purchased)
+          : !!(rxs || []).some(r => String(r.id) === String(order.id) && r.purchased),
+        'order');
+      const wrote = espera.ok ? 1 : 0;
+      if(espera.ok){
+        if(order.kind === 'legacy' && espera.row){
+          bought = { medication: espera.row.approved_medication,
+                     dose: espera.row.approved_dose,
+                     price: espera.row.approved_price };
+        } else if(espera.rx){
+          bought = { medication: espera.rx.medication,
+                     dose: espera.rx.dose, price: espera.rx.price };
+        }
+      } else {
+        // No se marca nada por nuestra cuenta. Se avisa y se reintenta en la
+        // próxima carga; si el pago fue real, el webhook llega igual.
+        alert('Your payment is still being confirmed. This usually takes a few '
+            + 'seconds — refresh in a moment.\n\nIf it does not appear, message '
+            + 'your care team before paying again.');
       }
-      if(wrote === 0){
-        throw new Error('El pedido no se guardó: la base aceptó la petición pero no '
-          + 'cambió ninguna fila. Casi siempre es una política RLS bloqueando el update.');
-      }
-      console.log('[order] guardado, filas:', wrote);
+      console.log('[order] confirmado por el servidor:', espera.ok);
 
       // Recibo del medicamento. Va detached: si el correo falla, la compra ya
       // quedó registrada y el paciente no puede quedarse sin su pedido por eso.
