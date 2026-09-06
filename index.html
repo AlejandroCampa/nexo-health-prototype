@@ -2540,7 +2540,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 2sep-13';
+  const NUVI_BUILD = 'build 2sep-15';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -3584,6 +3584,7 @@
     try{
       const { data, error } = await supabaseClient.from('lab_documents')
         .select('*').eq('user_id', currentUser.id)
+        .is('deleted_at', null)
         .order('uploaded_at', { ascending:false });
       if(error) throw error;
       rows = data || [];
@@ -3609,8 +3610,14 @@
           return '<div class="dash-protocol-row">'
             + '<div><div class="name">' + escapeHtml(r.file_name || 'Document') + '</div>'
             + '<div class="meta">' + when + (kb ? ' · ' + kb + ' KB' : '') + '</div></div>'
+            + '<div style="display:flex;gap:8px;flex:none;">'
             + '<button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:12.5px;" '
             +   'onclick="openLabDocument(\'' + r.id + '\')">View</button>'
+            + '<button type="button" class="btn btn-outline" '
+            +   'style="width:auto;padding:7px 12px;font-size:12.5px;border-color:#B23A3A;color:#B23A3A;" '
+            +   'onclick="deleteLabDocument(\'' + r.id + '\', \'' + escapeHtml(r.file_name || '') + '\')" '
+            +   'aria-label="Remove this document">Remove</button>'
+            + '</div>'
             + '</div>';
         }).join('');
 
@@ -3671,6 +3678,58 @@
     }catch(err){
       labMsg(prefix, 'Upload failed: ' + (err.message || 'unknown error'), true);
       console.error('[labs] fallo la subida:', err);
+    }
+  }
+
+  // Borrar un documento que se subió por error.
+  //
+  // Es un BORRADO SUAVE: el archivo desaparece del bucket de verdad, pero la
+  // fila se queda marcada con deleted_at. Un expediente médico del que se
+  // pueden sacar cosas sin dejar rastro no es un expediente — si el médico
+  // ya miró ese lab y tomó una decisión con él, tiene que constar que existió
+  // y que el paciente lo quitó.
+  //
+  // El paciente deja de verlo. El clínico lo ve tachado, con la fecha.
+  async function deleteLabDocument(id, nombre){
+    if(!supabaseClient || !currentUser || !id) return;
+    if(!confirm('Remove ' + (nombre || 'this document') + '?\n\n'
+              + 'Your care team will see that it was uploaded and removed, but they '
+              + 'will no longer be able to open it. If you meant to replace it, '
+              + 'upload the new one afterwards.')) return;
+
+    try{
+      const { data: row, error: readErr } = await supabaseClient.from('lab_documents')
+        .select('file_path').eq('id', id).eq('user_id', currentUser.id).maybeSingle();
+      if(readErr) throw readErr;
+      if(!row) throw new Error('That document is not yours or no longer exists.');
+
+      // Primero la marca en la base, y con .select() para que una policy que
+      // bloquee el update no pase por éxito — el mismo fallo silencioso que
+      // tuvo el pago de la membresía y el de mover la cita.
+      const { data: cambiadas, error: upErr } = await supabaseClient.from('lab_documents')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id).eq('user_id', currentUser.id)
+        .select();
+      if(upErr) throw upErr;
+      if(!cambiadas || cambiadas.length === 0){
+        throw new Error('The database accepted the request but changed nothing — '
+          + 'most likely a row-level-security policy.');
+      }
+
+      // Y sólo entonces el archivo. En este orden a propósito: si se borrara
+      // primero el archivo y luego fallara la marca, quedaría una fila
+      // apuntando a un archivo que ya no está.
+      const { error: delErr } = await supabaseClient.storage
+        .from(LAB_BUCKET).remove([row.file_path]);
+      if(delErr) console.error('[labs] la fila quedó marcada pero el archivo sigue en el bucket:', delErr);
+
+      await loadLabDocuments();
+      labMsg('dash-labs', 'Document removed.');
+      labMsg('hh-labs', 'Document removed.');
+    }catch(err){
+      console.error('[labs] no se pudo borrar:', err);
+      alert('We could not remove that document.\n\n' + (err.message || 'unknown error')
+          + '\n\nIt is still there. Message your care team if you need it taken out.');
     }
   }
 
@@ -5012,7 +5071,7 @@
   let notifTimer = null;
 
   const NOTIF_ICONS = {
-    patient: '👤', message: '💬', overdue: '⏰', rx: '💊', cosign: '✍️'
+    patient: '👤', message: '💬', overdue: '⏰', rx: '💊', cosign: '✍️', lab: '🧪'
   };
 
   async function initNotifications(staffRow){
@@ -5030,14 +5089,19 @@
     const items = [];
     const now = Date.now();
     try{
-      const [hhRes, msgRes, rxRes, apRes] = await Promise.all([
+      const [hhRes, msgRes, rxRes, apRes, labRes] = await Promise.all([
         supabaseClient.from('health_history').select('*'),
         supabaseClient.from('messages').select('*').order('created_at', { ascending: false }),
         supabaseClient.from('prescriptions').select('*').eq('status', 'pending'),
-        supabaseClient.from('appointments').select('*').neq('status', 'cancelled')
+        supabaseClient.from('appointments').select('*').neq('status', 'cancelled'),
+        // Un lab que nadie mira no sirve de nada. Se avisa igual que un
+        // mensaje sin contestar. Los retirados no cuentan: si el paciente
+        // lo quitó, ya no hay nada que abrir.
+        supabaseClient.from('lab_documents').select('*').is('deleted_at', null)
       ]);
       const H = hhRes.data || [], M = msgRes.data || [],
-            R = rxRes.data || [], A = apRes.data || [];
+            R = rxRes.data || [], A = apRes.data || [],
+            L = labRes.data || [];
       const nameFor = {};
       H.forEach(h => { nameFor[h.user_id] = h.full_name || 'Patient'; });
 
@@ -5124,6 +5188,23 @@
         });
       }
 
+      // --- laboratorios subidos por el paciente ---
+      // Se derivan de la tabla, igual que todo lo demás aquí: no hay una
+      // tabla de notificaciones que mantener en sincronía. El "leído" sale
+      // de notifications_seen_at, así que uno viejo deja de molestar solo.
+      L.forEach(function(d){
+        const hh = H.find(x => x.user_id === d.user_id);
+        items.push({
+          type: 'lab',
+          at: new Date(d.uploaded_at || d.created_at),
+          title: nameFor[d.user_id] || 'Patient',
+          body: 'Uploaded ' + String(d.file_name || 'a document'),
+          patientId: hh ? hh.id : null,
+          // Para llevar al clínico directo a la sección, no sólo al paciente.
+          jumpTo: 'np-labs-list'
+        });
+      });
+
       items.sort((a,b) => b.at - a.at);
       notifItems = items;
       renderNotifications();
@@ -5160,7 +5241,8 @@
 
     list.innerHTML = notifItems.slice(0, 40).map(n => {
       const isUnread = !notifSeenAt || n.at > notifSeenAt;
-      return '<div onclick="openNotification(' + (n.patientId ? "'" + n.patientId + "'" : 'null') + ')"'
+      const salto = n.jumpTo ? ", '" + n.jumpTo + "'" : '';
+      return '<div onclick="openNotification(' + (n.patientId ? "'" + n.patientId + "'" : 'null') + salto + ')"'
         + ' style="display:flex;gap:11px;padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer;'
         + (isUnread ? 'background:rgba(0,194,255,0.06);' : '') + '">'
         + '<span style="font-size:17px;line-height:1.3;flex-shrink:0;">' + (NOTIF_ICONS[n.type] || '•') + '</span>'
@@ -5169,6 +5251,11 @@
         + '<b style="font-size:13.5px;">' + escapeHtml(n.title) + '</b>'
         + '<span style="font-size:11.5px;color:var(--ink-soft);flex-shrink:0;">' + timeAgo(n.at) + '</span></div>'
         + '<div style="font-size:12.5px;color:var(--ink-soft);">' + escapeHtml(n.body) + '</div>'
+        // Un aviso que no dice a dónde va obliga a buscar. Este lo dice.
+        + (n.jumpTo
+            ? '<span style="display:inline-block;margin-top:6px;font-size:12px;font-weight:600;'
+              + 'color:var(--brand-blue);">Open the document →</span>'
+            : '')
         + '</div>'
         + (isUnread ? '<span style="width:7px;height:7px;border-radius:50%;background:#C43C3C;flex-shrink:0;margin-top:6px;"></span>' : '')
         + '</div>';
@@ -5183,9 +5270,27 @@
     if(!showing) loadNotifications();
   }
 
-  function openNotification(patientId){
+  function openNotification(patientId, jumpTo){
     document.getElementById('notif-panel').style.display = 'none';
-    if(patientId) openNPPatientDetail(patientId);
+    if(!patientId) return;
+    openNPPatientDetail(patientId);
+    if(!jumpTo) return;
+    // La ficha se llena con varios awaits, así que el destino puede no estar
+    // pintado todavía. Se espera a que aparezca en vez de adivinar un delay.
+    let intentos = 0;
+    (function irAlSitio(){
+      const el = document.getElementById(jumpTo);
+      if(el && el.offsetParent !== null){
+        el.scrollIntoView({ behavior:'smooth', block:'center' });
+        // Un destello para que se vea CUÁL es, si la ficha es larga.
+        const antes = el.style.transition;
+        el.style.transition = 'background .25s';
+        el.style.background = 'rgba(1,224,254,0.16)';
+        setTimeout(function(){ el.style.background = ''; el.style.transition = antes; }, 1400);
+        return;
+      }
+      if(++intentos < 25) setTimeout(irAlSitio, 120);
+    })();
   }
 
   async function markNotificationsRead(){
@@ -6070,10 +6175,22 @@
       const { data: row } = await supabaseClient.from('appointments')
         .select('*').eq('id', apptId).eq('user_id', currentUser.id).maybeSingle();
 
-      const { error } = await supabaseClient.from('appointments')
+      // El .select() NO es decorativo. Sin él, un UPDATE bloqueado por una
+      // policy de RLS devuelve error:null y cero filas cambiadas — idéntico
+      // a un éxito. Eso es exactamente lo que pasaba: la cita NO se
+      // cancelaba, el código seguía tan contento, abría el calendario, y el
+      // calendario rechazaba todas las fechas porque la cita seguía ahí.
+      // El propio comentario del pago de la membresía ya avisaba de esto y
+      // yo escribí el mismo bug otra vez.
+      const { data: cambiadas, error } = await supabaseClient.from('appointments')
         .update({ status: 'cancelled' })
-        .eq('id', apptId).eq('user_id', currentUser.id);
+        .eq('id', apptId).eq('user_id', currentUser.id)
+        .select();
       if(error) throw error;
+      if(!cambiadas || cambiadas.length === 0){
+        throw new Error('La base aceptó la petición pero no cambió ninguna fila. '
+          + 'Casi siempre es una policy de RLS que no te deja cancelar tu propia cita.');
+      }
 
       // El proveedor lo tenía en su agenda: si no se avisa, se queda
       // esperando a alguien que no va a aparecer.
@@ -6088,8 +6205,13 @@
       await loadPatientState();
       openScheduler();
     }catch(err){
-      alert('We could not move that appointment: ' + (err.message || 'unknown error')
-          + '\n\nYour original time is unchanged. Please try again or message your care team.');
+      console.error('[reschedule] no se pudo cancelar:', err);
+      // NO se abre el calendario si la cancelación falló: el paciente se
+      // quedaría dando vueltas en una pantalla que le rechaza todas las
+      // fechas, sin entender por qué.
+      alert('We could not move that appointment.\n\n' + (err.message || 'unknown error')
+          + '\n\nYour original time is unchanged — you still have it. '
+          + 'Message your care team and they can move it for you.');
     }
   }
 
@@ -6190,6 +6312,10 @@
     if(!wrap || !patientUserId || !supabaseClient) return;
     wrap.innerHTML = '<p class="np-empty">Loading…</p>';
     try{
+      // Sin filtrar por deleted_at: el clínico TIENE que ver que existió un
+      // documento y que el paciente lo quitó. Si un lab desapareciera del
+      // expediente sin dejar rastro, el médico no podría saber que decidió
+      // con algo que ya no está.
       const { data, error } = await supabaseClient.from('lab_documents')
         .select('*').eq('user_id', patientUserId)
         .order('uploaded_at', { ascending:false });
@@ -6204,11 +6330,20 @@
         const when = r.uploaded_at
           ? new Date(r.uploaded_at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})
           : '';
-        return '<div class="dash-protocol-row">'
-          + '<div><div class="name">' + escapeHtml(r.file_name || 'Document') + '</div>'
-          + '<div class="meta">' + when + (kb ? ' \u00b7 ' + kb + ' KB' : '') + '</div></div>'
-          + '<button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:12.5px;" '
-          +   'onclick="openLabDocument(\'' + r.id + '\')">Open</button>'
+        const borrado = !!r.deleted_at;
+        const cuando = borrado
+          ? new Date(r.deleted_at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})
+          : '';
+        return '<div class="dash-protocol-row"' + (borrado ? ' style="opacity:0.6;"' : '') + '>'
+          + '<div><div class="name"' + (borrado ? ' style="text-decoration:line-through;"' : '') + '>'
+          +   escapeHtml(r.file_name || 'Document') + '</div>'
+          + '<div class="meta">' + when + (kb ? ' \u00b7 ' + kb + ' KB' : '')
+          + (borrado ? ' \u00b7 <b style="color:#B23A3A;">removed by patient ' + cuando + '</b>' : '')
+          + '</div></div>'
+          + (borrado
+              ? '<span class="meta" style="flex:none;">file deleted</span>'
+              : '<button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:12.5px;" '
+                + 'onclick="openLabDocument(\'' + r.id + '\')">Open</button>')
           + '</div>';
       }).join('');
     }catch(err){
