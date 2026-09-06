@@ -2540,7 +2540,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 2sep-15';
+  const NUVI_BUILD = 'build 2sep-16';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -6087,8 +6087,17 @@
         .eq('user_id', currentUser.id).neq('status','cancelled')
         .order('appointment_date', { ascending: false });
       const appts = data || [];
-      const done = appts.filter(a => a.status === 'completed');
-      const upcoming = appts.filter(a => a.status !== 'completed')
+      // Una cita con fecha FUTURA no puede haber ocurrido ya, diga lo que
+      // diga su status. Pasaba en producción: una cita del 3 de octubre
+      // marcada 'completed' el 5 de septiembre. El código la contaba como
+      // visita hecha, calculaba el próximo ciclo desde ella, y al paciente
+      // le desaparecía el botón de mover la cita — porque para el código no
+      // tenía ninguna pendiente. Se clasifica por FECHA, no por status.
+      const hoyISO = new Date().toISOString().slice(0, 10);
+      const done = appts.filter(a => a.status === 'completed'
+                                  && a.appointment_date <= hoyISO);
+      const upcoming = appts
+        .filter(a => a.status !== 'completed' || a.appointment_date > hoyISO)
         .sort((a,b) => a.appointment_date.localeCompare(b.appointment_date))[0];
 
       let tone, title, body, cta = true, ctaLabel = 'Book evaluation';
@@ -6253,8 +6262,17 @@
         .eq('user_id', patientUserId).neq('status','cancelled')
         .order('appointment_date', { ascending: false });
       const appts = (data || []).filter(a => a.type === 'np_interview' || a.type === 'physician_visit');
-      const done = appts.filter(a => a.status === 'completed');
-      const upcoming = appts.filter(a => a.status !== 'completed')
+      // Una cita con fecha FUTURA no puede haber ocurrido ya, diga lo que
+      // diga su status. Pasaba en producción: una cita del 3 de octubre
+      // marcada 'completed' el 5 de septiembre. El código la contaba como
+      // visita hecha, calculaba el próximo ciclo desde ella, y al paciente
+      // le desaparecía el botón de mover la cita — porque para el código no
+      // tenía ninguna pendiente. Se clasifica por FECHA, no por status.
+      const hoyISO = new Date().toISOString().slice(0, 10);
+      const done = appts.filter(a => a.status === 'completed'
+                                  && a.appointment_date <= hoyISO);
+      const upcoming = appts
+        .filter(a => a.status !== 'completed' || a.appointment_date > hoyISO)
         .sort((a,b) => a.appointment_date.localeCompare(b.appointment_date))[0];
 
       const last = done[0];
