@@ -2540,7 +2540,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 2sep-16';
+  const NUVI_BUILD = 'build 2sep-17';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -6102,6 +6102,8 @@
 
       let tone, title, body, cta = true, ctaLabel = 'Book evaluation';
       let mover = null;          // id de la cita que se puede mover
+      let entrar = null;         // id de la cita cuya sala se puede abrir
+      let esHoy = false;
 
       const fmt = iso => new Date(iso + 'T00:00:00')
         .toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
@@ -6110,8 +6112,16 @@
       if(upcoming){
         tone = 'ok'; cta = false;
         mover = upcoming.id;
+        // La sala se abre SIEMPRE, no sólo el día de la cita. El paciente
+        // que entraba antes de tiempo no encontraba ningún botón y escribía
+        // al equipo pensando que se le había perdido la cita. Que la sala
+        // esté abierta y vacía se explica solo; que no exista, no.
+        entrar = upcoming.id;
+        esHoy = apptIsToday(upcoming);
         title = 'Your next evaluation is booked';
-        body = fmt(upcoming.appointment_date) + ' at ' + upcoming.appointment_time + '.';
+        body = fmt(upcoming.appointment_date) + ' at ' + upcoming.appointment_time + '.'
+             + (esHoy ? ' Your room is open — join when you\'re ready.'
+                      : ' You can open the room any time; your physician joins at your scheduled time.');
       } else if(done.length === 0){
         tone = 'warn';
         title = 'Book your first evaluation';
@@ -6161,6 +6171,12 @@
         + '<div style="font-size:13.5px;margin-top:4px;">' + body + '</div>'
         + (cta ? '<button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;margin-top:12px;" '
                  + 'onclick="openScheduler()">' + ctaLabel + '</button>' : '')
+        // Entrar a la videollamada desde aquí. Antes esto sólo existía en la
+        // etapa 'scheduled': el paciente ya aprobado, que es el que tiene una
+        // evaluación cada 28 días, se quedaba sin ninguna forma de entrar.
+        + (entrar ? '<button type="button" class="btn btn-primary" '
+                 + 'style="width:auto;padding:9px 18px;font-size:13.5px;margin-top:12px;margin-right:8px;" '
+                 + 'onclick="joinEvaluationById(\'' + entrar + '\')">Join meeting</button>' : '')
         // Con la cita ya reservada el paciente se quedaba sin salida: ni
         // moverla ni cancelarla. Terminaba escribiéndole al equipo para algo
         // que puede resolver solo en dos clics.
@@ -7931,6 +7947,32 @@
     showVideoRoom();
     joinVideoCall(currentAppointment.ticket_number, 'patient',
                   'video-local', 'video-remote', 'video-status');
+  }
+
+  // ---- Entrar a la sala de UNA cita concreta -------------------------------
+  // No se apoya en currentAppointment: ése es el último np_interview creado,
+  // que no tiene por qué ser la cita que el paciente está mirando en la
+  // tarjeta. La sala se identifica por ticket_number, así que se lee la fila
+  // por id — y con .eq('user_id') para que nadie pueda abrir la sala de otro
+  // escribiendo un id en la consola.
+  async function joinEvaluationById(apptId){
+    if(!supabaseClient || !currentUser || !apptId) return;
+    try{
+      const { data: row, error } = await supabaseClient.from('appointments')
+        .select('*').eq('id', apptId).eq('user_id', currentUser.id).maybeSingle();
+      if(error) throw error;
+      if(!row || !row.ticket_number){
+        alert('We could not open the room for that appointment.\n\n'
+            + 'Message your care team and we will open it with you.');
+        return;
+      }
+      currentAppointment = row;
+      showVideoRoom();
+      joinVideoCall(row.ticket_number, 'patient',
+                    'video-local', 'video-remote', 'video-status');
+    } catch(err){
+      alert('Could not open the video room: ' + (err.message || 'unknown error'));
+    }
   }
 
   // Free public STUN servers only — no TURN relay. Connects instantly on the
