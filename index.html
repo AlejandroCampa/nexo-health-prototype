@@ -2540,7 +2540,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 2sep-17';
+  const NUVI_BUILD = 'build 2sep-18';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -3183,8 +3183,7 @@
     document.getElementById('nav-cta').style.display = 'none';
 
     const meta = user.user_metadata || {};
-    const displayName = meta.full_name ? meta.full_name.split(' ')[0] : user.email;
-    document.getElementById('dash-welcome').textContent = 'Welcome, ' + displayName;
+    refreshWelcome();
 
     // If this user signed up with pending intake data attached, save it as their
     // starting health history goal reference, then clear the flag.
@@ -3199,6 +3198,43 @@
     await loadPatientState();
   }
 
+  // ---- El saludo del dashboard ---------------------------------------------
+  // Decía "Welcome, alejandro+test2@nuviclinic.com". El correo NO es un
+  // nombre: es feo, es largo, rompe la línea en el móvil, y en una pantalla
+  // médica que el paciente puede estar enseñándole a alguien es exponer un
+  // dato que no hace falta enseñar.
+  //
+  // Se busca el nombre en este orden, y si no hay ninguno se saluda a secas.
+  // Nunca se cae al correo.
+  function patientFirstName(){
+    const meta = (currentUser && currentUser.user_metadata) || {};
+    // 1. El nombre que puso al registrarse.
+    let full = meta.full_name;
+    // 2. El del historial médico, que es el legal y el que ve el médico.
+    if(!full && currentHealthHistory) full = currentHealthHistory.full_name;
+    if(full){
+      const primero = String(full).trim().split(/\s+/)[0];
+      if(primero) return primero.charAt(0).toUpperCase() + primero.slice(1);
+    }
+    // 3. Último recurso: la parte del correo antes de la @, y sólo si de
+    //    verdad parece un nombre. Se quita el +tag de las cuentas de prueba
+    //    ("alejandro+test2" → "alejandro"). Si lleva números o parece un id
+    //    ("jdoe92", "u4f2a"), no se inventa nada: se saluda sin nombre.
+    const correo = (currentUser && currentUser.email) || '';
+    const local = correo.split('@')[0].split('+')[0].replace(/[._-].*$/, '');
+    if(/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{3,}$/.test(local)){
+      return local.charAt(0).toUpperCase() + local.slice(1).toLowerCase();
+    }
+    return null;
+  }
+
+  function refreshWelcome(){
+    const el = document.getElementById('dash-welcome');
+    if(!el) return;
+    const nombre = patientFirstName();
+    el.textContent = nombre ? ('Welcome, ' + nombre) : 'Welcome';
+  }
+
   async function loadPatientState(){
     if(!supabaseClient || !currentUser) return;
 
@@ -3210,6 +3246,8 @@
       .order('created_at', { ascending: false }).limit(1);
     const history = (historyRows && historyRows[0]) || null;
     currentHealthHistory = history;
+    // Ahora sí hay historial: si el saludo se pintó sin nombre, ya lo tiene.
+    refreshWelcome();
 
     if(pendingPaymentPlan && history && !history.paid){
       await applyPendingPayment();
