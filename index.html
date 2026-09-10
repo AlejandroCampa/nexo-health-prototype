@@ -1591,6 +1591,25 @@
         <div id="athm-amount" style="font-family:'IBM Plex Mono',monospace;font-size:30px;
              margin:6px 0 14px;">—</div>
         <div id="ATHMovil_Checkout_Button_payment"></div>
+        <!-- El script de Evertec va AQUI, en el HTML, no inyectado por JS.
+             Se inyectaba con appendChild despues de cargar la pagina y el
+             boton no se pintaba nunca: su codigo se engancha al arranque del
+             documento, y para cuando lo metiamos ese momento ya habia pasado.
+             Ahora se carga en el parseo, con el div ya existiendo encima y la
+             config ya definida — que es el orden que piden sus docs.
+             athmStart() despues MUTA ese mismo objeto para poner el importe
+             de cada compra; no lo reemplaza, para que cualquier referencia
+             que su codigo se haya guardado siga viendo los valores nuevos. -->
+        <script>
+          window.ATHM_Checkout = {
+            env: 'production', publicToken: '', timeout: 600, orderType: '',
+            theme: 'btn', lang: 'es', total: 1, subtotal: 1, tax: 0,
+            metadata1: '', metadata2: '', phoneNumber: '',
+            items: [{ name: 'Nuvi Clinic', description: '', quantity: '1',
+                      price: '1', tax: '0', metadata: '' }]
+          };
+        </script>
+        <script src="https://payments.athmovil.com/api/modal/js/athmovil_base.js"></script>
         <div id="athm-status" style="margin-top:14px;font-size:13.5px;color:var(--ink-soft);
              line-height:1.6;">Open ATH Móvil on your phone to approve the payment.</div>
         <button type="button" class="btn btn-outline" style="width:auto;padding:9px 18px;
@@ -2600,7 +2619,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 10sep-05';
+  const NUVI_BUILD = 'build 10sep-06';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -2865,11 +2884,13 @@
     if(typeof refreshPatientTabs === 'function') refreshPatientTabs();
     document.getElementById('athm-wrap').scrollIntoView({ behavior:'smooth', block:'start' });
 
-    window.ATHM_Checkout = {
+    // MUTAR, no reemplazar. Si su script guardo una referencia al objeto,
+    // cambiarlo por otro nuevo lo dejaria mirando el viejo con total: 1.
+    const cfg = window.ATHM_Checkout || (window.ATHM_Checkout = {});
+    Object.assign(cfg, {
       env:         ATHM.env,
       publicToken: ATHM.publicToken,
       timeout:     600,
-      // Va en el ejemplo oficial de Evertec y faltaba. Vacio es lo normal.
       orderType:   '',
       theme:       'btn',
       lang:        (document.documentElement.lang === 'es' ? 'es' : 'en'),
@@ -2893,7 +2914,7 @@
       phoneNumber: ATHM.phoneNumber,
       items: [{ name: 'Nuvi Clinic', description: '', quantity: '1',
                 price: String(total), tax: '0', metadata: ref }]
-    };
+    });
 
     athmMontarBoton();
   }
@@ -2902,23 +2923,32 @@
   // Para un segundo pago hay que volver a inyectarlo: por eso se quita y se
   // pone de nuevo en vez de cargarlo una sola vez al arrancar.
   function athmMontarBoton(){
-    const viejo = document.getElementById('athm-sdk');
-    if(viejo) viejo.remove();
     const host = document.getElementById('ATHMovil_Checkout_Button_payment');
-    if(host) host.innerHTML = '';
-    const sc = document.createElement('script');
-    sc.id = 'athm-sdk';
-    sc.src = 'https://payments.athmovil.com/api/modal/js/athmovil_base.js';
-    sc.onerror = function(){
-      document.getElementById('athm-status').textContent =
-        'We could not load the ATH Móvil button. Check your connection and try again — '
-        + 'nothing has been charged.';
-      console.error('[athm] el script de Evertec no cargo. Causas tipicas: sin '
-        + 'red, un bloqueador de anuncios, o el dominio no autorizado en la '
-        + 'cuenta ATH Business.');
-    };
-    document.body.appendChild(sc);
-    athmCargado = true;
+
+    // El script YA viene en el HTML y se cargo en el parseo. Si pinto su
+    // boton, no se toca nada: borrarlo y volver a inyectar el script era
+    // justamente lo que impedia que apareciera.
+    if(host && host.children.length > 0){
+      athmCargado = true;
+    } else if(!athmCargado){
+      // No se pinto solo. Se intenta una vez mas inyectandolo, por si su
+      // script se cargo antes de que existiera el div.
+      const viejo = document.getElementById('athm-sdk');
+      if(viejo) viejo.remove();
+      const sc = document.createElement('script');
+      sc.id = 'athm-sdk';
+      sc.src = 'https://payments.athmovil.com/api/modal/js/athmovil_base.js';
+      sc.onerror = function(){
+        document.getElementById('athm-status').textContent =
+          'We could not load the ATH Móvil button. Check your connection and try again — '
+          + 'nothing has been charged.';
+        console.error('[athm] el script de Evertec no cargo. Causas tipicas: sin '
+          + 'red, un bloqueador de anuncios, o el dominio no autorizado en la '
+          + 'cuenta ATH Business.');
+      };
+      document.body.appendChild(sc);
+      athmCargado = true;
+    }
 
     // Una caja vacia no le dice nada a nadie. Si a los 5 segundos Evertec no
     // ha pintado su boton, hay que decirlo — y dejar en consola por donde
