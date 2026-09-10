@@ -2600,7 +2600,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 10sep-03';
+  const NUVI_BUILD = 'build 10sep-04';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -2831,9 +2831,27 @@
     }).select().maybeSingle();
 
     if(error || !fila){
+      // Al paciente se le dice algo sereno y sin codigos de base de datos.
       alert('We could not start the payment. Nothing was charged.\n\n'
           + 'Please try again, or message your care team.');
-      console.error('[athm] no se pudo crear la orden:', error);
+      // Pero en la consola tiene que quedar QUE hacer, no solo que fallo.
+      // Este error casi siempre es de instalacion, no del paciente, y sin
+      // esto hay que adivinarlo mirando el codigo.
+      const cod = (error && error.code) || '';
+      let pista = 'Mira el objeto de error de abajo.';
+      if(cod === '42P01' || /does not exist/i.test((error && error.message) || '')){
+        pista = 'LA TABLA athm_orders NO EXISTE. Corre athm-setup.sql en '
+              + 'Supabase -> SQL Editor. Es esto el 99% de las veces.';
+      } else if(cod === '42501'){
+        pista = 'RLS bloqueo el insert. Falta la policy "paciente crea su '
+              + 'orden" de athm-setup.sql, o el paciente no tiene sesion.';
+      } else if(cod === '23514'){
+        pista = 'El CHECK de la tabla rechazo el monto (' + total + '). '
+              + 'Tiene que ser > 0 y <= 1500.';
+      } else if(cod === '23503'){
+        pista = 'La foreign key a auth.users fallo: el user_id no existe.';
+      }
+      console.error('[athm] NO SE PUDO CREAR LA ORDEN -> ' + pista, error);
       return;
     }
 
