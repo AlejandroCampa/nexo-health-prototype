@@ -2600,7 +2600,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 10sep-04';
+  const NUVI_BUILD = 'build 10sep-05';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -2869,6 +2869,8 @@
       env:         ATHM.env,
       publicToken: ATHM.publicToken,
       timeout:     600,
+      // Va en el ejemplo oficial de Evertec y faltaba. Vacio es lo normal.
+      orderType:   '',
       theme:       'btn',
       lang:        (document.documentElement.lang === 'es' ? 'es' : 'en'),
       total:       total,
@@ -2911,9 +2913,34 @@
       document.getElementById('athm-status').textContent =
         'We could not load the ATH Móvil button. Check your connection and try again — '
         + 'nothing has been charged.';
+      console.error('[athm] el script de Evertec no cargo. Causas tipicas: sin '
+        + 'red, un bloqueador de anuncios, o el dominio no autorizado en la '
+        + 'cuenta ATH Business.');
     };
     document.body.appendChild(sc);
     athmCargado = true;
+
+    // Una caja vacia no le dice nada a nadie. Si a los 5 segundos Evertec no
+    // ha pintado su boton, hay que decirlo — y dejar en consola por donde
+    // empezar a mirar, porque este fallo es de configuracion, no del paciente.
+    setTimeout(function(){
+      const host = document.getElementById('ATHMovil_Checkout_Button_payment');
+      if(!host || host.children.length > 0) return;   // ya se pinto: todo bien
+      const est = document.getElementById('athm-status');
+      if(est){
+        est.textContent = 'The ATH Móvil button did not load. Nothing has been '
+          + 'charged. Please message your care team and we will take the payment '
+          + 'another way.';
+      }
+      console.error('[athm] el div del boton sigue vacio 5s despues de inyectar '
+        + 'el script. Comprueba, en este orden:\n'
+        + '  1. Pestana Network: se descargo athmovil_base.js? (200, no 403/404)\n'
+        + '  2. El dominio nuviclinic.com esta autorizado en ATH Business ->\n'
+        + '     Boton de pago? Evertec no pinta el boton en dominios no dados de alta.\n'
+        + '  3. El publicToken es el del Boton de Pago, no el de otra seccion.\n'
+        + '  4. Estas en https? En file:// o http no funciona.\n'
+        + '  Config enviada:', window.ATHM_Checkout);
+    }, 5000);
   }
 
   function athmCancel(){
