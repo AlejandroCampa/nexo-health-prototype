@@ -2682,7 +2682,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 11sep-07';
+  const NUVI_BUILD = 'build 11sep-08';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -4358,6 +4358,7 @@
     { id:'admin',     panel:'nppanel-admin'     }
   ];
   let activeStaffTab = 'patients';
+  let npAppts = [];
 
   function showStaffTab(id){
     const t = STAFF_TABS.find(x => x.id === id);
@@ -6912,18 +6913,50 @@
     npPatients = patients || [];
     renderNPPatientList();
 
-    const { data: appts } = await supabaseClient.from('appointments').select('*')
-      .eq('type', 'np_interview').eq('status', 'scheduled')
+    // TODAS las citas, no solo las agendadas. La lista de arriba sigue
+    // enseñando solo las proximas, pero para decir en que punto esta cada
+    // paciente hace falta saber si su evaluacion ya se hizo.
+    const { data: todas } = await supabaseClient.from('appointments').select('*')
+      .eq('type', 'np_interview')
       .order('appointment_date', { ascending: true });
-    renderNPAppointmentList(appts || []);
+    npAppts = todas || [];
+
+    renderNPAppointmentList(npAppts.filter(a => a.status === 'scheduled'));
+    renderNPPatientList();          // repintar ya con las citas cargadas
     await loadRecetasRecientes();
+  }
+
+  // En que punto del camino esta el paciente. Antes ponia "Approved" /
+  // "Pending review" / "Not yet paid", que no decia gran cosa: aprobado ¿que?
+  // Ahora dice lo siguiente que tiene que pasar, y marca en naranja lo que
+  // espera por el clinico.
+  function npEtapaPaciente(p){
+    if(!p.paid)     return { texto: 'Sin pagar',       alerta: false };
+    const mias = (npAppts || []).filter(a => a.user_id === p.user_id
+                                          && a.status !== 'cancelled');
+    const hoyISO = new Date().toISOString().slice(0, 10);
+    // Igual que en el lado del paciente: una cita con fecha futura no puede
+    // haber ocurrido, diga lo que diga su status.
+    const hecha = mias.some(a => a.status === 'completed' && a.appointment_date <= hoyISO);
+    const proxima = mias.filter(a => a.status !== 'completed' || a.appointment_date > hoyISO)
+                        .sort((a,b) => a.appointment_date.localeCompare(b.appointment_date))[0];
+
+    if(p.approved_medication){
+      return { texto: p.purchased ? 'Con receta · pagada'
+                                  : 'Con receta · sin pagar',
+               alerta: !p.purchased };
+    }
+    if(hecha)   return { texto: 'Por recetar',  alerta: true };
+    if(proxima) return { texto: 'Evaluación ' + proxima.appointment_date.slice(5),
+                         alerta: false };
+    return { texto: 'Falta agendar', alerta: false };
   }
 
   function renderNPPatientList(){
     const wrap = document.getElementById('np-patient-list');
     if(npPatients.length === 0){ wrap.innerHTML = '<p class="np-empty">No patients yet.</p>'; return; }
     wrap.innerHTML = npPatients.map(p => {
-      const status = p.approved ? 'Approved' : (p.paid ? 'Pending review' : 'Not yet paid');
+      const etapa = npEtapaPaciente(p);
       // Con ATH la membresia se paga a mano, asi que el clinico tiene que ver
       // de un vistazo a quien se le vencio — es la gente que hay que llamar
       // antes de perderla, no despues.
@@ -6939,8 +6972,11 @@
           : '';
       return '<div class="np-row" onclick="openNPPatientDetail(\''+p.id+'\')">'
         + '<div><div class="name">' + (p.full_name || p.email || 'Unknown patient') + chip + '</div>'
-        + '<div class="meta">' + (p.email || '') + ' · Goal: ' + (p.goal || '—') + ' · Plan: ' + (p.plan || '—') + '</div></div>'
-        + '<div class="meta">' + status + '</div></div>';
+        // "Plan" fuera: solo hay un plan, asi que decirlo en cada fila no
+        // informaba de nada y encima salia vacio.
+        + '<div class="meta">' + (p.email || '') + ' · Objetivo: ' + (p.goal || '—') + '</div></div>'
+        + '<div class="meta"' + (etapa.alerta ? ' style="color:#8A5A12;font-weight:600;"' : '')
+        + '>' + etapa.texto + '</div></div>';
     }).join('');
   }
 
