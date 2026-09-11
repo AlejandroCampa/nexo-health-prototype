@@ -1613,6 +1613,28 @@
         <div id="athm-status" style="margin-top:14px;font-size:13.5px;color:var(--ink-soft);
              line-height:1.6;">Open ATH Móvil on your phone to approve the payment.</div>
 
+        <!-- Si la confirmación automática no llega, el paciente tiene el número
+             de confirmación en su recibo de ATH. Se le pide, en vez de dejarlo
+             mirando un mensaje de error sin nada que hacer. -->
+        <div id="athm-codigo-wrap" style="display:none;margin-top:16px;padding:14px 16px;
+             background:rgba(217,140,43,0.12);border:1px solid rgba(217,140,43,0.4);
+             border-radius:12px;">
+          <div style="font-size:13.5px;font-weight:600;color:#8A5A12;margin-bottom:4px;">
+            ¿ATH Móvil te dio un número de confirmación?</div>
+          <div style="font-size:12.5px;color:#8A5A12;margin-bottom:10px;line-height:1.6;">
+            Está en el recibo del pago, en tu app. Pégalo aquí y lo verificamos.</div>
+          <input id="athm-codigo" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="Número de confirmación"
+                 style="width:100%;padding:11px 12px;border:1px solid var(--line);
+                        border-radius:9px;font-family:'IBM Plex Mono',monospace;
+                        font-size:14px;background:var(--white);">
+          <button type="button" class="btn btn-primary" id="athm-codigo-btn"
+                  style="width:auto;padding:9px 18px;font-size:13.5px;margin-top:10px;"
+                  onclick="athmEnviarCodigo()">Verificar</button>
+          <div id="athm-codigo-msg" style="font-size:12.5px;margin-top:10px;
+               line-height:1.6;"></div>
+        </div>
+
         <!-- ATH Móvil solo existe como app de teléfono. En una computadora el
              botón de arriba no lleva a ningún sitio, así que se le da un
              puente: un QR que abre ESTA MISMA orden en su móvil. Se enseña
@@ -2640,7 +2662,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 11sep-04';
+  const NUVI_BUILD = 'build 11sep-05';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -2950,6 +2972,8 @@
                 price: String(total), tax: '0', metadata: ref }]
     };
 
+    const cod = document.getElementById('athm-codigo-wrap');
+    if(cod) cod.style.display = 'none';   // empieza limpio cada cobro
     athmEspiarRed();
     athmMontarBoton();
     athmMostrarQR(ref);
@@ -3232,11 +3256,73 @@
     }catch(e){ console.warn('[athm] no se pudieron reintentar los pendientes:', e); }
   }
 
+  // El paciente pega el numero de su recibo. Se lo manda al servidor, que
+  // decide: si se puede verificar contra ATH, entra ya; si no, queda anotado
+  // para que lo apruebe una persona. El navegador no desbloquea nada.
+  async function athmEnviarCodigo(){
+    const campo = document.getElementById('athm-codigo');
+    const msg = document.getElementById('athm-codigo-msg');
+    const btn = document.getElementById('athm-codigo-btn');
+    const codigo = (campo.value || '').trim();
+    if(!codigo){ msg.style.color = '#8C2F2F';
+      msg.textContent = 'Escribe el número que te dio ATH Móvil.'; return; }
+    if(!athmOrden){ msg.style.color = '#8C2F2F';
+      msg.textContent = 'Esa sesión de pago ya se cerró. Escríbele a tu equipo clínico.';
+      return; }
+
+    btn.disabled = true;
+    msg.style.color = 'var(--ink-soft)';
+    msg.textContent = 'Verificando…';
+    try{
+      const r = await fetch(SUPABASE_URL + '/functions/v1/athm-confirm', {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify({ ref: athmOrden.ref, codigo: codigo,
+                               ecommerceId: athmOrden.ecommerceId || null })
+      });
+      const out = await r.json().catch(function(){ return {}; });
+      if(out && out.paid){
+        msg.style.color = '#2F5C46';
+        msg.textContent = 'Confirmado. Gracias.';
+        athmOrden = null;
+        setTimeout(function(){
+          document.getElementById('athm-wrap').style.display = 'none';
+          loadPatientState();
+        }, 1200);
+        return;
+      }
+      if(out && out.revision){
+        msg.style.color = '#8A5A12';
+        msg.textContent = out.mensaje || 'Guardamos tu número. Tu equipo clínico '
+          + 'lo verifica y te desbloquea — no vuelvas a pagar.';
+        campo.disabled = true;
+        return;
+      }
+      msg.style.color = '#8C2F2F';
+      msg.textContent = 'ATH no reconoce ese número. Revisa que esté completo. '
+        + 'Si el cobro salió de tu cuenta, escríbele a tu equipo clínico — '
+        + 'no pagues otra vez.';
+    }catch(err){
+      msg.style.color = '#8C2F2F';
+      msg.textContent = 'No pudimos contactar el servidor. No pagues otra vez.';
+      console.error('[athm] codigo:', err);
+    }finally{ btn.disabled = false; }
+  }
+
+  function athmPedirCodigo(){
+    const w = document.getElementById('athm-codigo-wrap');
+    if(w){ w.style.display = 'block';
+           document.getElementById('athm-codigo').value = '';
+           document.getElementById('athm-codigo').disabled = false;
+           document.getElementById('athm-codigo-msg').textContent = ''; }
+  }
+
   function athmCancel(){
     athmOrden = null;
     document.getElementById('athm-wrap').style.display = 'none';
     const qr = document.getElementById('athm-qr-wrap');
     if(qr) qr.style.display = 'none';
+    const cod = document.getElementById('athm-codigo-wrap');
+    if(cod) cod.style.display = 'none';
     if(typeof refreshPatientTabs === 'function') refreshPatientTabs();
   }
 
@@ -3325,8 +3411,8 @@
       // en vez de mandar una llamada que va a fallar seguro.
       document.getElementById('athm-status').textContent =
         'Your payment went through, but we could not confirm it automatically. '
-        + 'Do not pay again — your care team will see it and unlock your account. '
-        + 'Reference: ' + ref;
+        + 'Do not pay again. Reference: ' + ref;
+      athmPedirCodigo();
       return;
     }
     try{
@@ -3348,14 +3434,15 @@
       // No se pudo confirmar. NUNCA se marca por si acaso: si el dinero salio
       // de verdad, esto lo resuelve una persona mirando el panel de ATH.
       document.getElementById('athm-status').textContent =
-        'We could not confirm the payment automatically. If ATH Móvil says it went '
-        + 'through, your care team will see it and unlock your order — you do not '
-        + 'need to pay again. Reference: ' + ref;
+        'We could not confirm the payment automatically. Do not pay again — '
+        + 'Reference: ' + ref;
+      athmPedirCodigo();
       console.error('[athm] sin confirmar:', out);
     }catch(err){
       document.getElementById('athm-status').textContent =
-        'We could not reach our server to confirm. Do not pay again — send your care '
-        + 'team this reference: ' + ref;
+        'We could not reach our server to confirm. Do not pay again — '
+        + 'Reference: ' + ref;
+      athmPedirCodigo();
       console.error('[athm] fallo de red al confirmar:', err);
     }
   }
