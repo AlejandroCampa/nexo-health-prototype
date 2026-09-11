@@ -2555,6 +2555,10 @@
   const ATHM = {
     env:         'production',
     publicToken: '6105ba08c77989780b42e22fb16ceb42cb977975',
+    // El telefono de la cuenta comercial. NO se le manda a ATH en el cobro —
+    // ahi va el del paciente. Se guarda aqui como constancia de que la cuenta
+    // esta configurada, y es lo que athmConfigurado() mira para encender los
+    // cobros.
     phoneNumber: '7872998643',           // cuenta ATH Business de Nuvi Clinic
     // Tope del boton de ATH. No es nuestro: lo impone Evertec. Se comprueba
     // ANTES de abrir el modal para que el paciente no llegue hasta la app y
@@ -2619,7 +2623,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 10sep-08';
+  const NUVI_BUILD = 'build 11sep-01';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -2914,7 +2918,17 @@
       // donde el paciente sí necesita verlo para saber que esta pagando.
       metadata1:   ref,                       // 12 caracteres, no dicen nada
       metadata2:   '',
-      phoneNumber: ATHM.phoneNumber,
+      // VACIO A PROPOSITO. Aqui iba ATHM.phoneNumber — el numero de la cuenta
+      // comercial — y estaba mal: este campo es el telefono de QUIEN PAGA, no
+      // el del negocio. El negocio se identifica con el publicToken y nada mas.
+      //
+      // Al ponerlo, el widget se saltaba el paso de pedirle el numero al
+      // paciente y le mandaba la solicitud de pago al propio negocio. Sintoma
+      // exacto: el modal iba directo a "Ingresa a ATH Movil para confirmar" y
+      // al telefono del paciente no llegaba nunca nada.
+      //
+      // Vacio, el widget le pregunta su numero, que es lo correcto.
+      phoneNumber: '',
       items: [{ name: 'Nuvi Clinic', description: '', quantity: '1',
                 price: String(total), tax: '0', metadata: ref }]
     };
