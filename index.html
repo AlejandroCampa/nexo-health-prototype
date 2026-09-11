@@ -2640,7 +2640,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 11sep-02';
+  const NUVI_BUILD = 'build 11sep-03';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -3139,16 +3139,61 @@
 
   // ---- Los tres callbacks que llama el widget de Evertec --------------------
   // Sus nombres los fija ATH; tienen que ser globales y llamarse asi.
+  // Buscar el ecommerceId dentro de lo que devuelva Evertec, SIN dar por hecho
+  // la forma. Se probaba con r.ecommerceId y r.data.ecommerceId y salia null:
+  // el pago se cobraba de verdad y la confirmacion moria porque el servidor no
+  // sabia que transaccion preguntarle a ATH.
+  //
+  // Se recorre el objeto entero: primero cualquier clave que se llame
+  // ecommerceId, y si no, cualquier valor que tenga pinta de UUID. Es feo,
+  // pero su respuesta no esta documentada y el dinero ya salio.
+  function athmSacarEcommerceId(obj){
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const vistos = new Set();
+    let porUuid = null;
+    const andar = function(v){
+      if(v === null || typeof v !== 'object' || vistos.has(v)) return null;
+      vistos.add(v);
+      for(const k in v){
+        const val = v[k];
+        if(typeof val === 'string'){
+          if(/ecommerce.?id/i.test(k) && val) return val;   // el bueno
+          if(!porUuid && UUID.test(val)) porUuid = val;     // el de reserva
+        } else if(val && typeof val === 'object'){
+          const hallado = andar(val);
+          if(hallado) return hallado;
+        }
+      }
+      return null;
+    };
+    return andar(obj) || porUuid;
+  }
+
   async function authorizationATHM(){
     // NO se marca nada aqui. Se le pide al servidor que verifique.
     document.getElementById('athm-status').textContent = 'Confirming your payment…';
     let eco = null;
+    let crudo = null;
     try{
       if(typeof authorization === 'function'){
-        const r = await authorization();
-        eco = (r && (r.ecommerceId || (r.data && r.data.ecommerceId))) || null;
+        crudo = await authorization();
+      } else if(typeof findPaymentATHM === 'function'){
+        // Si no existe authorization(), su otra global tambien trae la
+        // transaccion.
+        crudo = await findPaymentATHM();
       }
+      eco = athmSacarEcommerceId(crudo);
     }catch(e){ console.error('[athm] authorization():', e); }
+
+    if(!eco){
+      // Que quede EN CRUDO en consola. Si su respuesta cambia de forma otra
+      // vez, esto es lo unico que permite arreglarlo sin adivinar — y sin
+      // pedirle al paciente que pague de nuevo para reproducirlo.
+      console.error('[athm] NO se pudo sacar el ecommerceId. Esto es lo que '
+        + 'devolvio Evertec, mandamelo tal cual:', crudo);
+    } else {
+      console.log('[athm] ecommerceId =', eco);
+    }
     await athmConfirmarConServidor(eco);
   }
 
@@ -3170,6 +3215,15 @@
   async function athmConfirmarConServidor(ecommerceId){
     if(!athmOrden){ return; }
     const ref = athmOrden.ref;
+    if(!ecommerceId){
+      // Sin el id no hay nada que preguntarle a ATH. Se avisa y se para aqui
+      // en vez de mandar una llamada que va a fallar seguro.
+      document.getElementById('athm-status').textContent =
+        'Your payment went through, but we could not confirm it automatically. '
+        + 'Do not pay again — your care team will see it and unlock your account. '
+        + 'Reference: ' + ref;
+      return;
+    }
     try{
       const resp = await fetch(SUPABASE_URL + '/functions/v1/athm-confirm', {
         method: 'POST',
