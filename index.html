@@ -2682,7 +2682,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 11sep-08';
+  const NUVI_BUILD = 'build 11sep-09';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -4359,6 +4359,7 @@
   ];
   let activeStaffTab = 'patients';
   let npAppts = [];
+  let npOrdenes = [];
 
   function showStaffTab(id){
     const t = STAFF_TABS.find(x => x.id === id);
@@ -6921,6 +6922,16 @@
       .order('appointment_date', { ascending: true });
     npAppts = todas || [];
 
+    // Los cobros de ATH. Sirven para una cosa concreta: cuando un paciente
+    // dice "yo pagué" y la ficha dice que no, aqui esta la respuesta. Sin
+    // esto hay que irse a Supabase a mirar tablas a mano.
+    try{
+      const { data: ordenes } = await supabaseClient.from('athm_orders')
+        .select('ref, user_id, kind, amount, status, created_at')
+        .order('created_at', { ascending: false }).limit(300);
+      npOrdenes = ordenes || [];
+    }catch(e){ npOrdenes = []; console.warn('[np] no se pudieron leer los cobros:', e); }
+
     renderNPAppointmentList(npAppts.filter(a => a.status === 'scheduled'));
     renderNPPatientList();          // repintar ya con las citas cargadas
     await loadRecetasRecientes();
@@ -6931,7 +6942,24 @@
   // Ahora dice lo siguiente que tiene que pasar, y marca en naranja lo que
   // espera por el clinico.
   function npEtapaPaciente(p){
-    if(!p.paid)     return { texto: 'Sin pagar',       alerta: false };
+    if(!p.paid){
+      // "Sin pagar" y "pagó pero no se le aplicó" se veian IGUAL, y son
+      // problemas opuestos: al primero hay que cobrarle, al segundo hay que
+      // arreglarle la cuenta. Confundirlos hace que le pidas dinero a alguien
+      // que ya pagó.
+      const suyas = (npOrdenes || []).filter(o => o.user_id === p.user_id);
+      const cobrada = suyas.find(o => o.status === 'paid');
+      if(cobrada){
+        return { texto: 'PAGÓ · sin aplicar', alerta: true, urgente: true };
+      }
+      const porRevisar = suyas.find(o => o.status === 'pending_review'
+                                      || o.status === 'paid_unapplied'
+                                      || o.status === 'mismatch');
+      if(porRevisar){
+        return { texto: 'Pago por revisar', alerta: true, urgente: true };
+      }
+      return { texto: 'Sin pagar', alerta: false };
+    }
     const mias = (npAppts || []).filter(a => a.user_id === p.user_id
                                           && a.status !== 'cancelled');
     const hoyISO = new Date().toISOString().slice(0, 10);
@@ -6975,7 +7003,9 @@
         // "Plan" fuera: solo hay un plan, asi que decirlo en cada fila no
         // informaba de nada y encima salia vacio.
         + '<div class="meta">' + (p.email || '') + ' · Objetivo: ' + (p.goal || '—') + '</div></div>'
-        + '<div class="meta"' + (etapa.alerta ? ' style="color:#8A5A12;font-weight:600;"' : '')
+        + '<div class="meta"' + (etapa.urgente
+              ? ' style="color:#8C2F2F;font-weight:700;"'
+              : (etapa.alerta ? ' style="color:#8A5A12;font-weight:600;"' : ''))
         + '>' + etapa.texto + '</div></div>';
     }).join('');
   }
