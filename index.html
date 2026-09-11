@@ -1612,6 +1612,23 @@
         <script src="https://payments.athmovil.com/api/modal/js/athmovil_base.js"></script>
         <div id="athm-status" style="margin-top:14px;font-size:13.5px;color:var(--ink-soft);
              line-height:1.6;">Open ATH Móvil on your phone to approve the payment.</div>
+
+        <!-- ATH Móvil solo existe como app de teléfono. En una computadora el
+             botón de arriba no lleva a ningún sitio, así que se le da un
+             puente: un QR que abre ESTA MISMA orden en su móvil. Se enseña
+             sólo en escritorio; en el teléfono sobra. -->
+        <div id="athm-qr-wrap" style="display:none;margin-top:18px;padding-top:16px;
+             border-top:1px solid var(--line);">
+          <div style="font-size:13.5px;font-weight:600;margin-bottom:4px;">
+            On a computer? Pay from your phone.</div>
+          <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px;line-height:1.6;">
+            ATH Móvil only works from the app. Scan this with your phone's camera
+            and it opens this same payment there — same amount, nothing to retype.</div>
+          <div id="athm-qr" style="width:180px;height:180px;background:var(--white);
+               padding:10px;border:1px solid var(--line);border-radius:10px;"></div>
+          <div id="athm-qr-link" style="font-family:'IBM Plex Mono',monospace;font-size:11px;
+               color:var(--ink-soft);margin-top:10px;word-break:break-all;"></div>
+        </div>
         <button type="button" class="btn btn-outline" style="width:auto;padding:9px 18px;
                 font-size:13px;margin-top:14px;" onclick="athmCancel()">Cancel</button>
       </div>
@@ -2623,7 +2640,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 11sep-01';
+  const NUVI_BUILD = 'build 11sep-02';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -2934,6 +2951,7 @@
     };
 
     athmMontarBoton();
+    athmMostrarQR(ref);
   }
 
   // El script de Evertec dibuja el boton al cargar, leyendo window.ATHM_Checkout.
@@ -2990,9 +3008,132 @@
     }, 5000);
   }
 
+  // ---- El puente a escritorio -------------------------------------------
+  // ATH Móvil no existe fuera del teléfono. Sin esto, el paciente que entra
+  // desde una computadora ve un botón que no lleva a ningún sitio.
+  //
+  // El QR apunta a ?pagar=<ref>. La referencia sola no vale de nada para
+  // quien no sea su dueño: athm_orders está bajo RLS y sólo el paciente que
+  // la creó puede leerla. Si alguien fotografía el QR ajeno, no ve ni el
+  // importe.
+  function esEscritorio(){
+    return !/Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent || '');
+  }
+
+  function athmURLDePago(ref){
+    return window.location.origin + window.location.pathname
+         + '?pagar=' + encodeURIComponent(ref);
+  }
+
+  function athmMostrarQR(ref){
+    const wrap = document.getElementById('athm-qr-wrap');
+    const caja = document.getElementById('athm-qr');
+    if(!wrap || !caja) return;
+    if(!esEscritorio()){ wrap.style.display = 'none'; return; }
+
+    const url = athmURLDePago(ref);
+    wrap.style.display = 'block';
+    caja.innerHTML = '';
+    // El enlace en texto SIEMPRE, aunque el QR no se pinte. Si la librería no
+    // carga, el paciente todavía puede escribirlo o mandárselo al teléfono;
+    // un cuadro vacío lo dejaría sin salida.
+    document.getElementById('athm-qr-link').textContent = url;
+
+    const pintar = function(){
+      // onload puede dispararse sin que la libreria exista: un proxy, un
+      // bloqueador o una respuesta vacia dan un 200 sin contenido. Se
+      // comprueba antes de usarla, en vez de reventar dentro del try.
+      if(!window.QRCode || !window.QRCode.CorrectLevel){
+        console.warn('[athm] la libreria del QR no quedo disponible; '
+          + 'el paciente tiene el enlace en texto debajo.');
+        return;
+      }
+      try{
+        caja.innerHTML = '';
+        new window.QRCode(caja, { text: url, width: 160, height: 160,
+          colorDark: '#0F2336', colorLight: '#FFFFFF',
+          correctLevel: window.QRCode.CorrectLevel.M });
+      }catch(e){
+        console.error('[athm] no se pudo pintar el QR:', e);
+      }
+    };
+
+    if(window.QRCode){ pintar(); return; }
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    sc.onload = pintar;
+    sc.onerror = function(){
+      console.error('[athm] no cargó la librería del QR; queda el enlace en texto.');
+    };
+    document.head.appendChild(sc);
+  }
+
+  // Retomar una orden que ya existe, en vez de crear otra. Importa: el importe
+  // se verifica contra la fila que se guardó al abrirla, así que reutilizar la
+  // misma referencia mantiene esa garantía. Crear una nueva al escanear
+  // dejaría dos órdenes abiertas por el mismo pago.
+  const ATHM_ORDEN_VIGENCIA_MIN = 60;
+
+  async function athmResume(ref){
+    if(!supabaseClient || !currentUser || !ref) return false;
+    try{
+      const { data: orden, error } = await supabaseClient.from('athm_orders')
+        .select('*').eq('ref', ref).eq('user_id', currentUser.id).maybeSingle();
+      if(error) throw error;
+      // Si no es suya, RLS ya devolvió nada. No se distingue de "no existe"
+      // a propósito: no hay por qué confirmarle a nadie que una ref es real.
+      if(!orden){
+        console.warn('[athm] ref no encontrada o no es de este paciente:', ref);
+        return false;
+      }
+      if(orden.status === 'paid'){
+        alert('That payment already went through. You are all set.');
+        return true;
+      }
+      if(orden.status !== 'open'){
+        console.warn('[athm] la orden ya no está abierta:', orden.status);
+        return false;
+      }
+      const edad = (Date.now() - new Date(orden.created_at).getTime()) / 60000;
+      if(edad > ATHM_ORDEN_VIGENCIA_MIN){
+        // No se reutiliza una orden vieja: el precio pudo cambiar. Se le manda
+        // a empezar de nuevo, que crea una orden con el importe de hoy.
+        console.warn('[athm] orden caducada (' + Math.round(edad) + ' min).');
+        return false;
+      }
+
+      athmOrden = { ref: orden.ref, kind: orden.kind, id: orden.target_id,
+                    total: Number(orden.amount), etiqueta: orden.label };
+      document.getElementById('athm-detail').textContent = orden.label || '';
+      document.getElementById('athm-amount').textContent = athmDinero(orden.amount);
+      document.getElementById('athm-status').textContent =
+        'Open ATH Móvil on your phone to approve the payment.';
+      document.getElementById('athm-wrap').style.display = 'block';
+      if(typeof refreshPatientTabs === 'function') refreshPatientTabs();
+
+      window.ATHM_Checkout = {
+        env: ATHM.env, publicToken: ATHM.publicToken, timeout: 600, orderType: '',
+        theme: 'btn', lang: (document.documentElement.lang === 'es' ? 'es' : 'en'),
+        total: Number(orden.amount), subtotal: Number(orden.amount), tax: 0,
+        metadata1: orden.ref, metadata2: '', phoneNumber: '',
+        items: [{ name: 'Nuvi Clinic', description: '', quantity: '1',
+                  price: String(orden.amount), tax: '0', metadata: orden.ref }]
+      };
+      athmMontarBoton();
+      athmMostrarQR(orden.ref);
+      document.getElementById('athm-wrap').scrollIntoView({ behavior:'smooth', block:'start' });
+      return true;
+    }catch(err){
+      console.error('[athm] no se pudo retomar la orden:', err);
+      return false;
+    }
+  }
+
   function athmCancel(){
     athmOrden = null;
     document.getElementById('athm-wrap').style.display = 'none';
+    const qr = document.getElementById('athm-qr-wrap');
+    if(qr) qr.style.display = 'none';
     if(typeof refreshPatientTabs === 'function') refreshPatientTabs();
   }
 
@@ -3662,6 +3803,20 @@
     refreshWelcome();
     try{ renderMembershipCard(); }
     catch(e){ console.error('[membresia] no se pudo pintar la tarjeta:', e); }
+
+    // Venía de escanear el QR en una computadora. Se retoma AQUI, no antes:
+    // hace falta sesión para que RLS deje leer la orden.
+    if(athmRefPendiente){
+      const ref = athmRefPendiente;
+      athmRefPendiente = null;
+      try{ sessionStorage.removeItem('nuviAthmRef'); }catch(e){}
+      athmResume(ref).then(function(ok){
+        if(!ok){
+          console.warn('[athm] no se pudo retomar ' + ref
+            + '. El paciente puede empezar el pago de nuevo con normalidad.');
+        }
+      });
+    }
 
     if(pendingPaymentPlan && history && !history.paid){
       await applyPendingPayment();
@@ -8863,6 +9018,31 @@
       }catch(e){}
     }
     if(pendingPaymentPlan) console.log('[payment] return detected, plan:', pendingPaymentPlan);
+  })();
+
+  // ---- Llegada desde el QR -------------------------------------------------
+  // El paciente escaneó el código en su computadora y abrió esto en el móvil.
+  // Se guarda la referencia y se retoma cuando el dashboard esté cargado: en
+  // este momento puede que ni haya sesión todavía.
+  let athmRefPendiente = null;
+  (function athmDesdeQR(){
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('pagar');
+    if(!ref) {
+      try{ athmRefPendiente = sessionStorage.getItem('nuviAthmRef'); }catch(e){}
+      return;
+    }
+    // Formato estricto. Es lo unico que llega de fuera, asi que no se acepta
+    // cualquier cosa: 12 caracteres del alfabeto que genera athmRef().
+    if(!/^[A-Z2-9]{12}$/.test(ref)){
+      console.warn('[athm] ?pagar= con formato invalido, se ignora.');
+    } else {
+      athmRefPendiente = ref;
+      // Sobrevive al magic link: entrar desde el movil recarga la pagina.
+      try{ sessionStorage.setItem('nuviAthmRef', ref); }catch(e){}
+    }
+    window.history.replaceState({}, document.title,
+      window.location.pathname + window.location.hash);
   })();
 
   // Same pattern, but for a medication purchase from the Store returning
