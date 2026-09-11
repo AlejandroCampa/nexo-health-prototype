@@ -370,7 +370,13 @@
   .filter:hover{border-color:var(--ink);}
   .filter.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);}
   .protocol-grid{display:grid;grid-template-columns:1fr;gap:16px;max-width:880px;}
-  .vial-art{display:flex;align-items:center;justify-content:center;height:104px;background:var(--paper-quiet);border-radius:12px;}
+  /* El vial es una foto sobre fondo transparente, asi que el fondo lo pone
+     la tarjeta. Un degradado muy suave en los tonos del sitio le da algo
+     donde apoyarse; sobre blanco plano el cristal se pierde. */
+  .vial-art{display:flex;align-items:flex-end;justify-content:center;height:118px;
+    padding-bottom:8px;border-radius:12px;
+    background:linear-gradient(168deg,rgba(63,151,134,0.10) 0%,var(--paper-quiet) 68%);
+    border:1px solid var(--line-soft);}
   .vial-card{
     background:var(--white);border-radius:var(--radius);border:1px solid var(--line-soft);
     overflow:hidden;transition:transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s var(--ease);
@@ -2751,7 +2757,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 11sep-12';
+  const NUVI_BUILD = 'build 11sep-14';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -3911,6 +3917,15 @@
   // Simple inline SVG in brand colours. Swap for real product photography
   // once EC3Health provides licensed images: add an `image` property to a
   // medication in MEDICATION_INFO and the card will use it instead.
+  // Foto del vial. Va como data URI y en WebP (5 KB) por dos razones: el sitio
+  // es UN archivo, asi que no hay donde alojar un png; y un archivo aparte es
+  // una peticion mas que puede fallar y dejar la tarjeta coja.
+  //
+  // Es una imagen ILUSTRATIVA de un vial, no una foto del producto que manda
+  // la farmacia. Si algun dia se cambia por una foto real del vial que se
+  // despacha, ojo: enseñar el vial de otro fabricante SI seria un problema.
+  const VIAL_IMG = 'data:image/webp;base64,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';
+
   function medArt(info){
     const teal = 'var(--teal)', coral = 'var(--amber)', ink = 'var(--ink)';
     const isOral = /oral|tablet|capsule/i.test(info.form || '');
@@ -3985,9 +4000,11 @@
       return '<div class="vial-card">'
         + '<div class="vial-label"><span class="cat">' + info.category + '</span><h3>' + name + '</h3></div>'
         + '<div class="vial-body">'
-        + '<div class="vial-art">' + (info.image
-              ? '<img src="' + info.image + '" alt="' + name + '" style="max-height:86px;max-width:100%;object-fit:contain;">'
-              : medArt(info)) + '</div>'
+        + '<div class="vial-art">'
+              + '<img src="' + (info.image || VIAL_IMG) + '" alt="" aria-hidden="true"'
+              + ' style="max-height:92px;max-width:100%;object-fit:contain;'
+              + 'filter:drop-shadow(0 10px 14px rgba(15,35,54,0.16));">'
+          + '</div>'
         + '<p style="font-size:13px;color:rgba(15,35,54,0.68);margin:0 0 12px;">' + info.description + '</p>'
         + '<div class="vial-spec"><span>Form</span><b>' + info.form + '</b></div>'
         // "Starting dose" repite el primer escalón cuando hay tabla, y además
