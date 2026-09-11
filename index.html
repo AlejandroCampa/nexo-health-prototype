@@ -2662,7 +2662,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 11sep-05';
+  const NUVI_BUILD = 'build 11sep-06';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -8072,10 +8072,31 @@
 
   async function npMarkInterviewComplete(apptId){
     try{
-      const { error } = await supabaseClient.from('appointments').update({ status: 'completed' }).eq('id', apptId);
+      // El .select() NO es decorativo: sin el, un update bloqueado por RLS
+      // devuelve error:null y cero filas — identico a un exito. Ya nos paso
+      // con el reschedule del paciente.
+      const { data: cambiadas, error } = await supabaseClient.from('appointments')
+        .update({ status: 'completed' }).eq('id', apptId).select();
       if(error) throw error;
-      nuviCloseModal('np-patient');
+      if(!cambiadas || cambiadas.length === 0){
+        throw new Error('La base acepto la peticion pero no cambio ninguna fila. '
+          + 'Casi siempre es una policy de RLS bloqueando el update.');
+      }
+
+      // Aqui habia un nuviCloseModal('np-patient'): terminar la entrevista
+      // CERRABA la ficha del paciente. Justo en el momento en que el medico
+      // necesita quedarse ahi para recetar. Se queda abierta y se repinta con
+      // el estado nuevo, que es lo que hace tambien "reabrir entrevista".
       await loadNPData();
+      await openNPPatientDetail(npCurrentPatientId);
+
+      // Y se le lleva la vista a la caja de aprobar, que es el siguiente paso
+      // real. Sin esto hay que buscarla entre todo el expediente.
+      const aprobar = document.getElementById('np-approve-med');
+      if(aprobar){
+        const caja = aprobar.closest('.dash-card') || aprobar;
+        caja.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     } catch(err){
       alert('Could not update: ' + (err.message || 'unknown error'));
     }
@@ -8304,9 +8325,13 @@
         approved_dose: newDose,
         approved_price: price,
         approved_notes: 'Approved by care team.',
-        approved_at: new Date().toISOString(),
-        purchased: false,
-        purchased_at: null
+        approved_at: new Date().toISOString()
+        // purchased / purchased_at NO van aqui. Estan revocadas para
+        // authenticated —que es TODO paciente, no solo el staff— asi que
+        // incluirlas hacia que la aprobacion entera fallara con
+        // "permission denied for table health_history".
+        // Las reinicia el trigger trg_resetear_compra (aprobar-fix.sql),
+        // que corre como dueño de la tabla, cuando cambia lo recetado.
       }).eq('id', npCurrentPatientId).select();
       if(error) throw error;
       if(!updated || updated.length === 0){
