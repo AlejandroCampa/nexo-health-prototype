@@ -1744,6 +1744,9 @@
       <button type="button" class="dash-tab" role="tab" id="nptab-patients"
               data-panel="nppanel-patients" aria-controls="nppanel-patients"
               onclick="showStaffTab('patients')">Patients</button>
+      <button type="button" class="dash-tab" role="tab" id="nptab-rx"
+              data-panel="nppanel-rx" aria-controls="nppanel-rx"
+              onclick="showStaffTab('rx')">Recetas aprobadas</button>
       <button type="button" class="dash-tab" role="tab" id="nptab-schedule"
               data-panel="nppanel-schedule" aria-controls="nppanel-schedule"
               onclick="showStaffTab('schedule')">Schedule</button>
@@ -1753,6 +1756,23 @@
       <button type="button" class="dash-tab" role="tab" id="nptab-admin"
               data-panel="nppanel-admin" aria-controls="nppanel-admin"
               onclick="showStaffTab('admin')">Admin</button>
+    </div>
+
+    <!-- RECETAS RECIÉN APROBADAS.
+         El panel clínico tenía que recorrerse paciente por paciente para saber
+         qué se recetó hoy y si el paciente llegó a pagarlo. Esto lo pone en
+         una sola lista, que es la pregunta que el staff se hace a diario:
+         ¿qué aprobamos, y quién falta por comprar? -->
+    <div class="dash-panel" id="nppanel-rx" role="tabpanel" aria-labelledby="nptab-rx" hidden>
+      <div class="dash-grid" style="grid-template-columns:1fr;">
+        <div class="dash-card">
+          <h3>Recetas recién aprobadas</h3>
+          <p style="margin-bottom:16px;">Lo último que se aprobó, primero. El
+             estado dice si el paciente ya la pagó — los pendientes son a quien
+             hay que darle seguimiento.</p>
+          <div id="np-rx-recientes"></div>
+        </div>
+      </div>
     </div>
 
     <div class="dash-panel" id="nppanel-patients" role="tabpanel" aria-labelledby="nptab-patients" hidden>
@@ -2662,7 +2682,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 11sep-06';
+  const NUVI_BUILD = 'build 11sep-07';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -4332,6 +4352,7 @@
   // si no, un cambio de pestaña podría enseñarle a un NP la consola de admin.
   const STAFF_TABS = [
     { id:'patients',  panel:'nppanel-patients'  },
+    { id:'rx',        panel:'nppanel-rx'        },
     { id:'schedule',  panel:'nppanel-schedule'  },
     { id:'oversight', panel:'nppanel-oversight' },
     { id:'admin',     panel:'nppanel-admin'     }
@@ -6895,6 +6916,7 @@
       .eq('type', 'np_interview').eq('status', 'scheduled')
       .order('appointment_date', { ascending: true });
     renderNPAppointmentList(appts || []);
+    await loadRecetasRecientes();
   }
 
   function renderNPPatientList(){
@@ -6920,6 +6942,92 @@
         + '<div class="meta">' + (p.email || '') + ' · Goal: ' + (p.goal || '—') + ' · Plan: ' + (p.plan || '—') + '</div></div>'
         + '<div class="meta">' + status + '</div></div>';
     }).join('');
+  }
+
+  // Las recetas aprobadas, de todos los pacientes, lo último primero.
+  // Junta las dos fuentes: la tabla `prescriptions` y la receta original que
+  // vive en `health_history`. Si sólo mirara una, faltaría media clínica.
+  async function loadRecetasRecientes(){
+    const wrap = document.getElementById('np-rx-recientes');
+    if(!wrap || !supabaseClient) return;
+    try{
+      const { data: rx, error } = await supabaseClient.from('prescriptions')
+        .select('*').order('approved_at', { ascending: false }).limit(60);
+      if(error) throw error;
+
+      const nombreDe = function(userId){
+        const p = npPatients.find(x => x.user_id === userId);
+        return p ? (p.full_name || p.email || 'Paciente') : 'Paciente';
+      };
+      const fichaDe = function(userId){
+        const p = npPatients.find(x => x.user_id === userId);
+        return p ? p.id : '';
+      };
+
+      const filas = [];
+
+      (rx || []).filter(r => r.status === 'approved' || r.status === 'superseded')
+        .forEach(function(r){
+          filas.push({ cuando: r.approved_at || r.created_at, userId: r.user_id,
+                       med: r.medication, dose: r.dose, precio: r.price,
+                       comprada: !!r.purchased, cancelada: !!r.cancelled,
+                       vigente: r.status === 'approved' });
+        });
+
+      // La receta original no está en `prescriptions`: vive en la ficha.
+      npPatients.filter(p => p.approved_medication).forEach(function(p){
+        filas.push({ cuando: p.approved_at, userId: p.user_id,
+                     med: p.approved_medication, dose: p.approved_dose,
+                     precio: p.approved_price, comprada: !!p.purchased,
+                     cancelada: !!p.cancelled, vigente: true });
+      });
+
+      filas.sort(function(a, b){
+        return String(b.cuando || '').localeCompare(String(a.cuando || ''));
+      });
+
+      if(filas.length === 0){
+        wrap.innerHTML = '<p class="np-empty">Todavía no se ha aprobado ninguna receta.</p>';
+        return;
+      }
+
+      const fecha = function(iso){
+        if(!iso) return '—';
+        return new Date(iso).toLocaleDateString(undefined,
+          { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      };
+
+      wrap.innerHTML = filas.slice(0, 40).map(function(f){
+        // El estado del pago es lo que de verdad se viene a mirar aquí.
+        let pill;
+        if(f.cancelada){
+          pill = '<span class="rx-badge" style="background:rgba(196,60,60,0.10);'
+               + 'border-color:rgba(196,60,60,0.40);color:#8C2F2F;">Cancelada</span>';
+        } else if(f.comprada){
+          pill = '<span class="rx-badge" style="background:rgba(79,122,100,0.14);'
+               + 'border-color:rgba(79,122,100,0.40);color:#2F5C46;">Pagada</span>';
+        } else {
+          pill = '<span class="rx-badge" style="background:rgba(217,140,43,0.14);'
+               + 'border-color:rgba(217,140,43,0.45);color:#8A5A12;">Sin pagar</span>';
+        }
+        const anterior = f.vigente ? ''
+          : '<span class="rx-badge" style="border-color:rgba(15,35,54,0.25);'
+            + 'color:rgba(15,35,54,0.63);margin-left:6px;font-size:10px;'
+            + 'padding:1px 6px;">Anterior</span>';
+        const ficha = fichaDe(f.userId);
+        return '<div class="np-row"' + (ficha
+                 ? ' onclick="openNPPatientDetail(\'' + ficha + '\')"' : ' style="cursor:default;"')
+          + '><div><div class="name">' + escapeHtml(nombreDe(f.userId)) + anterior + '</div>'
+          + '<div class="meta">' + escapeHtml(f.med || '') + ' · ' + escapeHtml(f.dose || '')
+          + (f.precio ? ' · $' + f.precio : '') + '</div>'
+          + '<div class="meta" style="opacity:0.7;">Aprobada ' + fecha(f.cuando) + '</div></div>'
+          + '<div style="text-align:right;">' + pill + '</div></div>';
+      }).join('');
+    }catch(err){
+      console.error('[recetas] no se pudieron cargar:', err);
+      wrap.innerHTML = '<p class="np-empty">No se pudieron cargar las recetas. '
+        + 'Recarga la página.</p>';
+    }
   }
 
   function renderNPAppointmentList(appts){
