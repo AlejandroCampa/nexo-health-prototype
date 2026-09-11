@@ -2640,7 +2640,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 11sep-03';
+  const NUVI_BUILD = 'build 11sep-04';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -2950,6 +2950,7 @@
                 price: String(total), tax: '0', metadata: ref }]
     };
 
+    athmEspiarRed();
     athmMontarBoton();
     athmMostrarQR(ref);
   }
@@ -3119,6 +3120,7 @@
         items: [{ name: 'Nuvi Clinic', description: '', quantity: '1',
                   price: String(orden.amount), tax: '0', metadata: orden.ref }]
       };
+      athmEspiarRed();
       athmMontarBoton();
       athmMostrarQR(orden.ref);
       document.getElementById('athm-wrap').scrollIntoView({ behavior:'smooth', block:'start' });
@@ -3127,6 +3129,107 @@
       console.error('[athm] no se pudo retomar la orden:', err);
       return false;
     }
+  }
+
+  // ---- Cazar el ecommerceId en la red -------------------------------------
+  // Depender de lo que devuelva authorization() ya fallo una vez: el pago se
+  // cobraba y la confirmacion moria porque el id venia en otro sitio.
+  //
+  // Esto no depende de su respuesta. El script de Evertec crea la transaccion
+  // con un POST a payments.athmovil.com y ATH le contesta con el
+  // ecommerceId. Se escucha esa respuesta y se guarda en la orden ANTES de
+  // que el paciente apruebe nada.
+  //
+  // Con el id guardado, el pago se puede confirmar DESPUES — aunque el
+  // paciente cierre el navegador a mitad. Eso es lo que sustituye al webhook
+  // que ATH no tiene.
+  let athmRedEspiada = false;
+
+  function athmEspiarRed(){
+    if(athmRedEspiada) return;
+    athmRedEspiada = true;
+
+    const esDeATH = function(u){ return /payments\.athmovil\.com/.test(String(u || '')); };
+
+    const fetchOriginal = window.fetch;
+    window.fetch = function(entrada, opciones){
+      const p = fetchOriginal.apply(this, arguments);
+      try{
+        const url = (entrada && entrada.url) ? entrada.url : entrada;
+        if(esDeATH(url)){
+          p.then(function(resp){
+            // .clone() es obligatorio: leer el cuerpo lo consume, y si se
+            // consume aqui el script de Evertec se queda sin su respuesta.
+            resp.clone().json()
+              .then(function(j){ athmGuardarEcommerceId(athmSacarEcommerceId(j)); })
+              .catch(function(){});
+          }).catch(function(){});
+        }
+      }catch(e){}
+      return p;
+    };
+
+    // Su bundle puede usar XHR en vez de fetch. Se cubren los dos.
+    const abrirOriginal = XMLHttpRequest.prototype.open;
+    const enviarOriginal = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function(metodo, url){
+      this.__athm = esDeATH(url);
+      return abrirOriginal.apply(this, arguments);
+    };
+    XMLHttpRequest.prototype.send = function(){
+      if(this.__athm){
+        this.addEventListener('load', function(){
+          try{ athmGuardarEcommerceId(athmSacarEcommerceId(JSON.parse(this.responseText))); }
+          catch(e){}
+        });
+      }
+      return enviarOriginal.apply(this, arguments);
+    };
+  }
+
+  // Guarda el id en la orden abierta. El paciente solo puede escribir esta
+  // columna y de su propia fila; da igual que mienta, porque quien decide si
+  // se pago sigue siendo el servidor preguntandole a ATH.
+  async function athmGuardarEcommerceId(id){
+    if(!id || !athmOrden || athmOrden.ecommerceId === id) return;
+    athmOrden.ecommerceId = id;
+    console.log('[athm] ecommerceId capturado:', id);
+    try{
+      await supabaseClient.from('athm_orders')
+        .update({ ecommerce_id: id })
+        .eq('ref', athmOrden.ref).eq('user_id', currentUser.id);
+    }catch(e){ console.warn('[athm] no se pudo guardar el ecommerceId:', e); }
+  }
+
+  // ---- El reintento que sustituye al webhook -------------------------------
+  // Se llama cada vez que el paciente entra. Coge sus ordenes abiertas de las
+  // ultimas 48h que ya tengan ecommerceId y le pide al servidor que las
+  // compruebe. Si pago y cerro el navegador, aqui se resuelve solo.
+  async function athmReintentarPendientes(){
+    if(!supabaseClient || !currentUser || PAYMENTS_PAUSED) return;
+    try{
+      const desde = new Date(Date.now() - 48*3600*1000).toISOString();
+      const { data: abiertas } = await supabaseClient.from('athm_orders')
+        .select('ref, ecommerce_id, amount, kind')
+        .eq('user_id', currentUser.id).eq('status', 'open')
+        .gte('created_at', desde);
+      const conId = (abiertas || []).filter(o => o.ecommerce_id);
+      if(conId.length === 0) return;
+      console.log('[athm] reintentando ' + conId.length + ' pago(s) sin confirmar');
+      let alguno = false;
+      for(const o of conId){
+        try{
+          const r = await fetch(SUPABASE_URL + '/functions/v1/athm-confirm', {
+            method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: JSON.stringify({ ref: o.ref, ecommerceId: o.ecommerce_id })
+          });
+          const out = await r.json().catch(function(){ return {}; });
+          if(out && out.paid){ alguno = true; console.log('[athm] confirmado tarde:', o.ref); }
+        }catch(e){ console.warn('[athm] reintento fallido:', o.ref, e); }
+      }
+      // Si alguno entro, repintar para que el paciente lo VEA sin recargar.
+      if(alguno) loadPatientState();
+    }catch(e){ console.warn('[athm] no se pudieron reintentar los pendientes:', e); }
   }
 
   function athmCancel(){
@@ -3184,6 +3287,8 @@
       }
       eco = athmSacarEcommerceId(crudo);
     }catch(e){ console.error('[athm] authorization():', e); }
+    // Si su respuesta no lo trae, ya lo cazamos en la red al crear el cobro.
+    if(!eco && athmOrden && athmOrden.ecommerceId) eco = athmOrden.ecommerceId;
 
     if(!eco){
       // Que quede EN CRUDO en consola. Si su respuesta cambia de forma otra
@@ -3857,6 +3962,10 @@
     refreshWelcome();
     try{ renderMembershipCard(); }
     catch(e){ console.error('[membresia] no se pudo pintar la tarjeta:', e); }
+
+    // Pagos que quedaron sin confirmar (el paciente cerro el navegador, se le
+    // fue la red...). ATH no tiene webhook, asi que esto es lo que los recoge.
+    athmReintentarPendientes();
 
     // Venía de escanear el QR en una computadora. Se retoma AQUI, no antes:
     // hace falta sesión para que RLS deje leer la orden.
