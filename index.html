@@ -1380,6 +1380,75 @@
               <span>I agree to the <a href="#page-terms" target="_blank">Terms</a> and <a href="#page-privacy" target="_blank">Privacy Policy</a>. I understand my care is delivered online without an in-person exam, and that this isn't emergency care — I'll call 911 for emergencies.</span>
             </label>
           </div>
+
+          <!-- ===== CONSENTIMIENTO INFORMADO GLP-1 =====
+               Este NO es un checkbox más. Es el documento que dice que lo que
+               va a recibir no está aprobado por la FDA y que no es la marca.
+               Por eso: el texto entero a la vista (no un enlace que nadie
+               abre), hay que desplazarlo hasta el final, y se firma
+               escribiendo el nombre legal. Un "acepto" sobre un enlace
+               cerrado no es consentimiento informado, es un clic. -->
+          <div class="form-section-title" style="margin-top:28px;">Informed consent for treatment</div>
+          <p style="font-size:13px;color:var(--ink-soft);margin:-6px 0 12px;line-height:1.6;">
+            Please read this in full. You'll need to scroll to the end before you can sign.
+          </p>
+
+          <div id="glp1-consent-scroll"
+               style="max-height:300px;overflow-y:auto;background:var(--white);
+                      border:1px solid var(--line);border-radius:14px;
+                      padding:18px 20px;font-size:13.5px;line-height:1.7;
+                      margin-bottom:12px;">
+            <h4 style="font-family:var(--display);font-size:17px;margin:0 0 10px;">Informed Consent for GLP-1 / GIP Weight Management Treatment</h4>
+            <p style="margin:0 0 14px;">This document describes the treatment I am about to receive from NuVi Clinic, including the medication, its risks and benefits, and important information about the specific product used. By signing below, I confirm that I have read and understood this information, that I have had the opportunity to ask questions, and that I voluntarily consent to proceed with treatment.</p>
+
+            <p style="margin:0 0 4px;"><b>1. Nature of Treatment</b></p>
+            <p style="margin:0 0 14px;">I understand that I am being prescribed tirzepatide, a GIP/GLP-1 receptor agonist medication used for weight management and/or metabolic health, administered by weekly subcutaneous injection. I understand that my treatment plan, including dosage, will be determined and adjusted by my treating provider based on my individual response.</p>
+
+            <p style="margin:0 0 4px;"><b>2. Risks and Side Effects</b></p>
+            <p style="margin:0 0 14px;">I understand that common side effects of GIP/GLP-1 medications may include nausea, vomiting, diarrhea, constipation, decreased appetite, and injection-site reactions. Less common but more serious risks may include pancreatitis, gallbladder problems, kidney issues, and allergic reactions. I understand that I should contact my provider promptly if I experience severe or persistent symptoms, and seek emergency care for signs of a serious allergic reaction or severe abdominal pain.</p>
+
+            <p style="margin:0 0 4px;"><b>3. Compounded Medication — Not FDA-Approved</b></p>
+            <p style="margin:0 0 6px;">I understand that the tirzepatide prescribed to me through NuVi Clinic is a compounded product, prepared by a licensed compounding pharmacy, and that:</p>
+            <ul style="margin:0 0 14px;padding-left:20px;">
+              <li style="margin-bottom:4px;">It is not an FDA-approved product (unlike Mounjaro&reg; or Zepbound&reg;, registered trademarks of Eli Lilly).</li>
+              <li style="margin-bottom:4px;">It has not been formally demonstrated to be bioequivalent to the brand-name product in terms of absorption, efficacy, or safety.</li>
+              <li style="margin-bottom:4px;">It is subject to batch-to-batch variability that does not apply to FDA-approved products.</li>
+              <li>Its long-term safety and effectiveness have not been evaluated by the FDA in the same manner as an approved drug product.</li>
+            </ul>
+
+            <p style="margin:0 0 4px;"><b>4. NuVi Clinic's Scope of Services</b></p>
+            <p style="margin:0 0 14px;">I understand that NuVi Clinic does not dispense or prescribe FDA-approved brand-name tirzepatide (Mounjaro&reg;/Zepbound&reg;) as part of its services. I understand that brand-name products may be available to me through other healthcare providers, my health insurance, or the manufacturer's direct-pricing program (LillyDirect&reg;), and that I am free to pursue those options independently if I prefer. I acknowledge this is a general market alternative, not a service offered by NuVi Clinic.</p>
+
+            <p style="margin:0 0 4px;"><b>5. Telehealth Care</b></p>
+            <p style="margin:0 0 14px;">I understand that my treatment is being provided through telehealth, without an in-person physical examination, and that my treating provider is relying on the information I provide about my health history, current medications, and symptoms. I agree to provide accurate and complete information and to update my provider of any changes in my health status.</p>
+
+            <p style="margin:0 0 4px;"><b>6. Voluntary Participation</b></p>
+            <p style="margin:0 0 14px;">I understand that my participation in this treatment program is entirely voluntary, that I may stop treatment at any time, and that I may ask questions about my treatment at any point during care.</p>
+
+            <p style="margin:0 0 4px;"><b>Acknowledgment</b></p>
+            <p style="margin:0;">I confirm that I have read this entire document, or had it read to me, and that I understand its contents. I confirm I have had the opportunity to ask questions about the treatment, the compounded medication, and the fact that NuVi Clinic does not offer the brand-name alternative. I voluntarily consent to proceed with the treatment prescribed to me by NuVi Clinic.</p>
+            <div id="glp1-consent-end" style="height:1px;"></div>
+          </div>
+
+          <div id="glp1-scroll-aviso"
+               style="font-size:12.5px;color:#8A5A12;margin:-4px 0 12px;">
+            Scroll to the end of the document to continue.
+          </div>
+
+          <div class="consent-box" id="glp1-firma-wrap" style="opacity:0.45;pointer-events:none;">
+            <label class="checkbox-item" style="background:transparent;border:none;padding:0;align-items:flex-start;">
+              <input type="checkbox" id="hh-consent-glp1" required>
+              <span><b>I have read and understood the consent above.</b> I understand the medication I will receive is compounded, is <b>not FDA-approved</b>, and has <b>not been shown to be bioequivalent</b> to the brand-name product, and that NuVi Clinic does not offer brand-name GLP-1 medications.</span>
+            </label>
+            <div class="field" style="margin:14px 0 0;">
+              <label>Signature — type your full legal name</label>
+              <input id="hh-consent-signature" type="text" autocomplete="off"
+                     placeholder="Your full legal name" required>
+            </div>
+            <p style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;">
+              Typing your name here is your signature. It must match the legal name
+              you give on the next step.</p>
+          </div>
           </div>
 
           <div class="hh-step" data-step="2">
@@ -2682,7 +2751,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 11sep-09';
+  const NUVI_BUILD = 'build 11sep-12';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -3674,7 +3743,10 @@
   const MEDICATION_INFO = {
     'Tirzepatide': {
       category: 'Weight management',
-      description: 'Dual GLP-1/GIP agonist. The most effective option we offer for weight loss, dosed once weekly and titrated up gradually by your physician.',
+      // Texto de la clinica. Antes decia "the most effective option we offer":
+      // es una comparacion de eficacia entre dos farmacos, en una pagina
+      // publica de una clinica, sin nada que la respalde. Fuera.
+      description: 'Dual GLP-1/GIP agonist. Delivers significant weight loss results, administered once weekly and adjusted gradually by your physician.',
       basePrice: 120, perMg: 24, unit: 'mg',
       // Dosis semanal máxima de etiqueta (tirzepatida: 15 mg/sem). No es un
       // límite duro — el clínico puede pasarse a propósito — pero arriba de
@@ -3872,7 +3944,13 @@
       // El label de MEDICATION_INFO repite la dosis semanal, que ya sale
       // grande a la izquierda ("2.5 mg / week ... 2.5 mg/wk"). Aquí sólo
       // hace falta lo que el label añade: cuánto vial es en total.
-      const sub = t.totalMg + ' ' + unit + ' total \u00b7 4 weeks';
+      // El "4 weeks" sale en TODOS menos en el escalon de arriba. Ese es la
+      // dosis maxima y su label dice "as directed by MD": cuanto dura ese vial
+      // lo decide el medico, no una regla fija. Poner "4 semanas" ahi era
+      // afirmar algo que no sabemos.
+      const porMedico = /as directed/i.test(String(t.label || ''));
+      const sub = t.totalMg + ' ' + unit + ' total'
+                + (porMedico ? '' : ' \u00b7 4 weeks');
       return '<div class="dose-row">'
         + '<span class="dose-mg">' + t.doseMg + ' ' + unit + '<em> / week</em></span>'
         + '<b class="dose-price">$' + t.price + '</b>'
@@ -3924,7 +4002,12 @@
   }
 
   const FAQ_ITEMS = [
-    { q: "What does \"compounded medication\" mean?", a: "Compounded medications are prepared by a licensed 503A compounding pharmacy under an individual prescription from your physician. These pharmacies operate under strict state and federal quality regulations, and every preparation is made specifically for you." },
+    // Texto ampliado a peticion de la clinica. Lo que se añadio no es adorno:
+    // decir que NO son productos aprobados por la FDA y que NO se ha
+    // demostrado bioequivalencia con la marca es exactamente lo que distingue
+    // una divulgacion honesta de una que insinua que es lo mismo mas barato.
+    // Si alguien vuelve a acortar esto, que sea a sabiendas.
+    { q: "What does \"compounded medication\" mean?", a: "Compounded medications are prepared by a licensed 503A compounding pharmacy based on your physician's individual prescription. Unlike Mounjaro\u00ae or Zepbound\u00ae (or Ozempic\u00ae/Wegovy\u00ae), compounded tirzepatide and semaglutide are not FDA-approved products, and they have not been shown to be bioequivalent to the brand-name product. NuVi Clinic does not offer brand-name GLP-1 medications as part of its services. Compounding pharmacies operate under state and federal quality regulations, and each preparation is made according to your prescription." },
     { q: "Can I ask for a different medication later?", a: "Yes — each request is reviewed individually by your physician before it's approved, the same way your first one was." },
     { q: "Is there a minimum commitment?", a: "No minimum commitment. Membership is month to month." },
     { q: "How do I cancel?", a: "You can cancel at any time from your account Settings." },
@@ -5304,13 +5387,46 @@
   // ====== HEALTH HISTORY STEP NAVIGATION ======
   // Bump this whenever the consent wording changes, so it's always provable
   // which version of the text a given patient actually agreed to.
-  const CONSENT_VERSION = '2026-08-02.v1';
+  // Sube cuando cambie el TEXTO del consentimiento, para que siempre se pueda
+  // probar que version acepto cada paciente. 11sep: se añadio el
+  // consentimiento informado GLP-1 (no aprobado por la FDA, no bioequivalente).
+  const CONSENT_VERSION = '2026-09-11.glp1-v1';
   const HH_STEP_NAMES = ['Consent & terms', 'About you & shipping', 'Medical history', 'Surgical, allergies & habits', 'Body markers', 'Family history', 'Lab results'];
   let hhCurrentStep = 1;
   const HH_TOTAL_STEPS = 7;
 
+  // El bloque de firma nace deshabilitado y se abre cuando el paciente llega
+  // al final del texto. Es la diferencia entre "leí" y "hice clic".
+  function armarConsentimientoGLP1(){
+    const caja = document.getElementById('glp1-consent-scroll');
+    const wrap = document.getElementById('glp1-firma-wrap');
+    const aviso = document.getElementById('glp1-scroll-aviso');
+    if(!caja || !wrap) return;
+
+    const abrir = function(){
+      wrap.style.opacity = '1';
+      wrap.style.pointerEvents = 'auto';
+      if(aviso) aviso.style.display = 'none';
+    };
+
+    // Si el documento cabe entero sin desplazar (pantalla grande, zoom), no
+    // se le puede pedir que haga scroll: no hay scroll que hacer.
+    const cabeEntero = function(){ return caja.scrollHeight <= caja.clientHeight + 4; };
+
+    const mirar = function(){
+      if(cabeEntero() || caja.scrollTop + caja.clientHeight >= caja.scrollHeight - 24){
+        abrir();
+      }
+    };
+    caja.addEventListener('scroll', mirar);
+    // Y una comprobacion al abrir el paso, por si ya cabe.
+    setTimeout(mirar, 60);
+  }
+
+  let glp1Armado = false;
   function hhShowStep(n){
     hhCurrentStep = Math.min(Math.max(n, 1), HH_TOTAL_STEPS);
+    if(hhCurrentStep === 1 && !glp1Armado){ glp1Armado = true; armarConsentimientoGLP1(); }
     document.querySelectorAll('.hh-step').forEach(el => {
       el.style.display = (parseInt(el.dataset.step, 10) === hhCurrentStep) ? 'block' : 'none';
     });
@@ -5342,6 +5458,30 @@
       const ter = document.getElementById('hh-consent-terms');
       if(acc && !acc.checked){ alert('Please confirm your answers will be accurate and complete before continuing.'); acc.focus(); return; }
       if(ter && !ter.checked){ alert('Please accept the Terms and Privacy Policy before continuing.'); ter.focus(); return; }
+
+      // El consentimiento informado GLP-1. Aqui no vale un checkbox: hay que
+      // haber llegado al final del documento y firmar con el nombre.
+      const glp1 = document.getElementById('hh-consent-glp1');
+      const firma = document.getElementById('hh-consent-signature');
+      if(glp1 && !glp1.checked){
+        alert('Please read the informed consent for treatment and confirm you '
+            + 'understand it before continuing.');
+        document.getElementById('glp1-consent-scroll').scrollIntoView(
+          { behavior:'smooth', block:'center' });
+        return;
+      }
+      const nombreFirma = firma ? firma.value.trim() : '';
+      if(!nombreFirma){
+        alert('Please type your full legal name to sign the consent.');
+        firma.focus(); return;
+      }
+      // Una firma de una sola palabra no es un nombre legal. No es
+      // burocracia: un consentimiento firmado "asd" no vale nada el dia que
+      // haga falta.
+      if(nombreFirma.split(/\s+/).length < 2){
+        alert('Please type your full legal name — first and last name.');
+        firma.focus(); return;
+      }
     }
 
     if(delta > 0 && hhCurrentStep === 2){
@@ -7961,6 +8101,15 @@
 
     const lines = [
       'DOB: ' + (patient.date_of_birth || '—') + '  ·  Shipping: ' + shippingLine,
+      // El consentimiento GLP-1, en la ficha. Si un paciente no lo firmo, el
+      // clinico tiene que verlo ANTES de recetar, no despues.
+      'GLP-1 consent: ' + (patient.consent_glp1
+          ? '<b style="color:#2F5C46;">signed by ' + escapeHtml(patient.consent_glp1_signature || '—')
+            + '</b> on ' + (patient.consent_glp1_at
+                ? new Date(patient.consent_glp1_at).toLocaleString() : 'date not recorded')
+            + ' (' + escapeHtml(patient.consent_glp1_version || 'version not recorded') + ')'
+          : '<b style="color:#8C2F2F;">NOT SIGNED</b> — this patient has not signed the '
+            + 'informed consent for compounded GLP-1 treatment.'),
       'Attestation: ' + (patient.consented_at
           ? 'signed ' + new Date(patient.consented_at).toLocaleString() + ' (' + (patient.consent_version || 'version not recorded') + ')'
           : 'NOT ON FILE'),
@@ -8599,7 +8748,7 @@
 
     // Every attestation must be individually ticked. Checking them one by one
     // (rather than one blanket box) is the whole point — so enforce it.
-    const consentIds = ['hh-consent-accuracy','hh-consent-terms'];
+    const consentIds = ['hh-consent-accuracy','hh-consent-terms','hh-consent-glp1'];
     for(const id of consentIds){
       const el = document.getElementById(id);
       if(el && !el.checked){
@@ -8651,6 +8800,14 @@
       consent_compounded: document.getElementById('hh-consent-terms').checked,
       consent_not_emergency: document.getElementById('hh-consent-terms').checked,
       consent_terms: document.getElementById('hh-consent-terms').checked,
+      // El consentimiento GLP-1, por separado y con su firma. Va aparte de
+      // los otros porque es el que dice que el medicamento NO es la marca y
+      // NO esta aprobado por la FDA — el dia que alguien pregunte, esto es lo
+      // que hay que poder enseñar.
+      consent_glp1: document.getElementById('hh-consent-glp1').checked,
+      consent_glp1_signature: document.getElementById('hh-consent-signature').value.trim(),
+      consent_glp1_version: CONSENT_VERSION,
+      consent_glp1_at: new Date().toISOString(),
       consented_at: new Date().toISOString(),
       consent_version: CONSENT_VERSION,
       consent: true
@@ -10014,6 +10171,12 @@
     'First month $50, then $70/month. Cancel anytime.': 'Primer mes $50, luego $70 al mes. Cancela cuando quieras.',
   };
   var ES_LONG = [
+    // La divulgacion de medicamento compuesto. Va traducida A MANO, no por el
+    // widget de Google: es lo que le dice al paciente que esto NO es la marca
+    // y que no se ha demostrado bioequivalencia. Una traduccion automatica
+    // que se coma un "no" ahi cambia el sentido legal de la frase.
+    ["Compounded medications are prepared by a licensed 503A compounding pharmacy based on your physician's individual prescription. Unlike Mounjaro\u00ae or Zepbound\u00ae (or Ozempic\u00ae/Wegovy\u00ae), compounded tirzepatide and semaglutide are not FDA-approved products, and they have not been shown to be bioequivalent to the brand-name product. NuVi Clinic does not offer brand-name GLP-1 medications as part of its services. Compounding pharmacies operate under state and federal quality regulations, and each preparation is made according to your prescription.",
+     "Los medicamentos compuestos son preparados por una farmacia de compuestos 503A licenciada, seg\u00fan la receta individual de su m\u00e9dico. A diferencia de Mounjaro\u00ae o Zepbound\u00ae (u Ozempic\u00ae/Wegovy\u00ae), la tirzepatida y la semaglutida compuestas NO son productos aprobados por la FDA, y no se ha demostrado que sean bioequivalentes al producto de marca. NuVi Clinic no ofrece medicamentos GLP-1 de marca como parte de sus servicios. Las farmacias de compuestos operan bajo regulaciones de calidad estatales y federales, y cada preparaci\u00f3n se hace conforme a su receta."],
     ['Every patient completes a required 15-minute evaluation with a licensed physician before any prescription is approved. Appointments run 8:00 AM \u2013 7:00 PM, every day.',
      'Cada paciente completa una evaluaci\u00f3n obligatoria de 15 minutos con un m\u00e9dico licenciado antes de que se apruebe cualquier receta. Las citas son de 8:00 AM a 7:00 PM, todos los d\u00edas.'],
     ['Your evaluation is complete. Your physician is finalising the review \u2014 your protocol will appear here once approved.',
