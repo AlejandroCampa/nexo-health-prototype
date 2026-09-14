@@ -2781,7 +2781,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 14sep-2';
+  const NUVI_BUILD = 'build 14sep-3';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -7306,6 +7306,14 @@
     document.getElementById('np-dashboard').classList.add('visible');
     document.getElementById('nav-cta').style.display = 'none';
     document.getElementById('np-welcome').textContent = staffWelcome(staffRow);
+    // Deja en la consola lo que la app RECIBIO de verdad. Sin esto, "no me
+    // salen los tabs" y "el rol no cambio en la base" se ven exactamente
+    // igual desde fuera, y se pierden dias distinguiendolos.
+    console.log('[staff] entro:', user.email,
+                '| role =', staffRow.role,
+                '| ve el panel de medico:',
+                (staffRow.role === 'physician' || staffRow.role === 'admin'),
+                '| fila completa:', staffRow);
     if(staffRow && (staffRow.role === 'physician' || staffRow.role === 'admin')){
       const sub = document.querySelector('#np-dashboard .dash-head p');
       if(sub) sub.textContent = 'Patients, prescriptions, and oversight of the whole care team.';
