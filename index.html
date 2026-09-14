@@ -2781,7 +2781,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 14sep-1';
+  const NUVI_BUILD = 'build 14sep-2';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -6700,6 +6700,21 @@
   // Marrero" o lo que la persona use. Vacío, se cae al rótulo del rol. NO
   // toca permisos: poner title = 'Doctora' a un NP no le da co-firma, eso lo
   // sigue decidiendo role.
+  // El saludo. staff.greeting, si está, se usa TAL CUAL — incluido el idioma
+  // y el género. "Welcome, Angelica Marrero" traducido por Google sale
+  // "Bienvenido", en masculino, y no hay forma de arreglar eso desde una
+  // tabla de traducciones: el nombre es dinámico. Así que se deja que cada
+  // quien escriba su propio saludo y se acabó el problema.
+  //
+  // Vacío, se cae al de siempre. Como title, esto es SOLO texto: no toca un
+  // solo permiso.
+  function staffWelcome(row){
+    const propio = (row && row.greeting || '').trim();
+    if(propio) return propio;
+    const nombre = (row && row.full_name) || currentStaffName || '';
+    return nombre ? ('Welcome, ' + nombre) : 'Clinical Dashboard';
+  }
+
   function staffRoleLabel(row){
     if(!row) return 'Staff';
     const propio = (row.title || '').trim();
@@ -7290,7 +7305,7 @@
     if(typeof refreshChatBubble === 'function') refreshChatBubble();
     document.getElementById('np-dashboard').classList.add('visible');
     document.getElementById('nav-cta').style.display = 'none';
-    document.getElementById('np-welcome').textContent = 'Welcome, ' + currentStaffName;
+    document.getElementById('np-welcome').textContent = staffWelcome(staffRow);
     if(staffRow && (staffRow.role === 'physician' || staffRow.role === 'admin')){
       const sub = document.querySelector('#np-dashboard .dash-head p');
       if(sub) sub.textContent = 'Patients, prescriptions, and oversight of the whole care team.';
