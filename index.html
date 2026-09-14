@@ -1474,15 +1474,16 @@
           <p style="font-size:12px;color:rgba(15,35,54,0.66);margin:-4px 0 4px;">Required by the pharmacy to verify your identity before dispensing. If you don't drive, any government-issued ID number works.</p>
 
           <div class="form-section-title">Shipping address</div>
-          <p style="font-size:12px;color:rgba(15,35,54,0.66);margin:-6px 0 12px;">Where we'll ship your medication. Our physicians are licensed in Puerto Rico, so we can only treat and ship to patients located here.</p>
+          <p style="font-size:12px;color:rgba(15,35,54,0.66);margin:-6px 0 12px;">Where we'll ship your medication. Our physicians are licensed in Puerto Rico and Maryland, so those are the only places we can treat and ship to today — we're working on adding more.</p>
           <div class="field"><label>Street address</label><input id="hh-address1" type="text" placeholder="123 Calle Principal"></div>
           <div class="field"><label>Apt / unit <span style="font-weight:400;opacity:0.6;">(optional)</span></label><input id="hh-address2" type="text" placeholder="Apt 4B"></div>
           <div class="two-col">
             <div class="field"><label>City</label><input id="hh-city" type="text" placeholder="San Juan"></div>
             <div class="field"><label>State / territory</label>
-              <select id="hh-state"><!-- se llena desde SERVED_STATES al arrancar --></select>
+              <select id="hh-state"><!-- se llena desde SERVED_STATES + US_STATES al arrancar --></select>
             </div>
           </div>
+          <p id="hh-state-note" style="display:none;font-size:12.5px;line-height:1.5;color:#7a4a10;background:#fff6e6;border:1px solid #f0dcb4;border-radius:8px;padding:9px 11px;margin:-4px 0 12px;"></p>
           <div class="field" style="max-width:200px;"><label>ZIP code</label><input id="hh-zip" type="text" inputmode="numeric" maxlength="5" placeholder="00901"></div>
 
           <div class="form-section-title">Primary goal</div>
@@ -1710,21 +1711,41 @@
                line-height:1.6;"></div>
         </div>
 
-        <!-- ATH Móvil solo existe como app de teléfono. En una computadora el
-             botón de arriba no lleva a ningún sitio, así que se le da un
-             puente: un QR que abre ESTA MISMA orden en su móvil. Se enseña
-             sólo en escritorio; en el teléfono sobra. -->
-        <div id="athm-qr-wrap" style="display:none;margin-top:18px;padding-top:16px;
+        <!-- ATH Móvil sólo existe como app de teléfono. En una computadora el
+             botón de arriba no lleva a ningún sitio, así que se le dan los
+             datos para pagar a mano desde el móvil. Se enseña sólo en
+             escritorio; en el teléfono sobra.
+
+             Antes esto era un QR. Se quitó: dependía de una librería que a
+             veces no cargaba y de que la referencia cruzara del escritorio al
+             móvil pasando por el correo del magic link. Demasiadas piezas para
+             algo que un número de teléfono resuelve. -->
+        <div id="athm-manual-wrap" style="display:none;margin-top:18px;padding-top:16px;
              border-top:1px solid var(--line);">
           <div style="font-size:13.5px;font-weight:600;margin-bottom:4px;">
             On a computer? Pay from your phone.</div>
           <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px;line-height:1.6;">
-            ATH Móvil only works from the app. Scan this with your phone's camera
-            and it opens this same payment there — same amount, nothing to retype.</div>
-          <div id="athm-qr" style="width:180px;height:180px;background:var(--white);
-               padding:10px;border:1px solid var(--line);border-radius:10px;"></div>
-          <div id="athm-qr-link" style="font-family:'IBM Plex Mono',monospace;font-size:11px;
-               color:var(--ink-soft);margin-top:10px;word-break:break-all;"></div>
+            ATH Móvil only works from the app. Open it on your phone, send the
+            exact amount to the number below, and then paste the confirmation
+            number here so we can match it to your account.</div>
+          <div style="background:var(--white);border:1px solid var(--line);
+               border-radius:12px;padding:14px 16px;">
+            <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+                 color:var(--ink-soft);margin-bottom:3px;">Send to</div>
+            <div id="athm-manual-tel" style="font-family:'IBM Plex Mono',monospace;
+                 font-size:20px;font-weight:600;color:var(--ink);letter-spacing:0.02em;"></div>
+            <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+                 color:var(--ink-soft);margin:12px 0 3px;">Exact amount</div>
+            <div id="athm-manual-total" style="font-family:'IBM Plex Mono',monospace;
+                 font-size:20px;font-weight:600;color:var(--ink);"></div>
+            <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+                 color:var(--ink-soft);margin:12px 0 3px;">Put this in the message</div>
+            <div id="athm-manual-ref" style="font-family:'IBM Plex Mono',monospace;
+                 font-size:16px;font-weight:600;color:var(--ink);letter-spacing:0.06em;"></div>
+            <div style="font-size:12px;color:var(--ink-soft);margin-top:10px;line-height:1.55;">
+              The amount has to match exactly, or we can't match the payment
+              automatically.</div>
+          </div>
         </div>
         <button type="button" class="btn btn-outline" style="width:auto;padding:9px 18px;
                 font-size:13px;margin-top:14px;" onclick="athmCancel()">Cancel</button>
@@ -2495,9 +2516,12 @@
     <div class="field"><label for="settings-address2">Apt / Suite (optional)</label><input id="settings-address2" type="text" placeholder="Optional"></div>
     <div class="two-col">
       <div class="field"><label for="settings-city">City</label><input id="settings-city" type="text"></div>
-      <div class="field"><label for="settings-state">State / Territory</label><input id="settings-state" type="text" placeholder="e.g. PR"></div>
+      <div class="field"><label for="settings-state">State / Territory</label>
+        <select id="settings-state"><!-- se llena desde US_STATES al arrancar --></select>
+      </div>
     </div>
-    <div class="field"><label for="settings-zip">ZIP code</label><input id="settings-zip" type="text"></div>
+    <p id="settings-state-note" style="display:none;font-size:12.5px;line-height:1.5;color:#7a4a10;background:#fff6e6;border:1px solid #f0dcb4;border-radius:8px;padding:9px 11px;margin:-4px 0 12px;"></p>
+    <div class="field"><label for="settings-zip">ZIP code</label><input id="settings-zip" type="text" inputmode="numeric" maxlength="5"></div>
     <button class="btn btn-outline" style="width:auto;padding:10px 20px;margin-bottom:24px;" onclick="saveShippingInfo()">Save</button>
 
     <div id="settings-cancelled-notice" style="display:none;background:rgba(196,60,60,0.08);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#B23A3A;"></div>
@@ -2757,7 +2781,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 11sep-14';
+  const NUVI_BUILD = 'build 13sep-6';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -2937,6 +2961,11 @@
   //     receta. Por eso se guarda una orden con referencia corta y viaja esa.
 
   let athmOrden = null;      // la orden abierta ahora mismo
+  // Cuando ya se le ha dicho al paciente algo definitivo sobre SU DINERO
+  // ("confirmado", "lo estamos revisando"), ningún aviso posterior puede
+  // pisarlo. El del botón que no carga dice "no se ha cobrado nada", y
+  // soltarlo encima de un pago recibido manda al paciente a pagar dos veces.
+  let athmAvisoFinal = false;
   let athmCargado = false;   // el script de Evertec ya se inyecto?
 
   function athmRef(){
@@ -3013,6 +3042,7 @@
     }
 
     athmOrden = { ref, kind, id, total, etiqueta };
+    athmAvisoFinal = false;
 
     document.getElementById('athm-detail').textContent = etiqueta || '';
     document.getElementById('athm-amount').textContent = athmDinero(total);
@@ -3071,7 +3101,8 @@
     if(cod) cod.style.display = 'none';   // empieza limpio cada cobro
     athmEspiarRed();
     athmMontarBoton();
-    athmMostrarQR(ref);
+    athmMostrarManual(ref, total);
+    athmVigilarPago(ref);
   }
 
   // El script de Evertec dibuja el boton al cargar, leyendo window.ATHM_Checkout.
@@ -3111,11 +3142,16 @@
     setTimeout(function(){
       const host = document.getElementById('ATHMovil_Checkout_Button_payment');
       if(!host || host.children.length > 0) return;   // ya se pinto: todo bien
+      // Si en estos 5 segundos el pago YA entró, callarse. El aviso decía
+      // "no se ha cobrado nada", y pisar con eso un "Payment confirmed" le
+      // diría al paciente que su pago no pasó cuando sí pasó — y lo mandaría
+      // a pagar dos veces. Este temporizador no puede tener la última palabra.
+      if(!athmOrden || athmAvisoFinal) return;
       const est = document.getElementById('athm-status');
       if(est){
         est.textContent = 'The ATH Móvil button did not load. Nothing has been '
-          + 'charged. Please message your care team and we will take the payment '
-          + 'another way.';
+          + 'charged. You can still pay from your phone using the number below, '
+          + 'or message your care team.';
       }
       console.error('[athm] el div del boton sigue vacio 5s despues de inyectar '
         + 'el script. Comprueba, en este orden:\n'
@@ -3132,66 +3168,60 @@
   // ATH Móvil no existe fuera del teléfono. Sin esto, el paciente que entra
   // desde una computadora ve un botón que no lleva a ningún sitio.
   //
-  // El QR apunta a ?pagar=<ref>. La referencia sola no vale de nada para
-  // quien no sea su dueño: athm_orders está bajo RLS y sólo el paciente que
-  // la creó puede leerla. Si alguien fotografía el QR ajeno, no ve ni el
-  // importe.
+  // Aquí había un QR que abría ?pagar=<ref> en el móvil. Se quitó entero.
+  // Tenía que sobrevivir a demasiadas cosas para funcionar: que la librería
+  // del dibujo cargara, que la cámara lo leyera, y que la referencia cruzara
+  // del escritorio al teléfono pasando por el correo del magic link. Cada
+  // pieza fallaba en silencio y el paciente se quedaba mirando un cuadro
+  // blanco. Un número de teléfono no se cae.
+  //
+  // Ahora se le enseña a dónde mandar el dinero, cuánto exactamente, y la
+  // referencia para el mensaje. Confirma pegando el número de recibo, que ya
+  // existía como red de seguridad y aquí pasa a ser el camino normal.
   function esEscritorio(){
     return !/Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent || '');
   }
 
-  function athmURLDePago(ref){
-    return window.location.origin + window.location.pathname
-         + '?pagar=' + encodeURIComponent(ref);
+  // El teléfono del negocio, formateado para que se pueda teclear de un
+  // vistazo. Sale de ATHM.phoneNumber para que no haya dos números en el
+  // código que puedan discrepar.
+  function athmTelefonoLegible(){
+    const d = String(ATHM.phoneNumber || '').replace(/\D/g, '');
+    return d.length === 10
+      ? '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6)
+      : (ATHM.phoneNumber || '');
   }
 
-  function athmMostrarQR(ref){
-    const wrap = document.getElementById('athm-qr-wrap');
-    const caja = document.getElementById('athm-qr');
-    if(!wrap || !caja) return;
+  function athmMostrarManual(ref, total){
+    const wrap = document.getElementById('athm-manual-wrap');
+    if(!wrap) return;
     if(!esEscritorio()){ wrap.style.display = 'none'; return; }
 
-    const url = athmURLDePago(ref);
+    const poner = (id, txt) => {
+      const el = document.getElementById(id);
+      if(el) el.textContent = txt;
+    };
+    poner('athm-manual-tel', athmTelefonoLegible());
+    poner('athm-manual-total',
+          '$' + Number(total || 0).toFixed(2));
+    poner('athm-manual-ref', ref);
     wrap.style.display = 'block';
-    caja.innerHTML = '';
-    // El enlace en texto SIEMPRE, aunque el QR no se pinte. Si la librería no
-    // carga, el paciente todavía puede escribirlo o mandárselo al teléfono;
-    // un cuadro vacío lo dejaría sin salida.
-    document.getElementById('athm-qr-link').textContent = url;
 
-    const pintar = function(){
-      // onload puede dispararse sin que la libreria exista: un proxy, un
-      // bloqueador o una respuesta vacia dan un 200 sin contenido. Se
-      // comprueba antes de usarla, en vez de reventar dentro del try.
-      if(!window.QRCode || !window.QRCode.CorrectLevel){
-        console.warn('[athm] la libreria del QR no quedo disponible; '
-          + 'el paciente tiene el enlace en texto debajo.');
-        return;
-      }
-      try{
-        caja.innerHTML = '';
-        new window.QRCode(caja, { text: url, width: 160, height: 160,
-          colorDark: '#0F2336', colorLight: '#FFFFFF',
-          correctLevel: window.QRCode.CorrectLevel.M });
-      }catch(e){
-        console.error('[athm] no se pudo pintar el QR:', e);
-      }
-    };
-
-    if(window.QRCode){ pintar(); return; }
-    const sc = document.createElement('script');
-    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-    sc.onload = pintar;
-    sc.onerror = function(){
-      console.error('[athm] no cargó la librería del QR; queda el enlace en texto.');
-    };
-    document.head.appendChild(sc);
+    // El pago a mano no lleva metadata1, así que el webhook no lo puede atar
+    // solo. El número de recibo es lo único que lo cierra: se le enseña ya,
+    // no cuando algo falle.
+    const cod = document.getElementById('athm-codigo-wrap');
+    if(cod) cod.style.display = 'block';
   }
 
   // Retomar una orden que ya existe, en vez de crear otra. Importa: el importe
   // se verifica contra la fila que se guardó al abrirla, así que reutilizar la
-  // misma referencia mantiene esa garantía. Crear una nueva al escanear
-  // dejaría dos órdenes abiertas por el mismo pago.
+  // misma referencia mantiene esa garantía.
+  //
+  // OJO: ahora mismo NADIE la llama. Su único cliente era la llegada desde el
+  // QR, que se quitó. Se deja porque es la pieza correcta el día que haya otra
+  // forma de retomar un cobro (un enlace por SMS, por ejemplo) y porque está
+  // cubierta por pruebas. Si dentro de unos meses sigue sin usarse, fuera.
   const ATHM_ORDEN_VIGENCIA_MIN = 60;
 
   async function athmResume(ref){
@@ -3241,7 +3271,8 @@
       };
       athmEspiarRed();
       athmMontarBoton();
-      athmMostrarQR(orden.ref);
+      athmMostrarManual(orden.ref, Number(orden.amount));
+      athmVigilarPago(orden.ref);
       document.getElementById('athm-wrap').scrollIntoView({ behavior:'smooth', block:'start' });
       return true;
     }catch(err){
@@ -3351,6 +3382,112 @@
     }catch(e){ console.warn('[athm] no se pudieron reintentar los pendientes:', e); }
   }
 
+  // ---- EL VIGILANTE: la página se entera sola de que el pago entró ---------
+  //
+  // Faltaba esto y por eso un paciente pagaba, refrescaba, y seguía viendo
+  // "sin pagar". El pago se aplica en el SERVIDOR (el webhook de ATH llega
+  // cuando llega, a veces medio minuto después). La página sólo miraba en dos
+  // momentos: al cargar y justo al volver del modal. Si el webhook llegaba
+  // entre medias, nadie volvía a preguntar — y refrescar tampoco servía si el
+  // refresco caía antes que el webhook.
+  //
+  // Ahora, mientras el cobro está abierto, se pregunta cada pocos segundos
+  // hasta que entra. En cuanto entra, se repinta el dashboard solo.
+  let athmVigia = null;
+
+  function athmDejarDeVigilar(){
+    if(athmVigia){
+      clearInterval(athmVigia.timer);
+      document.removeEventListener('visibilitychange', athmVigia.alVolver);
+      window.removeEventListener('focus', athmVigia.alVolver);
+      athmVigia = null;
+    }
+  }
+
+  function athmVigilarPago(ref){
+    athmDejarDeVigilar();
+    if(!supabaseClient || !currentUser || !ref) return;
+
+    const arranque = Date.now();
+    const LIMITE_MS = 15 * 60 * 1000;   // 15 min y se rinde
+    const CADA_MS   = 4000;
+    let mirando = false;                // que dos ticks no se pisen
+    let ultimoEmpujon = 0;
+
+    const mirar = async function(){
+      if(mirando || !athmOrden || athmOrden.ref !== ref) return;
+      if(Date.now() - arranque > LIMITE_MS){
+        console.log('[athm] se deja de vigilar', ref, '(15 min)');
+        athmDejarDeVigilar();
+        return;
+      }
+      mirando = true;
+      try{
+        // RLS deja al paciente leer SUS órdenes. No hace falta nada especial.
+        const { data: fila } = await supabaseClient.from('athm_orders')
+          .select('status, ecommerce_id').eq('ref', ref)
+          .eq('user_id', currentUser.id).maybeSingle();
+        if(!fila){ mirando = false; return; }
+
+        if(fila.status === 'paid'){
+          athmDejarDeVigilar();
+          athmAvisoFinal = true;
+          const est = document.getElementById('athm-status');
+          if(est) est.textContent = 'Payment confirmed. Thank you.';
+          athmOrden = null;
+          setTimeout(function(){
+            const w = document.getElementById('athm-wrap');
+            if(w) w.style.display = 'none';
+            const man = document.getElementById('athm-manual-wrap');
+            if(man) man.style.display = 'none';
+            const cod = document.getElementById('athm-codigo-wrap');
+            if(cod) cod.style.display = 'none';
+            loadPatientState();     // <- el repintado automático
+          }, 1200);
+          return;
+        }
+
+        // Estados que ya no van a cambiar solos: hace falta una persona. Se le
+        // dice claro, y sobre todo se le dice que NO pague otra vez.
+        if(fila.status === 'mismatch' || fila.status === 'pending_review'
+           || fila.status === 'paid_unapplied'){
+          athmDejarDeVigilar();
+          athmAvisoFinal = true;
+          const est = document.getElementById('athm-status');
+          if(est) est.textContent =
+            'We received your payment but need to review it before it applies. '
+            + 'Do not pay again — your care team will sort it out. Reference: ' + ref;
+          athmPedirCodigo();
+          return;
+        }
+
+        // Sigue 'open'. Si ya tenemos el ecommerceId, se le da un empujón al
+        // servidor cada 20s por si el webhook de ATH no llegó nunca.
+        const id = fila.ecommerce_id || (athmOrden && athmOrden.ecommerceId);
+        if(id && Date.now() - ultimoEmpujon > 20000){
+          ultimoEmpujon = Date.now();
+          fetch(SUPABASE_URL + '/functions/v1/athm-confirm', {
+            method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: JSON.stringify({ ref: ref, ecommerceId: id })
+          }).catch(function(){});   // silencioso: el próximo tick lo verá igual
+        }
+      }catch(e){
+        console.warn('[athm] el vigilante falló un tick:', e);
+      }finally{
+        mirando = false;
+      }
+    };
+
+    // Volver a la pestaña después de pagar en la app de ATH es la señal más
+    // fuerte que hay de que algo pasó. Se mira en el acto, sin esperar al tick.
+    const alVolver = function(){ if(!document.hidden) mirar(); };
+    document.addEventListener('visibilitychange', alVolver);
+    window.addEventListener('focus', alVolver);
+
+    athmVigia = { timer: setInterval(mirar, CADA_MS), alVolver: alVolver, ref: ref };
+    mirar();
+  }
+
   // El paciente pega el numero de su recibo. Se lo manda al servidor, que
   // decide: si se puede verificar contra ATH, entra ya; si no, queda anotado
   // para que lo apruebe una persona. El navegador no desbloquea nada.
@@ -3412,10 +3549,12 @@
   }
 
   function athmCancel(){
+    athmDejarDeVigilar();
+    athmAvisoFinal = false;
     athmOrden = null;
     document.getElementById('athm-wrap').style.display = 'none';
-    const qr = document.getElementById('athm-qr-wrap');
-    if(qr) qr.style.display = 'none';
+    const man = document.getElementById('athm-manual-wrap');
+    if(man) man.style.display = 'none';
     const cod = document.getElementById('athm-codigo-wrap');
     if(cod) cod.style.display = 'none';
     if(typeof refreshPatientTabs === 'function') refreshPatientTabs();
@@ -4173,20 +4312,6 @@
     // Pagos que quedaron sin confirmar (el paciente cerro el navegador, se le
     // fue la red...). ATH no tiene webhook, asi que esto es lo que los recoge.
     athmReintentarPendientes();
-
-    // Venía de escanear el QR en una computadora. Se retoma AQUI, no antes:
-    // hace falta sesión para que RLS deje leer la orden.
-    if(athmRefPendiente){
-      const ref = athmRefPendiente;
-      athmRefPendiente = null;
-      try{ sessionStorage.removeItem('nuviAthmRef'); }catch(e){}
-      athmResume(ref).then(function(ok){
-        if(!ok){
-          console.warn('[athm] no se pudo retomar ' + ref
-            + '. El paciente puede empezar el pago de nuevo con normalidad.');
-        }
-      });
-    }
 
     if(pendingPaymentPlan && history && !history.paid){
       await applyPendingPayment();
@@ -5307,9 +5432,7 @@
 
     try{
       const { data: staffRow } = await supabaseClient.from('staff').select('*').eq('user_id', currentUser.id).maybeSingle();
-      document.getElementById('staff-acct-role').textContent = staffRow && staffRow.role
-        ? (staffRow.role === 'np' ? 'Nurse Practitioner' : staffRow.role === 'physician' ? 'Physician' : 'Admin')
-        : 'Staff';
+      document.getElementById('staff-acct-role').textContent = staffRoleLabel(staffRow);
       paintAvatar(staffRow ? staffRow.avatar_url : null, currentStaffName);
     } catch(err){ /* non-fatal */ }
 
@@ -5533,9 +5656,13 @@
           ? ('That ZIP code doesn\'t look like it\'s in ' + elegido.name + '.\n\n'
              + 'The pharmacy ships against this address, so it has to match the '
              + 'state you selected. Please check your ZIP code.')
-          : ('We can only treat patients located in ' + donde + ' right now.\n\n'
+          : ((nombreEstado(st ? st.value : '')
+                ? 'We\'re not licensed in ' + nombreEstado(st.value) + ' yet.\n\n'
+                : '')
+             + 'Right now we can only treat patients located in ' + donde + '. '
              + 'Our physicians are licensed there, and we cannot legally evaluate or '
-             + 'prescribe for patients elsewhere.'));
+             + 'prescribe for patients elsewhere.\n\n'
+             + 'We are working on expanding to more states — check back soon.'));
         if(zip) zip.focus();
         return;
       }
@@ -5586,6 +5713,9 @@
       setVal('hh-address2', h.shipping_address2);
       setVal('hh-city', h.shipping_city);
       setVal('hh-state', h.shipping_state);
+      // Si lo que tenía guardado es un estado que no atendemos, que el aviso
+      // salga solo al reabrir el formulario, no sólo al tocar el dropdown.
+      if(typeof avisarEstadoNoAtendido === 'function') avisarEstadoNoAtendido();
       setVal('hh-zip', h.shipping_zip);
       setVal('hh-goal', h.goal);
       setVal('hh-conditions-other', h.conditions_other);
@@ -5663,6 +5793,8 @@
     document.getElementById('settings-city').value = (history && history.shipping_city) || '';
     document.getElementById('settings-state').value = (history && history.shipping_state) || '';
     document.getElementById('settings-zip').value = (history && history.shipping_zip) || '';
+    // Que el aviso salga al abrir Settings, no sólo al tocar el dropdown.
+    avisarEstadoNoAtendido({ target: document.getElementById('settings-state') });
 
     const cancelledNotice = document.getElementById('settings-cancelled-notice');
     const cancelSection = document.getElementById('settings-cancel-section');
@@ -5728,14 +5860,46 @@
       alert('Complete your health history first — shipping info is saved to that record.');
       return;
     }
+    // ---- EL MISMO GATE QUE EL INTAKE ----
+    // Esto faltaba, y era un agujero de verdad: el intake comprueba estado y
+    // ZIP, pero AQUÍ no se comprobaba nada. Un paciente aprobado en Puerto
+    // Rico podía entrar a Settings, poner una dirección de Florida, darle
+    // Save, y la farmacia despachaba allí. La licencia del médico se quedaba
+    // en Puerto Rico y el medicamento se iba a otro estado.
+    //
+    // No basta con que el <select> ya sólo ofrezca la lista: el ZIP sigue
+    // siendo texto libre, y es contra la dirección completa contra lo que
+    // despacha la farmacia.
+    const sEstado = document.getElementById('settings-state');
+    const sZip    = document.getElementById('settings-zip');
+    const estadoNuevo = sEstado ? sEstado.value : '';
+    const zipNuevo    = sZip ? sZip.value : '';
+
+    if(!isServedAddress(estadoNuevo, zipNuevo)){
+      const donde = SERVED_STATES.map(x => x.name).join(' and ');
+      const elegido = servedStateFor(estadoNuevo);
+      alert(elegido
+        ? ('That ZIP code doesn\'t look like it\'s in ' + elegido.name + '.\n\n'
+           + 'The pharmacy ships against this address, so it has to match the '
+           + 'state you selected. Please check your ZIP code.')
+        : ((nombreEstado(estadoNuevo)
+              ? 'We\'re not licensed in ' + nombreEstado(estadoNuevo) + ' yet.\n\n'
+              : '')
+           + 'We can only ship to patients located in ' + donde + '. '
+           + 'If you\'ve moved, message your care team before your next refill — '
+           + 'we cannot ship outside the states where our physicians are licensed.'));
+      if(sZip) sZip.focus();
+      return;
+    }
+
     try{
       await supabaseClient.from('health_history').update({
         date_of_birth: document.getElementById('settings-dob').value || null,
         shipping_address1: document.getElementById('settings-address1').value,
         shipping_address2: document.getElementById('settings-address2').value,
         shipping_city: document.getElementById('settings-city').value,
-        shipping_state: document.getElementById('settings-state').value,
-        shipping_zip: document.getElementById('settings-zip').value
+        shipping_state: estadoNuevo,
+        shipping_zip: zipNuevo
       }).eq('id', currentHealthHistory.id);
       alert('Saved.');
       await loadPatientState();
@@ -5759,7 +5923,7 @@
     const reason = document.getElementById('cancel-membership-reason').value;
     const notes = document.getElementById('cancel-membership-notes').value;
     const fullReason = notes ? (reason + ' — ' + notes) : reason;
-    if(!confirm('Cancel your membership? This does not automatically stop any Stripe charge already scheduled.')) return;
+    if(!confirm('Cancel your membership? You\'ll keep access until the end of the month you\'ve already paid for.')) return;
     try{
       await supabaseClient.from('health_history')
         .update({ membership_cancelled: true, membership_cancelled_at: new Date().toISOString(), membership_cancel_reason: fullReason })
@@ -6506,6 +6670,26 @@
   // A provider practising under supervision writes the note; a licensed
   // physician countersigns it. Deliberately excludes 'admin' from signing —
   // a non-clinical administrator must never attest to clinical content.
+  // ---- Cómo se llama cada quien -------------------------------------------
+  // El rol decide PERMISOS ('physician' co-firma, 'np' no). El rótulo es otra
+  // cosa: es cómo esa persona se presenta. Angelica es médica y su dashboard
+  // decía "Nurse Practitioner" — mal por los dos lados, porque además le
+  // quitaba la co-firma.
+  //
+  // staff.title es opcional y manda cuando está: sirve para "Doctora", "Dra.
+  // Marrero" o lo que la persona use. Vacío, se cae al rótulo del rol. NO
+  // toca permisos: poner title = 'Doctora' a un NP no le da co-firma, eso lo
+  // sigue decidiendo role.
+  function staffRoleLabel(row){
+    if(!row) return 'Staff';
+    const propio = (row.title || '').trim();
+    if(propio) return propio;
+    return row.role === 'physician' ? 'Physician'
+         : row.role === 'np'        ? 'Nurse Practitioner'
+         : row.role === 'admin'     ? 'Admin'
+         : (row.role || 'Staff');
+  }
+
   let staffRequiresCosign = false;
   let canCosign = false;
 
@@ -6639,9 +6823,6 @@
       + stat('Progress notes', M.length, M.filter(x=>x.signed).length + ' signed');
 
     // ---- staff roster with roles ----
-    const roleLabel = r => r === 'physician' ? 'Physician'
-                        : r === 'np' ? 'Nurse Practitioner'
-                        : r === 'admin' ? 'Admin' : (r || 'unknown');
     document.getElementById('admin-roster').innerHTML = S.length
       ? S.map(s => {
           const notes = M.filter(m => m.author_user_id === s.user_id).length;
@@ -6650,8 +6831,8 @@
             + '<div style="display:flex;align-items:center;gap:11px;">'
             + avatarChip(s.avatar_url, s.full_name, 36)
             + '<div><div class="name" style="font-size:13.5px;">' + escapeHtml(s.full_name || '(no name)') + '</div>'
-            + '<div class="meta">' + roleLabel(s.role) + ' \u00b7 ' + appts + ' evaluations \u00b7 ' + notes + ' notes</div></div>'
-            + '</div><span class="rx-badge">' + roleLabel(s.role) + '</span></div>';
+            + '<div class="meta">' + staffRoleLabel(s) + ' \u00b7 ' + appts + ' evaluations \u00b7 ' + notes + ' notes</div></div>'
+            + '</div><span class="rx-badge">' + staffRoleLabel(s) + '</span></div>';
         }).join('')
       : '<p class="np-empty">No staff records.</p>';
 
@@ -6990,6 +7171,44 @@
     { code:'PR', name:'Puerto Rico', zips:[[601,795],[901,988]] },
     { code:'MD', name:'Maryland',    zips:[[20331,21930]] }
   ];
+
+  // ┌────────────────────────────────────────────────────────────────┐
+  // │  US_STATES ES SÓLO PARA QUE SE VEAN EN EL DROPDOWN.            │
+  // │                                                                │
+  // │  Estar en esta lista no atiende a nadie. Quien decide sigue    │
+  // │  siendo SERVED_STATES / isServedAddress(). Un estado que esté  │
+  // │  aquí y no allá sale bajo "Coming soon", NO deja avanzar el    │
+  // │  intake, y lo que ve el paciente es un aviso de lista de       │
+  // │  espera — nunca una evaluación.                                │
+  // │                                                                │
+  // │  Si algún día se atiende uno de verdad, se AÑADE A             │
+  // │  SERVED_STATES con sus rangos de ZIP. Moverlo de sitio aquí    │
+  // │  no hace absolutamente nada, y eso es a propósito.             │
+  // └────────────────────────────────────────────────────────────────┘
+  const US_STATES = [
+    ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],
+    ['CA','California'],['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],
+    ['DC','District of Columbia'],['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],
+    ['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],
+    ['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],
+    ['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],
+    ['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],
+    ['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],
+    ['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],
+    ['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['PR','Puerto Rico'],
+    ['RI','Rhode Island'],['SC','South Carolina'],['SD','South Dakota'],
+    ['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],
+    // "Virgin Islands (U.S.)" y no "U.S. Virgin Islands": así cae junto a
+    // Virginia, que es donde la gente lo busca, y no perdido bajo la U.
+    ['VA','Virginia'],['VI','Virgin Islands (U.S.)'],['WA','Washington'],
+    ['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming']
+  ];
+
+  function nombreEstado(code){
+    const st = String(code || '').trim().toUpperCase();
+    const hit = US_STATES.find(x => x[0] === st || x[1].toUpperCase() === st);
+    return hit ? hit[1] : '';
+  }
 
   function servedStateFor(state){
     const st = String(state || '').trim().toUpperCase();
@@ -7791,11 +8010,15 @@
     if(sign && !confirm('Sign this record? Once signed it cannot be edited — corrections require an amendment.')) return;
 
     try{
+      // select('*') y no una lista de columnas: si se pide 'title' por su
+      // nombre y esa columna todavia no existe en la base, PostgREST devuelve
+      // error y la nota NO se guarda. Paso exactamente eso con consent_glp1.
+      // Con '*', una columna que falte simplemente no viene.
       const { data: staffRow } = await supabaseClient.from('staff')
-        .select('role, npi, license_number').eq('user_id', currentUser.id).maybeSingle();
-      const roleLabel = staffRow && staffRow.role === 'physician' ? 'Physician'
-                      : staffRow && staffRow.role === 'np' ? 'Nurse Practitioner'
-                      : 'Provider';
+        .select('*').eq('user_id', currentUser.id).maybeSingle();
+      // La nota firmada dice LO MISMO que su dashboard. Que el expediente de
+      // un paciente diga "Nurse Practitioner" de una medica no es cosmetico.
+      const roleLabel = staffRow ? staffRoleLabel(staffRow) : 'Provider';
 
       const { error } = await supabaseClient.from('medical_records').insert({
         patient_user_id: npCurrentPatientUserId,
@@ -8769,7 +8992,7 @@
     for(const id of consentIds){
       const el = document.getElementById(id);
       if(el && !el.checked){
-        errorBox.innerHTML = '<div style="background:rgba(196,60,60,0.1);color:#B23A3A;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;">Please check both boxes before submitting.</div>';
+        errorBox.innerHTML = '<div style="background:rgba(196,60,60,0.1);color:#B23A3A;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;">Please check every box before submitting.</div>';
         el.focus();
         return false;
       }
@@ -9643,30 +9866,14 @@
     if(pendingPaymentPlan) console.log('[payment] return detected, plan:', pendingPaymentPlan);
   })();
 
-  // ---- Llegada desde el QR -------------------------------------------------
-  // El paciente escaneó el código en su computadora y abrió esto en el móvil.
-  // Se guarda la referencia y se retoma cuando el dashboard esté cargado: en
-  // este momento puede que ni haya sesión todavía.
-  let athmRefPendiente = null;
-  (function athmDesdeQR(){
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get('pagar');
-    if(!ref) {
-      try{ athmRefPendiente = sessionStorage.getItem('nuviAthmRef'); }catch(e){}
-      return;
-    }
-    // Formato estricto. Es lo unico que llega de fuera, asi que no se acepta
-    // cualquier cosa: 12 caracteres del alfabeto que genera athmRef().
-    if(!/^[A-Z2-9]{12}$/.test(ref)){
-      console.warn('[athm] ?pagar= con formato invalido, se ignora.');
-    } else {
-      athmRefPendiente = ref;
-      // Sobrevive al magic link: entrar desde el movil recarga la pagina.
-      try{ sessionStorage.setItem('nuviAthmRef', ref); }catch(e){}
-    }
-    window.history.replaceState({}, document.title,
-      window.location.pathname + window.location.hash);
-  })();
+  // ---- El ?pagar=<ref> se fue con el QR ------------------------------------
+  // Existía sólo para el código escaneado: abrir en el móvil la MISMA orden
+  // creada en la computadora. Sin QR nadie genera ese enlace, así que sobra
+  // toda la maquinaria de guardarlo y retomarlo — y de paso desaparece una
+  // entrada que venía de fuera y había que validar.
+  //
+  // Un pago que se quedó a medias no se pierde por esto: athmReintentarPendientes()
+  // repasa al entrar las órdenes 'open' de las últimas 48h y las cierra solo.
 
   // Same pattern, but for a medication purchase from the Store returning
   // from Stripe (shipping address collected by Stripe itself at checkout).
@@ -9904,14 +10111,60 @@
       document.getElementById('marketing-content').classList.remove('hidden-for-dashboard');
     }
   }
-  // El dropdown de estado se construye desde SERVED_STATES, no a mano, para
-  // que añadir un estado sea un solo cambio y no dos que se desincronizan.
-  (function fillStateDropdown(){
-    const sel = document.getElementById('hh-state');
+  // El dropdown de estado se construye desde las listas, no a mano, para que
+  // añadir un estado sea un solo cambio y no dos que se desincronizan.
+  //
+  // UNA SOLA LISTA, EN ORDEN ALFABÉTICO. Antes iba partida en dos grupos
+  // ("Available now" arriba con PR y MD, "Coming soon" abajo con el resto), y
+  // pasó justo lo que tenía que pasar: buscas Puerto Rico entre Pennsylvania y
+  // Rhode Island, no está, y concluyes que falta. Nadie lee las cabeceras de un
+  // <optgroup> — la gente escanea alfabéticamente y ya.
+  //
+  // Así que ahora cada estado sale donde le toca, con su nombre y ya. Sin
+  // sufijos ni marcas: la lista se lee limpia. Quien elige uno que no
+  // atendemos se entera en el acto por el aviso de avisarEstadoNoAtendido(),
+  // y el que decide de verdad sigue siendo isServedAddress().
+  function llenarDropdownEstados(sel){
     if(!sel) return;
-    sel.innerHTML = SERVED_STATES
-      .map(x => '<option value="' + x.code + '">' + x.name + '</option>').join('');
-  })();
+    // Se ordena aquí y no a mano en US_STATES: el orden alfabético es el
+    // único motivo por el que esta lista es usable, y dejarlo a que nadie
+    // se equivoque al añadir una fila es pedir demasiado.
+    const enOrden = US_STATES.slice()
+      .sort((a, b) => a[1].localeCompare(b[1], 'en'));
+
+    sel.innerHTML =
+        '<option value="">Select your state…</option>'
+      + enOrden.map(([code, name]) =>
+          '<option value="' + code + '">' + name + '</option>').join('');
+    sel.addEventListener('change', avisarEstadoNoAtendido);
+  }
+
+  llenarDropdownEstados(document.getElementById('hh-state'));
+  llenarDropdownEstados(document.getElementById('settings-state'));
+
+  // El aviso amable, en el momento en que elige. No bloquea nada por sí solo:
+  // el bloqueo de verdad vive en hhStep(), contra el ZIP.
+  function avisarEstadoNoAtendido(ev){
+    // Sirve a los DOS dropdowns —el del intake y el de settings—. Cada uno
+    // tiene su <p> de aviso, que es su propio id + '-note'.
+    const sel = (ev && ev.target && ev.target.tagName === 'SELECT')
+      ? ev.target
+      : document.getElementById('hh-state');
+    if(!sel) return;
+    const nota = document.getElementById(sel.id + '-note');
+    if(!nota) return;
+    const code = sel.value;
+    if(!code || servedStateFor(code)){
+      nota.style.display = 'none';
+      nota.textContent = '';
+      return;
+    }
+    nota.textContent =
+      'We\'re not licensed in ' + (nombreEstado(code) || code) + ' yet. '
+      + 'We\'re working on expanding — for now we can only treat patients in '
+      + SERVED_STATES.map(x => x.name).join(' and ') + '.';
+    nota.style.display = 'block';
+  }
 
   window.addEventListener('hashchange', routeInfoPages);
 
