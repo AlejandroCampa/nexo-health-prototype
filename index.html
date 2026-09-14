@@ -2781,7 +2781,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 13sep-6';
+  const NUVI_BUILD = 'build 14sep-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -6269,15 +6269,35 @@
     }
     const username = document.getElementById('staff-username').value.trim();
     const password = document.getElementById('staff-password').value;
-    const email = username.indexOf('@') > -1 ? username : username + '@nuviclinic.local';
+
+    // ---- Un usuario, dos dominios posibles ----
+    // Antes esto pegaba SIEMPRE '@nuviclinic.local'. Las cuentas viejas del
+    // staff son de ese dominio inventado, pero las nuevas se crearon con el
+    // correo real de trabajo (@nuviclinic.com). Escribir 'drangelicamarrero'
+    // apuntaba a una cuenta que no existe, y salía "Invalid login
+    // credentials" — que es lo mismo que sale con la contraseña mal, así que
+    // no había forma de distinguir "usuario equivocado" de "clave mala".
+    //
+    // Ahora se prueban los dos. El orden da igual: si la cuenta no existe,
+    // Supabase devuelve el mismo error y se pasa a la siguiente.
+    const DOMINIOS_STAFF = ['@nuviclinic.com', '@nuviclinic.local'];
+    const candidatos = username.indexOf('@') > -1
+      ? [username]
+      : DOMINIOS_STAFF.map(function(d){ return username + d; });
 
     const submitBtn = document.querySelector('#modal-staff button[type="submit"]');
     submitBtn.textContent = 'Logging in...';
     submitBtn.disabled = true;
 
     try{
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if(error) throw error;
+      let ultimoError = null;
+      let entro = false;
+      for(const email of candidatos){
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if(!error){ entro = true; break; }
+        ultimoError = error;
+      }
+      if(!entro) throw (ultimoError || new Error('Login failed.'));
       // onAuthStateChange routes to the NP dashboard automatically once the
       // staff table lookup confirms this account is staff.
     } catch(err){
