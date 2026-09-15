@@ -1689,6 +1689,24 @@
     <div id="athm-wrap" style="display:none;margin-top:22px;">
       <div class="dash-card" style="max-width:460px;">
         <h3 id="athm-title">Pay with ATH Móvil</h3>
+
+        <!-- Por que existe este aviso: hoy el unico metodo es ATH Movil. El
+             paciente que no lo tiene llegaba hasta aqui, no encontraba como
+             pagar, y se iba pensando que la pagina estaba rota. Decirselo
+             antes de que lo descubra solo es la diferencia entre una
+             limitacion y un fallo. El telefono va en <a href="tel:"> para que
+             en movil se marque de un toque. -->
+        <div style="background:rgba(217,140,43,0.12);border:1px solid rgba(217,140,43,0.42);
+             border-radius:10px;padding:13px 15px;margin:4px 0 16px;font-size:13px;
+             line-height:1.6;color:#8A5A12;">
+          <b>Right now we can only take ATH Móvil.</b><br>
+          Credit card and other payment methods are on the way — we're sorry for the
+          inconvenience. If ATH Móvil doesn't work for you, call us at
+          <a href="tel:+17872998643" style="color:#8A5A12;font-weight:600;
+             white-space:nowrap;">(787) 299-8643</a>
+          and we'll arrange another way to pay. Your treatment doesn't have to wait.
+        </div>
+
         <div id="athm-detail" class="meta" style="margin-bottom:4px;"></div>
         <div id="athm-amount" style="font-family:'IBM Plex Mono',monospace;font-size:30px;
              margin:6px 0 14px;">—</div>
@@ -2814,7 +2832,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 15sep-3';
+  const NUVI_BUILD = 'build 15sep-4';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
