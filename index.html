@@ -1301,6 +1301,32 @@
             <button class="btn btn-outline" style="width:auto;padding:11px 20px;" onclick="saveTargetWeight()">Save goal</button>
           </div>
 
+          <!-- Altura y peso actual, editables SIEMPRE.
+               Antes solo se podian poner en el intake y ahi se quedaban para
+               siempre: el medico veia el peso del dia que se registro aunque
+               hubieran pasado seis meses, y el BMI de su ficha se calculaba
+               con ese numero viejo. -->
+          <div class="form-section-title">Your measurements</div>
+          <p style="font-size:12.5px;color:rgba(15,35,54,0.66);margin:-6px 0 12px;line-height:1.55;">
+            Keep these current — your care team uses them to dose your treatment.</p>
+          <div class="two-col" style="align-items:flex-end;">
+            <div class="field"><label>Height</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input id="me-height-ft" type="number" min="1" max="8" step="1" placeholder="5" style="width:70px;">
+                <span style="font-size:13px;color:rgba(15,35,54,0.66);">ft</span>
+                <input id="me-height-in" type="number" min="0" max="11" step="1" placeholder="9" style="width:70px;">
+                <span style="font-size:13px;color:rgba(15,35,54,0.66);">in</span>
+              </div>
+            </div>
+            <div class="field"><label>Current weight (lbs)</label>
+              <input id="me-weight" type="number" min="50" max="1000" step="0.1" placeholder="e.g. 195"></div>
+          </div>
+          <button class="btn btn-outline" style="width:auto;padding:11px 20px;margin-top:4px;"
+                  onclick="saveMeasurements()">Save measurements</button>
+          <div id="me-msg" style="font-size:12.5px;margin-top:9px;line-height:1.55;"></div>
+
+          <div style="height:1px;background:var(--line);margin:22px 0;"></div>
+
           <div id="weight-chart-wrap" style="margin-bottom:20px;"></div>
 
           <div class="form-section-title">Log this week's weight</div>
@@ -1997,6 +2023,9 @@
     <div style="background:var(--paper);border-radius:12px;padding:16px;margin-bottom:16px;font-size:13.5px;line-height:1.7;" id="np-detail-history"></div>
 
     <div id="np-detail-appt" style="margin-bottom:16px;"></div>
+    <!-- La proxima cita la anota el clinico durante la consulta, aqui mismo.
+         El paciente ya no coordina seguimientos. -->
+    <div id="np-proxima-cita" style="margin-bottom:16px;"></div>
 
     <div id="np-video-wrap" style="display:none;margin-bottom:16px;">
       <div class="video-shell" id="np-video-shell" style="position:relative;height:220px;">
@@ -2781,7 +2810,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 14sep-3';
+  const NUVI_BUILD = 'build 15sep-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -4991,6 +5020,12 @@
     if(!supabaseClient || !currentUser) return;
 
     document.getElementById('target-weight-input').value = history.target_weight_lbs || '';
+    // Altura y peso actual, precargados de su ficha.
+    const pon = (id, v) => { const e = document.getElementById(id);
+                             if(e) e.value = (v === null || v === undefined) ? '' : v; };
+    pon('me-height-ft', history.height_ft);
+    pon('me-height-in', history.height_in);
+    pon('me-weight',    history.weight_lbs);
 
     const { data: logs } = await supabaseClient.from('weight_logs')
       .select('*').eq('user_id', currentUser.id).order('logged_date', { ascending: true });
@@ -5068,6 +5103,80 @@
     }
   }
 
+  // Altura y peso actual. Se pueden cambiar cuando quieran, no solo al
+  // registrarse. Escribe en health_history, que es de donde el medico lee el
+  // peso y de donde sale el BMI de su ficha.
+  async function saveMeasurements(){
+    const msg = document.getElementById('me-msg');
+    const decir = (texto, malo) => {
+      if(!msg) return;
+      msg.style.color = malo ? '#8C2F2F' : '#2F5C46';
+      msg.textContent = texto;
+    };
+    if(!supabaseClient || !currentHealthHistory){
+      decir('Complete your health history first — these are saved to that record.', true);
+      return;
+    }
+
+    const num = id => {
+      const e = document.getElementById(id);
+      const v = e && e.value.trim();
+      return v === '' || v === null || v === undefined ? null : parseFloat(v);
+    };
+    const ft = num('me-height-ft'), inch = num('me-height-in'), lbs = num('me-weight');
+
+    // Los min/max del input son una sugerencia del navegador y se saltan
+    // escribiendo a mano. El limite de verdad va aqui, antes de que un valor
+    // imposible llegue a la ficha de un clinico y se dosifique con el.
+    if(ft !== null && (!Number.isFinite(ft) || ft < 1 || ft > 8)){
+      decir('Height in feet should be between 1 and 8.', true); return; }
+    if(inch !== null && (!Number.isFinite(inch) || inch < 0 || inch > 11)){
+      decir('Inches should be between 0 and 11.', true); return; }
+    if(lbs !== null && (!Number.isFinite(lbs) || lbs < 50 || lbs > 1000)){
+      decir('Weight should be between 50 and 1000 lbs.', true); return; }
+    if(ft === null && inch === null && lbs === null){
+      decir('Nothing to save — fill in at least one.', true); return; }
+
+    const cambios = {};
+    if(ft   !== null) cambios.height_ft = ft;
+    if(inch !== null) cambios.height_in = inch;
+    if(lbs  !== null) cambios.weight_lbs = lbs;
+
+    decir('Saving…', false);
+    try{
+      // .select() para saber si de verdad cambio algo: sin el, una policy de
+      // RLS que bloquee devuelve error:null y cero filas, identico a un exito.
+      const { data, error } = await supabaseClient.from('health_history')
+        .update(cambios).eq('id', currentHealthHistory.id).select();
+      if(error) throw error;
+      if(!data || data.length === 0){
+        throw new Error('The database accepted the request but changed nothing.');
+      }
+      // Un peso nuevo tambien es una pesada: entra en la grafica sin que
+      // tenga que escribirlo dos veces.
+      if(lbs !== null) await registrarPesada(lbs);
+      decir('Saved.', false);
+      await loadPatientState();
+    }catch(err){
+      decir('Could not save: ' + (err.message || 'unknown error'), true);
+    }
+  }
+
+  // Una pesada del dia. Si ya hay una de hoy se actualiza en vez de crear otra,
+  // para que pesarse dos veces no dibuje dos puntos en el mismo dia.
+  async function registrarPesada(lbs){
+    const hoy = new Date().toISOString().slice(0,10);
+    const { data: yaHay } = await supabaseClient.from('weight_logs')
+      .select('id').eq('user_id', currentUser.id).eq('logged_date', hoy).limit(1);
+    if(yaHay && yaHay.length){
+      await supabaseClient.from('weight_logs')
+        .update({ weight_lbs: lbs }).eq('id', yaHay[0].id);
+    } else {
+      await supabaseClient.from('weight_logs')
+        .insert({ user_id: currentUser.id, weight_lbs: lbs, logged_date: hoy });
+    }
+  }
+
   async function logWeight(){
     if(!supabaseClient || !currentUser) return;
     const val = document.getElementById('log-weight-input').value;
@@ -5075,11 +5184,14 @@
     const n = parseFloat(val);
     if(isNaN(n) || n < 50 || n > 1000){ alert('Please enter a weight between 50 and 1000 lbs.'); return; }
     try{
-      await supabaseClient.from('weight_logs').insert({
-        user_id: currentUser.id,
-        weight_lbs: val,
-        logged_date: new Date().toISOString().slice(0,10)
-      });
+      await registrarPesada(n);
+      // Y el peso de la ficha se pone al dia. Esto es lo que faltaba: el
+      // paciente registraba pesadas durante meses y el medico seguia viendo
+      // el peso del intake, con el BMI calculado sobre ese numero viejo.
+      if(currentHealthHistory){
+        await supabaseClient.from('health_history')
+          .update({ weight_lbs: n }).eq('id', currentHealthHistory.id);
+      }
       document.getElementById('log-weight-input').value = '';
       await loadPatientState();
     } catch(err){
@@ -7600,6 +7712,7 @@
 
       let tone, title, body, cta = true, ctaLabel = 'Book evaluation';
       let mover = null;          // id de la cita que se puede mover
+      let pedir = false;         // enseñar "pídenos que la agendemos"
       let entrar = null;         // id de la cita cuya sala se puede abrir
       let esHoy = false;
 
@@ -7637,23 +7750,32 @@
         abre.setDate(abre.getDate() + EVAL_CYCLE_DAYS - EVAL_BOOKING_GRACE_DAYS);
         const puedeYa = new Date() >= abre;
 
+        // Ya tuvo al menos una consulta, asi que la siguiente se la pone su
+        // medico al terminar cada visita. Aqui NO va un boton de reservar:
+        // el paciente no coordina seguimientos. Lo que si tiene es una forma
+        // de pedirla si se le paso a alguien, que no es lo mismo que
+        // dejarle coger hueco en el calendario por su cuenta.
+        cta = false;
+        pedir = true;
         if(days < 0){
           tone = 'warn';
           title = 'Your evaluation is overdue';
-          body = 'It was due ' + dueStr + '. Your refill depends on this visit — book it now.';
+          body = 'It was due ' + dueStr + ' and nothing is on the calendar yet. '
+               + 'Your refill depends on this visit — ask us to schedule it.';
         } else if(days <= EVAL_WARN_DAYS){
           tone = 'soon';
-          title = 'Book your next evaluation';
-          body = 'Due ' + dueStr + (days === 0 ? ' — today.' : ' — ' + days + ' day' + (days===1?'':'s') + ' away.');
+          title = 'Your next evaluation is due ' + dueStr;
+          body = (days === 0 ? 'It\'s due today. ' : 'That\'s ' + days + ' day'
+                  + (days===1?'':'s') + ' away. ')
+               + 'Your care team schedules it at the end of each visit — '
+               + 'if you don\'t see it here yet, ask us.';
         } else {
           tone = 'ok';
           title = 'Next evaluation due ' + dueStr;
           body = 'Each prescription covers ' + EVAL_CYCLE_DAYS + ' days, so evaluations are every '
-               + EVAL_CYCLE_DAYS + ' days. ';
-          body += puedeYa
-            ? 'You can book it now.'
-            : 'Booking opens ' + fmtCorto(abre) + '.';
-          cta = puedeYa;
+               + EVAL_CYCLE_DAYS + ' days. Your physician sets the date with you at the '
+               + 'end of each visit — it will show up here once it\'s booked.';
+          pedir = false;   // todavia queda tiempo: no hace falta empujar
         }
       }
 
@@ -7669,6 +7791,10 @@
         + '<div style="font-size:13.5px;margin-top:4px;">' + body + '</div>'
         + (cta ? '<button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;margin-top:12px;" '
                  + 'onclick="openScheduler()">' + ctaLabel + '</button>' : '')
+        // No reserva nada: le escribe a su equipo, que es quien agenda.
+        + (pedir ? '<button type="button" class="btn btn-primary" '
+                 + 'style="width:auto;padding:9px 18px;font-size:13.5px;margin-top:12px;" '
+                 + 'onclick="pedirCita()">Ask us to schedule it</button>' : '')
         // Entrar a la videollamada desde aquí. Antes esto sólo existía en la
         // etapa 'scheduled': el paciente ya aprobado, que es el que tiene una
         // evaluación cada 28 días, se quedaba sin ninguna forma de entrar.
@@ -7678,12 +7804,67 @@
         // Con la cita ya reservada el paciente se quedaba sin salida: ni
         // moverla ni cancelarla. Terminaba escribiéndole al equipo para algo
         // que puede resolver solo en dos clics.
+        // "Need to move it?" ya NO cancela ni abre el calendario. El paciente
+        // no coordina sus citas: esto le manda un mensaje a su medico, que la
+        // mueve desde la ficha. Antes cancelaba primero y abria el calendario
+        // despues — si se arrepentia a medias, se quedaba sin cita.
         + (mover ? '<button type="button" class="btn btn-outline" '
                  + 'style="width:auto;padding:8px 16px;font-size:13px;margin-top:12px;" '
-                 + 'onclick="rescheduleEvaluation(\'' + mover + '\')">Need to move it?</button>' : '');
+                 + 'onclick="pedirMoverCita(\'' + mover + '\')">Need to move it?</button>' : '');
     } catch(err){
       el.style.display = 'none';
     }
+  }
+
+  // ---- El paciente PIDE, no reserva --------------------------------------
+  // Las citas las pone el clinico al final de cada consulta. Estas dos
+  // funciones no tocan la tabla de citas: mandan un mensaje al equipo, que
+  // es exactamente lo que pasaria si el paciente llamara por telefono.
+  async function enviarPeticionDeCita(texto, confirmacion){
+    if(!supabaseClient || !currentUser) return false;
+    if(confirmacion && !confirm(confirmacion)) return false;
+    try{
+      const { error } = await supabaseClient.from('messages')
+        .insert({ user_id: currentUser.id, sender: 'patient', body: texto });
+      if(error) throw error;
+      alert('Sent. Your care team will get back to you — usually within 24–48 hours.\n\n'
+          + 'You can see their reply in the Messages tab.');
+      if(typeof loadMessages === 'function') loadMessages();
+      return true;
+    }catch(err){
+      alert('We could not send that right now: ' + (err.message || 'unknown error')
+          + '\n\nYou can also email info@nuviclinic.com.');
+      return false;
+    }
+  }
+
+  async function pedirCita(){
+    return enviarPeticionDeCita(
+      'Hi — I don\'t have my next evaluation on the calendar yet. '
+      + 'Could you schedule it for me?');
+  }
+
+  async function pedirMoverCita(apptId){
+    if(!apptId) return;
+    let cuando = '';
+    try{
+      const { data: row } = await supabaseClient.from('appointments')
+        .select('appointment_date, appointment_time')
+        .eq('id', apptId).eq('user_id', currentUser.id).maybeSingle();
+      if(row) cuando = ' (currently ' + row.appointment_date + ' at ' + row.appointment_time + ')';
+    }catch(e){}
+
+    // Se le deja decir CUANDO le viene bien. Sin esto, el mensaje es "muevela"
+    // y arranca un ida y vuelta de tres dias para acordar una hora.
+    const cuandoLeSirve = prompt(
+      'We\'ll ask your care team to move it' + cuando + '.\n\n'
+      + 'When works better for you? (for example: "mornings after the 20th")');
+    if(cuandoLeSirve === null) return;   // le dio a cancelar
+
+    return enviarPeticionDeCita(
+      'Hi — I need to move my evaluation' + cuando + '. '
+      + (cuandoLeSirve.trim() ? 'What works for me: ' + cuandoLeSirve.trim()
+                              : 'Any other time works.'));
   }
 
   // Mover una cita = cancelar la que hay y abrir el calendario. Tiene que ir
@@ -8443,6 +8624,12 @@
       apptWrap.innerHTML = '<div class="form-section-title">Interview</div><p class="np-empty">Not scheduled yet.</p>';
     }
 
+    // ---- LA PROXIMA CITA LA PONE EL CLINICO ----
+    // Se le pregunta al paciente durante la consulta y se anota aqui mismo,
+    // sin cambiar de pantalla. El paciente ya no coordina seguimientos: si
+    // necesita moverla, manda un mensaje y se mueve desde aqui.
+    await npRenderProximaCita(patient.user_id);
+
     // Precargar la dosis VIGENTE del paciente, no un 2.5 fijo. Con el valor
     // fijo, abrir la ficha de alguien que ya está en 7.5 mg mostraba 2.5 mg y
     // $180 — parecía que el precio "no cambiaba", y peor: aprobar sin tocar el
@@ -8673,6 +8860,148 @@
       await loadNPData();
     } catch(err){
       alert('Could not reopen the interview: ' + (err.message || 'unknown error'));
+    }
+  }
+
+  // ---- Proxima cita: agendar, mover, cancelar ----
+  // Todo desde la ficha, mientras el paciente sigue en la llamada.
+  let npProximaCitaActual = null;
+
+  async function npRenderProximaCita(patientUserId){
+    const wrap = document.getElementById('np-proxima-cita');
+    if(!wrap) return;
+    const hoyISO = new Date().toISOString().slice(0,10);
+
+    // La proxima de verdad: cualquier cita futura que no este cancelada. Se
+    // clasifica por FECHA y no por status, porque una cita del mes que viene
+    // marcada 'completed' por error seguiria siendo la proxima.
+    const { data } = await supabaseClient.from('appointments').select('*')
+      .eq('user_id', patientUserId).neq('status', 'cancelled')
+      .gt('appointment_date', hoyISO)
+      .order('appointment_date', { ascending: true }).limit(1);
+    const prox = (data && data[0]) || null;
+    npProximaCitaActual = prox;
+
+    // Por defecto se propone la fecha del proximo ciclo. El clinico la puede
+    // cambiar, pero teclear una fecha a mano en cada consulta es como se
+    // acaban agendando seguimientos a 40 dias sin que nadie se de cuenta.
+    const sugerida = new Date();
+    sugerida.setDate(sugerida.getDate() + EVAL_CYCLE_DAYS);
+    const sugeridaISO = sugerida.toISOString().slice(0,10);
+
+    const fmt = iso => new Date(iso + 'T00:00:00')
+      .toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+
+    wrap.innerHTML =
+        '<div class="form-section-title">Next appointment</div>'
+      + (prox
+          ? '<div style="background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.35);'
+            + 'border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#2F5C46;font-size:13.5px;">'
+            + '<b>' + fmt(prox.appointment_date) + ' at ' + prox.appointment_time + '</b>'
+            + '<div style="font-size:12.5px;margin-top:3px;opacity:0.85;">Ticket '
+            + prox.ticket_number + ' · ' + prox.status + '</div></div>'
+          : '<p style="font-size:13px;color:rgba(15,35,54,0.66);margin:-6px 0 12px;">'
+            + 'Nothing scheduled. Ask the patient now and set it before you close the chart.</p>')
+      + '<div class="two-col" style="align-items:flex-end;">'
+      +   '<div class="field"><label>Date</label>'
+      +     '<input id="np-prox-fecha" type="date" min="' + hoyISO + '" value="'
+      +     (prox ? prox.appointment_date : sugeridaISO) + '"></div>'
+      +   '<div class="field"><label>Time</label>'
+      +     '<input id="np-prox-hora" type="time" value="'
+      +     (prox ? String(prox.appointment_time).slice(0,5) : '09:00') + '"></div>'
+      + '</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">'
+      +   '<button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;" '
+      +     'onclick="npGuardarProximaCita(\'' + patientUserId + '\')">'
+      +     (prox ? 'Move appointment' : 'Schedule') + '</button>'
+      +   (prox
+          ? '<button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13.5px;" '
+            + 'onclick="npCancelarProximaCita()">Cancel it</button>'
+          : '')
+      + '</div>'
+      + '<div id="np-prox-msg" style="font-size:12.5px;margin-top:9px;line-height:1.55;"></div>';
+  }
+
+  async function npGuardarProximaCita(patientUserId){
+    const msg = document.getElementById('np-prox-msg');
+    const decir = (t, malo) => { if(msg){ msg.style.color = malo ? '#8C2F2F' : '#2F5C46';
+                                          msg.textContent = t; } };
+    const fecha = (document.getElementById('np-prox-fecha') || {}).value;
+    const hora  = (document.getElementById('np-prox-hora')  || {}).value;
+    if(!fecha || !hora){ decir('Pick a date and a time.', true); return; }
+    if(fecha < new Date().toISOString().slice(0,10)){
+      decir('That date is in the past.', true); return; }
+
+    decir('Saving…', false);
+    try{
+      if(npProximaCitaActual){
+        // Mover = cambiar la fila que ya existe. Crear otra dejaria dos citas
+        // vivas y el paciente veria la vieja en su panel.
+        const { data, error } = await supabaseClient.from('appointments')
+          .update({ appointment_date: fecha, appointment_time: hora, status: 'scheduled' })
+          .eq('id', npProximaCitaActual.id).select();
+        if(error) throw error;
+        if(!data || data.length === 0){
+          throw new Error('The database changed nothing — almost always an RLS policy.');
+        }
+      } else {
+        // Mismo formato que las que reserva el paciente ('NV-'): el ticket
+        // es el nombre de la sala de video, y dos formatos distintos serian
+        // dos salas distintas para la misma consulta.
+        const ticket = 'NV-' + Math.random().toString(36).slice(2,8).toUpperCase();
+        const { error } = await supabaseClient.from('appointments').insert({
+          user_id: patientUserId,
+          np_user_id: currentUser.id,
+          ticket_number: ticket,
+          appointment_date: fecha,
+          appointment_time: hora,
+          status: 'scheduled',
+          type: 'np_interview'
+        });
+        if(error) throw error;
+      }
+
+      // Que se entere. Un seguimiento que el paciente no sabe que tiene es
+      // una ausencia programada.
+      const cuando = new Date(fecha + 'T00:00:00')
+        .toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+      try{
+        await supabaseClient.from('messages').insert({
+          user_id: patientUserId, sender: 'doctor',
+          body: (npProximaCitaActual ? 'Your appointment was moved to ' : 'Your next appointment is set for ')
+              + cuando + ' at ' + hora + '. You can join from your dashboard.'
+        });
+      }catch(e){ console.warn('[appt] no se pudo avisar por mensaje:', e); }
+
+      decir('Saved. The patient has been notified.', false);
+      await npRenderProximaCita(patientUserId);
+      await loadNPData();
+    }catch(err){
+      decir('Could not save: ' + (err.message || 'unknown error'), true);
+    }
+  }
+
+  async function npCancelarProximaCita(){
+    if(!npProximaCitaActual) return;
+    if(!confirm('Cancel this appointment? The patient will be told it was cancelled.')) return;
+    const msg = document.getElementById('np-prox-msg');
+    const pid = npProximaCitaActual.user_id;
+    try{
+      const { data, error } = await supabaseClient.from('appointments')
+        .update({ status: 'cancelled' }).eq('id', npProximaCitaActual.id).select();
+      if(error) throw error;
+      if(!data || data.length === 0) throw new Error('Nothing changed — likely an RLS policy.');
+      try{
+        await supabaseClient.from('messages').insert({
+          user_id: pid, sender: 'doctor',
+          body: 'Your upcoming appointment was cancelled. We\'ll be in touch to set a new one.'
+        });
+      }catch(e){}
+      await npRenderProximaCita(pid);
+      await loadNPData();
+    }catch(err){
+      if(msg){ msg.style.color = '#8C2F2F';
+               msg.textContent = 'Could not cancel: ' + (err.message || 'unknown error'); }
     }
   }
 
