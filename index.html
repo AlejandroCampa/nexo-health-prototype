@@ -1869,8 +1869,12 @@
       <button type="button" class="dash-tab" role="tab" id="nptab-rx"
               data-panel="nppanel-rx" aria-controls="nppanel-rx"
               onclick="showStaffTab('rx')">Recetas aprobadas</button>
-      <button type="button" class="dash-tab" role="tab" id="nptab-schedule"
+      <!-- translate="no": en el HTML ya decia "Schedule", pero Google lo
+           traducia a "Cronograma", que suena a diagrama de Gantt y no a la
+           agenda del dia. Se queda en "Schedule" en los dos idiomas. -->
+      <button type="button" class="dash-tab notranslate" role="tab" id="nptab-schedule"
               data-panel="nppanel-schedule" aria-controls="nppanel-schedule"
+              translate="no"
               onclick="showStaffTab('schedule')">Schedule</button>
       <button type="button" class="dash-tab" role="tab" id="nptab-oversight"
               data-panel="nppanel-oversight" aria-controls="nppanel-oversight"
@@ -2810,7 +2814,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 15sep-1';
+  const NUVI_BUILD = 'build 15sep-3';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -9430,6 +9434,25 @@
     submitBtn.disabled = true;
 
     try{
+      // ---- El consentimiento GLP-1 se escribe UNA VEZ ----
+      // consent-glp1.sql revoco UPDATE sobre estas cuatro columnas para que
+      // una firma no se pueda reescribir. Correcto — pero el payload las
+      // mandaba SIEMPRE, tambien al editar, y en Postgres basta con NOMBRAR
+      // una columna revocada para que el UPDATE entero se rechace. Resultado:
+      // "permiso denegado para la tabla health_history" al corregir una
+      // direccion, y el historial entero sin guardar.
+      //
+      // Si ya firmo, no se vuelven a mandar. Si no ha firmado —los pacientes
+      // de antes de que existiera el documento— se mandan, y del lado de la
+      // base un trigger deja pasar solo esa primera vez.
+      const yaFirmo = !!(currentHealthHistory && currentHealthHistory.consent_glp1_at);
+      if(yaFirmo){
+        delete payload.consent_glp1;
+        delete payload.consent_glp1_signature;
+        delete payload.consent_glp1_version;
+        delete payload.consent_glp1_at;
+      }
+
       // If this patient already has a health history record, update it in place
       // rather than inserting a second one — otherwise correcting a typo would
       // create a duplicate record and the care team wouldn't know which is current.
