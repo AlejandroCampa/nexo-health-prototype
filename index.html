@@ -1500,7 +1500,18 @@
           <p style="font-size:12px;color:rgba(15,35,54,0.66);margin:-4px 0 4px;">Required by the pharmacy to verify your identity before dispensing. If you don't drive, any government-issued ID number works.</p>
 
           <div class="form-section-title">Shipping address</div>
-          <p style="font-size:12px;color:rgba(15,35,54,0.66);margin:-6px 0 12px;">Where we'll ship your medication. Our physicians are licensed in Puerto Rico and Maryland, so those are the only places we can treat and ship to today — we're working on adding more.</p>
+          <!-- Esta linea es requisito de certificacion, no relleno: hay que
+               declarar TODAS las jurisdicciones donde se atiende, y el
+               desplegable ahora lista los 54 sin marcar ninguno. Sin este
+               aviso, alguien que mire el formulario concluye que atendemos
+               en los cincuenta estados. -->
+          <p id="hh-jurisdicciones" style="font-size:12.5px;line-height:1.6;color:#8A5A12;
+             background:rgba(217,140,43,0.12);border:1px solid rgba(217,140,43,0.40);
+             border-radius:9px;padding:10px 12px;margin:-6px 0 14px;">
+            <b>We currently treat patients located in Puerto Rico and Maryland only.</b>
+            Our physicians are licensed there and cannot legally evaluate or prescribe for
+            patients elsewhere. More states are coming.</p>
+          <p style="font-size:12px;color:rgba(15,35,54,0.66);margin:-4px 0 12px;">Where we'll ship your medication.</p>
           <div class="field"><label>Street address</label><input id="hh-address1" type="text" placeholder="123 Calle Principal"></div>
           <div class="field"><label>Apt / unit <span style="font-weight:400;opacity:0.6;">(optional)</span></label><input id="hh-address2" type="text" placeholder="Apt 4B"></div>
           <div class="two-col">
@@ -2398,8 +2409,17 @@
            esperan encontrar contacto real del comercio en el sitio, y un
            paciente que quiere disputar un cargo debe poder escribirnos
            antes de ir al banco. Falta el teléfono. -->
-      <p>© 2026 Nuvi Clinic LLC · 761 Valle del Toa, San Juan, PR 00926 · info@nuviclinic.com<br>
-      Telehealth services provided by licensed physicians. Not for medical emergencies — call 911.</p>
+      <p>© 2026 Nuvi Clinic LLC · 761 Valle del Toa, San Juan, PR 00926 · info@nuviclinic.com ·
+      <a href="tel:+17872998643" style="color:inherit;">(787) 299-8643</a><br>
+      Telehealth services provided by physicians licensed in
+      <!-- Se rellena desde SERVED_STATES: LegitScript exige declarar TODAS las
+           jurisdicciones donde se presta el servicio, y una lista escrita a
+           mano se desincroniza el dia que se añada un estado. -->
+      <span id="footer-jurisdicciones">Puerto Rico</span>.
+      We do not treat patients located elsewhere.<br>
+      Not for medical emergencies — call 911.
+      <a href="javascript:void(0)" onclick="nuviOpenModal('eventos-adversos')"
+         style="color:inherit;text-decoration:underline;">Report a side effect</a></p>
       <a href="javascript:void(0)" onclick="nuviOpenModal('staff')" style="font-size:12px;color:rgba(15,35,54,0.66);">Staff login</a>
       <!-- Sello de versión. Sirve para saber de un vistazo QUÉ archivo está
            corriendo el sitio, en vez de adivinar si un cambio subió o si el
@@ -2592,6 +2612,55 @@
       <div class="field"><label for="cancel-membership-notes">Anything else we should know? (optional)</label><input id="cancel-membership-notes" type="text" placeholder="Optional"></div>
       <button class="btn btn-outline" style="border-color:#B23A3A;color:#B23A3A;" onclick="submitCancelMembership()">Cancel my membership</button>
     </div>
+  </div>
+</div>
+
+<!-- Reporte de eventos adversos.
+     LegitScript pide un proceso FORMAL para que un paciente reporte una
+     reaccion, y que el sitio lo enseñe. "Escribenos" no cuenta: hace falta
+     decir que hacemos con el reporte y nombrar la via de la FDA, que existe
+     independientemente de nosotros. Es tambien lo correcto: un paciente con
+     una reaccion seria no tiene que adivinar a quien avisar. -->
+<div class="modal-overlay" id="modal-eventos-adversos" onclick="closeOnOverlay(event,'eventos-adversos')">
+  <div class="modal">
+    <button class="modal-close" onclick="nuviCloseModal('eventos-adversos')" aria-label="Close">✕</button>
+    <span class="modal-eyebrow">Patient safety</span>
+    <h3 id="eventos-adversos-title">Reporting a side effect or bad reaction</h3>
+
+    <p style="background:rgba(196,60,60,0.10);border:1px solid rgba(196,60,60,0.40);
+       border-radius:10px;padding:12px 14px;color:#8C2F2F;font-size:13.5px;line-height:1.6;
+       margin-bottom:16px;">
+      <b>If this is an emergency, stop and call 911.</b> Trouble breathing, swelling of the
+      face or throat, severe abdominal pain, or fainting need emergency care now — not a
+      message to us.
+    </p>
+
+    <p class="modal-sub" style="margin-bottom:14px;">For anything that is not an emergency,
+    tell us. We want to hear about it even if you are not sure it is related to your
+    medication.</p>
+
+    <div class="form-section-title">How to reach us</div>
+    <ul style="font-size:13.5px;line-height:1.75;margin:0 0 18px 18px;">
+      <li><b>Message your care team</b> from your dashboard — this reaches a clinician and
+          becomes part of your record.</li>
+      <li><b>Call <a href="tel:+17872998643">(787) 299-8643</a></b></li>
+      <li><b>Email <a href="mailto:info@nuviclinic.com">info@nuviclinic.com</a></b></li>
+    </ul>
+
+    <div class="form-section-title">What we do with it</div>
+    <p style="font-size:13.5px;line-height:1.7;margin-bottom:18px;">
+      A clinician reviews every report, we record it in your chart, and we contact you to
+      decide whether to adjust your dose, pause treatment, or send you to be seen in person.
+      Serious or unexpected reactions are reported onward to the compounding pharmacy and,
+      where appropriate, to the FDA.
+    </p>
+
+    <div class="form-section-title">You can also report it directly to the FDA</div>
+    <p style="font-size:13.5px;line-height:1.7;margin-bottom:6px;">
+      This is independent of us and you do not need our permission:
+      <a href="https://www.fda.gov/safety/medwatch-fda-safety-information-and-adverse-event-reporting-program"
+         target="_blank" rel="noopener">FDA MedWatch</a>, or call 1-800-FDA-1088.
+    </p>
   </div>
 </div>
 
@@ -2832,7 +2901,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 15sep-4';
+  const NUVI_BUILD = 'build 15sep-5';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -10551,6 +10620,26 @@
           '<option value="' + code + '">' + name + '</option>').join('');
     sel.addEventListener('change', avisarEstadoNoAtendido);
   }
+
+  // La lista de jurisdicciones del pie, desde la MISMA fuente que el gate.
+  (function ponerJurisdicciones(){
+    const el = document.getElementById('footer-jurisdicciones');
+    if(!el) return;
+    const n = SERVED_STATES.map(x => x.name);
+    el.textContent = n.length > 1
+      ? n.slice(0,-1).join(', ') + ' and ' + n[n.length-1]
+      : (n[0] || '—');
+  })();
+
+  (function ponerJurisdiccionesIntake(){
+    const el = document.getElementById('hh-jurisdicciones');
+    if(!el) return;
+    const n = SERVED_STATES.map(x => x.name);
+    const lista = n.length > 1
+      ? n.slice(0,-1).join(', ') + ' and ' + n[n.length-1] : (n[0] || '—');
+    const b = el.querySelector('b');
+    if(b) b.textContent = 'We currently treat patients located in ' + lista + ' only.';
+  })();
 
   llenarDropdownEstados(document.getElementById('hh-state'));
   llenarDropdownEstados(document.getElementById('settings-state'));
