@@ -68,7 +68,10 @@
      etiquetas y datos. Lora y Manrope son el par ALTERNO: las de primera
      elección son Quincy CF y Greycliff CF, que son de pago y no se sirven
      desde aquí — ver el comentario de --display en :root. -->
-<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- IBM Plex Mono ya no se carga: se quito de todo el sitio. Los precios,
+     dosis, tickets y etiquetas iban en monoespaciada y se veian a maquina
+     de escribir. Una peticion menos al cargar. -->
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
@@ -175,7 +178,7 @@
     text-wrap:balance;
   }
   p{text-wrap:pretty;}
-  .mono{font-family:'IBM Plex Mono',monospace;}
+  .mono{font-family:var(--sans);}
   a{color:inherit;text-decoration:none;}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px;}
   img,svg{display:block;}
@@ -250,7 +253,7 @@
   .hero-grid > div{max-width:660px;}
   .eyebrow{
     display:inline-flex;align-items:center;gap:9px;
-    font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:0.12em;text-transform:uppercase;
+    font-family:var(--sans);font-size:11.5px;letter-spacing:0.12em;text-transform:uppercase;
     color:var(--ink);background:rgba(255,255,255,0.62);border:1px solid rgba(15,35,54,0.10);
     padding:8px 15px;border-radius:100px;margin-bottom:22px;
   }
@@ -275,7 +278,7 @@
   }
   .hero-proof div{background:rgba(255,255,255,0.72);padding:18px 18px;}
   .hero-proof b{display:block;font-family:var(--display);font-size:22px;letter-spacing:-0.03em;}
-  .hero-proof span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);}
+  .hero-proof span{font-family:var(--sans);font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);}
 
   /* ---- ESCALERA DE DOSIS (hero) ----------------------------------------
      Reemplaza la tarjeta de "receta". Aquella imitaba un documento firmado,
@@ -295,7 +298,7 @@
   }
   .ladder-head{margin-bottom:22px;}
   .ladder-eyebrow{
-    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+    display:inline-block;font-family:var(--sans);font-size:10.5px;
     letter-spacing:0.16em;text-transform:uppercase;color:var(--brand-blue);
     margin-bottom:10px;
   }
@@ -341,7 +344,7 @@
   .section{padding:clamp(56px,8vw,110px) 0;position:relative;}
   .section-alt{background:var(--paper-quiet);}
   .section-head{max-width:660px;margin-bottom:clamp(32px,4.5vw,58px);}
-  .section-eyebrow{display:inline-flex;align-items:center;gap:11px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--amber-deep);margin-bottom:16px;}
+  .section-eyebrow{display:inline-flex;align-items:center;gap:11px;font-family:var(--sans);font-size:11.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--amber-deep);margin-bottom:16px;}
   .section-eyebrow::before{content:"";width:24px;height:2px;background:var(--coral);}
   .section-head h2{font-size:clamp(28px,5.4vw,46px);line-height:1.06;}
   .section-head p{font-size:clamp(15.5px,1.4vw,17.5px);color:var(--ink);opacity:0.78;margin-top:16px;line-height:1.65;}
@@ -356,7 +359,7 @@
   .step::before{content:"";position:absolute;left:0;top:0;width:3px;height:0;background:var(--coral);transition:height .45s var(--ease);}
   .step:hover{transform:translateY(-5px);box-shadow:var(--shadow-md);border-color:var(--line);}
   .step:hover::before{height:100%;}
-  .step-num{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.12em;color:var(--amber-deep);margin-bottom:20px;display:inline-block;padding-bottom:6px;border-bottom:1px solid var(--line);}
+  .step-num{font-family:var(--sans);font-size:12px;letter-spacing:0.12em;color:var(--amber-deep);margin-bottom:20px;display:inline-block;padding-bottom:6px;border-bottom:1px solid var(--line);}
   .step h3{font-size:clamp(19px,2vw,22px);margin-bottom:10px;}
   .step p{font-size:15px;color:var(--ink);opacity:0.78;line-height:1.62;margin:0;}
 
@@ -384,16 +387,16 @@
   }
   .vial-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-md);border-color:var(--line);}
   .vial-label{background:var(--ink);color:#F6F6F3;padding:22px 24px 20px;position:relative;}
-  .vial-label .cat{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--mint);}
+  .vial-label .cat{font-family:var(--sans);font-size:10.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--mint);}
   .vial-label h3{font-family:var(--display);font-size:24px;font-weight:700;margin-top:6px;color:#F6F6F3;}
   .vial-body{padding:22px 24px 24px;display:flex;flex-direction:column;flex:1;}
-  .vial-spec{display:flex;justify-content:space-between;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:11px 0;border-bottom:1px solid var(--line-soft);color:var(--ink-soft);}
+  .vial-spec{display:flex;justify-content:space-between;gap:12px;font-family:var(--sans);font-size:12px;padding:11px 0;border-bottom:1px solid var(--line-soft);color:var(--ink-soft);}
   .vial-spec:last-of-type{border-bottom:none;}
   .vial-spec b{color:var(--ink);font-weight:600;text-align:right;}
   .vial-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:18px;border-top:1px solid var(--line);}
   .price{font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:-0.03em;color:var(--ink);}
-  .price span{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;color:var(--ink-soft);}
-  .rx-badge{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;background:var(--coral-soft);color:var(--amber-deep);padding:6px 10px;border-radius:100px;white-space:nowrap;}
+  .price span{font-family:var(--sans);font-size:11px;font-weight:400;color:var(--ink-soft);}
+  .rx-badge{font-family:var(--sans);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;background:var(--coral-soft);color:var(--amber-deep);padding:6px 10px;border-radius:100px;white-space:nowrap;}
   /* ---- ESCALERA DE PRECIOS DEL CATÁLOGO ----------------------------------
      Antes la tarjeta pública sólo decía "Starting at $180" y el resto de los
      escalones sólo se veían dentro de la cuenta. Los precios salen de
@@ -406,7 +409,7 @@
   .dose-table-head{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     background:var(--paper-warm);padding:9px 14px;
-    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;
+    font-family:var(--sans);font-size:10px;letter-spacing:0.14em;
     text-transform:uppercase;color:var(--ink-soft);
     border-bottom:1px solid var(--line-soft);
   }
@@ -424,7 +427,7 @@
   }
   .dose-sub{
     grid-column:1 / 2;
-    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.04em;
+    font-family:var(--sans);font-size:10.5px;letter-spacing:0.04em;
     color:var(--ink-soft);opacity:0.85;
   }
   .dose-note{
@@ -441,7 +444,7 @@
   .faq-q{display:flex;align-items:center;justify-content:space-between;padding:22px 4px;cursor:pointer;gap:20px;transition:padding-left .25s var(--ease);}
   .faq-q:hover{padding-left:10px;}
   .faq-q h4{font-family:var(--display);font-size:clamp(16.5px,1.7vw,19px);font-weight:600;letter-spacing:-0.02em;margin:0;}
-  .faq-q .plus{font-family:'IBM Plex Mono',monospace;font-size:22px;color:var(--amber-deep);flex:none;transition:transform .3s var(--ease);line-height:1;}
+  .faq-q .plus{font-family:var(--sans);font-size:22px;color:var(--amber-deep);flex:none;transition:transform .3s var(--ease);line-height:1;}
   .faq-item.open .faq-q{padding-left:10px;}
   .faq-item.open .faq-q .plus{transform:rotate(45deg);}
   .faq-a{max-height:0;overflow:hidden;transition:max-height .35s var(--ease);}
@@ -454,7 +457,7 @@
   .lead-grid{display:grid;grid-template-columns:1fr;gap:clamp(28px,4vw,56px);align-items:center;position:relative;z-index:1;}
   .lead-photo{border-radius:var(--radius);overflow:hidden;max-width:360px;border:1px solid rgba(255,255,255,0.16);box-shadow:var(--shadow-lg);}
   .lead-photo img{width:100%;height:100%;object-fit:cover;display:block;}
-  .lead-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--mint);margin-bottom:14px;}
+  .lead-eyebrow{font-family:var(--sans);font-size:11.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--mint);margin-bottom:14px;}
   .lead-name{font-size:clamp(26px,4.6vw,42px);color:#F6F6F3;}
   .lead-name span{color:var(--mint);}
   .lead-role{font-size:15px;color:rgba(234,251,255,0.7);margin:8px 0 26px;}
@@ -474,8 +477,8 @@
   .tier.featured .tier-price span{color:rgba(234,251,255,0.65);}
   .tier.featured li{color:rgba(234,251,255,0.9);}
   .tier.featured p{color:rgba(234,251,255,0.7) !important;}
-  .tier-badge{position:absolute;top:-14px;right:22px;background:var(--coral) !important;color:var(--white) !important;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;padding:8px 14px;border-radius:100px;font-weight:600;box-shadow:0 10px 22px -10px rgba(15,35,54,0.7);}
-  .tier-name{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--amber-deep);margin-bottom:14px;}
+  .tier-badge{position:absolute;top:-14px;right:22px;background:var(--coral) !important;color:var(--white) !important;font-family:var(--sans);font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;padding:8px 14px;border-radius:100px;font-weight:600;box-shadow:0 10px 22px -10px rgba(15,35,54,0.7);}
+  .tier-name{font-family:var(--sans);font-size:11.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--amber-deep);margin-bottom:14px;}
   .tier-price{font-family:var(--display);font-size:clamp(38px,9vw,50px);font-weight:700;letter-spacing:-0.04em;margin-bottom:4px;line-height:1;}
   .tier-price span{font-family:var(--sans);font-size:15px;font-weight:500;opacity:0.6;letter-spacing:0;}
   .tier ul{list-style:none;padding:0;margin:22px 0 26px;flex:1;}
@@ -497,7 +500,7 @@
   footer .logo{color:#F6F6F3;}
   .footer-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:32px;padding-bottom:32px;border-bottom:1px solid rgba(255,255,255,0.14);}
   .footer-cols{display:flex;gap:clamp(28px,6vw,64px);flex-wrap:wrap;}
-  .footer-col h5{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--mint);margin:0 0 12px;}
+  .footer-col h5{font-family:var(--sans);font-size:10.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--mint);margin:0 0 12px;}
   .footer-col a{display:block;font-size:14.5px;padding:6px 0;color:rgba(234,251,255,0.72);transition:color .2s var(--ease),transform .2s var(--ease);}
   .footer-col a:hover{color:#F6F6F3;transform:translateX(3px);}
   .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:24px;flex-wrap:wrap;gap:12px;}
@@ -595,7 +598,7 @@
     transition:background .2s var(--ease),transform .2s var(--ease);
   }
   .modal-close:hover{background:var(--ink);color:var(--paper);transform:rotate(90deg);}
-  .modal-eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--amber-deep);margin-bottom:12px;}
+  .modal-eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:var(--sans);font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--amber-deep);margin-bottom:12px;}
   .modal-eyebrow::before{content:"";width:20px;height:1.5px;background:var(--amber);}
   .modal h3{font-family:var(--display);font-size:27px;font-weight:700;letter-spacing:-0.02em;margin-bottom:10px;}
   .modal p.modal-sub{font-size:14.5px;color:var(--ink-soft);line-height:1.55;margin:0 0 24px;}
@@ -614,7 +617,7 @@
   .modal-foot-link a:hover{text-decoration:underline;}
   .modal-icon-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
   .modal-plan-tag{
-    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:0.02em;
+    display:inline-block;font-family:var(--sans);font-size:11.5px;letter-spacing:0.02em;
     background:rgba(63,151,134,0.16);color:var(--amber-deep);padding:6px 13px;border-radius:100px;margin-bottom:20px;
   }
   .modal-success{text-align:center;padding:12px 0;}
@@ -626,7 +629,7 @@
   /* ---- INFO PAGES / DASHBOARD -------------------------------------------- */
   .info-page{display:none;padding:clamp(48px,7vw,80px) 0 96px;}
   .info-page.visible{display:block;}
-  .info-back{display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:0.03em;color:var(--ink-soft);margin-bottom:32px;transition:color .2s var(--ease);}
+  .info-back{display:inline-flex;align-items:center;gap:7px;font-family:var(--sans);font-size:12.5px;letter-spacing:0.03em;color:var(--ink-soft);margin-bottom:32px;transition:color .2s var(--ease);}
   .info-back:hover{color:var(--amber-deep);}
   .info-page h1{font-size:clamp(32px,4.4vw,46px);margin-bottom:14px;letter-spacing:-0.03em;}
   .info-page h3{font-size:21px;margin:38px 0 12px;letter-spacing:-0.02em;}
@@ -637,7 +640,7 @@
   .info-list li{margin-bottom:9px;}
   .info-contact{margin-top:30px;padding-top:20px;border-top:1px solid var(--line);}
   .provider-card{background:var(--white);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:14px;padding:22px 24px;margin-bottom:16px;}
-  .provider-creds{font-family:'IBM Plex Mono',monospace;font-size:12px !important;letter-spacing:0.02em;color:var(--teal-deep) !important;margin-bottom:10px !important;}
+  .provider-creds{font-family:var(--sans);font-size:12px !important;letter-spacing:0.02em;color:var(--teal-deep) !important;margin-bottom:10px !important;}
   .legal-draft-banner{background:rgba(196,60,60,0.08);border:1px solid rgba(196,60,60,0.28);border-radius:12px;padding:16px 20px;font-size:13.5px;line-height:1.65;color:#8C2F2F;margin-bottom:30px;}
 
   .account-icon-btn{
@@ -658,7 +661,7 @@
   .np-row:last-child{border-bottom:none;}
   .np-row:hover{background:var(--paper-warm);padding-left:14px;}
   .np-row .name{font-weight:600;font-size:14.5px;}
-  .np-row .meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .np-row .meta{font-family:var(--sans);font-size:12px;color:var(--ink-soft);}
   .np-empty{font-size:13.5px;color:var(--ink-soft);opacity:0.7;padding:10px 6px;}
   .marketing-page.hidden-for-dashboard{display:none;}
   .dash-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:18px;margin-bottom:44px;padding-bottom:28px;border-bottom:1px solid var(--line);}
@@ -669,7 +672,7 @@
   .dash-card h3{font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:-0.02em;margin-bottom:8px;}
   .dash-card p{font-size:14.5px;color:var(--ink-soft);line-height:1.6;margin:0;}
   .status-pill{
-    display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;
+    display:inline-flex;align-items:center;gap:7px;font-family:var(--sans);
     font-size:11px;text-transform:uppercase;letter-spacing:0.08em;
     background:rgba(63,151,134,0.15);color:var(--amber-deep);padding:7px 14px;border-radius:100px;margin-bottom:18px;
   }
@@ -678,7 +681,7 @@
   .dash-protocol-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 0;border-bottom:1px dashed var(--line);}
   .dash-protocol-row:last-child{border-bottom:none;}
   .dash-protocol-row .name{font-weight:600;font-size:14.5px;}
-  .dash-protocol-row .meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .dash-protocol-row .meta{font-family:var(--sans);font-size:12px;color:var(--ink-soft);}
   .dash-checklist{list-style:none;padding:0;margin:18px 0 0;}
   .dash-checklist li{display:flex;align-items:center;gap:11px;padding:10px 0;font-size:13.5px;}
   .dash-check-icon{width:20px;height:20px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;}
@@ -759,7 +762,7 @@
   /* ---- HEALTH HISTORY FORM ----------------------------------------------- */
   .consent-box{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;font-size:13.5px;line-height:1.7;transition:border-color .25s var(--ease),background .25s var(--ease);}
   .consent-box:has(input:checked){border-color:var(--teal);background:rgba(63,151,134,0.08);}
-  .form-section-title{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--amber-deep);margin:32px 0 16px;display:flex;align-items:center;gap:12px;}
+  .form-section-title{font-family:var(--sans);font-size:11.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--amber-deep);margin:32px 0 16px;display:flex;align-items:center;gap:12px;}
   .form-section-title::before{content:"";width:20px;height:1.5px;background:var(--amber);flex:none;}
   .form-section-title:first-of-type{margin-top:0;}
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
@@ -777,23 +780,23 @@
   .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;}
   .slot-btn{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:left;cursor:pointer;transition:all .2s var(--ease);font-family:var(--sans);}
   .slot-btn:hover{border-color:var(--amber);background:rgba(63,151,134,0.08);transform:translateY(-2px);}
-  .slot-day{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.04em;}
+  .slot-day{font-family:var(--sans);font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.04em;}
   .slot-time{font-family:var(--display);font-weight:700;font-size:19px;margin-top:4px;color:var(--ink);}
   @media(max-width:700px){ .slot-grid{grid-template-columns:1fr 1fr;} }
 
   .ticket-card{background:var(--ink);color:var(--paper);border-radius:16px;padding:28px;text-align:center;margin:18px 0;position:relative;overflow:hidden;}
   .ticket-card::before{content:"";position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--brand-blue),var(--brand),var(--brand-mint));}
-  .ticket-number{font-family:'IBM Plex Mono',monospace;font-size:28px;letter-spacing:0.08em;color:var(--brand);margin:10px 0;}
+  .ticket-number{font-family:var(--sans);font-size:28px;letter-spacing:0.08em;color:var(--brand);margin:10px 0;}
 
   /* ---- VIDEO ROOM --------------------------------------------------------- */
   .video-shell{background:#0B1420;border-radius:16px;overflow:hidden;position:relative;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;}
   .video-shell video{width:100%;height:100%;object-fit:cover;}
-  .video-waiting{color:rgba(250,247,241,0.6);font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:center;padding:0 20px;letter-spacing:0.02em;}
+  .video-waiting{color:rgba(250,247,241,0.6);font-family:var(--sans);font-size:13px;text-align:center;padding:0 20px;letter-spacing:0.02em;}
   .video-controls{display:flex;gap:12px;justify-content:center;margin-top:20px;}
 
   /* ---- CALENDAR ----------------------------------------------------------- */
   .cal-weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:8px;}
-  .cal-weekday-row span{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);opacity:0.6;text-transform:uppercase;letter-spacing:0.04em;}
+  .cal-weekday-row span{text-align:center;font-family:var(--sans);font-size:10.5px;color:var(--ink-soft);opacity:0.6;text-transform:uppercase;letter-spacing:0.04em;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
   .cal-day{
     aspect-ratio:1;display:flex;align-items:center;justify-content:center;
@@ -824,10 +827,10 @@
   .person-img{position:relative;aspect-ratio:4/5;overflow:hidden;background:#dff6fb;}
   .person-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.2,.7,.3,1);}
   .person:hover .person-img img{transform:scale(1.04);}
-  .person-tag{position:absolute;left:14px;bottom:14px;background:rgba(255,255,255,0.94);backdrop-filter:blur(6px);border-radius:999px;padding:6px 13px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);}
+  .person-tag{position:absolute;left:14px;bottom:14px;background:rgba(255,255,255,0.94);backdrop-filter:blur(6px);border-radius:999px;padding:6px 13px;font-family:var(--sans);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);}
   .person-body{padding:20px 20px 22px;}
   .person-body blockquote{margin:0 0 14px;font-size:16px;line-height:1.55;color:var(--ink);}
-  .person-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(15,35,54,0.66);}
+  .person-meta{font-family:var(--sans);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(15,35,54,0.66);}
   .people-note{margin-top:26px;font-size:12.5px;line-height:1.6;color:rgba(15,35,54,0.68);max-width:720px;}
   .visit-band{position:relative;border-radius:24px;overflow:hidden;display:grid;grid-template-columns:1fr;background:#fff;box-shadow:0 24px 60px -40px rgba(15,35,54,0.68);}
   @media(min-width:860px){.visit-band{grid-template-columns:1.05fr 1fr;align-items:stretch;}}
@@ -1138,7 +1141,7 @@
             <div class="cal-weekday-row" id="np-calendar-weekdays"></div>
             <div class="cal-grid" id="np-calendar"></div>
             <div id="np-slots-wrap" style="display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--line);">
-              <div id="np-slots-date-label" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(15,35,54,0.68);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
+              <div id="np-slots-date-label" style="font-family:var(--sans);font-size:12px;color:rgba(15,35,54,0.68);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;"></div>
               <div class="slot-grid" id="np-slot-grid"></div>
               <p id="np-slots-empty" style="display:none;font-size:13.5px;color:rgba(15,35,54,0.66);">No open times that day — try another date.</p>
               <p id="np-limit-msg" style="display:none;font-size:13.5px;color:var(--amber-deep);"></p>
@@ -1377,7 +1380,7 @@
         <h3>Health history</h3>
         <p style="margin-bottom:8px;">Please answer as completely as you can — this goes directly to your care team.</p>
         <div id="history-form-error"></div>
-        <div id="hh-progress" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--amber-deep);margin-bottom:6px;"></div>
+        <div id="hh-progress" style="font-family:var(--sans);font-size:12px;color:var(--amber-deep);margin-bottom:6px;"></div>
         <div style="height:4px;background:var(--line);border-radius:100px;margin-bottom:22px;overflow:hidden;">
           <div id="hh-progress-bar" style="height:100%;width:20%;background:var(--amber);transition:width .25s;"></div>
         </div>
@@ -1719,7 +1722,7 @@
         </div>
 
         <div id="athm-detail" class="meta" style="margin-bottom:4px;"></div>
-        <div id="athm-amount" style="font-family:'IBM Plex Mono',monospace;font-size:30px;
+        <div id="athm-amount" style="font-family:var(--sans);font-size:30px;
              margin:6px 0 14px;">—</div>
         <div id="ATHMovil_Checkout_Button_payment"></div>
         <!-- El script de Evertec va AQUI, en el HTML, no inyectado por JS.
@@ -1757,7 +1760,7 @@
           <input id="athm-codigo" type="text" autocomplete="off" spellcheck="false"
                  placeholder="Número de confirmación"
                  style="width:100%;padding:11px 12px;border:1px solid var(--line);
-                        border-radius:9px;font-family:'IBM Plex Mono',monospace;
+                        border-radius:9px;font-family:var(--sans);
                         font-size:14px;background:var(--white);">
           <button type="button" class="btn btn-primary" id="athm-codigo-btn"
                   style="width:auto;padding:9px 18px;font-size:13.5px;margin-top:10px;"
@@ -1787,15 +1790,15 @@
                border-radius:12px;padding:14px 16px;">
             <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
                  color:var(--ink-soft);margin-bottom:3px;">Send to</div>
-            <div id="athm-manual-tel" style="font-family:'IBM Plex Mono',monospace;
+            <div id="athm-manual-tel" style="font-family:var(--sans);
                  font-size:20px;font-weight:600;color:var(--ink);letter-spacing:0.02em;"></div>
             <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
                  color:var(--ink-soft);margin:12px 0 3px;">Exact amount</div>
-            <div id="athm-manual-total" style="font-family:'IBM Plex Mono',monospace;
+            <div id="athm-manual-total" style="font-family:var(--sans);
                  font-size:20px;font-weight:600;color:var(--ink);"></div>
             <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
                  color:var(--ink-soft);margin:12px 0 3px;">Put this in the message</div>
-            <div id="athm-manual-ref" style="font-family:'IBM Plex Mono',monospace;
+            <div id="athm-manual-ref" style="font-family:var(--sans);
                  font-size:16px;font-weight:600;color:var(--ink);letter-spacing:0.06em;"></div>
             <div style="font-size:12px;color:var(--ink-soft);margin-top:10px;line-height:1.55;">
               The amount has to match exactly, or we can't match the payment
@@ -2152,7 +2155,7 @@
       <div class="field"><label id="np-dose-label">Weekly dose (mg)</label><input id="np-approve-dose-mg" type="number" min="0" step="0.1" value="2.5" oninput="onNPDoseInput()"></div>
       <div class="field"></div>
     </div>
-    <div id="np-price-preview" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(15,35,54,0.72);margin:6px 0 14px;"></div>
+    <div id="np-price-preview" style="font-family:var(--sans);font-size:13px;color:rgba(15,35,54,0.72);margin:6px 0 14px;"></div>
     <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="npApprovePrescription()">Approve prescription</button>
 
     <div class="form-section-title">Message patient</div>
@@ -2429,7 +2432,7 @@
            para saber qué versión está desplegada. -->
       <span class="notranslate" translate="no" id="nuvi-build"
             style="font-size:11px;color:rgba(246,246,243,0.55);margin-left:10px;
-                   font-family:'IBM Plex Mono',monospace;"></span>
+                   font-family:var(--sans);"></span>
     </div>
   </div>
 </footer>
@@ -2901,7 +2904,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 15sep-5';
+  const NUVI_BUILD = 'build 17sep-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -4007,11 +4010,17 @@
   // else in the codebase needs to change.
   const MEDICATION_INFO = {
     'Tirzepatide': {
+      // El nombre visible lleva "— compounded" pegado. La CLAVE del objeto
+      // sigue siendo 'Tirzepatide' a secas: es lo que hay guardado en cada
+      // receta de la base y en cada nota firmada. Cambiar la clave dejaria
+      // huerfano el historial entero de los pacientes que ya estan.
+      displayName: 'Tirzepatide — compounded',
       category: 'Weight management',
-      // Texto de la clinica. Antes decia "the most effective option we offer":
-      // es una comparacion de eficacia entre dos farmacos, en una pagina
-      // publica de una clinica, sin nada que la respalde. Fuera.
-      description: 'Dual GLP-1/GIP agonist. Delivers significant weight loss results, administered once weekly and adjusted gradually by your physician.',
+      // Texto de la clinica, palabra por palabra. Ya no describe el mecanismo
+      // ("dual GLP-1/GIP agonist") ni promete resultados: dice que es un
+      // medicamento compuesto, que va dentro de un programa medico, y que la
+      // dosis la pone el medico. Eso es lo que se puede afirmar.
+      description: 'Compounded injectable medication used as part of an individualized, physician-directed weight management program. Administered once weekly. Dosing and any adjustments are determined by the physician based on each patient\'s response and tolerance.',
       basePrice: 120, perMg: 24, unit: 'mg',
       // Dosis semanal máxima de etiqueta (tirzepatida: 15 mg/sem). No es un
       // límite duro — el clínico puede pasarse a propósito — pero arriba de
@@ -4027,13 +4036,20 @@
         { totalMg: 10, doseMg: 2.5, price: 180, label: '10 mg total — 2.5 mg/wk × 4 wks' },
         { totalMg: 20, doseMg: 5,   price: 240, label: '20 mg total — 5 mg/wk × 4 wks'   },
         { totalMg: 30, doseMg: 7.5, price: 300, label: '30 mg total — 7.5 mg/wk × 4 wks' },
-        { totalMg: 60, doseMg: 15,  price: 500, label: '60 mg total — as directed by MD' }
+        // El vial grande no es "una dosis mas alta": es MAS medicamento, y
+        // rinde distinto segun la pauta. A 15 mg/sem dura 4 semanas; a 5
+        // mg/sem, doce. Decirlo es lo que deja ver que comprar en grande sale
+        // mas barato por semana — antes ponia "as directed by MD", que no
+        // decia nada y hacia parecer que era solo para dosis altas.
+        { totalMg: 60, doseMg: 15,  price: 500, label: '60 mg total — as directed by MD',
+          sub: '60 mg total · 15 mg/week for 4 weeks, or 5 mg/week for 12 weeks' }
       ],
       launched: true, form: 'Compounded injectable, weekly', startingDose: '2.5 mg / wk', startingDoseMg: 2.5
     },
     'Semaglutide': {
+      displayName: 'Semaglutide — compounded',
       category: 'Weight management',
-      description: 'GLP-1 agonist for appetite control and weight loss. Weekly injection, titrated gradually to limit side effects.',
+      description: 'Compounded injectable medication used as part of an individualized, physician-directed weight management program. Administered once weekly. Dosing and any adjustments are determined by the medical provider based on each patient\'s response and tolerance.',
       basePrice: 141, perMg: 37, unit: 'mg',
       maxDoseMg: 2.4,   // semaglutida: 2.4 mg/sem de etiqueta
       // Escalones de la titulación estándar de semaglutida: 0.25 → 0.5 → 1.0
@@ -4155,7 +4171,7 @@
     box.innerHTML =
         '<div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:16px;font-weight:600;margin-bottom:6px;">' + name + '</div>'
       + '<p style="font-size:13.5px;line-height:1.65;margin-bottom:10px;">' + m.description + '</p>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:rgba(15,35,54,0.68);line-height:1.8;">'
+      + '<div style="font-family:var(--sans);font-size:12px;color:rgba(15,35,54,0.68);line-height:1.8;">'
       + m.form + '<br>'
       + 'Typical starting dose: ' + m.startingDose + '<br>'
       // El precio va por dosis, así que enseñar los escalones completos. Decir
@@ -4218,13 +4234,11 @@
       // El label de MEDICATION_INFO repite la dosis semanal, que ya sale
       // grande a la izquierda ("2.5 mg / week ... 2.5 mg/wk"). Aquí sólo
       // hace falta lo que el label añade: cuánto vial es en total.
-      // El "4 weeks" sale en TODOS menos en el escalon de arriba. Ese es la
-      // dosis maxima y su label dice "as directed by MD": cuanto dura ese vial
-      // lo decide el medico, no una regla fija. Poner "4 semanas" ahi era
-      // afirmar algo que no sabemos.
-      const porMedico = /as directed/i.test(String(t.label || ''));
-      const sub = t.totalMg + ' ' + unit + ' total'
-                + (porMedico ? '' : ' \u00b7 4 weeks');
+      // El "· 4 weeks" se quito de las filas. La cabecera de la tabla ya dice
+      // "Per 4 weeks", asi que repetirlo en cada renglon era ruido — y en el
+      // escalon de arriba era ademas inexacto, porque su label dice "as
+      // directed by MD" y cuanto dura ese vial lo decide el medico.
+      const sub = t.sub || (t.totalMg + ' ' + unit + ' total');
       return '<div class="dose-row">'
         + '<span class="dose-mg">' + t.doseMg + ' ' + unit + '<em> / week</em></span>'
         + '<b class="dose-price">$' + t.price + '</b>'
@@ -4257,7 +4271,8 @@
       const info = MEDICATION_INFO[name];
       const startingPrice = calcProtocolPrice(name, info.startingDoseMg);
       return '<div class="vial-card">'
-        + '<div class="vial-label"><span class="cat">' + info.category + '</span><h3>' + name + '</h3></div>'
+        + '<div class="vial-label"><span class="cat">' + info.category + '</span><h3>'
+          + (info.displayName || name) + '</h3></div>'
         + '<div class="vial-body">'
         + '<div class="vial-art">'
               + '<img src="' + (info.image || VIAL_IMG) + '" alt="" aria-hidden="true"'
@@ -5163,7 +5178,7 @@
     if(targetWeight){
       const ty = yFor(parseFloat(targetWeight));
       targetLine = '<line x1="' + PAD + '" y1="' + ty + '" x2="' + (W - PAD) + '" y2="' + ty + '" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="5,5" opacity="0.4" />'
-        + '<text x="' + (W - PAD) + '" y="' + (ty - 6) + '" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--ink)" opacity="0.55">Goal: ' + targetWeight + ' lbs</text>';
+        + '<text x="' + (W - PAD) + '" y="' + (ty - 6) + '" text-anchor="end" font-family="Manrope, sans-serif" font-size="11" fill="var(--ink)" opacity="0.55">Goal: ' + targetWeight + ' lbs</text>';
     }
 
     const firstLabel = entries[0].logged_date;
@@ -5173,8 +5188,8 @@
       + targetLine
       + '<polyline points="' + points.join(' ') + '" fill="none" stroke="var(--ink)" stroke-width="2.5" />'
       + circles
-      + '<text x="' + PAD + '" y="' + (H - 8) + '" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--ink)" opacity="0.5">' + firstLabel + '</text>'
-      + '<text x="' + (W - PAD) + '" y="' + (H - 8) + '" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--ink)" opacity="0.5">' + lastLabel + '</text>'
+      + '<text x="' + PAD + '" y="' + (H - 8) + '" font-family="Manrope, sans-serif" font-size="10.5" fill="var(--ink)" opacity="0.5">' + firstLabel + '</text>'
+      + '<text x="' + (W - PAD) + '" y="' + (H - 8) + '" text-anchor="end" font-family="Manrope, sans-serif" font-size="10.5" fill="var(--ink)" opacity="0.5">' + lastLabel + '</text>'
       + '</svg>';
   }
 
@@ -7797,9 +7812,14 @@
       const hoyISO = new Date().toISOString().slice(0, 10);
       const done = appts.filter(a => a.status === 'completed'
                                   && a.appointment_date <= hoyISO);
+      // La proxima tiene que estar en el FUTURO. Antes bastaba con que no
+      // estuviera 'completed', asi que una cita vieja a la que nadie marco
+      // nada se quedaba de "proxima" para siempre — y cuando el medico
+      // agendaba una nueva, el paciente seguia viendo la fecha caducada.
       const upcoming = appts
-        .filter(a => a.status !== 'completed' || a.appointment_date > hoyISO)
-        .sort((a,b) => a.appointment_date.localeCompare(b.appointment_date))[0];
+        .filter(a => a.appointment_date >= hoyISO && a.status !== 'cancelled')
+        .sort((a,b) => (a.appointment_date + ' ' + (a.appointment_time || ''))
+                       .localeCompare(b.appointment_date + ' ' + (b.appointment_time || '')))[0];
 
       let tone, title, body, cta = true, ctaLabel = 'Book evaluation';
       let mover = null;          // id de la cita que se puede mover
@@ -10266,14 +10286,39 @@
     authDebug('has access_token in hash: ' + (RAW_HASH_AT_LOAD.indexOf('access_token') > -1 ? 'YES' : 'no'));
     authDebug('has error in hash: ' + (RAW_HASH_AT_LOAD.indexOf('error') > -1 ? 'YES' : 'no'));
 
+    // ---- Quien ya esta enrutado --------------------------------------------
+    // EL GLITCH QUE ESTO ARREGLA:
+    //
+    // Supabase refresca el token cuando la pestaña vuelve a primer plano, y
+    // eso dispara onAuthStateChange con event='TOKEN_REFRESHED' y una sesion
+    // perfectamente valida. El codigo de antes solo miraba "hay sesion?" y
+    // volvia a enrutar. Enrutar repinta el dashboard desde cero: el paciente
+    // que estaba a mitad del consentimiento se iba a otra pestaña, volvia, y
+    // el formulario habia rebobinado al paso 1 con todo lo escrito borrado.
+    //
+    // La sesion no cambio. El usuario es el mismo. Solo se renovo un token.
+    // Asi que se recuerda a quien se enruto y no se repite por el mismo.
+    let usuarioEnrutado = null;
+
+    function enrutarUnaVez(user, porQue){
+      if(!user) return;
+      if(usuarioEnrutado === user.id){
+        authDebug('ya enrutado (' + porQue + '), no se repinta');
+        return;
+      }
+      usuarioEnrutado = user.id;
+      routeUserSession(user);
+    }
+
     supabaseClient.auth.onAuthStateChange((event, session) => {
       authDebug('event=' + event + ' session=' + (session && session.user ? session.user.email : 'null'));
       // Only respond to events that genuinely mean "logged in" or "logged out".
       // onAuthStateChange also fires INITIAL_SESSION with a null session while
       // Supabase is still parsing the #access_token out of the URL.
       if(session && session.user){
-        routeUserSession(session.user);
+        enrutarUnaVez(session.user, event);
       } else if(event === 'SIGNED_OUT'){
+        usuarioEnrutado = null;
         showMarketing();
       }
     });
@@ -10281,7 +10326,9 @@
     supabaseClient.auth.getSession().then(({ data, error }) => {
       if(error) authDebug('getSession ERROR: ' + error.message);
       authDebug('getSession result: ' + (data.session ? 'SESSION FOUND (' + data.session.user.email + ')' : 'no session'));
-      if(data.session && data.session.user){ routeUserSession(data.session.user); }
+      // Mismo guardia: onAuthStateChange suele haber enrutado ya para cuando
+      // esto resuelve, y sin el se pintaba el dashboard dos veces al entrar.
+      if(data.session && data.session.user) enrutarUnaVez(data.session.user, 'getSession');
     });
 
     // If Supabase rejected the link, the reason is in the hash — surface it.
@@ -10941,8 +10988,28 @@
     'Evaluation complete': 'Evaluaci\u00f3n completada',
     'Evaluation completed': 'Evaluaci\u00f3n completada',
     'First month $50, then $70/month. Cancel anytime.': 'Primer mes $50, luego $70 al mes. Cancela cuando quieras.',
+    // Google traducia estos como "Tirzepatida agravada" / "compuesto", en
+    // masculino. A mano y en femenino, que es como se dice.
+    'Tirzepatide \u2014 compounded': 'Tirzepatida \u2014 compuesta',
+    'Semaglutide \u2014 compounded': 'Semaglutida \u2014 compuesta',
   };
   var ES_LONG = [
+    // "no referral" lo traducia Google como "sin derivacion". En Puerto Rico
+    // eso no lo dice nadie: se dice "referido". La regla de la clinica es que
+    // si no suena como uno lo diria hablando, no se escribe.
+    ['A private video evaluation with a physician licensed in Puerto Rico \u2014 no waiting room, no referral, no travel.',
+     'Una evaluaci\u00f3n privada por video con un m\u00e9dico licenciado en Puerto Rico \u2014 sin sala de espera, sin referido, sin salir de tu casa.'],
+
+    // Las descripciones nuevas de los medicamentos, tal cual las dio la
+    // clinica. A mano porque son texto clinico: una traduccion automatica que
+    // cambie "se determinan por el medico" por otra cosa mueve quien decide.
+    ["Compounded injectable medication used as part of an individualized, physician-directed weight management program. Administered once weekly. Dosing and any adjustments are determined by the physician based on each patient's response and tolerance.",
+     'Medicamento inyectable compuesto utilizado como parte de un programa m\u00e9dico individualizado de manejo de peso. Se administra una vez por semana. La dosis y cualquier ajuste se determinan por el m\u00e9dico seg\u00fan la respuesta y tolerancia de cada paciente.'],
+    ["Compounded injectable medication used as part of an individualized, physician-directed weight management program. Administered once weekly. Dosing and any adjustments are determined by the medical provider based on each patient's response and tolerance.",
+     'Medicamento inyectable compuesto utilizado como parte de un programa m\u00e9dico individualizado de manejo de peso. Se administra una vez por semana. La dosis y cualquier ajuste se determinan por el profesional m\u00e9dico seg\u00fan la respuesta y tolerancia de cada paciente.'],
+
+    ['60 mg total \u00b7 15 mg/week for 4 weeks, or 5 mg/week for 12 weeks',
+     '60 mg en total \u00b7 15 mg por semana durante 4 semanas, o 5 mg por semana durante 12 semanas'],
     // La divulgacion de medicamento compuesto. Va traducida A MANO, no por el
     // widget de Google: es lo que le dice al paciente que esto NO es la marca
     // y que no se ha demostrado bioequivalencia. Una traduccion automatica
