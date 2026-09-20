@@ -2904,7 +2904,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 17sep-1';
+  const NUVI_BUILD = 'build 20sep-2';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -5271,7 +5271,7 @@
   // Una pesada del dia. Si ya hay una de hoy se actualiza en vez de crear otra,
   // para que pesarse dos veces no dibuje dos puntos en el mismo dia.
   async function registrarPesada(lbs){
-    const hoy = new Date().toISOString().slice(0,10);
+    const hoy = hoyLocalISO();
     const { data: yaHay } = await supabaseClient.from('weight_logs')
       .select('id').eq('user_id', currentUser.id).eq('logged_date', hoy).limit(1);
     if(yaHay && yaHay.length){
@@ -7599,7 +7599,7 @@
     }
     const mias = (npAppts || []).filter(a => a.user_id === p.user_id
                                           && a.status !== 'cancelled');
-    const hoyISO = new Date().toISOString().slice(0, 10);
+    const hoyISO = hoyLocalISO();
     // Igual que en el lado del paciente: una cita con fecha futura no puede
     // haber ocurrido, diga lo que diga su status.
     const hecha = mias.some(a => a.status === 'completed' && a.appointment_date <= hoyISO);
@@ -7809,7 +7809,7 @@
       // visita hecha, calculaba el próximo ciclo desde ella, y al paciente
       // le desaparecía el botón de mover la cita — porque para el código no
       // tenía ninguna pendiente. Se clasifica por FECHA, no por status.
-      const hoyISO = new Date().toISOString().slice(0, 10);
+      const hoyISO = hoyLocalISO();
       const done = appts.filter(a => a.status === 'completed'
                                   && a.appointment_date <= hoyISO);
       // La proxima tiene que estar en el FUTURO. Antes bastaba con que no
@@ -7826,6 +7826,21 @@
       let pedir = false;         // enseñar "pídenos que la agendemos"
       let entrar = null;         // id de la cita cuya sala se puede abrir
       let esHoy = false;
+
+      // ---- EL BOTON DE JOIN NO DEPENDE DE LA FECHA. NUNCA. ----
+      // Fue lo primero que pidio la clinica y ya se rompio dos veces por
+      // atarlo a "hoy". Regla: si hay CUALQUIER cita viva (ni cancelada ni
+      // completada), la sala se puede abrir. Se prefiere la de hoy o futura;
+      // si no hay, la ultima pasada — una consulta que se alargo, un dedazo
+      // en la fecha, un reloj mal puesto. Que la sala este vacia se explica
+      // solo; que el boton no exista, no.
+      const vivas = appts
+        .filter(a => a.status !== 'cancelled' && a.status !== 'completed')
+        .sort((a,b) => (a.appointment_date + ' ' + (a.appointment_time || ''))
+                       .localeCompare(b.appointment_date + ' ' + (b.appointment_time || '')));
+      const joinable = vivas.find(a => a.appointment_date >= hoyISO)
+                    || vivas[vivas.length - 1] || null;
+      if(joinable) entrar = joinable.id;
 
       const fmt = iso => new Date(iso + 'T00:00:00')
         .toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
@@ -7844,6 +7859,15 @@
         body = fmt(upcoming.appointment_date) + ' at ' + upcoming.appointment_time + '.'
              + (esHoy ? ' Your room is open — join when you\'re ready.'
                       : ' You can open the room any time; your physician joins at your scheduled time.');
+      } else if(joinable){
+        // Cita viva con fecha ya pasada: NO es "no tienes cita". O se
+        // alargo, o hay un error de fecha. Se le deja entrar y se le dice.
+        tone = 'soon'; cta = false;
+        mover = joinable.id;
+        title = 'Your evaluation room is still open';
+        body = 'Your appointment was set for ' + fmt(joinable.appointment_date) + ' at '
+             + joinable.appointment_time + '. If you still need to connect, join now — '
+             + 'or ask us to move it.';
       } else if(done.length === 0){
         tone = 'warn';
         title = 'Book your first evaluation';
@@ -8187,7 +8211,7 @@
       // visita hecha, calculaba el próximo ciclo desde ella, y al paciente
       // le desaparecía el botón de mover la cita — porque para el código no
       // tenía ninguna pendiente. Se clasifica por FECHA, no por status.
-      const hoyISO = new Date().toISOString().slice(0, 10);
+      const hoyISO = hoyLocalISO();
       const done = appts.filter(a => a.status === 'completed'
                                   && a.appointment_date <= hoyISO);
       const upcoming = appts
@@ -8360,7 +8384,7 @@
         author_user_id: currentUser.id,
         author_name: currentStaffName,
         author_role: roleLabel,
-        encounter_date: val('rec-date') || new Date().toISOString().slice(0,10),
+        encounter_date: val('rec-date') || hoyLocalISO(),
         encounter_type: val('rec-type'),
         subjective: s, objective: null, assessment: a, plan: p,
         weight_lbs: val('rec-weight') ? parseFloat(val('rec-weight')) : null,
@@ -8610,13 +8634,13 @@
       if(fu){
         const d = new Date(); d.setDate(d.getDate() + (EVAL_CYCLE_DAYS - 3));
         fu.value = d.toISOString().slice(0,10);
-        fu.min = new Date().toISOString().slice(0,10);
+        fu.min = hoyLocalISO();
         loadFollowupSlots();
       }
     }
     {
       const rd=document.getElementById('rec-date');
-      if(rd) rd.value=new Date().toISOString().slice(0,10);
+      if(rd) rd.value=hoyLocalISO();
       const rt=document.getElementById('rec-time');
       if(rt) rt.value=new Date().toTimeString().slice(0,5);
       const hpi=document.getElementById('rec-s');
@@ -8981,7 +9005,7 @@
   async function npRenderProximaCita(patientUserId){
     const wrap = document.getElementById('np-proxima-cita');
     if(!wrap) return;
-    const hoyISO = new Date().toISOString().slice(0,10);
+    const hoyISO = hoyLocalISO();
 
     // La proxima de verdad: cualquier cita futura que no este cancelada. Se
     // clasifica por FECHA y no por status, porque una cita del mes que viene
@@ -9040,7 +9064,7 @@
     const fecha = (document.getElementById('np-prox-fecha') || {}).value;
     const hora  = (document.getElementById('np-prox-hora')  || {}).value;
     if(!fecha || !hora){ decir('Pick a date and a time.', true); return; }
-    if(fecha < new Date().toISOString().slice(0,10)){
+    if(fecha < hoyLocalISO()){
       decir('That date is in the past.', true); return; }
 
     decir('Saving…', false);
@@ -10062,6 +10086,20 @@
   // Se ofrece mientras la cita sea de HOY. Una entrevista marcada como completa
   // por error, o una llamada que se cayó, se arregla volviendo a entrar — no
   // sacando otra cita. Pasado el día ya no es un accidente.
+  // ---- "HOY" EN HORA LOCAL, NO EN UTC ------------------------------------
+  // Esto rompio una consulta real. new Date().toISOString() devuelve la fecha
+  // en UTC, y Puerto Rico va cuatro horas por detras: a partir de las 8:00 PM
+  // hora de PR, para UTC ya es MAÑANA. Cualquier comparacion "cita >= hoy"
+  // hecha con esa fecha descartaba la cita de hoy por la tarde-noche, y con
+  // ella se iba el boton de Join meeting del paciente.
+  //
+  // apptIsToday() ya lo hacia bien. Esto es lo mismo, para todos los demas.
+  function hoyLocalISO(){
+    const n = new Date();
+    return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0')
+         + '-' + String(n.getDate()).padStart(2,'0');
+  }
+
   function apptIsToday(appt){
     if(!appt || !appt.appointment_date) return false;
     const now = new Date();
