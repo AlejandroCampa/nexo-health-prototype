@@ -2640,6 +2640,31 @@
      decir que hacemos con el reporte y nombrar la via de la FDA, que existe
      independientemente de nosotros. Es tambien lo correcto: un paciente con
      una reaccion seria no tiene que adivinar a quien avisar. -->
+<!-- ================= SALA DE VIDEO A PANTALLA COMPLETA =================
+     Se abre en su PROPIA PESTAÑA con ?sala=<ticket>. La ventana de 220px
+     dentro de la ficha del paciente no servia para una consulta: el medico
+     veia al paciente en un sello de correos mientras leia el expediente al
+     lado. Aqui la sala ocupa toda la pantalla y no hay nada mas. -->
+<section id="sala-view" style="display:none;position:fixed;inset:0;z-index:600;background:#0B1420;">
+  <video id="sala-remote" autoplay playsinline
+         style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0B1420;"></video>
+  <video id="sala-local" autoplay playsinline muted
+         style="position:absolute;bottom:22px;right:22px;width:22vw;max-width:320px;min-width:140px;
+                aspect-ratio:4/3;border-radius:12px;object-fit:cover;background:#101a28;
+                border:2px solid rgba(247,245,240,0.35);box-shadow:0 12px 30px rgba(0,0,0,0.45);"></video>
+  <div id="sala-status" class="video-waiting"
+       style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+              font-size:18px;padding:0 24px;text-align:center;pointer-events:none;">Connecting...</div>
+  <div style="position:absolute;top:18px;left:22px;color:rgba(247,245,240,0.85);font-size:14px;line-height:1.5;">
+    <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.7;">Nuvi Clinic · evaluation room</div>
+    <div id="sala-titulo" style="font-size:16px;font-weight:600;"></div>
+  </div>
+  <div style="position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:10px;">
+    <button type="button" class="btn btn-primary" onclick="salaSalir()"
+            style="width:auto;padding:13px 26px;font-size:15px;background:#B23A3A;color:#fff;">✕ End meeting</button>
+  </div>
+</section>
+
 <div class="modal-overlay" id="modal-eventos-adversos" onclick="closeOnOverlay(event,'eventos-adversos')">
   <div class="modal">
     <button class="modal-close" onclick="nuviCloseModal('eventos-adversos')" aria-label="Close">✕</button>
@@ -2920,7 +2945,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 20sep-3';
+  const NUVI_BUILD = 'build 21sep-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -8786,7 +8811,9 @@
       apptWrap.innerHTML = '<div class="form-section-title">Interview</div>'
         + '<div style="font-size:13.5px;">Ticket ' + appt.ticket_number + ' — ' + appt.appointment_date + ' ' + appt.appointment_time + ' — status: <b>' + appt.status + '</b></div>'
         + '<div style="display:flex;gap:8px;margin-top:8px;">'
-        + '<button class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:13px;" onclick="document.getElementById(\'np-video-wrap\').style.display=\'block\';joinVideoCall(\''+appt.ticket_number+'\',\'staff\',\'np-video-local\',\'np-video-remote\',\'np-video-status\')">Join meeting</button>'
+        // Pestaña nueva, pantalla completa. La ficha se queda abierta detras
+        // para leer el expediente mientras habla.
+        + '<button class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:13px;" onclick="abrirSala(\''+appt.ticket_number+'\')">Join meeting</button>'
         + (appt.status === 'scheduled'
             ? '<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npMarkInterviewComplete(\''+appt.id+'\')">Complete interview</button>'
             // Deshacer un "completar" accidental. Sin esto, un click por error
@@ -9088,7 +9115,7 @@
       +     (prox ? String(prox.appointment_time).slice(0,5) : '09:00') + '"></div>'
       + '</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">'
-      +   '<button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;" '
+      +   '<button class="btn btn-primary notranslate" translate="no" style="width:auto;padding:9px 18px;font-size:13.5px;" '
       +     'onclick="npGuardarProximaCita(\'' + patientUserId + '\')">'
       +     (prox ? 'Move appointment' : 'Schedule') + '</button>'
       +   (prox
@@ -10213,6 +10240,7 @@
   ];
 
   let rtcPeerConnection = null;
+  let rtcSoloAudio = false;   // entro sin camara: se le dice al otro lado
   let rtcLocalStream = null;
   let rtcChannel = null;
   let rtcRole = null;
@@ -10237,10 +10265,26 @@
     rtcOfferSent = false;
 
     const statusEl = document.getElementById(statusElId);
+    rtcSoloAudio = false;
     statusEl.textContent = 'Requesting camera access...';
 
     try{
-      rtcLocalStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      // Se pide camara+microfono. Si no hay camara (computadora de escritorio
+      // sin webcam, o el navegador no la ve), se cae a SOLO AUDIO en vez de
+      // tumbar la consulta entera con "Dispositivo solicitado no encontrado".
+      // Una evaluacion por voz es una evaluacion; una pantalla negra, no.
+      try{
+        rtcLocalStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      }catch(e1){
+        if(e1 && (e1.name === 'NotFoundError' || e1.name === 'OverconstrainedError'
+                  || e1.name === 'NotReadableError')){
+          rtcLocalStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+          statusEl.textContent = 'No camera found — joining with audio only.';
+          rtcSoloAudio = true;
+        } else {
+          throw e1;
+        }
+      }
     } catch(err){
       statusEl.textContent = 'Could not access camera/mic: ' + (err.message || 'permission denied');
       return;
@@ -10308,7 +10352,8 @@
       .subscribe((status) => {
         if(status === 'SUBSCRIBED' && !rtcSubscribeAnnounced){
           rtcSubscribeAnnounced = true;
-          statusEl.textContent = 'Waiting for the other person to join...';
+          statusEl.textContent = (rtcSoloAudio ? 'No camera found — audio only. ' : '')
+                               + 'Waiting for the other person to join...';
           rtcChannel.send({ type: 'broadcast', event: 'peer-joined', payload: { from: role } });
         }
       });
@@ -10327,11 +10372,64 @@
   }
 
 
+  // ---- La sala en su propia pestaña -----------------------------------------
+  function abrirSala(ticket){
+    if(!ticket) return;
+    const url = window.location.pathname + '?sala=' + encodeURIComponent(ticket);
+    const w = window.open(url, 'nuvi-sala-' + ticket);
+    // Bloqueador de popups: se abre aqui mismo antes que dejarle sin sala.
+    if(!w) window.location.href = url;
+  }
+
+  function salaPedida(){
+    try{
+      const t = new URLSearchParams(window.location.search).get('sala');
+      // Mismo alfabeto que los tickets. Es lo unico que llega de fuera.
+      return (t && /^[A-Z]{2}-[A-Z0-9]{4,8}$/i.test(t)) ? t.toUpperCase() : null;
+    }catch(e){ return null; }
+  }
+
+  async function mostrarSala(ticket, rol){
+    document.getElementById('marketing-content').classList.add('hidden-for-dashboard');
+    document.getElementById('dashboard').classList.remove('visible');
+    document.getElementById('np-dashboard').classList.remove('visible');
+    const v = document.getElementById('sala-view');
+    v.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    document.title = 'Evaluation room · ' + ticket;
+    const t = document.getElementById('sala-titulo');
+    if(t) t.textContent = 'Ticket ' + ticket;
+    await joinVideoCall(ticket, rol, 'sala-local', 'sala-remote', 'sala-status');
+  }
+
+  function salaSalir(){
+    leaveVideoCall('sala-local', 'sala-remote', 'sala-status');
+    // Esta pestaña existe solo para la sala: al salir, se cierra. Si el
+    // navegador no deja (no la abrio un script), se vuelve al dashboard.
+    window.close();
+    setTimeout(function(){
+      const v = document.getElementById('sala-view');
+      if(v) v.style.display = 'none';
+      document.body.style.overflow = '';
+      window.location.href = window.location.pathname;
+    }, 150);
+  }
+
   async function routeUserSession(user){
     document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));
     document.body.style.overflow = '';
     try{
       const { data: staffRow } = await supabaseClient.from('staff').select('*').eq('user_id', user.id).maybeSingle();
+      // ?sala=<ticket>: esta pestaña es SOLO la videollamada, a pantalla
+      // completa. El rol sale de la tabla staff, no de la URL — un paciente
+      // que escriba &rol=staff sigue entrando como paciente.
+      const sala = salaPedida();
+      if(sala){
+        currentUser = user;
+        if(staffRow) currentStaffName = staffRow.full_name || user.email;
+        mostrarSala(sala, staffRow ? 'staff' : 'patient');
+        return;
+      }
       if(staffRow){
         showNPDashboard(user, staffRow);
       } else {
