@@ -593,11 +593,12 @@
   @keyframes nuviPop{from{opacity:0;transform:translateY(16px) scale(0.98);}to{opacity:1;transform:translateY(0) scale(1);}}
   /* ===== LA FICHA COMO PAGINA ENTERA =====
      Con body.ficha-pagina, el modal de la ficha deja de ser una ventanita de
-     560px flotando sobre el dashboard y pasa a ser LA pagina: a lo ancho, sin
-     fondo oscuro, sin scroll interno, y con el video grande. Se activa cuando
-     la ficha se abre en su propia pestaña (?paciente=<id>). */
+     560px flotando sobre el dashboard y CUBRE LA PANTALLA ENTERA: a lo ancho,
+     sin fondo oscuro, con su propio scroll, y con el video grande. Misma URL,
+     misma pestaña: se cierra con "Back to dashboard" y vuelves donde estabas. */
   body.ficha-pagina #modal-np-patient{
-    position:static;display:block;background:var(--paper);padding:0;
+    position:fixed;inset:0;display:block;background:var(--paper);padding:0;
+    overflow-y:auto;z-index:300;
     backdrop-filter:none;-webkit-backdrop-filter:none;animation:none;
   }
   body.ficha-pagina #modal-np-patient .modal{
@@ -610,8 +611,7 @@
   body.ficha-pagina #np-video-local{width:22% !important;height:auto !important;aspect-ratio:4/3;
     max-width:300px;bottom:16px !important;right:16px !important;border-radius:10px !important;}
   body.ficha-pagina #np-video-status{font-size:16px !important;}
-  body.ficha-pagina #np-dashboard, body.ficha-pagina #dashboard,
-  body.ficha-pagina #marketing-content{display:none !important;}
+  body.ficha-pagina{overflow:hidden;}   /* solo baja la ficha, no lo de detras */
   body.ficha-pagina .ficha-barra{
     position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line);
     padding:12px clamp(20px,4vw,56px);display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -2671,31 +2671,6 @@
      decir que hacemos con el reporte y nombrar la via de la FDA, que existe
      independientemente de nosotros. Es tambien lo correcto: un paciente con
      una reaccion seria no tiene que adivinar a quien avisar. -->
-<!-- ================= SALA DE VIDEO A PANTALLA COMPLETA =================
-     Se abre en su PROPIA PESTAÑA con ?sala=<ticket>. La ventana de 220px
-     dentro de la ficha del paciente no servia para una consulta: el medico
-     veia al paciente en un sello de correos mientras leia el expediente al
-     lado. Aqui la sala ocupa toda la pantalla y no hay nada mas. -->
-<section id="sala-view" style="display:none;position:fixed;inset:0;z-index:600;background:#0B1420;">
-  <video id="sala-remote" autoplay playsinline
-         style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0B1420;"></video>
-  <video id="sala-local" autoplay playsinline muted
-         style="position:absolute;bottom:22px;right:22px;width:22vw;max-width:320px;min-width:140px;
-                aspect-ratio:4/3;border-radius:12px;object-fit:cover;background:#101a28;
-                border:2px solid rgba(247,245,240,0.35);box-shadow:0 12px 30px rgba(0,0,0,0.45);"></video>
-  <div id="sala-status" class="video-waiting"
-       style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-              font-size:18px;padding:0 24px;text-align:center;pointer-events:none;">Connecting...</div>
-  <div style="position:absolute;top:18px;left:22px;color:rgba(247,245,240,0.85);font-size:14px;line-height:1.5;">
-    <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.7;">Nuvi Clinic · evaluation room</div>
-    <div id="sala-titulo" style="font-size:16px;font-weight:600;"></div>
-  </div>
-  <div style="position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:10px;">
-    <button type="button" class="btn btn-primary" onclick="salaSalir()"
-            style="width:auto;padding:13px 26px;font-size:15px;background:#B23A3A;color:#fff;">✕ End meeting</button>
-  </div>
-</section>
-
 <div class="modal-overlay" id="modal-eventos-adversos" onclick="closeOnOverlay(event,'eventos-adversos')">
   <div class="modal">
     <button class="modal-close" onclick="nuviCloseModal('eventos-adversos')" aria-label="Close">✕</button>
@@ -2976,7 +2951,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 21sep-2';
+  const NUVI_BUILD = 'build 21sep-3';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -3954,6 +3929,10 @@
     // clicking "End meeting" first, make sure the camera/mic/connection
     // actually stop instead of silently running in the background.
     if(name === 'np-patient'){
+      fichaEnPagina = false;
+      document.body.classList.remove('ficha-pagina');
+      const barra = document.getElementById('ficha-barra');
+      if(barra) barra.style.display = 'none';
       const videoWrap = document.getElementById('np-video-wrap');
       if(videoWrap && videoWrap.style.display !== 'none'){
         leaveVideoCall('np-video-local', 'np-video-remote', 'np-video-status');
@@ -10413,97 +10392,38 @@
   // tiene sentido en una consulta.
   let fichaEnPagina = false;
 
-  function abrirFichaPaciente(patientId){
+  // NO es otra URL ni otra pestaña: la ficha se abre AQUI, encima de todo,
+  // ocupando la pantalla entera. Se cierra con "Back to dashboard" y vuelves
+  // exactamente a donde estabas.
+  async function abrirFichaPaciente(patientId){
     if(!patientId) return;
-    const url = window.location.pathname + '?paciente=' + encodeURIComponent(patientId);
-    const w = window.open(url, 'nuvi-ficha-' + patientId);   // una pestaña por paciente
-    if(!w) window.location.href = url;                        // bloqueador de popups
-  }
-
-  function fichaPedida(){
-    try{
-      const p = new URLSearchParams(window.location.search).get('paciente');
-      // Son ids de Supabase (uuid o "id-..."): letras, numeros y guiones.
-      return (p && /^[A-Za-z0-9-]{4,64}$/.test(p)) ? p : null;
-    }catch(e){ return null; }
-  }
-
-  async function mostrarFichaPagina(user, staffRow, patientId){
     fichaEnPagina = true;
     document.body.classList.add('ficha-pagina');
     const barra = document.getElementById('ficha-barra');
     if(barra) barra.style.display = 'flex';
-    // El dashboard se monta igual (carga npPatients y permisos), pero queda
-    // oculto por CSS: solo se ve la ficha.
-    await showNPDashboard(user, staffRow);
     await openNPPatientDetail(patientId);
-    document.body.style.overflow = '';   // openNPPatientDetail lo pone en hidden: aqui hay que poder bajar
-    const p = npPatients.find(x => x.id === patientId);
-    document.title = (p && p.full_name ? p.full_name : 'Patient') + ' · Nuvi Clinic';
-    window.scrollTo(0, 0);
+    const m = document.getElementById('modal-np-patient');
+    if(m) m.scrollTop = 0;
   }
 
   function cerrarFichaPagina(){
-    // Si hay llamada, se cierra limpio.
+    // Si hay llamada, se cierra limpio antes de irse.
     const videoWrap = document.getElementById('np-video-wrap');
     if(videoWrap && videoWrap.style.display !== 'none'){
       leaveVideoCall('np-video-local', 'np-video-remote', 'np-video-status');
+      videoWrap.style.display = 'none';
     }
-    window.close();   // esta pestaña la abrio un script: se puede cerrar
-    setTimeout(function(){ window.location.href = window.location.pathname; }, 150);
+    fichaEnPagina = false;
+    document.body.classList.remove('ficha-pagina');
+    const barra = document.getElementById('ficha-barra');
+    if(barra) barra.style.display = 'none';
+    nuviCloseModal('np-patient');
   }
 
   function npJoin(ticket){
-    if(fichaEnPagina){
-      document.getElementById('np-video-wrap').style.display = 'block';
-      joinVideoCall(ticket, 'staff', 'np-video-local', 'np-video-remote', 'np-video-status');
-      document.getElementById('np-video-wrap').scrollIntoView({ behavior:'smooth', block:'start' });
-    } else {
-      abrirSala(ticket);
-    }
-  }
-
-  // ---- La sala en su propia pestaña -----------------------------------------
-  function abrirSala(ticket){
-    if(!ticket) return;
-    const url = window.location.pathname + '?sala=' + encodeURIComponent(ticket);
-    const w = window.open(url, 'nuvi-sala-' + ticket);
-    // Bloqueador de popups: se abre aqui mismo antes que dejarle sin sala.
-    if(!w) window.location.href = url;
-  }
-
-  function salaPedida(){
-    try{
-      const t = new URLSearchParams(window.location.search).get('sala');
-      // Mismo alfabeto que los tickets. Es lo unico que llega de fuera.
-      return (t && /^[A-Z]{2}-[A-Z0-9]{4,8}$/i.test(t)) ? t.toUpperCase() : null;
-    }catch(e){ return null; }
-  }
-
-  async function mostrarSala(ticket, rol){
-    document.getElementById('marketing-content').classList.add('hidden-for-dashboard');
-    document.getElementById('dashboard').classList.remove('visible');
-    document.getElementById('np-dashboard').classList.remove('visible');
-    const v = document.getElementById('sala-view');
-    v.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-    document.title = 'Evaluation room · ' + ticket;
-    const t = document.getElementById('sala-titulo');
-    if(t) t.textContent = 'Ticket ' + ticket;
-    await joinVideoCall(ticket, rol, 'sala-local', 'sala-remote', 'sala-status');
-  }
-
-  function salaSalir(){
-    leaveVideoCall('sala-local', 'sala-remote', 'sala-status');
-    // Esta pestaña existe solo para la sala: al salir, se cierra. Si el
-    // navegador no deja (no la abrio un script), se vuelve al dashboard.
-    window.close();
-    setTimeout(function(){
-      const v = document.getElementById('sala-view');
-      if(v) v.style.display = 'none';
-      document.body.style.overflow = '';
-      window.location.href = window.location.pathname;
-    }, 150);
+    document.getElementById('np-video-wrap').style.display = 'block';
+    joinVideoCall(ticket, 'staff', 'np-video-local', 'np-video-remote', 'np-video-status');
+    document.getElementById('np-video-wrap').scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
   async function routeUserSession(user){
@@ -10514,18 +10434,6 @@
       // ?sala=<ticket>: esta pestaña es SOLO la videollamada, a pantalla
       // completa. El rol sale de la tabla staff, no de la URL — un paciente
       // que escriba &rol=staff sigue entrando como paciente.
-      const fichaId = fichaPedida();
-      if(fichaId && staffRow){
-        mostrarFichaPagina(user, staffRow, fichaId);
-        return;
-      }
-      const sala = salaPedida();
-      if(sala){
-        currentUser = user;
-        if(staffRow) currentStaffName = staffRow.full_name || user.email;
-        mostrarSala(sala, staffRow ? 'staff' : 'patient');
-        return;
-      }
       if(staffRow){
         showNPDashboard(user, staffRow);
       } else {
