@@ -1068,6 +1068,22 @@
          desde aquí, las dos lógicas se pelearían y ganaría la última que
          corriera. Panel oculto = no se ve nada suyo; panel visible = se ve
          lo que loadPatientState haya dejado visible. -->
+    <!-- FRANJA DE JOIN, FUERA DE LOS TABS.
+         Lo encontro la prueba de recorrido: con una receta aprobada sin
+         pagar, el dashboard abre solo en la pestaña de Recetas — y el boton
+         de Join vivia en Inicio. El paciente con consulta en ese momento
+         aterrizaba en la tienda y no veia como entrar. Esto se pinta por
+         encima de los tabs, asi que se ve este donde este. -->
+    <div id="join-strip" style="display:none;align-items:center;justify-content:space-between;
+         flex-wrap:wrap;gap:10px;margin:0 0 14px;padding:12px 16px;border-radius:12px;
+         background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.4);">
+      <div style="font-size:13.5px;color:#2F5C46;line-height:1.5;">
+        <b>Your evaluation room is open.</b>
+        <span id="join-strip-when"></span>
+      </div>
+      <button type="button" class="btn btn-primary" id="join-strip-btn"
+              style="width:auto;padding:9px 18px;font-size:13.5px;">Join meeting</button>
+    </div>
     <div class="dash-tabs" id="dash-tabs" role="tablist" aria-label="Secciones de tu cuenta">
       <button type="button" class="dash-tab" role="tab" id="tab-home"
               data-panel="panel-home" aria-controls="panel-home"
@@ -2904,7 +2920,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 20sep-2';
+  const NUVI_BUILD = 'build 20sep-3';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -4483,6 +4499,9 @@
 
     console.log('[state] stage =', stage, '| paid =', history && history.paid, '| appt =', appt && appt.status);
     document.querySelectorAll('.stage-view').forEach(v => v.style.display = 'none');
+    // La franja de Join se decide de nuevo en cada repintado. Sin esto, la de
+    // una cita anterior se quedaba encendida despues de cancelarla.
+    pintarJoinStrip(null);
     const stageEl = document.getElementById('stage-' + stage);
     if(stageEl){
       stageEl.style.display = 'block';
@@ -4533,6 +4552,7 @@
         td.setAttribute('translate','no'); td.classList.add('notranslate');
         td.textContent = appt.appointment_date + ' · ' + appt.appointment_time; }
       markPassedAppointment(appt.appointment_date, appt.appointment_time);
+      pintarJoinStrip(appt);
     }
     if(stage === 'awaiting-approval'){
       // La cita se marcó completa, pero si fue HOY todavía se puede volver a
@@ -7835,12 +7855,12 @@
       // en la fecha, un reloj mal puesto. Que la sala este vacia se explica
       // solo; que el boton no exista, no.
       const vivas = appts
-        .filter(a => a.status !== 'cancelled' && a.status !== 'completed')
-        .sort((a,b) => (a.appointment_date + ' ' + (a.appointment_time || ''))
-                       .localeCompare(b.appointment_date + ' ' + (b.appointment_time || '')));
-      const joinable = vivas.find(a => a.appointment_date >= hoyISO)
-                    || vivas[vivas.length - 1] || null;
+        .filter(a => a.status !== 'cancelled' && a.status !== 'completed');
+      // Solo una VIVA abre la sala desde aqui (las completadas van por la
+      // tarjeta de "volver a entrar"). Pero cual, lo decide la regla comun.
+      const joinable = vivas.length ? elegirCitaParaSala(vivas) : null;
       if(joinable) entrar = joinable.id;
+      pintarJoinStrip(joinable);
 
       const fmt = iso => new Date(iso + 'T00:00:00')
         .toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
@@ -8000,6 +8020,26 @@
       'Hi — I need to move my evaluation' + cuando + '. '
       + (cuandoLeSirve.trim() ? 'What works for me: ' + cuandoLeSirve.trim()
                               : 'Any other time works.'));
+  }
+
+  // La franja de arriba de los tabs. Misma cita que el boton de la tarjeta;
+  // solo que esta se ve desde CUALQUIER pestaña.
+  function pintarJoinStrip(cita){
+    const strip = document.getElementById('join-strip');
+    if(!strip) return;
+    if(!cita){ strip.style.display = 'none'; return; }
+    const cuando = document.getElementById('join-strip-when');
+    if(cuando){
+      const f = new Date(cita.appointment_date + 'T00:00:00')
+        .toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+      cuando.textContent = ' ' + f + ' at ' + cita.appointment_time + '.';
+    }
+    const btn = document.getElementById('join-strip-btn');
+    if(btn){
+      btn.onclick = function(){ joinEvaluationById(cita.id); };
+      btn.setAttribute('data-appt', cita.id);   // para saber CUAL abre, de un vistazo
+    }
+    strip.style.display = 'flex';
   }
 
   // Mover una cita = cancelar la que hay y abrir el calendario. Tiene que ir
@@ -8733,10 +8773,12 @@
     ];
     document.getElementById('np-detail-history').innerHTML = lines.map(l => '<div>'+l+'</div>').join('');
 
+    // TODAS sus citas, y se elige con la MISMA regla que usa el paciente.
+    // Antes era "la creada mas recientemente", que no siempre coincidia con
+    // la que el paciente veia — y entonces cada uno abria una sala distinta.
     const { data: apptRows } = await supabaseClient.from('appointments').select('*')
-      .eq('user_id', patient.user_id).eq('type', 'np_interview')
-      .order('created_at', { ascending: false }).limit(1);
-    const appt = (apptRows && apptRows[0]) || null;
+      .eq('user_id', patient.user_id).eq('type', 'np_interview');
+    const appt = elegirCitaParaSala(apptRows || []);
     const apptWrap = document.getElementById('np-detail-appt');
     npDetailCurrentTicket = appt ? appt.ticket_number : null;
     document.getElementById('np-video-wrap').style.display = 'none';
@@ -10094,6 +10136,26 @@
   // ella se iba el boton de Join meeting del paciente.
   //
   // apptIsToday() ya lo hacia bien. Esto es lo mismo, para todos los demas.
+  // ---- LA MISMA CITA PARA LOS DOS LADOS ----
+  // El paciente elegia su cita por FECHA (hoy/futura, si no la ultima viva) y
+  // la ficha del medico por "la creada mas recientemente". No siempre es la
+  // misma: si el medico agenda el seguimiento del mes que viene ANTES de
+  // marcar la de hoy como completa, la ficha abria la sala de octubre y el
+  // paciente la de hoy. Dos salas distintas = "el facetime no funciona".
+  // Ahora los dos preguntan aqui.
+  function elegirCitaParaSala(appts){
+    const hoy = hoyLocalISO();
+    const orden = (a,b) => (a.appointment_date + ' ' + (a.appointment_time || ''))
+                          .localeCompare(b.appointment_date + ' ' + (b.appointment_time || ''));
+    const vivas = (appts || [])
+      .filter(a => a && a.status !== 'cancelled' && a.status !== 'completed')
+      .sort(orden);
+    return vivas.find(a => a.appointment_date >= hoy)     // la de hoy o la proxima
+        || vivas[vivas.length - 1]                          // si no, la ultima viva
+        || (appts || []).filter(a => a && a.status !== 'cancelled').sort(orden).pop()  // si no, la ultima que hubo
+        || null;
+  }
+
   function hoyLocalISO(){
     const n = new Date();
     return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0')
