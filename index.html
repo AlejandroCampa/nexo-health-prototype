@@ -591,6 +591,31 @@
     max-height:88vh;overflow-y:auto;animation:nuviPop .4s var(--ease) both;
   }
   @keyframes nuviPop{from{opacity:0;transform:translateY(16px) scale(0.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+  /* ===== LA FICHA COMO PAGINA ENTERA =====
+     Con body.ficha-pagina, el modal de la ficha deja de ser una ventanita de
+     560px flotando sobre el dashboard y pasa a ser LA pagina: a lo ancho, sin
+     fondo oscuro, sin scroll interno, y con el video grande. Se activa cuando
+     la ficha se abre en su propia pestaña (?paciente=<id>). */
+  body.ficha-pagina #modal-np-patient{
+    position:static;display:block;background:var(--paper);padding:0;
+    backdrop-filter:none;-webkit-backdrop-filter:none;animation:none;
+  }
+  body.ficha-pagina #modal-np-patient .modal{
+    max-width:1180px !important;width:100%;margin:0 auto;border-radius:0;border:none;
+    box-shadow:none;max-height:none;overflow:visible;animation:none;
+    padding:36px clamp(20px,4vw,56px) 80px;
+  }
+  body.ficha-pagina #modal-np-patient .modal-close{display:none;}
+  body.ficha-pagina #np-video-shell{height:min(72vh,720px) !important;border-radius:16px;}
+  body.ficha-pagina #np-video-local{width:22% !important;height:auto !important;aspect-ratio:4/3;
+    max-width:300px;bottom:16px !important;right:16px !important;border-radius:10px !important;}
+  body.ficha-pagina #np-video-status{font-size:16px !important;}
+  body.ficha-pagina #np-dashboard, body.ficha-pagina #dashboard,
+  body.ficha-pagina #marketing-content{display:none !important;}
+  body.ficha-pagina .ficha-barra{
+    position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line);
+    padding:12px clamp(20px,4vw,56px);display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
   .modal-close{
     position:absolute;top:20px;right:20px;width:34px;height:34px;border-radius:50%;
     border:1px solid var(--line);background:var(--white);cursor:pointer;
@@ -2066,6 +2091,12 @@
 
 <!-- NP: PATIENT DETAIL PANEL -->
 <div class="modal-overlay" id="modal-np-patient" onclick="closeOnOverlay(event,'np-patient')">
+  <!-- Solo se ve en modo pagina (body.ficha-pagina). -->
+  <div class="ficha-barra" id="ficha-barra" style="display:none;">
+    <div style="font-size:13px;color:var(--ink-soft);">Nuvi Clinic · patient chart</div>
+    <button type="button" class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;"
+            onclick="cerrarFichaPagina()">← Back to dashboard</button>
+  </div>
   <div class="modal" style="max-width:560px;">
     <button class="modal-close" onclick="nuviCloseModal('np-patient')" aria-label="Close">✕</button>
     <span class="modal-eyebrow">Patient</span>
@@ -2945,7 +2976,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 21sep-1';
+  const NUVI_BUILD = 'build 21sep-2';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -6792,7 +6823,7 @@
   function openNotification(patientId, jumpTo){
     document.getElementById('notif-panel').style.display = 'none';
     if(!patientId) return;
-    openNPPatientDetail(patientId);
+    abrirFichaPaciente(patientId);
     if(!jumpTo) return;
     // La ficha se llena con varios awaits, así que el destino puede no estar
     // pintado todavía. Se espera a que aparezca en vez de adivinar un delay.
@@ -7680,7 +7711,7 @@
             + 'rgba(217,140,43,0.45);color:#8A5A12;margin-left:7px;font-size:10px;padding:1px 7px;'
             + 'vertical-align:middle;">Ends in ' + m.dias + 'd</span>'
           : '';
-      return '<div class="np-row" onclick="openNPPatientDetail(\''+p.id+'\')">'
+      return '<div class="np-row" onclick="abrirFichaPaciente(\''+p.id+'\')">'
         + '<div><div class="name">' + (p.full_name || p.email || 'Unknown patient') + chip + '</div>'
         // "Plan" fuera: solo hay un plan, asi que decirlo en cada fila no
         // informaba de nada y encima salia vacio.
@@ -7764,7 +7795,7 @@
             + 'padding:1px 6px;">Anterior</span>';
         const ficha = fichaDe(f.userId);
         return '<div class="np-row"' + (ficha
-                 ? ' onclick="openNPPatientDetail(\'' + ficha + '\')"' : ' style="cursor:default;"')
+                 ? ' onclick="abrirFichaPaciente(\'' + ficha + '\')"' : ' style="cursor:default;"')
           + '><div><div class="name">' + escapeHtml(nombreDe(f.userId)) + anterior + '</div>'
           + '<div class="meta">' + escapeHtml(f.med || '') + ' · ' + escapeHtml(f.dose || '')
           + (f.precio ? ' · $' + f.precio : '') + '</div>'
@@ -7784,7 +7815,7 @@
     wrap.innerHTML = appts.map(a => {
       const patient = npPatients.find(p => p.user_id === a.user_id);
       const label = patient ? (patient.full_name || patient.email) : 'Patient';
-      return '<div class="np-row" onclick="openNPPatientDetail(\''+(patient ? patient.id : '')+'\')">'
+      return '<div class="np-row" onclick="abrirFichaPaciente(\''+(patient ? patient.id : '')+'\')">'
         + '<div><div class="name">' + label + '</div><div class="meta">Ticket ' + a.ticket_number + '</div></div>'
         + '<div class="meta">' + a.appointment_date + ' · ' + a.appointment_time + '</div></div>';
     }).join('');
@@ -8813,7 +8844,10 @@
         + '<div style="display:flex;gap:8px;margin-top:8px;">'
         // Pestaña nueva, pantalla completa. La ficha se queda abierta detras
         // para leer el expediente mientras habla.
-        + '<button class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:13px;" onclick="abrirSala(\''+appt.ticket_number+'\')">Join meeting</button>'
+        // En la ficha-pagina el video ya es grande y esta AQUI: se une en la
+        // misma pantalla. Solo si alguien abre la ficha como modal (no deberia)
+        // se manda a la sala aparte.
+        + '<button class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npJoin(\''+appt.ticket_number+'\')">Join meeting</button>'
         + (appt.status === 'scheduled'
             ? '<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npMarkInterviewComplete(\''+appt.id+'\')">Complete interview</button>'
             // Deshacer un "completar" accidental. Sin esto, un click por error
@@ -10372,6 +10406,63 @@
   }
 
 
+  // ---- LA FICHA EN SU PROPIA PESTAÑA ------------------------------------------
+  // Cada paciente se abre en una pestaña aparte, a lo ancho, con el video
+  // grande DENTRO de la ficha: el medico ve al paciente y el expediente en la
+  // misma pantalla, sin ventanitas. Es lo que pidio la clinica y es lo que
+  // tiene sentido en una consulta.
+  let fichaEnPagina = false;
+
+  function abrirFichaPaciente(patientId){
+    if(!patientId) return;
+    const url = window.location.pathname + '?paciente=' + encodeURIComponent(patientId);
+    const w = window.open(url, 'nuvi-ficha-' + patientId);   // una pestaña por paciente
+    if(!w) window.location.href = url;                        // bloqueador de popups
+  }
+
+  function fichaPedida(){
+    try{
+      const p = new URLSearchParams(window.location.search).get('paciente');
+      // Son ids de Supabase (uuid o "id-..."): letras, numeros y guiones.
+      return (p && /^[A-Za-z0-9-]{4,64}$/.test(p)) ? p : null;
+    }catch(e){ return null; }
+  }
+
+  async function mostrarFichaPagina(user, staffRow, patientId){
+    fichaEnPagina = true;
+    document.body.classList.add('ficha-pagina');
+    const barra = document.getElementById('ficha-barra');
+    if(barra) barra.style.display = 'flex';
+    // El dashboard se monta igual (carga npPatients y permisos), pero queda
+    // oculto por CSS: solo se ve la ficha.
+    await showNPDashboard(user, staffRow);
+    await openNPPatientDetail(patientId);
+    document.body.style.overflow = '';   // openNPPatientDetail lo pone en hidden: aqui hay que poder bajar
+    const p = npPatients.find(x => x.id === patientId);
+    document.title = (p && p.full_name ? p.full_name : 'Patient') + ' · Nuvi Clinic';
+    window.scrollTo(0, 0);
+  }
+
+  function cerrarFichaPagina(){
+    // Si hay llamada, se cierra limpio.
+    const videoWrap = document.getElementById('np-video-wrap');
+    if(videoWrap && videoWrap.style.display !== 'none'){
+      leaveVideoCall('np-video-local', 'np-video-remote', 'np-video-status');
+    }
+    window.close();   // esta pestaña la abrio un script: se puede cerrar
+    setTimeout(function(){ window.location.href = window.location.pathname; }, 150);
+  }
+
+  function npJoin(ticket){
+    if(fichaEnPagina){
+      document.getElementById('np-video-wrap').style.display = 'block';
+      joinVideoCall(ticket, 'staff', 'np-video-local', 'np-video-remote', 'np-video-status');
+      document.getElementById('np-video-wrap').scrollIntoView({ behavior:'smooth', block:'start' });
+    } else {
+      abrirSala(ticket);
+    }
+  }
+
   // ---- La sala en su propia pestaña -----------------------------------------
   function abrirSala(ticket){
     if(!ticket) return;
@@ -10423,6 +10514,11 @@
       // ?sala=<ticket>: esta pestaña es SOLO la videollamada, a pantalla
       // completa. El rol sale de la tabla staff, no de la URL — un paciente
       // que escriba &rol=staff sigue entrando como paciente.
+      const fichaId = fichaPedida();
+      if(fichaId && staffRow){
+        mostrarFichaPagina(user, staffRow, fichaId);
+        return;
+      }
       const sala = salaPedida();
       if(sala){
         currentUser = user;
