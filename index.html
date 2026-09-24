@@ -73,6 +73,59 @@
      de escribir. Una peticion menos al cargar. -->
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* Si el CDN principal no cargó (red lenta, DNS del móvil, jsdelivr caído),
+   se intenta un segundo CDN AQUÍ MISMO, durante el parseo. Esto pasó de
+   verdad: una paciente entró un sábado desde su teléfono y la página quedó
+   muerta — sin supabase-js, el script grande revienta en createClient y
+   ningún botón responde. document.write en parseo es el patrón clásico de
+   fallback de librería (mismo truco que el de jQuery local). */
+if(!window.supabase){
+  document.write('<scr' + 'ipt src="https://unpkg.com/@supabase/supabase-js@2"></scr' + 'ipt>');
+}
+</script>
+<script>
+/* ===== VIGILANTE DE ARRANQUE (ES5 a propósito) ==========================
+   Si el script principal muere ANTES de terminar de arrancar — un CDN que
+   no llegó, un error fatal, un navegador viejo — el paciente ve una página
+   congelada donde ningún botón hace nada, y se va. Esto es lo que pasó el
+   sábado. Este script es minúsculo y en ES5 puro para que corra hasta en
+   el navegador más viejo, y enseña un aviso amable con botón de recarga
+   en vez de silencio. El script principal marca window.__nuviBooted=true
+   en su última línea; si a los 8 segundos no lo hizo, algo está roto. */
+(function(){
+  function pantalla(msg){
+    if(window.__nuviBooted) return;
+    if(document.getElementById('nuvi-fallo-carga')) return;
+    var d = document.createElement('div');
+    d.id = 'nuvi-fallo-carga';
+    d.setAttribute('style','position:fixed;left:0;top:0;right:0;bottom:0;z-index:9999;'
+      + 'background:#F7F5F0;color:#0F2336;font-family:Arial,Helvetica,sans-serif;'
+      + 'display:block;overflow:auto;padding:40px 24px;text-align:center;');
+    d.innerHTML = '<div style="max-width:420px;margin:60px auto 0;">'
+      + '<div style="font-size:40px;margin-bottom:14px;">📶</div>'
+      + '<h2 style="font-size:20px;margin:0 0 10px;">' + (msg || 'We couldn\'t load the page') + '</h2>'
+      + '<p style="font-size:14.5px;line-height:1.6;color:#43596B;margin:0 0 8px;">'
+      + 'It may be your connection. Check your signal and tap the button below to try again.</p>'
+      + '<p style="font-size:14.5px;line-height:1.6;color:#43596B;margin:0 0 22px;">'
+      + 'Puede ser la conexión. Verifica tu señal y toca el botón para intentar de nuevo.</p>'
+      + '<button onclick="window.location.reload()" style="background:#0F2336;color:#fff;border:none;'
+      + 'border-radius:10px;padding:14px 30px;font-size:15px;cursor:pointer;">Reload · Recargar</button>'
+      + '<p style="font-size:13px;color:#43596B;margin-top:22px;">Still stuck? Email us · ¿Sigue igual? Escríbenos:<br>'
+      + '<a href="mailto:info@nuviclinic.com" style="color:#0F2336;font-weight:bold;">info@nuviclinic.com</a></p>'
+      + '</div>';
+    (document.body || document.documentElement).appendChild(d);
+  }
+  window.__nuviMuestraErrorCarga = pantalla;
+  /* Un error fatal ANTES de arrancar = página muerta. Se avisa en cuanto
+     ocurre, sin esperar los 8 segundos. Los errores después del arranque
+     no tocan esto — la página ya funciona y un error puntual no la mata. */
+  window.addEventListener('error', function(){
+    if(!window.__nuviBooted) setTimeout(function(){ pantalla(); }, 1500);
+  });
+  setTimeout(function(){ pantalla(); }, 8000);
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   /* =========================================================================
@@ -591,31 +644,124 @@
     max-height:88vh;overflow-y:auto;animation:nuviPop .4s var(--ease) both;
   }
   @keyframes nuviPop{from{opacity:0;transform:translateY(16px) scale(0.98);}to{opacity:1;transform:translateY(0) scale(1);}}
-  /* ===== LA FICHA COMO PAGINA ENTERA =====
-     Con body.ficha-pagina, el modal de la ficha deja de ser una ventanita de
-     560px flotando sobre el dashboard y CUBRE LA PANTALLA ENTERA: a lo ancho,
-     sin fondo oscuro, con su propio scroll, y con el video grande. Misma URL,
-     misma pestaña: se cierra con "Back to dashboard" y vuelves donde estabas. */
+  /* ===== LA FICHA COMO EXPEDIENTE (EMR) EN SU PROPIA PESTAÑA =====
+     El doctor lo pidió así: la ficha de cada paciente se abre en un TAB
+     APARTE del navegador y se lee como un récord médico electrónico, no
+     como un formulario largo. Con body.ficha-pagina el "modal" cubre la
+     pantalla entera y se reorganiza en dos columnas: a la izquierda lo
+     clínico (intake, video, notas, receta) y a la derecha el rail de
+     estado (cita, membresía, labs, mensajes) — la anatomía de un EMR. */
   body.ficha-pagina #modal-np-patient{
     position:fixed;inset:0;display:block;background:var(--paper);padding:0;
     overflow-y:auto;z-index:300;
     backdrop-filter:none;-webkit-backdrop-filter:none;animation:none;
   }
   body.ficha-pagina #modal-np-patient .modal{
-    max-width:1180px !important;width:100%;margin:0 auto;border-radius:0;border:none;
+    max-width:1320px !important;width:100%;margin:0 auto;border-radius:0;border:none;
     box-shadow:none;max-height:none;overflow:visible;animation:none;
-    padding:36px clamp(20px,4vw,56px) 80px;
+    padding:26px clamp(18px,3vw,48px) 90px;background:transparent;
   }
   body.ficha-pagina #modal-np-patient .modal-close{display:none;}
-  body.ficha-pagina #np-video-shell{height:min(72vh,720px) !important;border-radius:16px;}
+  /* En la pestaña-expediente el encabezado viejo del modal sobra: lo
+     reemplaza la banda de paciente estilo EMR (#ficha-header). */
+  body.ficha-pagina #modal-np-patient .modal-eyebrow,
+  body.ficha-pagina #np-detail-name,
+  body.ficha-pagina #np-detail-email{display:none;}
+  body.ficha-pagina #np-video-shell{height:min(62vh,640px) !important;border-radius:16px;}
   body.ficha-pagina #np-video-local{width:22% !important;height:auto !important;aspect-ratio:4/3;
     max-width:300px;bottom:16px !important;right:16px !important;border-radius:10px !important;}
   body.ficha-pagina #np-video-status{font-size:16px !important;}
   body.ficha-pagina{overflow:hidden;}   /* solo baja la ficha, no lo de detras */
   body.ficha-pagina .ficha-barra{
-    position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line);
-    padding:12px clamp(20px,4vw,56px);display:flex;align-items:center;justify-content:space-between;gap:12px;
+    position:sticky;top:0;z-index:5;background:rgba(247,245,240,0.92);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    padding:10px clamp(18px,3vw,48px);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
   }
+  .ficha-barra-nav{display:flex;gap:2px;flex-wrap:wrap;}
+  .ficha-barra-nav a{
+    font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--ink-soft);
+    padding:7px 12px;border-radius:100px;text-decoration:none;cursor:pointer;
+    transition:background .15s var(--ease),color .15s var(--ease);
+  }
+  .ficha-barra-nav a:hover{background:rgba(15,35,54,0.07);color:var(--ink);}
+  /* --- Banda de paciente (estilo EMR) --- */
+  .ficha-header{display:none;}
+  body.ficha-pagina .ficha-header{
+    display:block;background:var(--white);border:1px solid var(--line);border-radius:16px;
+    padding:22px 26px;margin-bottom:22px;box-shadow:var(--shadow-sm);
+  }
+  .ficha-header .fh-top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .ficha-header .fh-avatar{
+    width:52px;height:52px;border-radius:50%;flex:none;
+    background:var(--brand);color:var(--brand-ink);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:0.02em;
+  }
+  .ficha-header .fh-nombre{font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:-0.02em;line-height:1.1;}
+  .ficha-header .fh-email{font-family:var(--sans);font-size:13px;color:var(--ink-soft);margin-top:2px;}
+  .ficha-header .fh-pills{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
+  .fh-pill{
+    font-family:var(--sans);font-size:11.5px;font-weight:700;letter-spacing:0.03em;
+    padding:6px 12px;border-radius:100px;white-space:nowrap;
+  }
+  .fh-pill.ok{background:rgba(79,122,100,0.14);color:#2F5C46;border:1px solid rgba(79,122,100,0.4);}
+  .fh-pill.warn{background:rgba(217,140,43,0.14);color:#8A5A12;border:1px solid rgba(217,140,43,0.45);}
+  .fh-pill.bad{background:rgba(196,60,60,0.10);color:#8C2F2F;border:1px solid rgba(196,60,60,0.35);}
+  .ficha-header .fh-datos{
+    display:flex;gap:0;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--line);
+  }
+  .fh-dato{padding:0 22px;border-left:1px solid var(--line);min-width:90px;}
+  .fh-dato:first-child{padding-left:0;border-left:none;}
+  .fh-dato .k{font-family:var(--sans);font-size:10.5px;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-soft);margin-bottom:3px;}
+  .fh-dato .v{font-family:var(--sans);font-size:14.5px;font-weight:600;color:var(--ink);}
+  /* --- Dos columnas de EMR --- */
+  .ficha-cols,.ficha-main,.ficha-side{display:contents;}
+  body.ficha-pagina .ficha-cols{
+    display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:22px;align-items:start;
+  }
+  body.ficha-pagina .ficha-main,body.ficha-pagina .ficha-side{display:block;min-width:0;}
+  /* --- Cada sección como tarjeta de expediente --- */
+  .fsec{display:contents;}
+  body.ficha-pagina .fsec{
+    display:block;background:var(--white);border:1px solid var(--line);border-radius:16px;
+    padding:20px 24px;margin-bottom:18px;box-shadow:var(--shadow-sm);scroll-margin-top:76px;
+  }
+  body.ficha-pagina .fsec > .form-section-title:first-child{margin-top:0;}
+  body.ficha-pagina .fsec .form-section-title{
+    font-family:var(--sans);font-size:11px;font-weight:800;text-transform:uppercase;
+    letter-spacing:0.1em;color:var(--ink-soft);
+    padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:14px;
+  }
+  body.ficha-pagina #np-detail-history{background:transparent;padding:0;margin-bottom:0;}
+  body.ficha-pagina #np-detail-history > div{
+    padding:7px 0;border-bottom:1px dashed rgba(15,35,54,0.10);
+  }
+  body.ficha-pagina #np-detail-history > div:last-child{border-bottom:none;}
+  @media(max-width:980px){
+    body.ficha-pagina .ficha-cols{grid-template-columns:1fr;}
+    .ficha-header .fh-pills{margin-left:0;}
+    .fh-dato{padding:0 14px;min-width:74px;}
+    body.ficha-pagina .fsec{padding:16px 16px;}
+  }
+  /* El video en la pestaña-expediente también es una tarjeta del EMR. */
+  body.ficha-pagina #np-video-wrap{
+    background:var(--white);border:1px solid var(--line);border-radius:16px;
+    padding:14px;margin-bottom:18px;box-shadow:var(--shadow-sm);
+  }
+  /* Cortina mientras la pestaña-expediente termina de cargar la sesión y
+     los datos: sin esto se ve el dashboard un segundo antes de la ficha. */
+  #ficha-cargando{
+    position:fixed;inset:0;z-index:400;background:var(--paper);display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:14px;
+    font-family:var(--sans);font-size:14px;color:var(--ink-soft);
+  }
+  body.ficha-cargando #ficha-cargando{display:flex;}
+  #ficha-cargando .spin{
+    width:26px;height:26px;border-radius:50%;border:3px solid var(--line);
+    border-top-color:var(--ink);animation:fichaSpin .8s linear infinite;
+  }
+  @keyframes fichaSpin{to{transform:rotate(360deg);}}
   .modal-close{
     position:absolute;top:20px;right:20px;width:34px;height:34px;border-radius:50%;
     border:1px solid var(--line);background:var(--white);cursor:pointer;
@@ -687,6 +833,12 @@
   .np-row:hover{background:var(--paper-warm);padding-left:14px;}
   .np-row .name{font-weight:600;font-size:14.5px;}
   .np-row .meta{font-family:var(--sans);font-size:12px;color:var(--ink-soft);}
+  .np-avatar{
+    width:36px;height:36px;border-radius:50%;flex:none;
+    background:rgba(1,224,254,0.18);border:1px solid rgba(1,224,254,0.5);
+    color:var(--ink);display:flex;align-items:center;justify-content:center;
+    font-family:var(--sans);font-size:12.5px;font-weight:800;letter-spacing:0.02em;
+  }
   .np-empty{font-size:13.5px;color:var(--ink-soft);opacity:0.7;padding:10px 6px;}
   .marketing-page.hidden-for-dashboard{display:none;}
   .dash-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:18px;margin-bottom:44px;padding-bottom:28px;border-bottom:1px solid var(--line);}
@@ -834,6 +986,53 @@
   .cal-day.selected{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);}
   .cal-day.today{border-color:var(--amber);font-weight:700;color:var(--amber-deep);}
 
+  /* ---- Calendario del equipo (tab Schedule) ----
+     Celdas altas con las citas puestas en su día, como cualquier EMR o
+     plataforma de telemedicina: el mes entero de un vistazo. */
+  .staff-cal{gap:6px;}
+  .staff-cal .cal-day{
+    aspect-ratio:auto;min-height:84px;align-items:stretch;justify-content:flex-start;
+    flex-direction:column;gap:3px;padding:8px 8px 6px;overflow:hidden;
+  }
+  .staff-cal .cal-day .dnum{font-size:12.5px;font-weight:600;opacity:0.7;line-height:1;}
+  .staff-cal .cal-day.today .dnum{opacity:1;}
+  .staff-cal .cal-day.past{background:var(--paper-warm);}
+  .staff-cal .cal-day.past .cita-chip{opacity:0.55;}
+  .staff-cal .cal-day:not(.empty):hover{border-color:var(--amber);background:rgba(63,151,134,0.07);}
+  .staff-cal .cal-day.selected{background:var(--brand);border-color:var(--brand);}
+  .staff-cal .cal-day.selected .dnum{color:var(--brand-ink);opacity:1;}
+  .cita-chip{
+    font-family:var(--sans);font-size:10.5px;font-weight:600;line-height:1.35;
+    background:rgba(1,224,254,0.14);border:1px solid rgba(1,224,254,0.55);
+    color:var(--ink);border-radius:6px;padding:2px 6px;max-width:100%;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;text-align:left;
+  }
+  .cita-chip.done{background:rgba(79,122,100,0.12);border-color:rgba(79,122,100,0.4);color:#2F5C46;}
+  .staff-cal .cal-day.selected .cita-chip{background:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.55);}
+  .cita-mas{font-family:var(--sans);font-size:10px;color:var(--ink-soft);text-align:left;}
+  .cita-cnt{display:none;}
+  @media(max-width:700px){
+    .staff-cal .cal-day{min-height:56px;padding:6px;}
+    .staff-cal .cita-chip,.staff-cal .cita-mas{display:none;}
+    .cita-cnt{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:18px;height:18px;border-radius:9px;padding:0 5px;
+      background:var(--ink);color:var(--paper);font-family:var(--sans);
+      font-size:10.5px;font-weight:700;
+    }
+    .staff-cal .cal-day.selected .cita-cnt{background:var(--brand-ink);color:var(--brand);}
+  }
+  .cita-dia-row{
+    display:flex;align-items:center;gap:14px;padding:12px 14px;
+    border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--white);
+  }
+  .cita-dia-row .hora{
+    font-family:var(--sans);font-weight:700;font-size:13.5px;white-space:nowrap;min-width:74px;
+  }
+  .cita-dia-row .quien{flex:1;min-width:0;}
+  .cita-dia-row .quien .nom{font-weight:600;font-size:14.5px;}
+  .cita-dia-row .quien .det{font-family:var(--sans);font-size:12px;color:var(--ink-soft);}
+
 
   /* ---- people / member stories ---- */
   .hero-cred{
@@ -882,6 +1081,10 @@
       <a href="#faq">FAQ</a>
       <a href="#membership">Membership</a>
       <a href="#trust">Providers</a>
+      <!-- El email a la vista en el nav: un paciente con dudas escribe al
+           momento en vez de perderse y no coger el servicio. -->
+      <a href="mailto:info@nuviclinic.com" class="notranslate" translate="no"
+         style="font-weight:600;">info@nuviclinic.com</a>
     </div>
     <div class="navcta" id="nav-cta">
       <a class="btn btn-outline" href="javascript:void(0)" onclick="nuviOpenModal('login')">Log in</a>
@@ -910,6 +1113,12 @@
           <a class="btn btn-outline" href="#protocols">See treatments</a>
         </div>
         <p class="hero-note">Membership is $50 your first month, then $70 a month. If you qualify for treatment, medication is an added cost, starting at $45 per weekly dose (tirzepatide 2.5 mg).</p>
+        <!-- Contacto directo, arriba del todo. Pedido del doctor: que quien
+             tenga una duda pueda escribir YA, sin buscar el footer. -->
+        <p class="hero-note" style="margin-top:6px;">Questions before you start? Email
+          <a href="mailto:info@nuviclinic.com" class="notranslate" translate="no"
+             style="color:var(--ink);font-weight:700;">info@nuviclinic.com</a>
+          — a real person answers.</p>
         <!-- El stack de avatares se quitó: las fotos eran generadas y se notaba.
              Para una clínica que es PROPIEDAD de sus médicos, la señal de
              confianza no son caras anónimas de stock — es quién firma la receta.
@@ -1197,6 +1406,10 @@
               <div class="ticket-number" id="ticket-number-display">—</div>
               <div class="mono" style="font-size:13px;" id="ticket-datetime-display">—</div>
             </div>
+            <!-- El mes de la cita con su día marcado, como cualquier
+                 plataforma de telemedicina. Solo lectura: para cambiarla
+                 está el botón de reprogramar de abajo. -->
+            <div id="patient-mini-cal" style="margin:16px 0;"></div>
             <div id="appt-passed-note" style="display:none;background:rgba(217,140,43,0.14);
                  border:1px solid rgba(217,140,43,0.45);border-radius:12px;padding:14px 16px;
                  margin-bottom:16px;font-size:13.5px;color:#8A5A12;">
@@ -1991,6 +2204,27 @@
     </div>
 
     <div class="dash-panel" id="nppanel-schedule" role="tabpanel" aria-labelledby="nptab-schedule" hidden>
+      <!-- CALENDARIO DE CITAS DEL EQUIPO. El doctor pidió "un calendario más
+           organizado con los pacientes", como las plataformas de telemedicina:
+           vista mensual con las citas puestas en su día, clic en un día para
+           ver el detalle, clic en la cita para abrir el expediente. -->
+      <div class="dash-grid" style="grid-template-columns:1fr;margin-bottom:22px;">
+        <div class="dash-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+            <h3 style="margin:0;">Appointment calendar</h3>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="staffCalShiftMonth(-1)">←</button>
+              <div id="staff-cal-month-label" class="notranslate" translate="no"
+                   style="font-family:var(--display);font-size:16px;min-width:150px;text-align:center;"></div>
+              <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="staffCalShiftMonth(1)">→</button>
+              <button type="button" class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="staffCalHoy()">Today</button>
+            </div>
+          </div>
+          <div class="cal-weekday-row" id="staff-cal-weekdays"></div>
+          <div class="cal-grid staff-cal" id="staff-cal"></div>
+          <div id="staff-cal-day-detail" style="margin-top:18px;"></div>
+        </div>
+      </div>
       <div class="dash-grid" style="grid-template-columns:1fr;margin-bottom:22px;">
         <div class="dash-card">
           <h3 style="margin-bottom:14px;">Today's & upcoming interviews</h3>
@@ -2093,7 +2327,16 @@
 <div class="modal-overlay" id="modal-np-patient" onclick="closeOnOverlay(event,'np-patient')">
   <!-- Solo se ve en modo pagina (body.ficha-pagina). -->
   <div class="ficha-barra" id="ficha-barra" style="display:none;">
-    <div style="font-size:13px;color:var(--ink-soft);">Nuvi Clinic · patient chart</div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;">Nuvi Clinic
+      <span style="font-weight:400;color:var(--ink-soft);">· Patient chart</span></div>
+    <!-- Navegación de secciones, como la barra lateral de un EMR. -->
+    <div class="ficha-barra-nav">
+      <a onclick="fichaIrA('fsec-intake')">Chart</a>
+      <a onclick="fichaIrA('fsec-cita')">Visit</a>
+      <a onclick="fichaIrA('fsec-records')">Records</a>
+      <a onclick="fichaIrA('fsec-approve')">Prescription</a>
+      <a onclick="fichaIrA('fsec-mensajes')">Messages</a>
+    </div>
     <button type="button" class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;"
             onclick="cerrarFichaPagina()">← Back to dashboard</button>
   </div>
@@ -2103,12 +2346,13 @@
     <h3 id="np-detail-name">—</h3>
     <p class="modal-sub" id="np-detail-email">—</p>
 
-    <div style="background:var(--paper);border-radius:12px;padding:16px;margin-bottom:16px;font-size:13.5px;line-height:1.7;" id="np-detail-history"></div>
+    <!-- Banda de paciente estilo EMR: quién es, sus números clave y su
+         estado, de un vistazo, antes de leer nada más. La pinta
+         pintarFichaHeader() con los mismos datos de siempre. -->
+    <div class="ficha-header" id="ficha-header"></div>
 
-    <div id="np-detail-appt" style="margin-bottom:16px;"></div>
-    <!-- La proxima cita la anota el clinico durante la consulta, aqui mismo.
-         El paciente ya no coordina seguimientos. -->
-    <div id="np-proxima-cita" style="margin-bottom:16px;"></div>
+    <div class="ficha-cols">
+    <div class="ficha-main">
 
     <div id="np-video-wrap" style="display:none;margin-bottom:16px;">
       <div class="video-shell" id="np-video-shell" style="position:relative;height:220px;">
@@ -2119,28 +2363,16 @@
       <button class="btn btn-primary" style="width:100%;padding:12px 14px;font-size:14px;margin-top:10px;background:#B23A3A;" onclick="leaveVideoCall('np-video-local','np-video-remote','np-video-status');document.getElementById('np-video-wrap').style.display='none';">✕ End meeting</button>
     </div>
 
-    <div id="np-detail-rx-requests" style="margin-bottom:16px;"></div>
+    <div class="fsec" id="fsec-intake">
+      <div class="form-section-title">Intake &amp; health history</div>
+      <div style="background:var(--paper);border-radius:12px;padding:16px;margin-bottom:16px;font-size:13.5px;line-height:1.7;" id="np-detail-history"></div>
+    </div>
 
-    <div class="form-section-title">Membership</div>
-    <div id="np-payment-banner" style="border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:14px;"></div>
-    <div id="np-eval-tracker" style="border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:14px;"></div>
+    <div class="fsec" id="fsec-rx-requests">
+      <div id="np-detail-rx-requests" style="margin-bottom:16px;"></div>
+    </div>
 
-    <details id="np-followup" style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:16px;">
-      <summary style="cursor:pointer;font-weight:600;font-size:13.5px;">+ Book this patient's next evaluation</summary>
-      <p style="font-size:12.5px;color:var(--ink-soft);margin:10px 0 12px;">Schedule it before they leave the call — patients who leave without a booked follow-up are the ones who lapse.</p>
-      <div class="two-col">
-        <div class="field"><label>Date</label><input id="fu-date" type="date" onchange="loadFollowupSlots()"></div>
-        <div class="field"><label>Time</label><select id="fu-time" class="notranslate" translate="no"><option value="">Pick a date first</option></select></div>
-      </div>
-      <button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;" onclick="bookFollowup()">Book evaluation</button>
-      <div id="fu-msg" style="font-size:12.5px;margin-top:10px;"></div>
-    </details>
-    <div id="np-membership-status" style="font-size:13.5px;margin-bottom:10px;"></div>
-    <button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13px;border-color:#B23A3A;color:#B23A3A;margin-bottom:20px;" onclick="npCancelMembership()">Cancel membership — medically ineligible</button>
-
-    <div class="form-section-title">Labs &amp; documents <span style="font-weight:400;color:rgba(15,35,54,0.63);">(uploaded by the patient)</span></div>
-    <div id="np-labs-list" style="margin-bottom:20px;"></div>
-
+    <div class="fsec" id="fsec-records">
     <div class="form-section-title">Progress note <span style="font-weight:400;color:rgba(15,35,54,0.63);">(signed clinical documentation)</span></div>
     <div id="np-records-list" style="margin-bottom:14px;"></div>
 
@@ -2181,14 +2413,18 @@
       </div>
       <p style="font-size:12px;color:rgba(15,35,54,0.66);margin-top:10px;">A signed record cannot be edited — corrections are made by adding an amendment.</p>
     </details>
+    </div><!-- /fsec-records -->
 
+    <div class="fsec" id="fsec-notes">
     <div class="form-section-title">Clinical notes <span style="font-weight:400;color:rgba(15,35,54,0.63);">(staff only — never visible to patient)</span></div>
     <div id="np-clinical-notes-list" style="max-height:220px;overflow-y:auto;margin-bottom:12px;"></div>
     <div class="field"><label for="np-new-note">Add a note</label>
       <textarea id="np-new-note" rows="3" placeholder="e.g. discussed dose tolerance, plan to reassess at next visit..." style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;"></textarea>
     </div>
     <button class="btn btn-outline" style="width:auto;padding:9px 18px;margin-bottom:20px;" onclick="npAddClinicalNote()">Add note</button>
+    </div><!-- /fsec-notes -->
 
+    <div class="fsec" id="fsec-approve">
     <div class="form-section-title">Approve prescription</div>
     <div class="two-col">
       <div class="field"><label>Medication</label>
@@ -2204,15 +2440,56 @@
     </div>
     <div id="np-price-preview" style="font-family:var(--sans);font-size:13px;color:rgba(15,35,54,0.72);margin:6px 0 14px;"></div>
     <button class="btn btn-primary" style="width:auto;padding:11px 22px;" onclick="npApprovePrescription()">Approve prescription</button>
+    </div><!-- /fsec-approve -->
 
+    </div><!-- /ficha-main -->
+    <aside class="ficha-side">
+
+    <div class="fsec" id="fsec-cita">
+    <div id="np-detail-appt" style="margin-bottom:16px;"></div>
+    <!-- La proxima cita la anota el clinico durante la consulta, aqui mismo.
+         El paciente ya no coordina seguimientos. -->
+    <div id="np-proxima-cita" style="margin-bottom:16px;"></div>
+    <details id="np-followup" style="background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:16px;">
+      <summary style="cursor:pointer;font-weight:600;font-size:13.5px;">+ Book this patient's next evaluation</summary>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:10px 0 12px;">Schedule it before they leave the call — patients who leave without a booked follow-up are the ones who lapse.</p>
+      <div class="two-col">
+        <div class="field"><label>Date</label><input id="fu-date" type="date" onchange="loadFollowupSlots()"></div>
+        <div class="field"><label>Time</label><select id="fu-time" class="notranslate" translate="no"><option value="">Pick a date first</option></select></div>
+      </div>
+      <button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;" onclick="bookFollowup()">Book evaluation</button>
+      <div id="fu-msg" style="font-size:12.5px;margin-top:10px;"></div>
+    </details>
+    </div><!-- /fsec-cita -->
+
+    <div class="fsec" id="fsec-membership">
+    <div class="form-section-title">Membership</div>
+    <div id="np-payment-banner" style="border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:14px;"></div>
+    <div id="np-eval-tracker" style="border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:14px;"></div>
+    <div id="np-membership-status" style="font-size:13.5px;margin-bottom:10px;"></div>
+    <button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13px;border-color:#B23A3A;color:#B23A3A;margin-bottom:20px;" onclick="npCancelMembership()">Cancel membership — medically ineligible</button>
+    </div><!-- /fsec-membership -->
+
+    <div class="fsec" id="fsec-labs">
+    <div class="form-section-title">Labs &amp; documents <span style="font-weight:400;color:rgba(15,35,54,0.63);">(uploaded by the patient)</span></div>
+    <div id="np-labs-list" style="margin-bottom:20px;"></div>
+    </div><!-- /fsec-labs -->
+
+    <div class="fsec" id="fsec-mensajes">
     <div class="form-section-title">Message patient</div>
     <div id="np-message-thread" style="max-height:180px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;"></div>
     <div style="display:flex;gap:8px;">
       <input id="np-message-input" type="text" placeholder="Reply as care team..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-family:var(--sans);font-size:14px;">
       <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="npSendMessage()">Send</button>
     </div>
+    </div><!-- /fsec-mensajes -->
+
+    </aside><!-- /ficha-side -->
+    </div><!-- /ficha-cols -->
   </div>
 </div>
+<!-- Cortina de carga de la pestaña-expediente (ver CSS #ficha-cargando). -->
+<div id="ficha-cargando"><div class="spin"></div><div>Opening patient chart…</div></div>
 
 <section class="info-page" id="page-about">
   <div class="wrap" style="max-width:780px;">
@@ -2738,7 +3015,11 @@
   // flowType 'implicit' matches the hash-token style link Supabase emails by
   // default; leaving it unset can make the client expect a ?code= PKCE param
   // that never arrives, so nothing is ever parsed.
-  const supabaseClient = (SUPABASE_URL.startsWith('http'))
+  // window.supabase se comprueba PRIMERO: si los dos CDNs fallaron, antes
+  // esto tiraba ReferenceError y mataba el script entero — página muerta,
+  // ningún botón responde. Ahora queda null y el vigilante de arranque
+  // enseña el aviso de conexión en vez de una pantalla congelada.
+  const supabaseClient = (window.supabase && SUPABASE_URL.startsWith('http'))
     ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         auth: {
           detectSessionInUrl: true,
@@ -2748,6 +3029,12 @@
         }
       })
     : null;
+
+  // Sin supabase no hay nada que hacer: mejor decirlo de una vez con el
+  // aviso amable del vigilante que dejar que cada botón falle en silencio.
+  if(!supabaseClient && typeof window.__nuviMuestraErrorCarga === 'function'){
+    window.__nuviMuestraErrorCarga();
+  }
 
   // El medicamento se despacha en ciclos de 4 semanas. Un calendario mensual
   // deja 2–3 días sin cobertura cada mes, y eso se acumula. Por eso la
@@ -2951,7 +3238,7 @@
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 21sep-3';
+  const NUVI_BUILD = 'build 23sep-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -4586,6 +4873,7 @@
       { const td = document.getElementById('ticket-datetime-display');
         td.setAttribute('translate','no'); td.classList.add('notranslate');
         td.textContent = appt.appointment_date + ' · ' + appt.appointment_time; }
+      renderMiniCalPaciente(appt.appointment_date, appt.appointment_time);
       markPassedAppointment(appt.appointment_date, appt.appointment_time);
       pintarJoinStrip(appt);
     }
@@ -7626,6 +7914,11 @@
 
     renderNPAppointmentList(npAppts.filter(a => a.status === 'scheduled'));
     renderNPPatientList();          // repintar ya con las citas cargadas
+    // El calendario del equipo abre en el mes actual con HOY seleccionado:
+    // la pregunta diaria es "¿a quién veo hoy?", no un mes en blanco.
+    if(!staffCalSelectedDate) staffCalSelectedDate = hoyLocalISO();
+    renderStaffCalendar();
+    renderStaffCalDia(staffCalSelectedDate);
     await loadRecetasRecientes();
   }
 
@@ -7690,11 +7983,15 @@
             + 'rgba(217,140,43,0.45);color:#8A5A12;margin-left:7px;font-size:10px;padding:1px 7px;'
             + 'vertical-align:middle;">Ends in ' + m.dias + 'd</span>'
           : '';
+      const nombre = p.full_name || p.email || 'Unknown patient';
+      const iniciales = nombre.trim().split(/\s+/).slice(0,2).map(w => w.charAt(0)).join('').toUpperCase() || '?';
       return '<div class="np-row" onclick="abrirFichaPaciente(\''+p.id+'\')">'
-        + '<div><div class="name">' + (p.full_name || p.email || 'Unknown patient') + chip + '</div>'
+        + '<div style="display:flex;align-items:center;gap:12px;min-width:0;">'
+        + '<div class="np-avatar notranslate" translate="no">' + iniciales + '</div>'
+        + '<div style="min-width:0;"><div class="name">' + nombre + chip + '</div>'
         // "Plan" fuera: solo hay un plan, asi que decirlo en cada fila no
         // informaba de nada y encima salia vacio.
-        + '<div class="meta">' + (p.email || '') + ' · Objetivo: ' + (p.goal || '—') + '</div></div>'
+        + '<div class="meta">' + (p.email || '') + ' · Objetivo: ' + (p.goal || '—') + '</div></div></div>'
         + '<div class="meta"' + (etapa.urgente
               ? ' style="color:#8C2F2F;font-weight:700;"'
               : (etapa.alerta ? ' style="color:#8A5A12;font-weight:600;"' : ''))
@@ -7798,6 +8095,153 @@
         + '<div><div class="name">' + label + '</div><div class="meta">Ticket ' + a.ticket_number + '</div></div>'
         + '<div class="meta">' + a.appointment_date + ' · ' + a.appointment_time + '</div></div>';
     }).join('');
+  }
+
+  // ====== CALENDARIO MENSUAL DEL EQUIPO (tab Schedule) ======
+  // El doctor pidió ver las citas "en un calendario más organizado", como
+  // las plataformas de telemedicina: el mes con cada cita en su día, clic
+  // en un día para el detalle, y de ahí directo al expediente del paciente.
+  let staffCalViewDate = new Date();
+  let staffCalSelectedDate = null;
+
+  // '5:15 PM' → minutos desde medianoche, para ordenar la agenda del día.
+  function horaAMinutos(t){
+    const m = /(\d+):(\d+)\s*(AM|PM)?/i.exec(String(t || ''));
+    if(!m) return 0;
+    let h = +m[1]; const min = +m[2]; const ap = (m[3] || '').toUpperCase();
+    if(ap === 'PM' && h !== 12) h += 12;
+    if(ap === 'AM' && h === 12) h = 0;
+    return h * 60 + min;
+  }
+
+  function citasDelDia(dateValue){
+    return (npAppts || [])
+      .filter(a => a.appointment_date === dateValue && a.status !== 'cancelled')
+      .sort((a,b) => horaAMinutos(a.appointment_time) - horaAMinutos(b.appointment_time));
+  }
+
+  function staffCalShiftMonth(delta){
+    staffCalViewDate.setMonth(staffCalViewDate.getMonth() + delta);
+    renderStaffCalendar();
+  }
+
+  function staffCalHoy(){
+    staffCalViewDate = new Date();
+    staffCalSelectedDate = hoyLocalISO();
+    renderStaffCalendar();
+    renderStaffCalDia(staffCalSelectedDate);
+  }
+
+  function staffCalPick(dateValue){
+    staffCalSelectedDate = dateValue;
+    renderStaffCalendar();
+    renderStaffCalDia(dateValue);
+  }
+
+  function renderStaffCalendar(){
+    const grid = document.getElementById('staff-cal');
+    if(!grid) return;
+    const weekdayRow = document.getElementById('staff-cal-weekdays');
+    weekdayRow.innerHTML = ['S','M','T','W','T','F','S'].map(d => '<span>'+d+'</span>').join('');
+    document.getElementById('staff-cal-month-label').textContent =
+      staffCalViewDate.toLocaleDateString(undefined, { month:'long', year:'numeric' });
+
+    const hoyISO = hoyLocalISO();
+    const year = staffCalViewDate.getFullYear();
+    const month = staffCalViewDate.getMonth();
+    const startOffset = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    grid.innerHTML = '';
+    for(let i = 0; i < startOffset; i++){
+      const empty = document.createElement('div');
+      empty.className = 'cal-day empty';
+      grid.appendChild(empty);
+    }
+    for(let day = 1; day <= daysInMonth; day++){
+      const dateValue = year + '-' + String(month + 1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      const citas = citasDelDia(dateValue);
+      const cell = document.createElement('div');
+      cell.className = 'cal-day'
+        + (dateValue < hoyISO ? ' past' : '')
+        + (dateValue === hoyISO ? ' today' : '')
+        + (staffCalSelectedDate === dateValue ? ' selected' : '');
+      let html = '<span class="dnum">' + day + '</span>';
+      if(citas.length){
+        html += '<span class="cita-cnt">' + citas.length + '</span>';
+        citas.slice(0,2).forEach(a => {
+          const p = npPatients.find(x => x.user_id === a.user_id);
+          const nombre = p ? (p.full_name || p.email || 'Patient').split(/\s+/)[0] : 'Patient';
+          html += '<span class="cita-chip' + (a.status === 'completed' ? ' done' : '') + ' notranslate" translate="no">'
+            + escapeHtml(a.appointment_time) + ' · ' + escapeHtml(nombre) + '</span>';
+        });
+        if(citas.length > 2) html += '<span class="cita-mas">+' + (citas.length - 2) + ' more</span>';
+      }
+      cell.innerHTML = html;
+      cell.onclick = () => staffCalPick(dateValue);
+      grid.appendChild(cell);
+    }
+  }
+
+  function renderStaffCalDia(dateValue){
+    const det = document.getElementById('staff-cal-day-detail');
+    if(!det) return;
+    const citas = citasDelDia(dateValue);
+    const fechaLarga = new Date(dateValue + 'T12:00:00')
+      .toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
+    let html = '<div style="font-family:var(--sans);font-size:12px;text-transform:uppercase;'
+      + 'letter-spacing:0.06em;color:var(--ink-soft);margin-bottom:10px;">' + fechaLarga
+      + (citas.length ? ' · ' + citas.length + (citas.length === 1 ? ' appointment' : ' appointments') : '') + '</div>';
+    if(!citas.length){
+      html += '<p class="np-empty">No appointments this day.</p>';
+    } else {
+      html += citas.map(a => {
+        const p = npPatients.find(x => x.user_id === a.user_id);
+        const nombre = p ? (p.full_name || p.email || 'Patient') : 'Patient';
+        const hecha = a.status === 'completed';
+        return '<div class="cita-dia-row">'
+          + '<div class="hora notranslate" translate="no">' + escapeHtml(a.appointment_time) + '</div>'
+          + '<div class="quien"><div class="nom">' + escapeHtml(nombre) + '</div>'
+          +   '<div class="det">Ticket ' + escapeHtml(a.ticket_number || '—') + ' · '
+          +   (hecha ? '<span style="color:#2F5C46;font-weight:600;">completed</span>' : 'scheduled') + '</div></div>'
+          + (p ? '<button type="button" class="btn btn-outline" style="width:auto;padding:8px 14px;font-size:12.5px;" '
+               + 'onclick="abrirFichaPaciente(\'' + p.id + '\')">Open chart →</button>' : '')
+          + '</div>';
+      }).join('');
+    }
+    det.innerHTML = html;
+  }
+
+  // ====== MINI-CALENDARIO DEL PACIENTE ("You're booked") ======
+  // El mes de su cita con el día marcado. Solo lectura: da la orientación
+  // visual de "cuándo me toca" sin abrir la puerta a re-agendar por error.
+  function renderMiniCalPaciente(fechaISO, hora){
+    const wrap = document.getElementById('patient-mini-cal');
+    if(!wrap || !fechaISO) return;
+    const [y, m, d] = fechaISO.split('-').map(Number);
+    if(!y || !m || !d){ wrap.innerHTML = ''; return; }
+    const mesLabel = new Date(y, m - 1, 1).toLocaleDateString(undefined, { month:'long', year:'numeric' });
+    const startOffset = new Date(y, m - 1, 1).getDay();
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const hoyISO = hoyLocalISO();
+    let html = '<div style="border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--white);">'
+      + '<div class="notranslate" translate="no" style="font-family:var(--display);font-size:15px;margin-bottom:10px;">' + mesLabel + '</div>'
+      + '<div class="cal-weekday-row">' + ['S','M','T','W','T','F','S'].map(x => '<span>'+x+'</span>').join('') + '</div>'
+      + '<div class="cal-grid" style="gap:4px;">';
+    for(let i = 0; i < startOffset; i++) html += '<div class="cal-day empty" style="aspect-ratio:1;"></div>';
+    for(let day = 1; day <= daysInMonth; day++){
+      const iso = y + '-' + String(m).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      const esCita = (iso === fechaISO);
+      html += '<div class="cal-day' + (esCita ? ' selected' : '') + (iso === hoyISO ? ' today' : '')
+        + '" style="aspect-ratio:1;cursor:default;font-size:12px;'
+        + (esCita ? 'box-shadow:0 0 0 3px rgba(1,224,254,0.3);' : '') + '">' + day + '</div>';
+    }
+    html += '</div>'
+      + '<div style="font-family:var(--sans);font-size:12.5px;color:var(--ink-soft);margin-top:10px;">'
+      + 'Your evaluation: <b class="notranslate" translate="no" style="color:var(--ink);">'
+      + fechaISO + (hora ? ' · ' + escapeHtml(hora) : '') + '</b></div>'
+      + '</div>';
+    wrap.innerHTML = html;
   }
 
 
@@ -8694,6 +9138,52 @@
     }
   }
 
+  // ---- Banda de paciente del expediente (estilo EMR) -----------------------
+  // Lo primero que un clínico busca al abrir un chart: quién es, edad, BMI,
+  // y en qué estado está (pagó, firmó el consentimiento, tiene receta). Todo
+  // sale de datos que ya estaban en la ficha — aquí solo se ordenan arriba.
+  function pintarFichaHeader(p){
+    const el = document.getElementById('ficha-header');
+    if(!el || !p) return;
+    const nombre = p.full_name || p.email || 'Unknown patient';
+    const iniciales = nombre.trim().split(/\s+/).slice(0,2).map(w => w.charAt(0)).join('').toUpperCase() || '?';
+    const edad = p.date_of_birth
+      ? Math.floor((Date.now() - new Date(p.date_of_birth)) / 31557600000) : null;
+    const bmi = (p.weight_lbs && p.height_ft != null)
+      ? ((p.weight_lbs * 703) / Math.pow(p.height_ft * 12 + (p.height_in || 0), 2)).toFixed(1) : null;
+
+    const pills = [];
+    if(p.membership_cancelled)      pills.push('<span class="fh-pill bad">Membership cancelled</span>');
+    else if(p.paid)                 pills.push('<span class="fh-pill ok">Membership active</span>');
+    else                            pills.push('<span class="fh-pill warn">Not paid</span>');
+    pills.push(p.consent_glp1
+      ? '<span class="fh-pill ok">GLP-1 consent ✓</span>'
+      : '<span class="fh-pill bad">Consent NOT signed</span>');
+    if(p.approved_medication){
+      pills.push(p.purchased
+        ? '<span class="fh-pill ok">Rx paid</span>'
+        : '<span class="fh-pill warn">Rx approved · unpaid</span>');
+    }
+
+    const datos = [];
+    function dato(k,v){ if(v != null && v !== '' && v !== '—') datos.push('<div class="fh-dato"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>'); }
+    dato('DOB', p.date_of_birth ? escapeHtml(p.date_of_birth) + (edad != null ? ' · ' + edad + 'y' : '') : null);
+    dato('Height', p.height_ft != null ? p.height_ft + '′' + (p.height_in || 0) + '″' : null);
+    dato('Weight', p.weight_lbs ? p.weight_lbs + ' lbs' : null);
+    dato('BMI', bmi);
+    dato('Goal', p.target_weight_lbs ? p.target_weight_lbs + ' lbs' : null);
+    dato('Plan', p.plan ? escapeHtml(p.plan) : null);
+
+    el.innerHTML =
+      '<div class="fh-top">'
+      +   '<div class="fh-avatar notranslate" translate="no">' + escapeHtml(iniciales) + '</div>'
+      +   '<div><div class="fh-nombre">' + escapeHtml(nombre) + '</div>'
+      +   '<div class="fh-email">' + escapeHtml(p.email || '') + '</div></div>'
+      +   '<div class="fh-pills">' + pills.join('') + '</div>'
+      + '</div>'
+      + (datos.length ? '<div class="fh-datos">' + datos.join('') + '</div>' : '');
+  }
+
   async function openNPPatientDetail(patientId){
     if(!patientId) return;
     const patient = npPatients.find(p => p.id === patientId);
@@ -8768,6 +9258,7 @@
 
     document.getElementById('np-detail-name').textContent = patient.full_name || patient.email || 'Unknown patient';
     document.getElementById('np-detail-email').textContent = patient.email || '';
+    pintarFichaHeader(patient);
 
     const shippingLine = (patient.shipping_address1)
       ? (patient.shipping_address1 + (patient.shipping_address2 ? ', ' + patient.shipping_address2 : '') + ', ' + (patient.shipping_city||'') + ', ' + (patient.shipping_state||'') + ' ' + (patient.shipping_zip||''))
@@ -10385,17 +10876,28 @@
   }
 
 
-  // ---- LA FICHA EN SU PROPIA PESTAÑA ------------------------------------------
-  // Cada paciente se abre en una pestaña aparte, a lo ancho, con el video
-  // grande DENTRO de la ficha: el medico ve al paciente y el expediente en la
-  // misma pantalla, sin ventanitas. Es lo que pidio la clinica y es lo que
-  // tiene sentido en una consulta.
+  // ---- LA FICHA EN SU PROPIA PESTAÑA DEL NAVEGADOR ------------------------
+  // El doctor lo pidió explícito: cada paciente se abre en un TAB APARTE,
+  // como el expediente de un EMR. Clic en un paciente → window.open con
+  // ?ficha=<id>; la pestaña nueva restaura la sesión (misma localStorage),
+  // entra al dashboard clínico y abre la ficha a pantalla completa. El video
+  // de la consulta vive DENTRO de esa pestaña, grande.
   let fichaEnPagina = false;
 
-  // NO es otra URL ni otra pestaña: la ficha se abre AQUI, encima de todo,
-  // ocupando la pantalla entera. Se cierra con "Back to dashboard" y vuelves
-  // exactamente a donde estabas.
-  async function abrirFichaPaciente(patientId){
+  function abrirFichaPaciente(patientId){
+    if(!patientId) return;
+    let win = null;
+    try{
+      win = window.open(window.location.pathname + '?ficha=' + encodeURIComponent(patientId), '_blank');
+    }catch(e){ win = null; }
+    // Popup bloqueado (pasa en móviles y en Safari con mano dura): la ficha
+    // se abre aquí mismo a pantalla completa, que es mejor que nada.
+    if(!win) abrirFichaAqui(patientId);
+  }
+
+  // El modo de siempre: la ficha cubre ESTA pestaña. Lo usa la pestaña
+  // nueva al aterrizar, y el fallback de popup bloqueado.
+  async function abrirFichaAqui(patientId){
     if(!patientId) return;
     fichaEnPagina = true;
     document.body.classList.add('ficha-pagina');
@@ -10404,6 +10906,12 @@
     await openNPPatientDetail(patientId);
     const m = document.getElementById('modal-np-patient');
     if(m) m.scrollTop = 0;
+  }
+
+  // Navegación de secciones de la barra del expediente.
+  function fichaIrA(secId){
+    const el = document.getElementById(secId);
+    if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
   function cerrarFichaPagina(){
@@ -10418,6 +10926,14 @@
     const barra = document.getElementById('ficha-barra');
     if(barra) barra.style.display = 'none';
     nuviCloseModal('np-patient');
+    // Si esta pestaña se abrió como expediente (?ficha=), "volver" es cerrar
+    // la pestaña — el dashboard de verdad quedó en la pestaña original. Se
+    // limpia la URL primero por si el navegador no deja cerrarla (pestaña
+    // recargada a mano): entonces queda el dashboard normal debajo.
+    if(new URLSearchParams(window.location.search).get('ficha')){
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+      window.close();
+    }
   }
 
   function npJoin(ticket){
@@ -10429,14 +10945,20 @@
   async function routeUserSession(user){
     document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));
     document.body.style.overflow = '';
+    // ?ficha=<id>: esta pestaña ES el expediente de un paciente (la abrió un
+    // clic en el dashboard de otra pestaña). El id solo dice QUÉ ficha abrir;
+    // el PERMISO sale de la tabla staff — un paciente con ?ficha= en la URL
+    // entra a su dashboard normal y el parámetro se ignora y se limpia.
+    const fichaParam = new URLSearchParams(window.location.search).get('ficha');
     try{
       const { data: staffRow } = await supabaseClient.from('staff').select('*').eq('user_id', user.id).maybeSingle();
-      // ?sala=<ticket>: esta pestaña es SOLO la videollamada, a pantalla
-      // completa. El rol sale de la tabla staff, no de la URL — un paciente
-      // que escriba &rol=staff sigue entrando como paciente.
       if(staffRow){
-        showNPDashboard(user, staffRow);
+        await showNPDashboard(user, staffRow);
+        if(fichaParam) await abrirFichaAqui(fichaParam);
       } else {
+        if(fichaParam){
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+        }
         showDashboard(user);
       }
     } catch(err){
@@ -10444,7 +10966,18 @@
       // patient dashboard rather than silently granting staff-level access.
       console.error('Staff check failed, defaulting to patient view:', err);
       showDashboard(user);
+    } finally {
+      quitarCortinaFicha();
     }
+  }
+
+  // La cortina "Opening patient chart…" se pone al arrancar si la URL trae
+  // ?ficha= (ver más abajo) y se quita cuando la sesión resolvió — o sola a
+  // los 6 segundos, para que un login caducado nunca deje la pantalla tapada.
+  function quitarCortinaFicha(){ document.body.classList.remove('ficha-cargando'); }
+  if(new URLSearchParams(window.location.search).get('ficha')){
+    document.body.classList.add('ficha-cargando');
+    setTimeout(quitarCortinaFicha, 6000);
   }
 
   // ====== AUTH DEBUG (hidden by default) ======
@@ -10929,6 +11462,11 @@
   populateRequestCategories();
   populateMedicationDropdown('np-approve-med', true);
   routeInfoPages();
+
+  // Última línea del script principal A PROPÓSITO: si algo de arriba
+  // revienta, esto no corre, y el vigilante de arranque (en el <head>)
+  // enseña el aviso de conexión en vez de dejar la página congelada.
+  window.__nuviBooted = true;
 </script>
 
 <!-- Language toggle. Google Translate does the work but its default
