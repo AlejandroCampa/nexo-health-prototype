@@ -3238,7 +3238,7 @@ if(!window.supabase){
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 23sep-1';
+  const NUVI_BUILD = 'build 29sep-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -4701,6 +4701,28 @@ if(!window.supabase){
     return 0;
   }
 
+  // ¿La receta VIGENTE (la de health_history) esta pagada? No basta con mirar
+  // `purchased`: health_history guarda UNA sola receta y la bandera se queda
+  // en true desde la compra anterior. Si el pago es de ANTES de que se
+  // aprobara lo que hay ahora, ese pago fue de otra receta.
+  //
+  // La ficha del clinico ya razonaba asi ("Prescription changed since last
+  // payment"). El paciente no: le salia "Order placed with pharmacy" en una
+  // receta que nadie habia comprado — y no la podia comprar. Esta es la unica
+  // pregunta que hay que hacer para saber si se le enseña "Buy" o "pedida".
+  function rxVigentePagada(h){
+    if(!h || !h.purchased) return false;
+    if(h.purchased_at && h.approved_at){
+      return new Date(h.purchased_at).getTime() >= new Date(h.approved_at).getTime();
+    }
+    return true;   // registros viejos sin fechas: se confia en la bandera
+  }
+
+  // Dos nombres de medicamento son el mismo aunque cambie mayuscula o espacio.
+  function mismoMedicamento(a, b){
+    return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+  }
+
   // ====== SESSION / DASHBOARD HANDLING ======
   let currentUser = null;
   let currentAppointment = null;
@@ -5423,7 +5445,7 @@ if(!window.supabase){
     let saltar = false;
     if(rxBtn){
       const h = currentHealthHistory;
-      const pendiente = !!(h && h.approved && !h.purchased && !h.membership_cancelled);
+      const pendiente = !!(h && h.approved && !rxVigentePagada(h) && !h.membership_cancelled);
       if(pendiente){
         rxBtn.setAttribute('data-alert', '1');
         saltar = !patientTabChosenByUser && !rxBtn.hidden;
@@ -5693,7 +5715,13 @@ if(!window.supabase){
         medication: history.approved_medication,
         dose: history.approved_dose,
         price: getDisplayPrice(history.approved_medication, history.approved_price),
-        purchased: history.purchased,
+        approvedOn: history.approved_at
+          ? new Date(history.approved_at).toLocaleDateString(undefined,
+              { year:'numeric', month:'short', day:'numeric' })
+          : null,
+        // NO history.purchased a secas: esa bandera es de la compra anterior
+        // hasta que el paciente pague ESTA receta.
+        purchased: rxVigentePagada(history),
         cancelled: history.cancelled,
         cancelReason: history.cancel_reason,
         onBuy: "goToMedicationCheckout('legacy', null, '" + history.approved_medication + "', " + getDisplayPrice(history.approved_medication, history.approved_price) + ")",
@@ -5705,6 +5733,10 @@ if(!window.supabase){
     approvedRx.forEach(r => {
       approvedHtml += renderStoreItem({
         medication: r.medication, dose: r.dose, price: getDisplayPrice(r.medication, r.price),
+        approvedOn: (r.approved_at || r.created_at)
+          ? new Date(r.approved_at || r.created_at).toLocaleDateString(undefined,
+              { year:'numeric', month:'short', day:'numeric' })
+          : null,
         purchased: r.purchased,
         cancelled: r.cancelled,
         cancelReason: r.cancel_reason,
@@ -7719,10 +7751,12 @@ if(!window.supabase){
 
       // Avisar igual que en la reserva del paciente. Antes solo notificaba
       // cuando reservaba el paciente: una cita puesta desde el panel clínico
-      // no le llegaba a nadie por correo.
+      // no le llegaba a nadie por correo. Y cuando se arreglo, el correo le
+      // llegaba a la DOCTORA (currentUser aqui es ella), no al paciente.
       notifyAppointmentBooked(assignedNP, await loadStaffRoster(),
         new Date(dateValue + 'T00:00:00').toLocaleDateString(undefined,
-          { weekday:'long', month:'long', day:'numeric' }), time, ticket);
+          { weekday:'long', month:'long', day:'numeric' }), time, ticket,
+        pacienteDeLaFicha());
 
       // Drop a message into the patient's thread so they see it on their
       // dashboard — this is our reminder channel until SMS is wired up.
@@ -7738,7 +7772,7 @@ if(!window.supabase){
       } catch(e){ /* message is a nicety, not a blocker */ }
 
       msg.style.color = 'var(--sage)';
-      msg.textContent = 'Booked for ' + dateValue + ' at ' + time + '. Patient notified in their messages.';
+      msg.textContent = 'Booked for ' + dateValue + ' at ' + time + '. Patient notified by email and in their messages.';
       document.getElementById('fu-time').value = '';
       await renderEvalTracker(npCurrentPatientUserId);
     } catch(err){
@@ -7955,9 +7989,10 @@ if(!window.supabase){
                         .sort((a,b) => a.appointment_date.localeCompare(b.appointment_date))[0];
 
     if(p.approved_medication){
-      return { texto: p.purchased ? 'Con receta · pagada'
-                                  : 'Con receta · sin pagar',
-               alerta: !p.purchased };
+      const pagada = rxVigentePagada(p);
+      return { texto: pagada ? 'Con receta · pagada'
+                             : 'Con receta · sin pagar',
+               alerta: !pagada };
     }
     if(hecha)   return { texto: 'Por recetar',  alerta: true };
     if(proxima) return { texto: 'Evaluación ' + proxima.appointment_date.slice(5),
@@ -8033,7 +8068,7 @@ if(!window.supabase){
       npPatients.filter(p => p.approved_medication).forEach(function(p){
         filas.push({ cuando: p.approved_at, userId: p.user_id,
                      med: p.approved_medication, dose: p.approved_dose,
-                     precio: p.approved_price, comprada: !!p.purchased,
+                     precio: p.approved_price, comprada: rxVigentePagada(p),
                      cancelada: !!p.cancelled, vigente: true });
       });
 
@@ -9160,7 +9195,7 @@ if(!window.supabase){
       ? '<span class="fh-pill ok">GLP-1 consent ✓</span>'
       : '<span class="fh-pill bad">Consent NOT signed</span>');
     if(p.approved_medication){
-      pills.push(p.purchased
+      pills.push(rxVigentePagada(p)
         ? '<span class="fh-pill ok">Rx paid</span>'
         : '<span class="fh-pill warn">Rx approved · unpaid</span>');
     }
@@ -9188,6 +9223,10 @@ if(!window.supabase){
     if(!patientId) return;
     const patient = npPatients.find(p => p.id === patientId);
     if(!patient) return;
+    // Repintar la ficha del MISMO paciente (tras aprobar, tras completar la
+    // entrevista) no es "abrir otra ficha": si hay videollamada, se queda.
+    const mismaFicha = npCurrentPatientId === patientId
+      && document.getElementById('modal-np-patient').classList.contains('open');
     npCurrentPatientId = patientId;
     npCurrentPatientUserId = patient.user_id;
     loadClinicalNotes(patient.user_id);
@@ -9307,7 +9346,12 @@ if(!window.supabase){
     const appt = elegirCitaParaSala(apptRows || []);
     const apptWrap = document.getElementById('np-detail-appt');
     npDetailCurrentTicket = appt ? appt.ticket_number : null;
-    document.getElementById('np-video-wrap').style.display = 'none';
+    // Al abrir OTRA ficha el video empieza escondido. Al repintar la misma
+    // en plena llamada, tocarlo seria quitarle la consulta de delante al
+    // medico (la conexion seguia viva por detras, sin verse).
+    const videoWrap = document.getElementById('np-video-wrap');
+    const enLlamada = mismaFicha && videoWrap.style.display !== 'none';
+    if(!enLlamada) videoWrap.style.display = 'none';
     if(appt){
       apptWrap.innerHTML = '<div class="form-section-title">Interview</div>'
         + '<div style="font-size:13.5px;">Ticket ' + appt.ticket_number + ' — ' + appt.appointment_date + ' ' + appt.appointment_time + ' — status: <b>' + appt.status + '</b></div>'
@@ -9360,13 +9404,23 @@ if(!window.supabase){
 
     let rxHtml = '<div class="form-section-title">Prescriptions</div>';
 
-    // The original first prescription lives on health_history, not the
-    // prescriptions table — show it here too so staff sees the full picture.
+    const fechaRx = iso => iso
+      ? new Date(iso).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })
+      : null;
+    // Pagada, y pagada ESTA receta (no la anterior): ver rxVigentePagada.
+    const pagoPill = pagada => pagada
+      ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);margin-right:6px;">Paid</span>'
+      : '<span class="rx-badge" style="background:rgba(217,140,43,0.14);border-color:rgba(217,140,43,0.45);color:#8A5A12;margin-right:6px;">Unpaid</span>';
+
+    // The latest prescription lives on health_history, not the prescriptions
+    // table — show it here too so staff sees the full picture.
     if(patient.approved_medication){
       const sent = patient.submitted_to_pharmacy;
+      const cuando = fechaRx(patient.approved_at);
       rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + patient.approved_medication + '</div>'
-        + '<div class="meta">' + (patient.approved_dose || '') + ' · original prescription</div></div>'
+        + '<div class="meta">' + (patient.approved_dose || '') + (cuando ? ' · approved ' + cuando : '') + '</div></div>'
         + '<div style="text-align:right;">'
+        + pagoPill(rxVigentePagada(patient))
         + (sent
             ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Sent to pharmacy</span>'
             : '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);margin-right:6px;">Approved</span><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;" onclick="markSentToPharmacy(\'legacy\',null)">Confirm sent</button>')
@@ -9377,12 +9431,22 @@ if(!window.supabase){
         + '</div></div>';
     }
 
-    (allRx || []).forEach(r => {
+    // Las activas primero, luego las pendientes, y las retiradas al final y
+    // atenuadas: lo que el clinico busca es lo que el paciente toma AHORA.
+    const orden = { approved: 0, pending: 1 };
+    const rxOrdenadas = (allRx || []).slice().sort((a, b) =>
+      ((orden[a.status] != null ? orden[a.status] : 2) - (orden[b.status] != null ? orden[b.status] : 2)));
+
+    rxOrdenadas.forEach(r => {
       if(r.status === 'approved'){
         const sent = r.submitted_to_pharmacy;
+        const cuando = fechaRx(r.approved_at || r.created_at);
         rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
-          + '<div class="meta">' + (r.dose || '') + ' · Goal: ' + (r.requested_goal || '—') + '</div></div>'
+          + '<div class="meta">' + (r.dose || '')
+          + (cuando ? ' · approved ' + cuando : '')
+          + (r.requested_goal ? ' · Goal: ' + r.requested_goal : '') + '</div></div>'
           + '<div style="text-align:right;">'
+          + pagoPill(!!r.purchased)
           + (sent
               ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Sent to pharmacy</span>'
               : '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);margin-right:6px;">Approved</span><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;" onclick="markSentToPharmacy(\'prescription\',\''+r.id+'\')">Confirm sent</button>')
@@ -9392,13 +9456,21 @@ if(!window.supabase){
           + ' style="font-size:11.5px;color:#B23A3A;">Remove prescription</a>'
           + '</div></div>';
       } else if(r.status === 'pending'){
-        rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
+        rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication
+          + ' <span class="rx-badge" style="background:rgba(217,140,43,0.14);border-color:rgba(217,140,43,0.45);color:#8A5A12;font-size:10px;padding:1px 7px;vertical-align:middle;">Patient request</span></div>'
           + '<div class="meta">Goal: ' + (r.requested_goal || '—') + (r.requested_notes ? ' · "' + r.requested_notes + '"' : '') + '</div></div>'
           + '<button class="btn btn-outline" style="width:auto;padding:7px 14px;font-size:13px;" onclick="npApproveNewPrescription(\''+r.id+'\',\''+r.medication+'\')">Approve</button></div>';
       } else {
-        rxHtml += '<div class="dash-protocol-row"><div><div class="name">' + r.medication + '</div>'
-          + '<div class="meta">Goal: ' + (r.requested_goal || '—') + '</div></div>'
-          + '<span class="meta">' + r.status + '</span></div>';
+        // superseded / voided: historial. Con su dosis y su motivo, que es lo
+        // que se viene a mirar cuando se pregunta "¿que tenia antes?".
+        const cuando = fechaRx(r.approved_at || r.created_at);
+        const etiqueta = r.status === 'superseded' ? 'Previous dose'
+                       : r.status === 'voided' ? 'Retracted' : r.status;
+        rxHtml += '<div class="dash-protocol-row" style="opacity:0.66;"><div><div class="name">' + r.medication + '</div>'
+          + '<div class="meta">' + (r.dose || '') + (cuando ? ' · ' + cuando : '')
+          + (r.purchased ? ' · paid' : '')
+          + (r.cancel_reason ? ' · ' + escapeHtml(r.cancel_reason) : '') + '</div></div>'
+          + '<span class="meta">' + etiqueta + '</span></div>';
       }
     });
 
@@ -9414,25 +9486,154 @@ if(!window.supabase){
     document.body.style.overflow = 'hidden';
   }
 
+  // Aprobar una SOLICITUD del paciente (fila 'pending' en prescriptions).
+  //
+  // Antes cerraba la ficha —y con ella la videollamada— nada mas aprobar, y
+  // dejaba la receta sin fecha de aprobacion. Ahora se queda en la ficha, la
+  // repinta con la receta ya aprobada, retira las dosis anteriores del MISMO
+  // medicamento (las de otros medicamentos se quedan: se apilan) y avisa al
+  // paciente por correo.
   async function npApproveNewPrescription(rxId, medication){
+    if(!supabaseClient || !npCurrentPatientId) return;
     const unit = getMedUnit(medication);
-    const doseMg = prompt('Weekly dose (' + unit + ') for ' + medication + ':', unit === 'mcg' ? '500' : '2.5');
+    const info = MEDICATION_INFO[medication] || {};
+    const sugerida = (info.tiers && info.tiers.length) ? info.tiers[0].doseMg
+                   : (info.startingDoseMg != null ? info.startingDoseMg : (unit === 'mcg' ? 500 : 2.5));
+    const doseMg = prompt('Weekly dose (' + unit + ') for ' + medication + ':', String(sugerida));
     if(doseMg === null) return;
-    const price = calcProtocolPrice(medication, doseMg);
+    const doseNum = parseFloat(doseMg);
+    if(!Number.isFinite(doseNum) || doseNum <= 0){
+      alert('Enter a valid weekly dose before approving.');
+      return;
+    }
+
+    // Si pide el medicamento que YA toma, esto es un cambio de dosis de la
+    // receta vigente: va por el camino de siempre (archiva la anterior, deja
+    // la solicitud resuelta), en vez de crear una segunda receta del mismo
+    // medicamento al lado de la vigente.
+    const patient = npPatients.find(p => p.id === npCurrentPatientId) || {};
+    if(patient.approved_medication && mismoMedicamento(patient.approved_medication, medication)){
+      const medSel = document.getElementById('np-approve-med');
+      medSel.value = medication;
+      onNPMedChange();
+      document.getElementById('np-approve-dose-mg').value = String(doseNum);
+      onNPDoseInput();
+      return npApprovePrescription();
+    }
+
+    const newDose = doseNum + ' ' + unit + ' / week';
+    const price = calcProtocolPrice(medication, doseNum);
+    const maxDose = info.maxDoseMg;
+    if(maxDose && doseNum > maxDose){
+      if(!confirm(doseNum + ' ' + unit + '/week is ' + (doseNum / maxDose).toFixed(1)
+        + 'x the labeled maximum for ' + medication + ' (' + maxDose + ' ' + unit + '/week).\n\n'
+        + 'Approve ' + doseNum + ' ' + unit + '/week anyway?')) return;
+    }
+
     try{
-      const { error } = await supabaseClient.from('prescriptions').update({
+      const stamp = new Date().toISOString();
+      const { data: aprobada, error } = await supabaseClient.from('prescriptions').update({
         status: 'approved',
         medication: medication,
-        dose: doseMg + ' mg / week',
+        dose: newDose,
         price: price,
+        approved_at: stamp,
         reviewed_notes: 'Approved by care team.'
-      }).eq('id', rxId);
+      }).eq('id', rxId).select();
       if(error) throw error;
-      nuviCloseModal('np-patient');
-      await loadNPData();
+      if(!aprobada || aprobada.length === 0){
+        throw new Error('La aprobación no se guardó: la base no cambió ninguna fila. Casi siempre es RLS.');
+      }
+
+      // Las dosis ANTERIORES de este mismo medicamento se retiran. Solo de
+      // este: una receta nueva de semaglutida no tiene por que tocar la
+      // tirzepatida que ya toma.
+      await retirarRecetasAnteriores(npCurrentPatientUserId, medication, rxId);
+
+      console.log('[approve] solicitud aprobada:', medication, newDose, '$' + price);
+      await npTrasAprobar({ medication: medication, dose: newDose, price: price });
     } catch(err){
       alert('Could not approve: ' + (err.message || 'unknown error'));
     }
+  }
+
+  // Retira (superseded) las recetas 'approved' de la tabla prescriptions del
+  // MISMO medicamento, menos la que se acaba de aprobar. Devuelve cuantas.
+  // Si falla, avisa: la aprobacion ya esta guardada y no se puede deshacer,
+  // pero el paciente veria dos dosis activas del mismo medicamento.
+  async function retirarRecetasAnteriores(patientUid, medication, exceptoId){
+    if(!patientUid) return 0;
+    const { data: activas, error: leerErr } = await supabaseClient.from('prescriptions')
+      .select('id, medication').eq('user_id', patientUid).eq('status', 'approved');
+    if(leerErr){
+      console.error('[approve] no se pudieron leer las recetas activas:', leerErr);
+      alert('The prescription was approved, but the previous ones could not be checked.\n\n'
+        + 'Database error: ' + (leerErr.message || leerErr.code || 'unknown'));
+      return 0;
+    }
+    const ids = (activas || [])
+      .filter(r => String(r.id) !== String(exceptoId || '') && mismoMedicamento(r.medication, medication))
+      .map(r => r.id);
+    if(ids.length === 0) return 0;
+    const { data: retired, error: supErr } = await supabaseClient.from('prescriptions')
+      .update({ status: 'superseded' }).in('id', ids).select();
+    if(supErr){
+      console.error('[approve] no se pudieron retirar las anteriores:', supErr);
+      alert('The prescription was approved, but the previous ' + medication + ' prescriptions could not be retired.\n\n'
+        + 'The patient may see more than one active dose and an inflated monthly total.\n\n'
+        + 'Database error: ' + (supErr.message || supErr.code || 'unknown'));
+      return 0;
+    }
+    if((retired || []).length) console.log('[approve] recetas retiradas:', retired.length);
+    return (retired || []).length;
+  }
+
+  // Lo que pasa DESPUES de aprobar, sea por el formulario o por una solicitud:
+  // se recarga la lista, se repinta la ficha (sin cerrarla, sin tocar la
+  // llamada), se lleva la vista a la lista de recetas, y se avisa al paciente.
+  async function npTrasAprobar(rx){
+    await loadNPData();
+    await openNPPatientDetail(npCurrentPatientId);
+
+    const lista = document.getElementById('np-detail-rx-requests');
+    if(lista){
+      const aviso = document.createElement('div');
+      aviso.id = 'np-approve-ok';
+      aviso.style.cssText = 'border-radius:10px;padding:10px 14px;margin:8px 0 12px;font-size:13.5px;'
+        + 'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.4);color:#2F5C46;';
+      aviso.innerHTML = '<b>Approved.</b> ' + escapeHtml(rx.medication) + ' — ' + escapeHtml(rx.dose)
+        + ' ($' + rx.price + '/mo). The patient can buy it from their dashboard; we emailed them.';
+      const titulo = lista.querySelector('.form-section-title');
+      if(titulo && titulo.nextSibling) lista.insertBefore(aviso, titulo.nextSibling);
+      else lista.appendChild(aviso);
+      try{ lista.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){}
+    }
+
+    // Y que el paciente se entere por los dos canales, igual que con las
+    // citas: un mensaje en su panel y un correo. Detached los dos: la receta
+    // ya esta guardada y un aviso que falle no la puede tumbar.
+    const paciente = npPatients.find(p => p.id === npCurrentPatientId) || {};
+    if(paciente.user_id){
+      try{
+        await supabaseClient.from('messages').insert({
+          user_id: paciente.user_id, sender: 'doctor',
+          body: 'Your prescription was approved: ' + rx.medication + ' — ' + rx.dose
+              + ' ($' + rx.price + '/mo). You can order it from your dashboard.'
+        });
+        await loadNPMessages(paciente.user_id);
+      }catch(e){ console.warn('[approve] no se pudo avisar por mensaje:', e); }
+    }
+    setTimeout(function(){
+      notify('prescription_approved', {
+        name: paciente.full_name || paciente.email,
+        email: paciente.email
+      }, {
+        medication: rx.medication,
+        dose: rx.dose,
+        price: rx.price,
+        provider: currentStaffName || null
+      });
+    }, 0);
   }
 
   // ====== RETIRAR UNA RECETA MAL HECHA ======
@@ -9642,9 +9843,12 @@ if(!window.supabase){
 
     decir('Saving…', false);
     try{
-      if(npProximaCitaActual){
+      const movida = !!npProximaCitaActual;
+      let ticket;
+      if(movida){
         // Mover = cambiar la fila que ya existe. Crear otra dejaria dos citas
         // vivas y el paciente veria la vieja en su panel.
+        ticket = npProximaCitaActual.ticket_number;
         const { data, error } = await supabaseClient.from('appointments')
           .update({ appointment_date: fecha, appointment_time: hora, status: 'scheduled' })
           .eq('id', npProximaCitaActual.id).select();
@@ -9656,7 +9860,7 @@ if(!window.supabase){
         // Mismo formato que las que reserva el paciente ('NV-'): el ticket
         // es el nombre de la sala de video, y dos formatos distintos serian
         // dos salas distintas para la misma consulta.
-        const ticket = 'NV-' + Math.random().toString(36).slice(2,8).toUpperCase();
+        ticket = 'NV-' + Math.random().toString(36).slice(2,8).toUpperCase();
         const { error } = await supabaseClient.from('appointments').insert({
           user_id: patientUserId,
           np_user_id: currentUser.id,
@@ -9673,17 +9877,29 @@ if(!window.supabase){
       // una ausencia programada.
       const cuando = new Date(fecha + 'T00:00:00')
         .toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+
+      // CORREO al paciente, el mismo que recibe cuando reserva el mismo.
+      // Antes esta caja solo dejaba un mensaje dentro del panel: quien no
+      // entraba al panel no se enteraba de que tenia cita.
+      notifyAppointmentBooked(currentUser.id, await loadStaffRoster(), cuando, hora, ticket,
+        pacienteDeLaFicha(), { moved: movida });
+
       try{
         await supabaseClient.from('messages').insert({
           user_id: patientUserId, sender: 'doctor',
-          body: (npProximaCitaActual ? 'Your appointment was moved to ' : 'Your next appointment is set for ')
+          body: (movida ? 'Your appointment was moved to ' : 'Your next appointment is set for ')
               + cuando + ' at ' + hora + '. You can join from your dashboard.'
         });
       }catch(e){ console.warn('[appt] no se pudo avisar por mensaje:', e); }
 
-      decir('Saved. The patient has been notified.', false);
+      // Repintar PRIMERO y avisar despues: el repintado reemplaza la caja
+      // entera, y el "Saved" escrito antes se iba con ella — el clinico
+      // guardaba y no veia confirmacion de nada.
       await npRenderProximaCita(patientUserId);
       await loadNPData();
+      const msg2 = document.getElementById('np-prox-msg');
+      if(msg2){ msg2.style.color = '#2F5C46';
+                msg2.textContent = 'Saved. The patient has been notified by email and in their messages.'; }
     }catch(err){
       decir('Could not save: ' + (err.message || 'unknown error'), true);
     }
@@ -9694,11 +9910,24 @@ if(!window.supabase){
     if(!confirm('Cancel this appointment? The patient will be told it was cancelled.')) return;
     const msg = document.getElementById('np-prox-msg');
     const pid = npProximaCitaActual.user_id;
+    const cita = npProximaCitaActual;
     try{
       const { data, error } = await supabaseClient.from('appointments')
-        .update({ status: 'cancelled' }).eq('id', npProximaCitaActual.id).select();
+        .update({ status: 'cancelled' }).eq('id', cita.id).select();
       if(error) throw error;
       if(!data || data.length === 0) throw new Error('Nothing changed — likely an RLS policy.');
+
+      // Correo al paciente, igual que cuando cancela el mismo.
+      const quien = pacienteDeLaFicha();
+      setTimeout(function(){
+        notify('appointment_cancelled', quien, {
+          date: new Date(cita.appointment_date + 'T00:00:00')
+            .toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'}),
+          time: cita.appointment_time, ticket: cita.ticket_number,
+          reason: 'cancelled by the care team'
+        });
+      }, 0);
+
       try{
         await supabaseClient.from('messages').insert({
           user_id: pid, sender: 'doctor',
@@ -9707,6 +9936,8 @@ if(!window.supabase){
       }catch(e){}
       await npRenderProximaCita(pid);
       await loadNPData();
+      const msg2 = document.getElementById('np-prox-msg');
+      if(msg2){ msg2.style.color = '#2F5C46'; msg2.textContent = 'Cancelled. The patient has been notified by email.'; }
     }catch(err){
       if(msg){ msg.style.color = '#8C2F2F';
                msg.textContent = 'Could not cancel: ' + (err.message || 'unknown error'); }
@@ -9910,25 +10141,46 @@ if(!window.supabase){
       // vieja. Resultado: la receta anterior no aparecía en "Previous
       // prescriptions" — se borraba, sin alerta y sin nada en consola.
       const { data: prev, error: prevErr } = await supabaseClient.from('health_history')
-        .select('user_id, approved_medication, approved_dose, approved_price, approved_at, purchased, purchased_at')
+        .select('user_id, approved_medication, approved_dose, approved_price, approved_at, '
+              + 'purchased, purchased_at, submitted_to_pharmacy, submitted_to_pharmacy_at')
         .eq('id', npCurrentPatientId).maybeSingle();
       if(prevErr) throw new Error('No se pudo leer la receta vigente, así que no se '
         + 'aprobó nada (para no sobrescribirla a ciegas): ' + prevErr.message);
 
       if(prev && prev.approved_medication){
-        const sameRx = rxSignature(prev.approved_medication, prev.approved_dose)
-                    === rxSignature(med, newDose);
-        if(!sameRx){
+        // Que pasa con la receta que habia depende de QUE se aprueba ahora:
+        //
+        //  · El MISMO medicamento a otra dosis  -> la anterior se retira
+        //    ('superseded'): el paciente no puede estar en 2.5 y en 5 a la vez.
+        //  · El mismo medicamento a la MISMA dosis, ya pagada -> es una
+        //    RENOVACION: la anterior se archiva como pagada y la nueva nace
+        //    sin pagar. Antes esto no se podia ni comprar: la bandera de
+        //    "pagado" del mes pasado se quedaba puesta.
+        //  · El mismo medicamento y dosis, sin pagar -> se esta re-aprobando
+        //    lo mismo; no hay nada que archivar.
+        //  · OTRO medicamento -> la anterior SIGUE ACTIVA ('approved'): se
+        //    apilan. Aprobar semaglutida no le quita la tirzepatida a nadie.
+        //    health_history solo guarda una receta, asi que la que estaba se
+        //    muda a la tabla prescriptions con todo lo suyo (pagada, enviada).
+        const mismoMed = mismoMedicamento(prev.approved_medication, med);
+        const sameRx = mismoMed && rxSignature(prev.approved_medication, prev.approved_dose)
+                                 === rxSignature(med, newDose);
+        const prevPagada = rxVigentePagada(prev);
+        const hayQueArchivar = !sameRx || prevPagada;
+        if(hayQueArchivar){
+          const estadoArchivo = mismoMed ? 'superseded' : 'approved';
           const { data: archived, error: archErr } = await supabaseClient
             .from('prescriptions').insert({
               user_id: prev.user_id,
               medication: prev.approved_medication,
               dose: prev.approved_dose,
               price: prev.approved_price,
-              status: 'superseded',
+              status: estadoArchivo,
               cancelled: false,
-              purchased: prev.purchased,
-              purchased_at: prev.purchased_at,
+              purchased: prevPagada,
+              purchased_at: prevPagada ? prev.purchased_at : null,
+              submitted_to_pharmacy: !!prev.submitted_to_pharmacy,
+              submitted_to_pharmacy_at: prev.submitted_to_pharmacy ? (prev.submitted_to_pharmacy_at || null) : null,
               approved_at: prev.approved_at,
               created_at: prev.approved_at || new Date().toISOString()
             }).select();
@@ -9942,7 +10194,7 @@ if(!window.supabase){
               + 'Error de la base: ' + (archErr.message || archErr.code || 'desconocido') + '\n\n'
               + 'Causas típicas: falta una policy de INSERT en "prescriptions" para el '
               + 'personal clínico, o la columna status tiene un CHECK que no incluye '
-              + '\'superseded\'.');
+              + '\'' + estadoArchivo + '\'.');
           }
           if(!archived || archived.length === 0){
             // El INSERT no dio error pero no devolvió la fila. Suele ser RLS
@@ -9954,7 +10206,13 @@ if(!window.supabase){
               + 'Continue anyway?')) return;
           } else {
             console.log('[approve] receta anterior archivada:',
-              archived[0].medication, archived[0].dose, '→ superseded');
+              archived[0].medication, archived[0].dose, '→ ' + estadoArchivo);
+            // La que se muda como activa pasa a ser LA receta de su
+            // medicamento: si por un fallo viejo quedaba otra dosis del mismo
+            // medicamento en 'approved', se retira ahora.
+            if(estadoArchivo === 'approved'){
+              await retirarRecetasAnteriores(prev.user_id, prev.approved_medication, archived[0].id);
+            }
           }
         }
       }
@@ -9962,19 +10220,27 @@ if(!window.supabase){
       // compra anterior del paciente hace que el panel diga "PAGADO" por un
       // medicamento que nadie ha comprado — y el riesgo real es que alguien
       // mande esa receta a la farmacia sin haber cobrado.
+      const stamp = new Date().toISOString();
       const { data: updated, error } = await supabaseClient.from('health_history').update({
         approved: true,
         approved_medication: med,
         approved_dose: newDose,
         approved_price: price,
         approved_notes: 'Approved by care team.',
-        approved_at: new Date().toISOString()
+        approved_at: stamp,
+        // La receta nueva no se ha mandado a la farmacia todavia, aunque la
+        // anterior si. Estas dos columnas las escribe el staff con
+        // "Confirm sent", asi que aqui se pueden reiniciar.
+        submitted_to_pharmacy: false,
+        submitted_to_pharmacy_at: null
         // purchased / purchased_at NO van aqui. Estan revocadas para
         // authenticated —que es TODO paciente, no solo el staff— asi que
         // incluirlas hacia que la aprobacion entera fallara con
         // "permission denied for table health_history".
         // Las reinicia el trigger trg_resetear_compra (aprobar-fix.sql),
-        // que corre como dueño de la tabla, cuando cambia lo recetado.
+        // que corre como dueño de la tabla, cuando cambia lo recetado. Y si
+        // el trigger no las toca, da igual: rxVigentePagada() compara
+        // purchased_at con approved_at y sabe que ese pago fue de otra receta.
       }).eq('id', npCurrentPatientId).select();
       if(error) throw error;
       if(!updated || updated.length === 0){
@@ -9983,28 +10249,35 @@ if(!window.supabase){
       }
       console.log('[approve] guardado:', updated[0].approved_medication, updated[0].approved_dose);
 
-      // Retirar las recetas anteriores. Sin esto se quedan listadas como
-      // activas junto a la nueva, el total mensual las suma dos veces, y el
-      // paciente no sabe cuál está tomando.
       const patientUid = (updated[0] && updated[0].user_id) || npCurrentPatientUserId;
       if(patientUid){
-        const { data: retired, error: supErr } = await supabaseClient.from('prescriptions')
-          .update({ status: 'superseded' })
-          .eq('user_id', patientUid).eq('status', 'approved').select();
-        if(supErr){
-          // Aquí la aprobación ya está guardada, así que no se puede abortar.
-          // Pero tampoco se puede callar: el paciente queda con dos recetas
-          // activas y el total mensual le suma las dos.
-          console.error('[approve] no se pudieron retirar las anteriores:', supErr);
-          alert('The prescription was approved, but the previous ones could not be retired.\n\n'
-            + 'The patient may see more than one active prescription and an inflated monthly total.\n\n'
-            + 'Database error: ' + (supErr.message || supErr.code || 'unknown'));
-        }
-        else if((retired || []).length) console.log('[approve] recetas retiradas:', retired.length);
+        // Retirar las dosis anteriores de ESTE medicamento en prescriptions.
+        // Solo de este: antes se retiraba TODO lo aprobado, y aprobar una
+        // dosis nueva de tirzepatida le quitaba al paciente la semaglutida.
+        await retirarRecetasAnteriores(patientUid, med, null);
+
+        // Si el paciente habia PEDIDO este mismo medicamento desde su panel,
+        // esa solicitud queda resuelta con esta aprobacion. Si se dejara en
+        // 'pending' el paciente la veria "Under review" para siempre.
+        try{
+          const { data: pedidas } = await supabaseClient.from('prescriptions')
+            .select('id, medication').eq('user_id', patientUid).eq('status', 'pending');
+          const ids = (pedidas || []).filter(r => mismoMedicamento(r.medication, med)).map(r => r.id);
+          if(ids.length){
+            await supabaseClient.from('prescriptions').update({
+              status: 'voided', cancelled: true,
+              cancel_reason: 'Fulfilled — approved as ' + newDose + ' on '
+                + new Date(stamp).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }),
+              reviewed_notes: 'Fulfilled by the prescription approved in the chart.'
+            }).in('id', ids);
+            console.log('[approve] solicitudes resueltas:', ids.length);
+          }
+        }catch(e){ console.warn('[approve] no se pudieron cerrar las solicitudes pendientes:', e); }
       }
 
-      nuviCloseModal('np-patient');
-      await loadNPData();
+      // Aqui habia un nuviCloseModal('np-patient'): aprobar CERRABA la ficha
+      // —y con ella la videollamada— en mitad de la consulta. Se queda.
+      await npTrasAprobar({ medication: med, dose: newDose, price: price });
     } catch(err){
       alert('Could not approve: ' + (err.message || 'unknown error'));
     }
@@ -10375,17 +10648,19 @@ if(!window.supabase){
       .toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
   }
 
-  // Avisar al proveedor asignado. Va detached y con try/catch: una cita
-  // reservada nunca puede fallar porque el correo no salga.
-  function notifyAppointmentBooked(providerUserId, roster, dateLabel, time, ticket){
+  // Avisar al paciente y al proveedor asignado. Va detached y con try/catch:
+  // una cita reservada nunca puede fallar porque el correo no salga.
+  //
+  // `paciente` ({name, email}) va EXPLICITO. Antes se sacaba de currentUser,
+  // y currentUser en el panel clinico es LA DOCTORA: cada cita que ponia el
+  // equipo mandaba el correo de "tu cita esta reservada" a la propia doctora,
+  // y al paciente no le llegaba nada. Sin paciente se cae al usuario con
+  // sesion, que en el panel del paciente si es el.
+  function notifyAppointmentBooked(providerUserId, roster, dateLabel, time, ticket, paciente, extra){
     setTimeout(function(){
       const prov = (roster && providerUserId) ? roster[providerUserId] : null;
-      notify('appointment_booked', {
-        name: (currentHealthHistory && currentHealthHistory.full_name)
-              || (currentUser && currentUser.email),
-        email: (currentHealthHistory && currentHealthHistory.email)
-               || (currentUser && currentUser.email)
-      }, {
+      const quien = paciente || pacienteConSesion();
+      notify('appointment_booked', quien, Object.assign({
         date: dateLabel,
         time: time,
         ticket: ticket,
@@ -10394,8 +10669,27 @@ if(!window.supabase){
         // bandeja de la clínica. Para que llegue a cada médico por separado,
         // hay que añadir una columna 'email' a la tabla staff.
         providerEmail: prov ? (prov.email || null) : null
-      });
+      }, extra || {}));
     }, 0);
+  }
+
+  // El paciente con sesion abierta, para los correos que salen de SU panel.
+  function pacienteConSesion(){
+    return {
+      name: (currentHealthHistory && currentHealthHistory.full_name)
+            || (currentUser && currentUser.email),
+      email: (currentHealthHistory && currentHealthHistory.email)
+             || (currentUser && currentUser.email)
+    };
+  }
+
+  // El paciente cuya ficha tiene abierta el equipo, para los correos que
+  // salen del panel clinico. NUNCA currentUser: ese es el medico.
+  function pacienteDeLaFicha(){
+    const p = npPatients.find(x => x.id === npCurrentPatientId)
+           || npPatients.find(x => x.user_id === npCurrentPatientUserId)
+           || {};
+    return { name: p.full_name || p.email || null, email: p.email || null };
   }
 
   function timesForWindow(startTime, endTime){
@@ -11249,7 +11543,7 @@ if(!window.supabase){
       let bought = null;
       const espera = await waitForServerConfirmation(
         (h, rxs) => order.kind === 'legacy'
-          ? !!(h && h.purchased)
+          ? rxVigentePagada(h)   // un `purchased` viejo no confirma ESTA compra
           : !!(rxs || []).some(r => String(r.id) === String(order.id) && r.purchased),
         'order');
       const wrote = espera.ok ? 1 : 0;
