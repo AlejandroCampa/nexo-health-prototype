@@ -3238,7 +3238,7 @@ if(!window.supabase){
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 29sep-1';
+  const NUVI_BUILD = 'build 29sep-2';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -8017,6 +8017,10 @@ if(!window.supabase){
           ? '<span class="rx-badge" style="background:rgba(217,140,43,0.14);border-color:'
             + 'rgba(217,140,43,0.45);color:#8A5A12;margin-left:7px;font-size:10px;padding:1px 7px;'
             + 'vertical-align:middle;">Ends in ' + m.dias + 'd</span>'
+        : (m.estado === 'cortesia')
+          ? '<span class="rx-badge" style="background:rgba(79,122,100,0.12);border-color:'
+            + 'rgba(79,122,100,0.35);color:#2F5C46;margin-left:7px;font-size:10px;padding:1px 7px;'
+            + 'vertical-align:middle;">Complimentary</span>'
           : '';
       const nombre = p.full_name || p.email || 'Unknown patient';
       const iniciales = nombre.trim().split(/\s+/).slice(0,2).map(w => w.charAt(0)).join('').toUpperCase() || '?';
@@ -8628,6 +8632,12 @@ if(!window.supabase){
     if(hist.membership_cancelled){
       return { estado: 'cancelada', activa: false, hasta: null, dias: 0 };
     }
+    // Membresia de cortesia: la clinica no le cobra a este paciente, nunca.
+    // No vence, no se renueva, no se le enseña ningun boton de pagar. Se
+    // pone con plan = 'Comped' desde SQL (sql-membresia-permanente.sql).
+    if(hist.plan === 'Comped'){
+      return { estado: 'cortesia', activa: true, hasta: null, dias: 36500, cortesia: true };
+    }
     // Sin fecha = el backfill de membership-setup.sql no corrio. Se falla
     // ABIERTO a proposito: es un fallo NUESTRO de migracion, y el paciente no
     // tiene que pagar por el. Queda ruidoso en consola para que se arregle.
@@ -8686,6 +8696,7 @@ if(!window.supabase){
 
     const estilos = {
       activa:      'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.35);color:#2F5C46;',
+      cortesia:    'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.35);color:#2F5C46;',
       'por-vencer':'background:rgba(217,140,43,0.14);border:1px solid rgba(217,140,43,0.45);color:#8A5A12;',
       vencida:     'background:rgba(196,60,60,0.10);border:1px solid rgba(196,60,60,0.40);color:#8C2F2F;',
       cancelada:   'background:rgba(15,35,54,0.06);border:1px solid var(--line);color:var(--ink-soft);'
@@ -8694,6 +8705,9 @@ if(!window.supabase){
     if(m.estado === 'activa'){
       titulo = 'Membership active';
       cuerpo = 'Paid through ' + membershipFecha(m.hasta) + '.';
+    } else if(m.estado === 'cortesia'){
+      titulo = 'Complimentary membership';
+      cuerpo = 'Your membership is covered by the clinic. Nothing to renew.';
     } else if(m.estado === 'por-vencer'){
       titulo = m.dias === 0 ? 'Your membership ends today' : 'Your membership ends in ' + m.dias + ' days';
       cuerpo = 'Renew before ' + membershipFecha(m.hasta)
@@ -9286,6 +9300,8 @@ if(!window.supabase){
         memEl.innerHTML = '<span style="color:#B23A3A;">Cancelled</span>' + (patient.membership_cancel_reason ? ' — ' + patient.membership_cancel_reason : '');
       } else if(!patient.paid){
         memEl.textContent = 'Not started — patient has not paid for a membership yet.';
+      } else if(patient.plan === 'Comped'){
+        memEl.innerHTML = '<b style="color:#2F5C46;">Complimentary membership</b> — this patient is never billed and it never expires.';
       } else {
         const c = getCommitmentStatus(patient);
         memEl.innerHTML = 'Active (' + (patient.plan || 'plan not set') + '). '
