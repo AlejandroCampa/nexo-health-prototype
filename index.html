@@ -3076,6 +3076,12 @@ if(!window.supabase){
         const { error } = await supabaseClient.from('appointments')
           .update({ status: 'cancelled' }).eq('id', appt.id);
         if(error) throw error;
+        // El equipo la tenia en agenda: que se entere, igual que en el
+        // reschedule de la evaluacion. Detached: no bloquea al paciente.
+        notify('appointment_cancelled', pacienteConSesion(), {
+          date: appt.appointment_date, time: appt.appointment_time,
+          ticket: appt.ticket_number, reason: 'patient rescheduling'
+        });
       }
       await loadPatientState();
       // Drop them straight onto the calendar rather than making them hunt for it.
@@ -3123,8 +3129,18 @@ if(!window.supabase){
   // antes de que la función corra, y el navegador solo dice "CORS" sin decir
   // por qué. Sin preflight, ese punto de fallo desaparece.
   // La función lee el body con req.json(), que no mira el Content-Type.
+  //
+  // Devuelve SIEMPRE un resultado (nunca lanza), para que quien lo llame
+  // pueda decirle al clinico la verdad: "correo enviado a X" o "no salio,
+  // por esto". Antes solo escribia en consola, y la ficha decia "notified"
+  // aunque la funcion hubiera respondido 500.
+  //   { ok, status, sent:[...], failed:[...], error }
+  //   sent/failed son lo que reporta la Edge Function ('patient', 'staff').
   async function notify(event, patient, data){
-    if(!SUPABASE_URL || !SUPABASE_URL.startsWith('http')) return;
+    const out = { ok:false, status:0, sent:[], failed:[], error:null };
+    if(!SUPABASE_URL || !SUPABASE_URL.startsWith('http')){
+      out.error = 'Supabase is not configured'; return out;
+    }
     const url = SUPABASE_URL.replace(/\/+$/, '') + '/functions/v1/' + NOTIFY_FUNCTION;
     try{
       const res = await fetch(url, {
@@ -3133,12 +3149,46 @@ if(!window.supabase){
         body: JSON.stringify({ event: event, patient: patient || {}, data: data || {} })
       });
       const txt = await res.text().catch(() => '');
-      if(res.ok) console.log('[notify] ' + event + ' OK →', txt.slice(0,200));
-      else console.error('[notify] ' + event + ' — la función respondió ' + res.status + ':', txt.slice(0,300));
+      let body = null;
+      try{ body = JSON.parse(txt); }catch(e){}
+      out.status = res.status;
+      out.sent   = (body && Array.isArray(body.sent))   ? body.sent   : [];
+      out.failed = (body && Array.isArray(body.failed)) ? body.failed : [];
+      if(res.ok){
+        out.ok = true;
+        console.log('[notify] ' + event + ' OK →', txt.slice(0,200));
+      } else {
+        out.error = (body && body.error) ? String(body.error) : ('HTTP ' + res.status);
+        console.error('[notify] ' + event + ' — la función respondió ' + res.status + ':', txt.slice(0,300));
+      }
     } catch(err){
+      out.error = 'could not reach the email function';
       console.error('[notify] ' + event + ' — no se pudo llamar a ' + url
         + '. Revisa que el slug sea correcto y que Verify JWT esté apagado.', err);
     }
+    return out;
+  }
+
+  // Frase corta, para la ficha, de lo que paso con el correo al paciente.
+  //   r: lo que devolvio notify();  email: a quien se intento mandar.
+  function fraseCorreo(r, email){
+    if(!email) return 'No email sent — this patient has no email on file.';
+    if(!r) return 'Email status unknown.';
+    if(r.ok && r.sent.indexOf('patient') > -1) return 'Email sent to ' + email + '.';
+    const motivo = r.error
+      || (r.failed || []).filter(f => /^patient/.test(String(f))).map(f => String(f).replace(/^patient:\s*/, '')).join('; ')
+      || 'the email function did not send it';
+    return 'Email to ' + email + ' NOT sent (' + motivo + ').';
+  }
+
+  // Espera un resultado de notify() como mucho unos segundos: el correo no
+  // puede dejar la ficha colgada, pero tampoco se puede decir "enviado" sin
+  // saberlo.
+  function esperarCorreo(promesa, ms){
+    return Promise.race([
+      Promise.resolve(promesa).catch(() => ({ ok:false, sent:[], failed:[], error:'unexpected error' })),
+      new Promise(res => setTimeout(() => res({ ok:false, sent:[], failed:[], error:'timed out waiting for the email function' }), ms || 8000))
+    ]);
   }
 
   // ====== STRIPE PAYMENT LINKS (test mode) ======
@@ -3238,7 +3288,7 @@ if(!window.supabase){
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 29sep-2';
+  const NUVI_BUILD = 'build 30sep-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -7753,10 +7803,12 @@ if(!window.supabase){
       // cuando reservaba el paciente: una cita puesta desde el panel clínico
       // no le llegaba a nadie por correo. Y cuando se arreglo, el correo le
       // llegaba a la DOCTORA (currentUser aqui es ella), no al paciente.
-      notifyAppointmentBooked(assignedNP, await loadStaffRoster(),
-        new Date(dateValue + 'T00:00:00').toLocaleDateString(undefined,
-          { weekday:'long', month:'long', day:'numeric' }), time, ticket,
-        pacienteDeLaFicha());
+      const paciente = pacienteDeLaFicha();
+      const correo = paciente.email
+        ? notifyAppointmentBooked(assignedNP, await loadStaffRoster(),
+            new Date(dateValue + 'T00:00:00').toLocaleDateString(undefined,
+              { weekday:'long', month:'long', day:'numeric' }), time, ticket, paciente)
+        : null;
 
       // Drop a message into the patient's thread so they see it on their
       // dashboard — this is our reminder channel until SMS is wired up.
@@ -7772,9 +7824,14 @@ if(!window.supabase){
       } catch(e){ /* message is a nicety, not a blocker */ }
 
       msg.style.color = 'var(--sage)';
-      msg.textContent = 'Booked for ' + dateValue + ' at ' + time + '. Patient notified by email and in their messages.';
+      msg.textContent = 'Booked for ' + dateValue + ' at ' + time + '. Sending email…';
       document.getElementById('fu-time').value = '';
       await renderEvalTracker(npCurrentPatientUserId);
+      const r = correo ? await esperarCorreo(correo) : null;
+      const okCorreo = !!(r && r.ok && r.sent.indexOf('patient') > -1);
+      msg.style.color = okCorreo ? 'var(--sage)' : '#8C2F2F';
+      msg.textContent = 'Booked for ' + dateValue + ' at ' + time + '. ' + fraseCorreo(r, paciente.email)
+                      + ' Message left in the patient\'s dashboard.';
     } catch(err){
       msg.style.color = '#8C2F2F';
       msg.textContent = 'Could not book: ' + (err.message || 'unknown error');
@@ -9233,6 +9290,45 @@ if(!window.supabase){
       + (datos.length ? '<div class="fh-datos">' + datos.join('') + '</div>' : '');
   }
 
+  // La caja "Interview" de la ficha: la cita con la que se abre la sala, con
+  // Join / Complete / Reopen. Separada para poder repintarla sola cuando el
+  // clinico agenda o mueve la cita desde la misma ficha — antes se quedaba
+  // en "Not scheduled yet" hasta reabrir el expediente, sin boton de Join.
+  function npPintarEntrevista(apptRows){
+    const appt = elegirCitaParaSala(apptRows || []);
+    const apptWrap = document.getElementById('np-detail-appt');
+    if(!apptWrap) return;
+    npDetailCurrentTicket = appt ? appt.ticket_number : null;
+    if(appt){
+      apptWrap.innerHTML = '<div class="form-section-title">Interview</div>'
+        + '<div style="font-size:13.5px;">Ticket ' + appt.ticket_number + ' — ' + appt.appointment_date + ' ' + appt.appointment_time + ' — status: <b>' + appt.status + '</b></div>'
+        + '<div style="display:flex;gap:8px;margin-top:8px;">'
+        // En la ficha-pagina el video ya es grande y esta AQUI: se une en la
+        // misma pantalla. Solo si alguien abre la ficha como modal (no deberia)
+        // se manda a la sala aparte.
+        + '<button class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npJoin(\''+appt.ticket_number+'\')">Join meeting</button>'
+        + (appt.status === 'scheduled'
+            ? '<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npMarkInterviewComplete(\''+appt.id+'\')">Complete interview</button>'
+            // Deshacer un "completar" accidental. Sin esto, un click por error
+            // dejaba al paciente sin poder volver a entrar a su propia consulta.
+            : '<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npReopenInterview(\''+appt.id+'\')">Reopen interview</button>')
+        + '</div>'
+        + (appt.status === 'completed'
+            ? '<div style="font-size:12.5px;color:rgba(15,35,54,0.63);margin-top:7px;">'
+              + 'Marked complete by mistake? Reopen it and both of you can rejoin.</div>'
+            : '');
+    } else {
+      apptWrap.innerHTML = '<div class="form-section-title">Interview</div><p class="np-empty">Not scheduled yet.</p>';
+    }
+  }
+
+  async function npRepintarEntrevista(patientUserId){
+    if(!patientUserId) return;
+    const { data: apptRows } = await supabaseClient.from('appointments').select('*')
+      .eq('user_id', patientUserId).eq('type', 'np_interview');
+    npPintarEntrevista(apptRows || []);
+  }
+
   async function openNPPatientDetail(patientId){
     if(!patientId) return;
     const patient = npPatients.find(p => p.id === patientId);
@@ -9359,38 +9455,13 @@ if(!window.supabase){
     // la que el paciente veia — y entonces cada uno abria una sala distinta.
     const { data: apptRows } = await supabaseClient.from('appointments').select('*')
       .eq('user_id', patient.user_id).eq('type', 'np_interview');
-    const appt = elegirCitaParaSala(apptRows || []);
-    const apptWrap = document.getElementById('np-detail-appt');
-    npDetailCurrentTicket = appt ? appt.ticket_number : null;
     // Al abrir OTRA ficha el video empieza escondido. Al repintar la misma
     // en plena llamada, tocarlo seria quitarle la consulta de delante al
     // medico (la conexion seguia viva por detras, sin verse).
     const videoWrap = document.getElementById('np-video-wrap');
     const enLlamada = mismaFicha && videoWrap.style.display !== 'none';
     if(!enLlamada) videoWrap.style.display = 'none';
-    if(appt){
-      apptWrap.innerHTML = '<div class="form-section-title">Interview</div>'
-        + '<div style="font-size:13.5px;">Ticket ' + appt.ticket_number + ' — ' + appt.appointment_date + ' ' + appt.appointment_time + ' — status: <b>' + appt.status + '</b></div>'
-        + '<div style="display:flex;gap:8px;margin-top:8px;">'
-        // Pestaña nueva, pantalla completa. La ficha se queda abierta detras
-        // para leer el expediente mientras habla.
-        // En la ficha-pagina el video ya es grande y esta AQUI: se une en la
-        // misma pantalla. Solo si alguien abre la ficha como modal (no deberia)
-        // se manda a la sala aparte.
-        + '<button class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npJoin(\''+appt.ticket_number+'\')">Join meeting</button>'
-        + (appt.status === 'scheduled'
-            ? '<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npMarkInterviewComplete(\''+appt.id+'\')">Complete interview</button>'
-            // Deshacer un "completar" accidental. Sin esto, un click por error
-            // dejaba al paciente sin poder volver a entrar a su propia consulta.
-            : '<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:13px;" onclick="npReopenInterview(\''+appt.id+'\')">Reopen interview</button>')
-        + '</div>'
-        + (appt.status === 'completed'
-            ? '<div style="font-size:12.5px;color:rgba(15,35,54,0.63);margin-top:7px;">'
-              + 'Marked complete by mistake? Reopen it and both of you can rejoin.</div>'
-            : '');
-    } else {
-      apptWrap.innerHTML = '<div class="form-section-title">Interview</div><p class="np-empty">Not scheduled yet.</p>';
-    }
+    npPintarEntrevista(apptRows || []);
 
     // ---- LA PROXIMA CITA LA PONE EL CLINICO ----
     // Se le pregunta al paciente durante la consulta y se anota aqui mismo,
@@ -9611,24 +9682,21 @@ if(!window.supabase){
     await loadNPData();
     await openNPPatientDetail(npCurrentPatientId);
 
-    const lista = document.getElementById('np-detail-rx-requests');
-    if(lista){
-      const aviso = document.createElement('div');
-      aviso.id = 'np-approve-ok';
-      aviso.style.cssText = 'border-radius:10px;padding:10px 14px;margin:8px 0 12px;font-size:13.5px;'
-        + 'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.4);color:#2F5C46;';
-      aviso.innerHTML = '<b>Approved.</b> ' + escapeHtml(rx.medication) + ' — ' + escapeHtml(rx.dose)
-        + ' ($' + rx.price + '/mo). The patient can buy it from their dashboard; we emailed them.';
-      const titulo = lista.querySelector('.form-section-title');
-      if(titulo && titulo.nextSibling) lista.insertBefore(aviso, titulo.nextSibling);
-      else lista.appendChild(aviso);
-      try{ lista.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){}
-    }
-
-    // Y que el paciente se entere por los dos canales, igual que con las
-    // citas: un mensaje en su panel y un correo. Detached los dos: la receta
-    // ya esta guardada y un aviso que falle no la puede tumbar.
+    // Que el paciente se entere por los dos canales, igual que con las
+    // citas: un correo y un mensaje en su panel. La receta ya esta guardada;
+    // un aviso que falle no la puede tumbar — pero SI se le dice al clinico.
     const paciente = npPatients.find(p => p.id === npCurrentPatientId) || {};
+    const correo = paciente.email
+      ? notify('prescription_approved', {
+          name: paciente.full_name || paciente.email,
+          email: paciente.email
+        }, {
+          medication: rx.medication,
+          dose: rx.dose,
+          price: rx.price,
+          provider: currentStaffName || null
+        })
+      : null;
     if(paciente.user_id){
       try{
         await supabaseClient.from('messages').insert({
@@ -9639,17 +9707,34 @@ if(!window.supabase){
         await loadNPMessages(paciente.user_id);
       }catch(e){ console.warn('[approve] no se pudo avisar por mensaje:', e); }
     }
-    setTimeout(function(){
-      notify('prescription_approved', {
-        name: paciente.full_name || paciente.email,
-        email: paciente.email
-      }, {
-        medication: rx.medication,
-        dose: rx.dose,
-        price: rx.price,
-        provider: currentStaffName || null
-      });
-    }, 0);
+
+    const lista = document.getElementById('np-detail-rx-requests');
+    let aviso = null;
+    if(lista){
+      aviso = document.createElement('div');
+      aviso.id = 'np-approve-ok';
+      aviso.style.cssText = 'border-radius:10px;padding:10px 14px;margin:8px 0 12px;font-size:13.5px;'
+        + 'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.4);color:#2F5C46;';
+      aviso.innerHTML = '<b>Approved.</b> ' + escapeHtml(rx.medication) + ' — ' + escapeHtml(rx.dose)
+        + ' ($' + rx.price + '/mo). The patient can buy it from their dashboard. Sending email…';
+      const titulo = lista.querySelector('.form-section-title');
+      if(titulo && titulo.nextSibling) lista.insertBefore(aviso, titulo.nextSibling);
+      else lista.appendChild(aviso);
+      try{ lista.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){}
+    }
+
+    const r = correo ? await esperarCorreo(correo) : null;
+    const okCorreo = !!(r && r.ok && r.sent.indexOf('patient') > -1);
+    if(aviso){
+      aviso.innerHTML = '<b>Approved.</b> ' + escapeHtml(rx.medication) + ' — ' + escapeHtml(rx.dose)
+        + ' ($' + rx.price + '/mo). The patient can buy it from their dashboard. '
+        + escapeHtml(fraseCorreo(r, paciente.email));
+      if(!okCorreo){
+        aviso.style.background = 'rgba(217,140,43,0.14)';
+        aviso.style.borderColor = 'rgba(217,140,43,0.45)';
+        aviso.style.color = '#8A5A12';
+      }
+    }
   }
 
   // ====== RETIRAR UNA RECETA MAL HECHA ======
@@ -9896,9 +9981,13 @@ if(!window.supabase){
 
       // CORREO al paciente, el mismo que recibe cuando reserva el mismo.
       // Antes esta caja solo dejaba un mensaje dentro del panel: quien no
-      // entraba al panel no se enteraba de que tenia cita.
-      notifyAppointmentBooked(currentUser.id, await loadStaffRoster(), cuando, hora, ticket,
-        pacienteDeLaFicha(), { moved: movida });
+      // entraba al panel no se enteraba de que tenia cita. Se lanza ya y se
+      // recoge el resultado al final, para decir la verdad de si salio.
+      const paciente = pacienteDeLaFicha();
+      const correo = paciente.email
+        ? notifyAppointmentBooked(currentUser.id, await loadStaffRoster(), cuando, hora, ticket,
+                                  paciente, { moved: movida })
+        : null;
 
       try{
         await supabaseClient.from('messages').insert({
@@ -9912,10 +10001,17 @@ if(!window.supabase){
       // entera, y el "Saved" escrito antes se iba con ella — el clinico
       // guardaba y no veia confirmacion de nada.
       await npRenderProximaCita(patientUserId);
+      await npRepintarEntrevista(patientUserId);   // que aparezca el Join ya
       await loadNPData();
-      const msg2 = document.getElementById('np-prox-msg');
-      if(msg2){ msg2.style.color = '#2F5C46';
-                msg2.textContent = 'Saved. The patient has been notified by email and in their messages.'; }
+      const pinta = (texto, malo) => {
+        const m = document.getElementById('np-prox-msg');
+        if(m){ m.style.color = malo ? '#8C2F2F' : '#2F5C46'; m.textContent = texto; }
+      };
+      pinta('Saved. Message left in the patient\'s dashboard. Sending email…', false);
+      const r = correo ? await esperarCorreo(correo) : null;
+      const okCorreo = !!(r && r.ok && r.sent.indexOf('patient') > -1);
+      pinta((movida ? 'Moved. ' : 'Saved. ') + fraseCorreo(r, paciente.email)
+            + ' Message left in the patient\'s dashboard.', !okCorreo);
     }catch(err){
       decir('Could not save: ' + (err.message || 'unknown error'), true);
     }
@@ -9935,14 +10031,14 @@ if(!window.supabase){
 
       // Correo al paciente, igual que cuando cancela el mismo.
       const quien = pacienteDeLaFicha();
-      setTimeout(function(){
-        notify('appointment_cancelled', quien, {
-          date: new Date(cita.appointment_date + 'T00:00:00')
-            .toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'}),
-          time: cita.appointment_time, ticket: cita.ticket_number,
-          reason: 'cancelled by the care team'
-        });
-      }, 0);
+      const correo = quien.email
+        ? notify('appointment_cancelled', quien, {
+            date: new Date(cita.appointment_date + 'T00:00:00')
+              .toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'}),
+            time: cita.appointment_time, ticket: cita.ticket_number,
+            reason: 'cancelled by the care team'
+          })
+        : null;
 
       try{
         await supabaseClient.from('messages').insert({
@@ -9951,9 +10047,14 @@ if(!window.supabase){
         });
       }catch(e){}
       await npRenderProximaCita(pid);
+      await npRepintarEntrevista(pid);
       await loadNPData();
+      const r = correo ? await esperarCorreo(correo) : null;
+      const okCorreo = !!(r && r.ok && r.sent.indexOf('patient') > -1);
       const msg2 = document.getElementById('np-prox-msg');
-      if(msg2){ msg2.style.color = '#2F5C46'; msg2.textContent = 'Cancelled. The patient has been notified by email.'; }
+      if(msg2){ msg2.style.color = okCorreo ? '#2F5C46' : '#8C2F2F';
+                msg2.textContent = 'Cancelled. ' + fraseCorreo(r, quien.email)
+                                 + ' Message left in the patient\'s dashboard.'; }
     }catch(err){
       if(msg){ msg.style.color = '#8C2F2F';
                msg.textContent = 'Could not cancel: ' + (err.message || 'unknown error'); }
@@ -10672,21 +10773,21 @@ if(!window.supabase){
   // equipo mandaba el correo de "tu cita esta reservada" a la propia doctora,
   // y al paciente no le llegaba nada. Sin paciente se cae al usuario con
   // sesion, que en el panel del paciente si es el.
+  // Devuelve la promesa del resultado (nunca rechaza) por si quien llama
+  // quiere enseñar si el correo salio. No hace falta esperarla.
   function notifyAppointmentBooked(providerUserId, roster, dateLabel, time, ticket, paciente, extra){
-    setTimeout(function(){
-      const prov = (roster && providerUserId) ? roster[providerUserId] : null;
-      const quien = paciente || pacienteConSesion();
-      notify('appointment_booked', quien, Object.assign({
-        date: dateLabel,
-        time: time,
-        ticket: ticket,
-        provider: prov ? prov.full_name : null,
-        // Sin email del proveedor, la Edge Function manda el aviso a la
-        // bandeja de la clínica. Para que llegue a cada médico por separado,
-        // hay que añadir una columna 'email' a la tabla staff.
-        providerEmail: prov ? (prov.email || null) : null
-      }, extra || {}));
-    }, 0);
+    const prov = (roster && providerUserId) ? roster[providerUserId] : null;
+    const quien = paciente || pacienteConSesion();
+    return notify('appointment_booked', quien, Object.assign({
+      date: dateLabel,
+      time: time,
+      ticket: ticket,
+      provider: prov ? prov.full_name : null,
+      // Sin email del proveedor, la Edge Function manda el aviso a la
+      // bandeja de la clínica. Para que llegue a cada médico por separado,
+      // hay que añadir una columna 'email' a la tabla staff.
+      providerEmail: prov ? (prov.email || null) : null
+    }, extra || {})).catch(function(e){ return { ok:false, sent:[], failed:[], error:String(e) }; });
   }
 
   // El paciente con sesion abierta, para los correos que salen de SU panel.
@@ -11044,13 +11145,17 @@ if(!window.supabase){
     }
   }
 
-  // Free public STUN servers only — no TURN relay. Connects instantly on the
-  // vast majority of home/mobile/office networks. A small number of very
-  // restrictive corporate/school networks (symmetric NAT) may fail to
-  // connect without a paid TURN relay — see pre-launch-checklist.md.
+  // STUN para descubrir la IP publica, y TURN (relay) para cuando eso no
+  // basta. Sin TURN, un telefono en datos moviles (CGNAT) o una oficina con
+  // NAT simetrico se queda en "connecting" para siempre. Openrelay es un
+  // TURN gratuito de Metered; si algun dia se cae, se cambia aqui.
   const RTC_ICE_SERVERS = [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' }
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:openrelay.metered.ca:80' },
+    { urls: 'turn:openrelay.metered.ca:80',  username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
   ];
 
   let rtcPeerConnection = null;
@@ -11058,10 +11163,35 @@ if(!window.supabase){
   let rtcLocalStream = null;
   let rtcChannel = null;
   let rtcRole = null;
-  let rtcSubscribeAnnounced = false;
-  let rtcAckSent = false;
-  let rtcOfferSent = false;
+  // Estado de UNA llamada. Se reemplaza entero en cada join, asi que los
+  // handlers de una llamada vieja (canal ya cerrado) no tocan la nueva.
+  let rtcCall = null;
 
+  // ==========================================================================
+  //  LA SEÑALIZACION, HECHA PARA FALLAR BIEN
+  // ==========================================================================
+  // Lo que habia: cada lado mandaba UN "peer-joined" al suscribirse, y si el
+  // otro no estaba suscrito todavia, ese mensaje se perdia. Broadcast de
+  // Supabase no guarda nada: o estas conectado cuando pasa, o no lo viste.
+  // Con la doctora entrando desde la ficha y el paciente desde el telefono,
+  // llegar con segundos de diferencia era lo normal — y los dos se quedaban
+  // en "esperando a la otra persona" mirandose sin verse.
+  //
+  // Ahora:
+  //  1. Cada lado repite su "hola" cada 1.5 s hasta OIR al otro. Un mensaje
+  //     perdido ya no importa.
+  //  2. Ademas se usa PRESENCE: el servidor lleva la lista de quien esta en
+  //     la sala, asi que al entrar se ve de inmediato si el otro ya esta.
+  //  3. Cada entrada lleva un id de sesion. Si el otro sale y vuelve a
+  //     entrar, se detecta el id nuevo y se rehace la conexion en vez de
+  //     seguir hablando con un peer que ya no existe.
+  //  4. Los candidatos ICE que llegan antes de la descripcion remota se
+  //     guardan y se aplican despues, en vez de tirarse (antes se tiraban
+  //     en silencio y la conexion fallaba "a veces").
+  //  5. Si la suscripcion al canal falla (CHANNEL_ERROR, TIMED_OUT, CLOSED)
+  //     se dice en pantalla y se reintenta. Antes se quedaba en "Requesting
+  //     camera access..." sin explicar nada.
+  //  6. El paciente siempre hace la oferta; la doctora responde. Sin glare.
   async function joinVideoCall(ticketNumber, role, localVideoElId, remoteVideoElId, statusElId){
     if(!ticketNumber){
       alert('No appointment found to connect this call to yet.');
@@ -11074,109 +11204,242 @@ if(!window.supabase){
     // Reset any previous call state before starting a fresh one
     leaveVideoCall(localVideoElId, remoteVideoElId, statusElId);
     rtcRole = role;
-    rtcSubscribeAnnounced = false;
-    rtcAckSent = false;
-    rtcOfferSent = false;
 
-    const statusEl = document.getElementById(statusElId);
+    const call = {
+      sid: Math.random().toString(36).slice(2, 10),   // id de ESTA entrada
+      role: role, ticket: ticketNumber,
+      peerSid: null,          // sesion del otro lado con la que se negocio
+      heard: false,           // ¿ya se oyo al otro?
+      offered: false,
+      pendingIce: [],         // candidatos que llegaron antes de tiempo
+      helloTimer: null, resubTimer: null, connectTimer: null,
+      subscribed: false, dead: false,
+      statusEl: document.getElementById(statusElId),
+      remoteEl: document.getElementById(remoteVideoElId)
+    };
+    rtcCall = call;
+    const statusEl = call.statusEl;
+    const say = (t) => { if(!call.dead && statusEl){ statusEl.style.display = 'flex'; statusEl.textContent = t; } };
+    const log = (...a) => console.log('[video ' + role + ' ' + call.sid + ']', ...a);
+
     rtcSoloAudio = false;
-    statusEl.textContent = 'Requesting camera access...';
+    say('Requesting camera access...');
 
     try{
       // Se pide camara+microfono. Si no hay camara (computadora de escritorio
       // sin webcam, o el navegador no la ve), se cae a SOLO AUDIO en vez de
       // tumbar la consulta entera con "Dispositivo solicitado no encontrado".
-      // Una evaluacion por voz es una evaluacion; una pantalla negra, no.
       try{
         rtcLocalStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       }catch(e1){
         if(e1 && (e1.name === 'NotFoundError' || e1.name === 'OverconstrainedError'
                   || e1.name === 'NotReadableError')){
           rtcLocalStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-          statusEl.textContent = 'No camera found — joining with audio only.';
           rtcSoloAudio = true;
         } else {
           throw e1;
         }
       }
     } catch(err){
-      statusEl.textContent = 'Could not access camera/mic: ' + (err.message || 'permission denied');
+      say('Could not access camera/mic: ' + (err.message || 'permission denied')
+        + '. Allow camera and microphone for this site and click Join again.');
       return;
     }
+    if(rtcCall !== call) return;   // se salio mientras pedia la camara
 
     const localVideo = document.getElementById(localVideoElId);
-    localVideo.srcObject = rtcLocalStream;
+    if(localVideo) localVideo.srcObject = rtcLocalStream;
 
-    rtcPeerConnection = new RTCPeerConnection({ iceServers: RTC_ICE_SERVERS });
-    rtcLocalStream.getTracks().forEach(track => rtcPeerConnection.addTrack(track, rtcLocalStream));
+    const prefijo = () => (rtcSoloAudio ? 'No camera found — audio only. ' : '');
 
-    rtcPeerConnection.ontrack = (event) => {
-      document.getElementById(remoteVideoElId).srcObject = event.streams[0];
-      statusEl.textContent = 'Connected';
-      statusEl.style.display = 'none';
-    };
+    // ---- La conexion WebRTC. Se puede rehacer si el otro lado reentra. ----
+    function nuevaConexion(){
+      if(rtcPeerConnection){ try{ rtcPeerConnection.close(); }catch(e){} }
+      const pc = new RTCPeerConnection({ iceServers: RTC_ICE_SERVERS });
+      rtcPeerConnection = pc;
+      call.offered = false;
+      call.pendingIce = [];
+      rtcLocalStream.getTracks().forEach(track => pc.addTrack(track, rtcLocalStream));
 
-    rtcPeerConnection.onconnectionstatechange = () => {
-      if(!rtcPeerConnection) return;
-      const state = rtcPeerConnection.connectionState;
-      if(state === 'disconnected' || state === 'failed'){
-        statusEl.style.display = 'flex';
-        statusEl.textContent = 'Connection lost — try leaving and rejoining.';
-      }
-    };
-
-    rtcChannel = supabaseClient.channel('video-room-' + ticketNumber, { config: { broadcast: { self: false } } });
-
-    rtcPeerConnection.onicecandidate = (event) => {
-      if(event.candidate && rtcChannel){
-        rtcChannel.send({ type: 'broadcast', event: 'ice-candidate', payload: { candidate: event.candidate, from: role } });
-      }
-    };
-
-    rtcChannel
-      .on('broadcast', { event: 'peer-joined' }, async ({ payload }) => {
-        if(!payload || payload.from === role || !rtcPeerConnection) return;
-        statusEl.textContent = 'Other person is here — connecting...';
-        if(!rtcAckSent){
-          rtcAckSent = true;
-          rtcChannel.send({ type: 'broadcast', event: 'peer-joined', payload: { from: role } });
+      pc.ontrack = (event) => {
+        if(rtcCall !== call) return;
+        if(call.remoteEl) call.remoteEl.srcObject = event.streams[0];
+        if(statusEl){ statusEl.textContent = 'Connected'; statusEl.style.display = 'none'; }
+        if(call.connectTimer){ clearTimeout(call.connectTimer); call.connectTimer = null; }
+      };
+      pc.onicecandidate = (event) => {
+        if(event.candidate && rtcCall === call) enviar('ice-candidate', { candidate: event.candidate });
+      };
+      pc.onconnectionstatechange = () => {
+        if(rtcCall !== call || rtcPeerConnection !== pc) return;
+        const st = pc.connectionState;
+        log('connectionState:', st);
+        if(st === 'connected'){
+          if(call.connectTimer){ clearTimeout(call.connectTimer); call.connectTimer = null; }
+        } else if(st === 'failed'){
+          say('Connection failed — usually the network is blocking the video. '
+            + 'Try switching Wi‑Fi ↔ cellular, then click Join again.');
+        } else if(st === 'disconnected'){
+          say('Connection lost — waiting to reconnect… If it does not come back, click Join again.');
         }
-        if(role === 'patient' && !rtcOfferSent){
-          rtcOfferSent = true;
+      };
+      return pc;
+    }
+    nuevaConexion();
+
+    // ---- El canal de señales ----
+    rtcChannel = supabaseClient.channel('video-room-' + ticketNumber,
+      { config: { broadcast: { self: false }, presence: { key: role + '-' + call.sid } } });
+    const canal = rtcChannel;
+
+    function enviar(event, payload){
+      if(rtcCall !== call || !canal) return;
+      try{
+        const r = canal.send({ type: 'broadcast', event: event,
+          payload: Object.assign({ from: role, sid: call.sid }, payload || {}) });
+        if(r && typeof r.then === 'function') r.then(res => { if(res && res !== 'ok') log('send ' + event + ' →', res); }).catch(() => {});
+      }catch(e){ log('send fallo', event, e); }
+    }
+
+    // Se oyo al otro. Si es una sesion nueva del otro lado (salio y volvio),
+    // la conexion vieja no sirve: se rehace.
+    async function oido(payload){
+      if(!payload || payload.from === role || rtcCall !== call) return;
+      const sid = payload.sid || 'sin-sid';
+      if(call.peerSid && call.peerSid !== sid){
+        log('el otro lado reentro (' + call.peerSid + ' → ' + sid + '): rehaciendo la conexion');
+        nuevaConexion();
+      }
+      call.peerSid = sid;
+      if(!call.heard){
+        call.heard = true;
+        say(prefijo() + 'Other person is here — connecting...');
+        // Si en 25 s no hay video, se dice; no se deja al medico adivinando.
+        call.connectTimer = setTimeout(() => {
+          if(rtcCall === call && rtcPeerConnection && rtcPeerConnection.connectionState !== 'connected'){
+            say('Still connecting… If this takes more than a minute, both of you click Join again.');
+          }
+        }, 25000);
+      }
+      // Contestar el hola SIEMPRE (no solo la primera vez): el otro repite
+      // hasta oirnos, y si su primer intento se perdio necesita este.
+      enviar('peer-joined', {});
+      if(role === 'patient' && !call.offered){
+        call.offered = true;
+        try{
           const offer = await rtcPeerConnection.createOffer();
           await rtcPeerConnection.setLocalDescription(offer);
-          rtcChannel.send({ type: 'broadcast', event: 'offer', payload: { sdp: offer, from: role } });
-        }
-      })
+          enviar('offer', { sdp: rtcPeerConnection.localDescription });
+          log('oferta enviada');
+        }catch(e){ log('no se pudo crear la oferta', e); call.offered = false; }
+      }
+    }
+
+    async function aplicarIcePendientes(){
+      const pc = rtcPeerConnection;
+      while(call.pendingIce.length && pc && pc.remoteDescription){
+        const c = call.pendingIce.shift();
+        try{ await pc.addIceCandidate(new RTCIceCandidate(c)); }catch(e){ log('ice rechazado', e && e.message); }
+      }
+    }
+
+    canal
+      .on('broadcast', { event: 'peer-joined' }, ({ payload }) => { oido(payload); })
       .on('broadcast', { event: 'offer' }, async ({ payload }) => {
-        if(!payload || payload.from === role || !rtcPeerConnection) return;
-        await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-        const answer = await rtcPeerConnection.createAnswer();
-        await rtcPeerConnection.setLocalDescription(answer);
-        rtcChannel.send({ type: 'broadcast', event: 'answer', payload: { sdp: answer, from: role } });
+        if(!payload || payload.from === role || rtcCall !== call) return;
+        if(role === 'patient') return;            // el paciente ofrece, no responde
+        await oido(payload);                      // por si el hola se perdio
+        const pc = rtcPeerConnection;
+        try{
+          await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          enviar('answer', { sdp: pc.localDescription });
+          log('respuesta enviada');
+          await aplicarIcePendientes();
+        }catch(e){ log('fallo al responder la oferta', e); say('Could not negotiate the call — click Join again on both sides.'); }
       })
       .on('broadcast', { event: 'answer' }, async ({ payload }) => {
-        if(!payload || payload.from === role || !rtcPeerConnection) return;
-        await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        if(!payload || payload.from === role || rtcCall !== call) return;
+        const pc = rtcPeerConnection;
+        try{
+          if(pc.signalingState !== 'have-local-offer'){ log('respuesta fuera de lugar, estado', pc.signalingState); return; }
+          await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          log('respuesta aplicada');
+          await aplicarIcePendientes();
+        }catch(e){ log('fallo al aplicar la respuesta', e); }
       })
       .on('broadcast', { event: 'ice-candidate' }, async ({ payload }) => {
-        if(!payload || payload.from === role || !rtcPeerConnection) return;
-        try{ await rtcPeerConnection.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch(e){ /* benign if call already ended */ }
+        if(!payload || payload.from === role || rtcCall !== call || !payload.candidate) return;
+        const pc = rtcPeerConnection;
+        if(!pc) return;
+        if(!pc.remoteDescription){ call.pendingIce.push(payload.candidate); return; }
+        try{ await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); }catch(e){ log('ice rechazado', e && e.message); }
       })
-      .subscribe((status) => {
-        if(status === 'SUBSCRIBED' && !rtcSubscribeAnnounced){
-          rtcSubscribeAnnounced = true;
-          statusEl.textContent = (rtcSoloAudio ? 'No camera found — audio only. ' : '')
-                               + 'Waiting for the other person to join...';
-          rtcChannel.send({ type: 'broadcast', event: 'peer-joined', payload: { from: role } });
+      .on('presence', { event: 'sync' }, () => {
+        // El servidor dice quien esta en la sala. Si el otro ya esta, no hay
+        // que esperar a que su "hola" llegue: se le saluda ya.
+        if(rtcCall !== call || typeof canal.presenceState !== 'function') return;
+        try{
+          const st = canal.presenceState() || {};
+          Object.keys(st).forEach(k => (st[k] || []).forEach(p => {
+            if(p && p.role && p.role !== role && p.sid){
+              if(!call.heard) log('presence: el otro lado ya esta (' + p.sid + ')');
+              if(call.peerSid !== p.sid || !call.heard) enviar('peer-joined', {});
+            }
+          }));
+        }catch(e){}
+      })
+      .subscribe((status, err) => {
+        if(rtcCall !== call) return;
+        log('canal:', status, err || '');
+        if(status === 'SUBSCRIBED'){
+          call.subscribed = true;
+          if(call.resubTimer){ clearTimeout(call.resubTimer); call.resubTimer = null; }
+          if(!call.heard) say(prefijo() + 'Waiting for the other person to join...');
+          if(typeof canal.track === 'function'){
+            try{ canal.track({ role: role, sid: call.sid, at: Date.now() }); }catch(e){}
+          }
+          enviar('peer-joined', {});
+          // Repetir el hola hasta oir al otro. Barato, y es lo que arregla
+          // el "los dos esperando".
+          if(!call.helloTimer){
+            call.helloTimer = setInterval(() => {
+              if(rtcCall !== call){ clearInterval(call.helloTimer); return; }
+              if(!call.heard || (rtcPeerConnection && rtcPeerConnection.connectionState !== 'connected'
+                                  && !call.offered && role === 'patient')){
+                enviar('peer-joined', {});
+              }
+            }, 1500);
+          }
+        } else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'){
+          call.subscribed = false;
+          say('Could not reach the call server (' + status.toLowerCase().replace('_',' ') + '). Retrying…');
+          if(!call.resubTimer){
+            call.resubTimer = setTimeout(() => {
+              call.resubTimer = null;
+              if(rtcCall !== call) return;
+              try{ canal.subscribe(); }catch(e){ log('resubscribe fallo', e); }
+            }, 3000);
+          }
         }
       });
   }
 
   function leaveVideoCall(localVideoElId, remoteVideoElId, statusElId){
+    if(rtcCall){
+      rtcCall.dead = true;
+      if(rtcCall.helloTimer) clearInterval(rtcCall.helloTimer);
+      if(rtcCall.resubTimer) clearTimeout(rtcCall.resubTimer);
+      if(rtcCall.connectTimer) clearTimeout(rtcCall.connectTimer);
+      rtcCall = null;
+    }
     if(rtcPeerConnection){ rtcPeerConnection.close(); rtcPeerConnection = null; }
     if(rtcLocalStream){ rtcLocalStream.getTracks().forEach(t => t.stop()); rtcLocalStream = null; }
-    if(rtcChannel && supabaseClient){ supabaseClient.removeChannel(rtcChannel); rtcChannel = null; }
+    if(rtcChannel && supabaseClient){
+      try{ if(typeof rtcChannel.untrack === 'function') rtcChannel.untrack(); }catch(e){}
+      supabaseClient.removeChannel(rtcChannel); rtcChannel = null;
+    }
     const localEl = document.getElementById(localVideoElId);
     const remoteEl = document.getElementById(remoteVideoElId);
     const statusEl = document.getElementById(statusElId);
