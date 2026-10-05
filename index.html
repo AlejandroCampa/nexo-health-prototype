@@ -3141,7 +3141,7 @@ if(!window.supabase){
   // vale — si esto no coincide, la llamada va a una función que no existe:
   // no sale correo, y tampoco aparece nada en los logs, porque nunca llega.
   // Si algún día la renombras en Supabase, cambia esta línea y ya.
-  const NOTIFY_FUNCTION = 'swift-responder';
+  const NOTIFY_FUNCTION = 'notify';
 
   // Se llama con fetch en vez de functions.invoke(), y con Content-Type
   // text/plain sin cabeceras extra. Eso lo convierte en una "simple request":
@@ -3317,7 +3317,7 @@ if(!window.supabase){
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 05oct-5';
+  const NUVI_BUILD = 'build 05oct-6';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
