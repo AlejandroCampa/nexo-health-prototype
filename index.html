@@ -3317,7 +3317,7 @@ if(!window.supabase){
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 05oct-3';
+  const NUVI_BUILD = 'build 05oct-5';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -6840,7 +6840,10 @@ if(!window.supabase){
     if(!body) return;
     input.value = '';
     try{
-      await supabaseClient.from('messages').insert({ user_id: currentUser.id, sender: 'patient', body });
+      const { error } = await supabaseClient.from('messages').insert({ user_id: currentUser.id, sender: 'patient', body });
+      if(error) throw error;
+      // Aviso al equipo (sin el texto: es informacion de salud). Detached.
+      notify('message_received', pacienteConSesion(), { from: 'patient' });
       await loadMessages();
     } catch(err){
       alert('Could not send message: ' + (err.message || 'unknown error'));
@@ -8758,6 +8761,7 @@ if(!window.supabase){
       const { error } = await supabaseClient.from('messages')
         .insert({ user_id: currentUser.id, sender: 'patient', body: texto });
       if(error) throw error;
+      notify('message_received', pacienteConSesion(), { from: 'patient', kind: 'appointment_request' });
       alert('Sent. Your care team will get back to you — usually within 24–48 hours.\n\n'
           + 'You can see their reply in the Messages tab.');
       if(typeof loadMessages === 'function') loadMessages();
@@ -10707,7 +10711,10 @@ if(!window.supabase){
     if(!body || !npCurrentPatientUserId) return;
     input.value = '';
     try{
-      await supabaseClient.from('messages').insert({ user_id: npCurrentPatientUserId, sender: 'doctor', body });
+      const { error } = await supabaseClient.from('messages').insert({ user_id: npCurrentPatientUserId, sender: 'doctor', body });
+      if(error) throw error;
+      const quien = pacienteDeLaFicha();
+      if(quien.email) notify('message_received', quien, { from: 'staff' });
       await loadNPMessages(npCurrentPatientUserId);
     } catch(err){
       alert('Could not send: ' + (err.message || 'unknown error'));
