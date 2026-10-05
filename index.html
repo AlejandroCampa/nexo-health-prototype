@@ -1065,6 +1065,8 @@ if(!window.supabase){
   .visit-copy ul{list-style:none;padding:0;margin:4px 0 0;display:grid;gap:9px;}
   .visit-copy li{position:relative;padding-left:22px;font-size:14.5px;color:rgba(15,35,54,0.8);}
   .visit-copy li::before{content:"";position:absolute;left:0;top:7px;width:9px;height:9px;border-radius:50%;background:var(--coral);}
+  .nmi-field{height:46px;border:1px solid var(--line);border-radius:9px;background:var(--white);padding:0 6px;margin-bottom:10px;}
+  .nmi-field iframe{height:44px !important;}
 </style>
 </head>
 <body>
@@ -1964,7 +1966,7 @@ if(!window.supabase){
              antes de que lo descubra solo es la diferencia entre una
              limitacion y un fallo. El telefono va en <a href="tel:"> para que
              en movil se marque de un toque. -->
-        <div style="background:rgba(217,140,43,0.12);border:1px solid rgba(217,140,43,0.42);
+        <div id="solo-athm-aviso" style="background:rgba(217,140,43,0.12);border:1px solid rgba(217,140,43,0.42);
              border-radius:10px;padding:13px 15px;margin:4px 0 16px;font-size:13px;
              line-height:1.6;color:#8A5A12;">
           <b>Right now we can only take ATH Móvil.</b><br>
@@ -1978,6 +1980,27 @@ if(!window.supabase){
         <div id="athm-detail" class="meta" style="margin-bottom:4px;"></div>
         <div id="athm-amount" style="font-family:var(--sans);font-size:30px;
              margin:6px 0 14px;">—</div>
+
+        <!-- TARJETA. Los tres campos los pinta Collect.js (iframes de NMI);
+             aqui solo hay cajas vacias con su borde. Se enseña cuando hay
+             llave publica configurada (nmiMostrar). -->
+        <div id="nmi-wrap" style="display:none;margin-bottom:18px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Credit or debit card</div>
+          <div id="nmi-ccnumber" class="nmi-field"></div>
+          <div style="display:flex;gap:10px;">
+            <div id="nmi-ccexp" class="nmi-field" style="flex:1;"></div>
+            <div id="nmi-cvv" class="nmi-field" style="flex:1;"></div>
+          </div>
+          <label id="nmi-save-wrap" style="display:none;font-size:12.5px;color:var(--ink-soft);margin:10px 0 0;cursor:pointer;">
+            <input id="nmi-save" type="checkbox" checked style="vertical-align:middle;margin-right:6px;">
+            Save this card and renew my membership automatically each month (cancel anytime)
+          </label>
+          <button type="button" class="btn btn-primary" id="nmi-pay-btn" style="width:100%;padding:12px 14px;margin-top:12px;" onclick="nmiPagar()">Pay with card</button>
+          <div id="nmi-msg" style="font-size:12.5px;margin-top:8px;line-height:1.6;color:var(--ink-soft);"></div>
+          <div style="font-size:11.5px;color:rgba(15,35,54,0.55);margin-top:8px;">Card details are entered directly with our payment processor and never stored on this site.</div>
+        </div>
+        <div id="athm-o-tarjeta" style="display:none;font-size:12.5px;color:var(--ink-soft);margin:4px 0 10px;text-align:center;">— or pay with ATH Móvil —</div>
+
         <div id="ATHMovil_Checkout_Button_payment"></div>
         <!-- El script de Evertec va AQUI, en el HTML, no inyectado por JS.
              Se inyectaba con appendChild despues de cargar la pagina y el
@@ -3217,6 +3240,10 @@ if(!window.supabase){
   // PEGA AQUI LOS DOS DATOS DE TU CUENTA ATH BUSINESS Y LOS COBROS SE ENCIENDEN
   // SOLOS. Mientras digan PEGAR_, el sitio sigue en pausa: no hay estado a
   // medias donde el boton exista pero el cobro no llegue.
+  // Public Tokenization Key de NMI (Settings → Security Keys → tipo "Public").
+  // Publica a proposito: solo tokeniza, no puede cobrar.
+  const NMI_PUBLIC_KEY = 'PEGAR_PUBLIC_TOKENIZATION_KEY';
+
   const ATHM = {
     env:         'production',
     publicToken: '6105ba08c77989780b42e22fb16ceb42cb977975',
@@ -3241,7 +3268,9 @@ if(!window.supabase){
   // Ya no es una constante escrita a mano: se DERIVA de si hay un medio de
   // cobro configurado. Asi no puede pasar lo unico peligroso — que alguien
   // ponga false sin que haya nada detras que cobre.
-  const PAYMENTS_PAUSED = !athmConfigurado();
+  const PAYMENTS_PAUSED = !athmConfigurado() && !nmiConfiguradoTemprano();
+  // NMI se define mas abajo; esto solo mira la llave publica.
+  function nmiConfiguradoTemprano(){ try{ return typeof NMI_PUBLIC_KEY === 'string' && NMI_PUBLIC_KEY.indexOf('PEGAR_') !== 0; }catch(e){ return false; } }
   const PAYMENTS_PAUSED_MSG =
     'Payments are paused right now.\n\n'
     + 'You are not being charged and you do not owe anything. Your account, '
@@ -3288,7 +3317,7 @@ if(!window.supabase){
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 30sep-1';
+  const NUVI_BUILD = 'build 05oct-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -3607,6 +3636,7 @@ if(!window.supabase){
     const cod = document.getElementById('athm-codigo-wrap');
     if(cod) cod.style.display = 'none';   // empieza limpio cada cobro
     athmEspiarRed();
+    nmiMostrar(athmOrden);
     athmMontarBoton();
     athmMostrarManual(ref, total);
     athmVigilarPago(ref);
@@ -4144,6 +4174,168 @@ if(!window.supabase){
   // Le pide a la Edge Function que verifique con ATH y marque. La funcion es la
   // UNICA que puede escribir paid/purchased: tiene la service key y el
   // privateToken, y los dos viven solo en el servidor.
+  // Pago confirmado POR EL SERVIDOR (ATH o tarjeta): lo mismo en los dos casos.
+  function pagoConfirmado(){
+    const est = document.getElementById('athm-status');
+    if(est) est.textContent = 'Payment confirmed. Thank you.';
+    const pagado = athmOrden;
+    athmOrden = null;
+    // Receta pagada → la orden sale a la farmacia SOLA. La Edge Function
+    // vuelve a comprobar el pago con la llave de servicio, asi que esto
+    // no es mas que un "ya puedes". Si algo la bloquea (producto sin
+    // mapear, direccion), queda registrado y el equipo la manda a mano.
+    if(pagado && (pagado.kind === 'legacy' || pagado.kind === 'prescription')){
+      if(est) est.textContent = 'Payment confirmed. Sending your prescription to the pharmacy…';
+      enviarAFarmacia(pagado.kind, pagado.id, null, true).then(function(r){
+        const e2 = document.getElementById('athm-status');
+        if(e2) e2.textContent = r.ok
+          ? 'Payment confirmed. Your prescription is with the pharmacy.'
+          : 'Payment confirmed. Your care team will send the prescription to the pharmacy.';
+        loadPatientState();
+      });
+    }
+    setTimeout(function(){
+      // Solo si no se abrio OTRO cobro mientras tanto.
+      if(!athmOrden) document.getElementById('athm-wrap').style.display = 'none';
+      loadPatientState();
+    }, 1800);
+  }
+
+  // ==========================================================================
+  //  TARJETA (Visa / Mastercard / Amex / Discover) — NMI via Merchant Service Depot
+  // ==========================================================================
+  // Collect.js pinta los campos de tarjeta en iframes de NMI: el numero NUNCA
+  // toca esta pagina (PCI SAQ-A). Devuelve un token de un solo uso, que se
+  // manda a la Edge Function nmi-charge junto con la referencia de la orden.
+  // La funcion cobra con la llave privada, lee la respuesta de NMI y marca la
+  // base. El navegador solo enseña el resultado — igual que con ATH.
+  const NMI = {
+    // Public Tokenization Key del portal de NMI (Settings → Security Keys →
+    // "Public" / tokenization). Es publica a proposito: solo sirve para
+    // tokenizar; no puede cobrar nada.
+    tokenizationKey: NMI_PUBLIC_KEY
+  };
+  function nmiConfigurado(){
+    return typeof NMI.tokenizationKey === 'string' && NMI.tokenizationKey.indexOf('PEGAR_') !== 0;
+  }
+  let nmiScriptCargado = false, nmiListo = false, nmiCobrando = false;
+
+  function nmiCargar(){
+    if(nmiScriptCargado) return;
+    nmiScriptCargado = true;
+    const sc = document.createElement('script');
+    sc.src = 'https://secure.nmi.com/token/Collect.js';
+    sc.setAttribute('data-tokenization-key', NMI.tokenizationKey);
+    sc.setAttribute('data-variant', 'inline');
+    sc.onload = nmiConfigurarCampos;
+    sc.onerror = function(){
+      nmiScriptCargado = false;
+      const m = document.getElementById('nmi-msg');
+      if(m){ m.style.color = '#8C2F2F'; m.textContent = 'Card form could not load. You can still pay with ATH Móvil below.'; }
+    };
+    document.head.appendChild(sc);
+  }
+
+  function nmiConfigurarCampos(){
+    if(!window.CollectJS) return;
+    try{
+      window.CollectJS.configure({
+        variant: 'inline',
+        styleSniffer: true,
+        fields: {
+          ccnumber: { selector: '#nmi-ccnumber', placeholder: 'Card number' },
+          ccexp:    { selector: '#nmi-ccexp',    placeholder: 'MM / YY' },
+          cvv:      { selector: '#nmi-cvv',      placeholder: 'CVC' }
+        },
+        validationCallback: function(field, status, message){
+          const m = document.getElementById('nmi-msg');
+          if(m && !nmiCobrando){ m.style.color = status ? 'var(--ink-soft)' : '#8C2F2F'; m.textContent = status ? '' : message; }
+        },
+        fieldsAvailableCallback: function(){ nmiListo = true; },
+        callback: function(resp){
+          // Collect.js ya tokenizo: aqui llega el token, y solo el token.
+          nmiCobrarConToken(resp && resp.token);
+        }
+      });
+    }catch(e){ console.error('[nmi] configure', e); }
+  }
+
+  // El boton "Pay with card".
+  function nmiPagar(){
+    if(!athmOrden || nmiCobrando) return;
+    const m = document.getElementById('nmi-msg');
+    if(!window.CollectJS){ if(m){ m.style.color='#8C2F2F'; m.textContent='Card form is still loading — try again in a second.'; } return; }
+    nmiCobrando = true;
+    nmiBoton(true, 'Checking card…');
+    if(m){ m.style.color='var(--ink-soft)'; m.textContent=''; }
+    try{ window.CollectJS.startPaymentRequest(); }
+    catch(e){ nmiCobrando = false; nmiBoton(false); if(m){ m.style.color='#8C2F2F'; m.textContent='Check the card details and try again.'; } }
+  }
+  function nmiBoton(ocupado, texto){
+    const b = document.getElementById('nmi-pay-btn');
+    if(!b) return;
+    b.disabled = !!ocupado;
+    b.textContent = texto || ('Pay ' + (athmOrden ? athmDinero(athmOrden.total) : '') + ' with card');
+  }
+
+  async function nmiCobrarConToken(token){
+    const m = document.getElementById('nmi-msg');
+    const orden = athmOrden;
+    if(!token || !orden){ nmiCobrando = false; nmiBoton(false); return; }
+    nmiBoton(true, 'Charging…');
+    try{
+      const { data: sess } = await supabaseClient.auth.getSession();
+      const jwt = sess && sess.session && sess.session.access_token;
+      const guardar = orden.kind === 'membership' && !!(document.getElementById('nmi-save') || {}).checked;
+      const res = await fetch(SUPABASE_URL.replace(/\/+$/, '') + '/functions/v1/nmi-charge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ ref: orden.ref, payment_token: token, save_card: guardar })
+      });
+      const out = await res.json().catch(function(){ return {}; });
+      if(res.ok && out.paid === true){
+        athmAvisoFinal = true;
+        if(m){ m.style.color='#2F5C46'; m.textContent='Paid' + (out.last4 ? ' with card ending ' + out.last4 : '') + '.'
+               + (out.saved_card ? ' Your membership will renew automatically each month.' : ''); }
+        pagoConfirmado();
+        return;
+      }
+      // Declinada o error: NADA se marco. Se dice claro y se deja ATH abajo.
+      if(m){ m.style.color='#8C2F2F'; m.textContent = out.error || ('Payment failed (HTTP ' + res.status + '). Nothing was charged.'); }
+    }catch(e){
+      if(m){ m.style.color='#8C2F2F'; m.textContent='We could not reach the payment server. Nothing was charged. Try again or use ATH Móvil.'; }
+      console.error('[nmi]', e);
+    }
+    nmiCobrando = false;
+    nmiBoton(false);
+  }
+
+  // Enseña (o esconde) la seccion de tarjeta cada vez que se abre un cobro.
+  function nmiMostrar(orden){
+    const wrap = document.getElementById('nmi-wrap');
+    const aviso = document.getElementById('solo-athm-aviso');
+    const sep = document.getElementById('athm-o-tarjeta');
+    const titulo = document.getElementById('athm-title');
+    if(!wrap) return;
+    if(!nmiConfigurado()){
+      wrap.style.display = 'none'; if(sep) sep.style.display = 'none';
+      if(aviso) aviso.style.display = 'block';
+      if(titulo) titulo.textContent = 'Pay with ATH Móvil';
+      return;
+    }
+    if(aviso) aviso.style.display = 'none';
+    if(sep) sep.style.display = 'block';
+    if(titulo) titulo.textContent = 'Pay';
+    wrap.style.display = 'block';
+    const guardarWrap = document.getElementById('nmi-save-wrap');
+    if(guardarWrap) guardarWrap.style.display = orden.kind === 'membership' ? 'block' : 'none';
+    const m = document.getElementById('nmi-msg'); if(m) m.textContent = '';
+    nmiCobrando = false;
+    nmiBoton(false);
+    nmiCargar();
+    if(window.CollectJS && nmiScriptCargado) nmiConfigurarCampos();
+  }
+
   async function athmConfirmarConServidor(ecommerceId){
     if(!athmOrden){ return; }
     const ref = athmOrden.ref;
@@ -4164,12 +4356,7 @@ if(!window.supabase){
       });
       const out = await resp.json().catch(function(){ return {}; });
       if(resp.ok && out && out.paid === true){
-        document.getElementById('athm-status').textContent = 'Payment confirmed. Thank you.';
-        athmOrden = null;
-        setTimeout(function(){
-          document.getElementById('athm-wrap').style.display = 'none';
-          loadPatientState();
-        }, 1200);
+        pagoConfirmado();
         return;
       }
       // No se pudo confirmar. NUNCA se marca por si acaso: si el dinero salio
@@ -5731,6 +5918,8 @@ if(!window.supabase){
     const pendingWrap = document.getElementById('store-pending-list');
 
     let approvedHtml = '';
+    const ordenesPaciente = await ordenesFarmaciaDe(currentUser.id);
+    const ordenPaciente = id => (id && ordenesPaciente.find(o => o.id === id)) || null;
 
     // Recetas anteriores, ARRIBA de la vigente y en orden cronológico, para
     // que se lea la progresión: 2.5 mg -> 7.5 mg. Van sin botón de comprar
@@ -5750,7 +5939,7 @@ if(!window.supabase){
       approvedHtml += renderStoreItem({
         medication: r.medication, dose: r.dose, price: p,
         previous: true, approvedOn: when,
-        purchased: r.purchased,
+        purchased: r.purchased, orden: ordenPaciente(r.pharmacy_order_id),
         cancelled: r.cancelled,
         cancelReason: r.cancel_reason,
         onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "', " + p + ")",
@@ -5771,7 +5960,7 @@ if(!window.supabase){
           : null,
         // NO history.purchased a secas: esa bandera es de la compra anterior
         // hasta que el paciente pague ESTA receta.
-        purchased: rxVigentePagada(history),
+        purchased: rxVigentePagada(history), orden: ordenPaciente(history.pharmacy_order_id),
         cancelled: history.cancelled,
         cancelReason: history.cancel_reason,
         onBuy: "goToMedicationCheckout('legacy', null, '" + history.approved_medication + "', " + getDisplayPrice(history.approved_medication, history.approved_price) + ")",
@@ -5787,7 +5976,7 @@ if(!window.supabase){
           ? new Date(r.approved_at || r.created_at).toLocaleDateString(undefined,
               { year:'numeric', month:'short', day:'numeric' })
           : null,
-        purchased: r.purchased,
+        purchased: r.purchased, orden: ordenPaciente(r.pharmacy_order_id),
         cancelled: r.cancelled,
         cancelReason: r.cancel_reason,
         onBuy: "goToMedicationCheckout('prescription', '" + r.id + "', '" + r.medication + "', " + getDisplayPrice(r.medication, r.price) + ")",
@@ -5833,7 +6022,15 @@ if(!window.supabase){
 
     let actionHtml;
     if(item.purchased){
-      actionHtml = '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Order placed with pharmacy</span>'
+      // Con orden en la farmacia se enseña su estado de verdad (y el
+      // tracking cuando sale). Sin orden todavia, lo de siempre.
+      const o = item.orden;
+      const estado = !o ? 'Order placed with pharmacy'
+        : /ship/i.test(o.status) ? 'Shipped' + (o.tracking_number ? ' · tracking ' + escapeHtml(o.tracking_number) : '')
+        : /deliver/i.test(o.status) ? 'Delivered'
+        : /error/i.test(o.status) ? 'Paid — your care team is sending it to the pharmacy'
+        : 'At the pharmacy — preparing your order';
+      actionHtml = '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">' + estado + '</span>'
         + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(15,35,54,0.68);">Cancel</a>';
     } else if(PAYMENTS_PAUSED){
       // Un boton que no cobra es peor que ningun boton: el paciente lo pulsa,
@@ -9495,6 +9692,23 @@ if(!window.supabase){
       ? new Date(iso).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })
       : null;
     // Pagada, y pagada ESTA receta (no la anterior): ver rxVigentePagada.
+    // Las ordenes de farmacia de este paciente, para enseñar estado/tracking.
+    const ordenes = await ordenesFarmaciaDe(patient.user_id);
+    const ordenDe = id => (id && ordenes.find(o => o.id === id)) || null;
+    // Que se puede hacer con la receta frente a la farmacia:
+    //   pagada y sin mandar  → boton "Send to pharmacy" (va por la API)
+    //   sin pagar            → nada: no se manda lo que no se cobro
+    //   mandada              → estado real de la orden (o "Sent" si fue a mano)
+    const accionFarmacia = (kind, id, sent, pagada, orden) => {
+      if(orden) return pillOrdenFarmacia(orden)
+        + (/error|simulated/i.test(orden.status)
+            ? '<button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;margin-left:6px;" onclick="npEnviarAFarmacia(\'' + kind + '\',' + (id ? '\'' + id + '\'' : 'null') + ')">Retry</button>'
+            : '');
+      if(sent) return '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Sent to pharmacy</span>';
+      if(!pagada) return '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Approved</span>';
+      return '<button class="btn btn-primary" style="width:auto;padding:6px 14px;font-size:12px;" onclick="npEnviarAFarmacia(\'' + kind + '\',' + (id ? '\'' + id + '\'' : 'null') + ')">Send to pharmacy</button>'
+        + '<br><a href="javascript:void(0)" onclick="markSentToPharmacy(\'' + kind + '\',' + (id ? '\'' + id + '\'' : 'null') + ')" style="font-size:11px;color:rgba(15,35,54,0.6);">Sent manually in the portal</a>';
+    };
     const pagoPill = pagada => pagada
       ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);margin-right:6px;">Paid</span>'
       : '<span class="rx-badge" style="background:rgba(217,140,43,0.14);border-color:rgba(217,140,43,0.45);color:#8A5A12;margin-right:6px;">Unpaid</span>';
@@ -9508,9 +9722,7 @@ if(!window.supabase){
         + '<div class="meta">' + (patient.approved_dose || '') + (cuando ? ' · approved ' + cuando : '') + '</div></div>'
         + '<div style="text-align:right;">'
         + pagoPill(rxVigentePagada(patient))
-        + (sent
-            ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Sent to pharmacy</span>'
-            : '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);margin-right:6px;">Approved</span><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;" onclick="markSentToPharmacy(\'legacy\',null)">Confirm sent</button>')
+        + accionFarmacia('legacy', null, sent, rxVigentePagada(patient), ordenDe(patient.pharmacy_order_id))
         + '<br><a href="javascript:void(0)" onclick="npVoidPrescription(\'legacy\',null,'
         + JSON.stringify(patient.approved_medication || '').replace(/"/g, '&quot;') + ','
         + JSON.stringify(patient.approved_dose || '').replace(/"/g, '&quot;') + ')"'
@@ -9534,9 +9746,7 @@ if(!window.supabase){
           + (r.requested_goal ? ' · Goal: ' + r.requested_goal : '') + '</div></div>'
           + '<div style="text-align:right;">'
           + pagoPill(!!r.purchased)
-          + (sent
-              ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Sent to pharmacy</span>'
-              : '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);margin-right:6px;">Approved</span><button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;" onclick="markSentToPharmacy(\'prescription\',\''+r.id+'\')">Confirm sent</button>')
+          + accionFarmacia('prescription', r.id, sent, !!r.purchased, ordenDe(r.pharmacy_order_id))
           + '<br><a href="javascript:void(0)" onclick="npVoidPrescription(\'prescription\',\''+r.id+'\','
           + JSON.stringify(r.medication || '').replace(/"/g, '&quot;') + ','
           + JSON.stringify(r.dose || '').replace(/"/g, '&quot;') + ')"'
@@ -9831,9 +10041,78 @@ if(!window.supabase){
     }
   }
 
+  // ====== LA FARMACIA (LifeFile / Center City) ======
+  // La orden la arma y la manda la Edge Function 'lifefile-order', nunca el
+  // navegador: ella comprueba con la llave de servicio que la receta esta
+  // aprobada, PAGADA, con direccion en PR y consentimiento, y solo entonces
+  // llama a LifeFile. Aqui solo se pide y se enseña la respuesta.
+  //   kind: 'legacy' | 'prescription'   id: id en prescriptions (o null)
+  //   patientUserId: lo manda el staff; el paciente manda lo suyo.
+  //   silencioso: true cuando sale solo tras el pago (no molesta con alerts)
+  async function enviarAFarmacia(kind, id, patientUserId, silencioso){
+    const out = { ok:false, error:null, blocked:null, order_id:null, lf_order_id:null, simulated:false };
+    if(!supabaseClient){ out.error = 'Not connected'; return out; }
+    try{
+      const { data: sess } = await supabaseClient.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if(!token){ out.error = 'Sign in again'; return out; }
+      const res = await fetch(SUPABASE_URL.replace(/\/+$/, '') + '/functions/v1/lifefile-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ kind: kind, rx_id: id || null, user_id: patientUserId || null })
+      });
+      const body = await res.json().catch(() => ({}));
+      out.ok = !!body.ok; out.order_id = body.order_id || null; out.lf_order_id = body.lf_order_id || null;
+      out.simulated = !!body.simulated; out.blocked = body.blocked || null;
+      out.error = body.ok ? null : (body.error || (body.blocked ? 'blocked: ' + body.blocked.join('; ') : 'HTTP ' + res.status));
+      console.log('[farmacia] ' + kind + ' ' + (id || '') + ' →', body);
+    }catch(e){
+      out.error = 'could not reach the pharmacy function';
+      console.error('[farmacia]', e);
+    }
+    if(!silencioso){
+      if(out.ok) alert((out.simulated ? 'SIMULATED (no pharmacy credentials yet): the order was built and recorded, nothing was sent.\n\n' : 'Sent to the pharmacy.\n\n')
+                       + 'Order ' + (out.lf_order_id || out.order_id || ''));
+      else alert('Not sent to the pharmacy.\n\n' + (out.blocked ? '• ' + out.blocked.join('\n• ') : out.error));
+    }
+    return out;
+  }
+
+  // Boton de la ficha. Tras mandar, se repinta la lista de recetas.
+  async function npEnviarAFarmacia(kind, id){
+    if(!npCurrentPatientUserId) return;
+    if(!confirm('Send this prescription to the pharmacy now?\n\nThe order goes to Center City through LifeFile. Only paid, approved prescriptions with a Puerto Rico address go through.')) return;
+    await enviarAFarmacia(kind, id, npCurrentPatientUserId, false);
+    await loadNPData();
+    await openNPPatientDetail(npCurrentPatientId);
+  }
+
+  // Las ordenes de un paciente, para enseñar estado y tracking.
+  async function ordenesFarmaciaDe(userId){
+    if(!supabaseClient || !userId) return [];
+    try{
+      const { data } = await supabaseClient.from('pharmacy_orders').select('*')
+        .eq('user_id', userId).order('created_at', { ascending:false });
+      return data || [];
+    }catch(e){ return []; }
+  }
+  function pillOrdenFarmacia(o){
+    if(!o) return '';
+    const st = String(o.status || '');
+    const color = /error/i.test(st) ? 'background:rgba(196,60,60,0.10);color:#8C2F2F;'
+                : /ship|deliver/i.test(st) ? 'background:rgba(79,122,100,0.14);color:var(--sage);'
+                : 'background:rgba(217,140,43,0.14);color:#8A5A12;';
+    const txt = /simulated/i.test(st) ? 'Pharmacy: simulated'
+              : /error/i.test(st) ? 'Pharmacy error'
+              : /ship/i.test(st) ? 'Shipped' + (o.tracking_number ? ' · ' + escapeHtml(o.tracking_number) : '')
+              : /deliver/i.test(st) ? 'Delivered'
+              : 'At pharmacy' + (o.lf_order_id ? ' · #' + escapeHtml(String(o.lf_order_id)) : '');
+    return '<span class="rx-badge" style="' + color + '">' + txt + '</span>';
+  }
+
   // Tracks whether staff has manually entered this prescription into
-  // LifeFile's portal — our app doesn't submit it automatically (no API
-  // access yet), this is just an honest record of "this was actually sent."
+  // LifeFile's portal — the fallback for when the API is down or the
+  // product isn't mapped yet. The normal path is npEnviarAFarmacia().
   async function markSentToPharmacy(kind, id){
     if(!confirm('Confirm you\'ve manually entered this prescription into LifeFile?')) return;
     try{
