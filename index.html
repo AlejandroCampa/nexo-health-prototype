@@ -3242,7 +3242,7 @@ if(!window.supabase){
   // medias donde el boton exista pero el cobro no llegue.
   // Public Tokenization Key de NMI (Settings → Security Keys → tipo "Public").
   // Publica a proposito: solo tokeniza, no puede cobrar.
-  const NMI_PUBLIC_KEY = 'ag5549-52HjA4-7njcn8-875SQA';
+  const NMI_PUBLIC_KEY = 'PEGAR_PUBLIC_TOKENIZATION_KEY';
 
   const ATHM = {
     env:         'production',
@@ -3270,7 +3270,7 @@ if(!window.supabase){
   // ponga false sin que haya nada detras que cobre.
   const PAYMENTS_PAUSED = !athmConfigurado() && !nmiConfiguradoTemprano();
   // NMI se define mas abajo; esto solo mira la llave publica.
-  function nmiConfiguradoTemprano(){ try{ return typeof NMI_PUBLIC_KEY === 'string' && NMI_PUBLIC_KEY.indexOf('PEGAR_') !== 0; }catch(e){ return false; } }
+  function nmiConfiguradoTemprano(){ try{ const k = String(NMI_PUBLIC_KEY || '').replace(/['"\s]/g, ''); return k.length > 10 && k.indexOf('PEGAR_') !== 0; }catch(e){ return false; } }
   const PAYMENTS_PAUSED_MSG =
     'Payments are paused right now.\n\n'
     + 'You are not being charged and you do not owe anything. Your account, '
@@ -3317,7 +3317,7 @@ if(!window.supabase){
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 05oct-1';
+  const NUVI_BUILD = 'build 05oct-2';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -3807,6 +3807,7 @@ if(!window.supabase){
                   price: String(orden.amount), tax: '0', metadata: orden.ref }]
       };
       athmEspiarRed();
+      nmiMostrar(athmOrden);
       athmMontarBoton();
       athmMostrarManual(orden.ref, Number(orden.amount));
       athmVigilarPago(orden.ref);
@@ -4216,8 +4217,11 @@ if(!window.supabase){
     tokenizationKey: NMI_PUBLIC_KEY
   };
   function nmiConfigurado(){
-    return typeof NMI.tokenizationKey === 'string' && NMI.tokenizationKey.indexOf('PEGAR_') !== 0;
+    const k = String(NMI.tokenizationKey || '').replace(/['"\s]/g, '');
+    return k.length > 10 && k.indexOf('PEGAR_') !== 0;
   }
+  // En consola, al cargar: asi "solo sale ATH" se diagnostica en un segundo.
+  console.log('[nmi] llave publica configurada:', nmiConfigurado() ? 'SI' : 'NO (sigue PEGAR_... en NMI_PUBLIC_KEY)');
   let nmiScriptCargado = false, nmiListo = false, nmiCobrando = false;
 
   function nmiCargar(){
@@ -4225,7 +4229,7 @@ if(!window.supabase){
     nmiScriptCargado = true;
     const sc = document.createElement('script');
     sc.src = 'https://secure.nmi.com/token/Collect.js';
-    sc.setAttribute('data-tokenization-key', NMI.tokenizationKey);
+    sc.setAttribute('data-tokenization-key', String(NMI.tokenizationKey).replace(/['"\s]/g, ''));
     sc.setAttribute('data-variant', 'inline');
     sc.onload = nmiConfigurarCampos;
     sc.onerror = function(){
