@@ -1317,8 +1317,15 @@ if(!window.supabase){
         <b>Your evaluation room is open.</b>
         <span id="join-strip-when"></span>
       </div>
-      <button type="button" class="btn btn-primary" id="join-strip-btn"
-              style="width:auto;padding:9px 18px;font-size:13.5px;">Join meeting</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary" id="join-strip-btn"
+                style="width:auto;padding:9px 18px;font-size:13.5px;">Join meeting</button>
+        <!-- Mover la cita, a la vista desde arriba (antes solo estaba
+             enterrado en la tarjeta de abajo y no se encontraba). Igual que
+             alli: le PIDE al equipo que la mueva, no la cancela. -->
+        <button type="button" class="btn btn-outline" id="join-strip-mover"
+                style="width:auto;padding:9px 16px;font-size:13.5px;">Need to move it?</button>
+      </div>
     </div>
     <div class="dash-tabs" id="dash-tabs" role="tablist" aria-label="Secciones de tu cuenta">
       <button type="button" class="dash-tab" role="tab" id="tab-home"
@@ -2383,7 +2390,7 @@ if(!window.supabase){
         <video id="np-video-local" autoplay playsinline muted style="position:absolute;bottom:10px;right:10px;width:90px;height:68px;border-radius:6px;object-fit:cover;background:#0B1420;border:2px solid rgba(247,245,240,0.3);"></video>
         <div class="video-waiting" id="np-video-status" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;">Connecting...</div>
       </div>
-      <button class="btn btn-primary" style="width:100%;padding:12px 14px;font-size:14px;margin-top:10px;background:#B23A3A;" onclick="leaveVideoCall('np-video-local','np-video-remote','np-video-status');document.getElementById('np-video-wrap').style.display='none';">✕ End meeting</button>
+      <button class="btn btn-primary btn-peligro" style="width:100%;padding:12px 14px;font-size:14px;margin-top:10px;" onclick="leaveVideoCall('np-video-local','np-video-remote','np-video-status');document.getElementById('np-video-wrap').style.display='none';">✕ End meeting</button>
     </div>
 
     <div class="fsec" id="fsec-intake">
@@ -3317,7 +3324,7 @@ if(!window.supabase){
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 05oct-7';
+  const NUVI_BUILD = 'build 09oct-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -8819,6 +8826,8 @@ if(!window.supabase){
       btn.onclick = function(){ joinEvaluationById(cita.id); };
       btn.setAttribute('data-appt', cita.id);   // para saber CUAL abre, de un vistazo
     }
+    const mover = document.getElementById('join-strip-mover');
+    if(mover) mover.onclick = function(){ pedirMoverCita(cita.id); };
     strip.style.display = 'flex';
   }
 
@@ -12482,6 +12491,50 @@ if(!window.supabase){
   #hh-progress-bar{ background:var(--teal) !important; }
   #hh-progress{ letter-spacing:0.1em; text-transform:uppercase; font-size:11px; }
 
+
+
+  /* ---- VIDEOLLAMADA EN EL CELULAR (09oct) -------------------------------
+     1) "End meeting" es destructivo: rojo, siempre (el !important de
+        .btn-primary de arriba le ganaba al color inline).
+     2) El video del doctor en la ficha tenía alto fijo + aspect-ratio 16/9,
+        así que el ANCHO salía de la cuenta (930px en un iPhone de 390): se
+        salía de la pantalla y la cámara propia quedaba fuera de vista.
+        Ahora el ancho manda (100%) y el alto se ajusta.
+     3) En pantallas chicas la llamada ocupa casi toda la pantalla, el otro
+        se ve COMPLETO (contain: sin cortarle la cara, venga de laptop o de
+        teléfono) y tu propia cámara es un recuadro vertical pequeño. */
+  .btn-peligro, .btn-peligro:hover{
+    background:#B23A3A !important; color:#fff !important;
+    box-shadow:0 8px 22px -10px rgba(178,58,58,0.55) !important; border-color:transparent !important;
+  }
+  .btn-peligro:hover{ background:#9A2F2F !important; }
+  #np-video-shell{ width:100%; }
+  /* El doctor ve al paciente COMPLETO: si el paciente llama desde un celular
+     vertical, 'cover' en un cuadro horizontal le cortaba frente y barbilla. */
+  #np-video-remote{ object-fit:contain !important; background:#0B1420; }
+  body.ficha-pagina #np-video-shell{ width:100% !important; aspect-ratio:auto !important; }
+  @media (max-width:760px){
+    #video-shell, #np-video-shell, body.ficha-pagina #np-video-shell{
+      width:100% !important; aspect-ratio:auto !important;
+      height:min(78vh, 700px) !important; border-radius:14px;
+    }
+    #video-remote{ object-fit:cover !important; }   /* el paciente ve al doctor a pantalla llena */
+    #video-local, #np-video-local, body.ficha-pagina #np-video-local{
+      width:30% !important; max-width:130px; height:auto !important; aspect-ratio:3/4;
+      bottom:10px !important; right:10px !important; border-radius:10px !important;
+      object-fit:cover !important; z-index:2;
+    }
+    #video-room-wrap .dash-card{ padding:16px 12px; }
+    #video-room-wrap .dash-card > p{ display:none; }   /* en el celular el video manda */
+    #video-room-wrap .dash-card > h3{ font-size:18px; margin-bottom:10px; }
+    .video-controls{ margin-top:12px; }
+    .video-controls .btn{ flex:1; }
+    body.ficha-pagina #np-video-wrap{ padding:8px; }
+  }
+  /* La barra de tabs del paciente sangra -22px a los lados en el celular,
+     pero el contenedor allí tiene menos padding: la página se movía 6px de
+     lado a lado. clip (no hidden) para no romper nada sticky adentro. */
+  @media (max-width:560px){ #dashboard{ overflow-x:clip; } }
 
 </style>
 
