@@ -3324,7 +3324,7 @@ if(!window.supabase){
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 09oct-1';
+  const NUVI_BUILD = 'build 12oct-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -11587,9 +11587,24 @@ if(!window.supabase){
     nuevaConexion();
 
     // ---- El canal de señales ----
-    rtcChannel = supabaseClient.channel('video-room-' + ticketNumber,
-      { config: { broadcast: { self: false }, presence: { key: role + '-' + call.sid } } });
-    const canal = rtcChannel;
+    // ---- El canal de señales ----
+    // supabase-js reutiliza el objeto de canal cuando el topic es el mismo.
+    // Al salir y volver a entrar a la MISMA sala, channel() devolvia el canal
+    // que removeChannel() todavia estaba cerrando: el subscribe nuevo caia en
+    // "CLOSED" al instante y la llamada no arrancaba nunca. Por eso: antes de
+    // crear uno, se quita (y se ESPERA a que se quite) cualquier canal viejo
+    // con ese topic; y si el canal se cae, se construye otro desde cero en
+    // vez de re-suscribir el muerto.
+    const topic = 'video-room-' + ticketNumber;
+    let canal = null;
+    async function quitarCanalesViejos(){
+      try{
+        const viejos = (supabaseClient.getChannels ? supabaseClient.getChannels() : [])
+          .filter(c => c && (c.topic === topic || c.topic === 'realtime:' + topic));
+        for(const c of viejos){ try{ await supabaseClient.removeChannel(c); }catch(e){} }
+        if(viejos.length) log('canales viejos quitados:', viejos.length);
+      }catch(e){ log('no se pudieron listar canales', e); }
+    }
 
     function enviar(event, payload){
       if(rtcCall !== call || !canal) return;
@@ -11642,7 +11657,15 @@ if(!window.supabase){
       }
     }
 
-    canal
+    async function conectarCanal(){
+      if(rtcCall !== call) return;
+      await quitarCanalesViejos();
+      if(rtcCall !== call) return;
+      canal = supabaseClient.channel(topic,
+        { config: { broadcast: { self: false }, presence: { key: role + '-' + call.sid } } });
+      rtcChannel = canal;
+      const esteCanal = canal;
+      canal
       .on('broadcast', { event: 'peer-joined' }, ({ payload }) => { oido(payload); })
       .on('broadcast', { event: 'offer' }, async ({ payload }) => {
         if(!payload || payload.from === role || rtcCall !== call) return;
@@ -11690,7 +11713,7 @@ if(!window.supabase){
         }catch(e){}
       })
       .subscribe((status, err) => {
-        if(rtcCall !== call) return;
+        if(rtcCall !== call || canal !== esteCanal) return;   // un canal ya reemplazado no opina
         log('canal:', status, err || '');
         if(status === 'SUBSCRIBED'){
           call.subscribed = true;
@@ -11718,11 +11741,13 @@ if(!window.supabase){
             call.resubTimer = setTimeout(() => {
               call.resubTimer = null;
               if(rtcCall !== call) return;
-              try{ canal.subscribe(); }catch(e){ log('resubscribe fallo', e); }
-            }, 3000);
+              conectarCanal();   // uno NUEVO, no el muerto
+            }, 2500);
           }
         }
       });
+    }
+    await conectarCanal();
   }
 
   function leaveVideoCall(localVideoElId, remoteVideoElId, statusElId){
