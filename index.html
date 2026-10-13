@@ -1065,8 +1065,30 @@ if(!window.supabase){
   .visit-copy ul{list-style:none;padding:0;margin:4px 0 0;display:grid;gap:9px;}
   .visit-copy li{position:relative;padding-left:22px;font-size:14.5px;color:rgba(15,35,54,0.8);}
   .visit-copy li::before{content:"";position:absolute;left:0;top:7px;width:9px;height:9px;border-radius:50%;background:var(--coral);}
-  .nmi-field{height:46px;border:1px solid var(--line);border-radius:9px;background:var(--white);padding:0 6px;margin-bottom:10px;}
-  .nmi-field iframe{height:44px !important;}
+  .cita-resp{position:fixed;inset:0;z-index:500;background:rgba(8,26,77,0.42);display:flex;align-items:center;justify-content:center;padding:16px;}
+  .cita-resp[hidden]{display:none;}
+  .cita-resp-caja{background:var(--white);border-radius:18px;max-width:420px;width:100%;padding:28px 24px 22px;box-shadow:0 24px 60px -24px rgba(8,26,77,0.45);}
+  .cita-resp-marca{font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#00A896;margin-bottom:8px;}
+  .cita-resp-caja h2{font-size:24px;margin:0 0 12px;color:var(--ink);}
+  .cita-resp-cuando{font-size:17px;font-weight:600;color:var(--ink);background:#F2FAFB;border-radius:12px;padding:14px 16px;margin-bottom:12px;}
+  .cita-resp-estado{font-size:14.5px;line-height:1.6;color:var(--ink-soft);min-height:4px;margin-bottom:6px;}
+  .cita-resp-botones{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+  .cita-resp-botones[hidden]{display:none;}
+  .cita-resp-botones .btn{width:100%;padding:14px 16px;font-size:15.5px;}
+  .cita-resp-botones .btn.cita-resp-no{color:#8C2F2F !important;border-color:#E2B4B4 !important;}
+  .nmi-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;
+    font-size:14px;font-weight:600;color:var(--ink);}
+  .nmi-seguro{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:#2F5C46;}
+  .nmi-label{font-size:12.5px;font-weight:500;color:var(--ink-soft);margin:0 0 6px 2px;}
+  .nmi-fila{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .nmi-field{height:50px;border:1px solid rgba(15,35,54,0.18);border-radius:10px;background:var(--white);
+    padding:0 14px;margin-bottom:14px;display:flex;align-items:center;overflow:hidden;
+    transition:border-color .15s ease, box-shadow .15s ease;}
+  .nmi-field:hover{border-color:rgba(15,35,54,0.32);}
+  /* El foco esta DENTRO del iframe de NMI; :focus-within lo ve desde aqui. */
+  .nmi-field:focus-within{border-color:#1E7BBF;box-shadow:0 0 0 3px rgba(30,123,191,0.16);}
+  .nmi-field.nmi-invalido{border-color:#B23A3A;box-shadow:0 0 0 3px rgba(178,58,58,0.12);}
+  .nmi-field iframe{height:48px !important;width:100% !important;border:0 !important;}
 </style>
 </head>
 <body>
@@ -1992,11 +2014,18 @@ if(!window.supabase){
              aqui solo hay cajas vacias con su borde. Se enseña cuando hay
              llave publica configurada (nmiMostrar). -->
         <div id="nmi-wrap" style="display:none;margin-bottom:18px;">
-          <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Credit or debit card</div>
+          <div class="nmi-head">
+            <span>Credit or debit card</span>
+            <span class="nmi-seguro"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/></svg>Secure payment</span>
+          </div>
+          <!-- Las cajas de adentro son iframes de NMI (Collect.js): el numero
+               nunca toca esta pagina. Aqui solo se viste el marco; el texto de
+               adentro se estiliza con customCss en nmiConfigurarCampos(). -->
+          <div class="nmi-label">Card number</div>
           <div id="nmi-ccnumber" class="nmi-field"></div>
-          <div style="display:flex;gap:10px;">
-            <div id="nmi-ccexp" class="nmi-field" style="flex:1;"></div>
-            <div id="nmi-cvv" class="nmi-field" style="flex:1;"></div>
+          <div class="nmi-fila">
+            <div><div class="nmi-label">Expiration</div><div id="nmi-ccexp" class="nmi-field"></div></div>
+            <div><div class="nmi-label">Security code</div><div id="nmi-cvv" class="nmi-field"></div></div>
           </div>
           <label id="nmi-save-wrap" style="display:none;font-size:12.5px;color:var(--ink-soft);margin:10px 0 0;cursor:pointer;">
             <input id="nmi-save" type="checkbox" checked style="vertical-align:middle;margin-right:6px;">
@@ -2520,6 +2549,23 @@ if(!window.supabase){
 </div>
 <!-- Cortina de carga de la pestaña-expediente (ver CSS #ficha-cargando). -->
 <div id="ficha-cargando"><div class="spin"></div><div>Opening patient chart…</div></div>
+<!-- Confirmar / cancelar la cita desde el email del recordatorio. Funciona SIN
+     sesion: el enlace trae el id de la cita y un token aleatorio. Abrir el
+     enlace no cambia nada (los escaneres de correo abren los enlaces); el
+     paciente tiene que tocar el boton. Ver citaRespuesta(). -->
+<div id="cita-resp" class="cita-resp" hidden role="dialog" aria-modal="true" aria-labelledby="cita-resp-titulo">
+  <div class="cita-resp-caja">
+    <div class="cita-resp-marca">Nuvi Clinic</div>
+    <h2 id="cita-resp-titulo">Your appointment</h2>
+    <div id="cita-resp-cuando" class="cita-resp-cuando notranslate" translate="no">Loading…</div>
+    <div id="cita-resp-estado" class="cita-resp-estado"></div>
+    <div id="cita-resp-botones" class="cita-resp-botones" hidden>
+      <button type="button" class="btn btn-primary" id="cita-resp-si" onclick="citaRespuesta('confirm')">Yes, I'll be there</button>
+      <button type="button" class="btn btn-outline cita-resp-no" id="cita-resp-no" onclick="citaRespuesta('cancel')">I can't make it — cancel</button>
+    </div>
+    <button type="button" class="btn btn-outline" id="cita-resp-cerrar" style="width:100%;margin-top:10px;" onclick="cerrarCitaRespuesta()">Go to nuviclinic.com</button>
+  </div>
+</div>
 
 <section class="info-page" id="page-about">
   <div class="wrap" style="max-width:780px;">
@@ -3199,6 +3245,73 @@ if(!window.supabase){
     return out;
   }
 
+  // ---- Confirmar / cancelar la cita desde el email ----------------------
+  // nuviclinic.com/?cita=<id>&t=<token>[&r=confirm|cancel]. Sin sesion. Abrir
+  // no cambia nada: hay que tocar el boton (los escaneres de Outlook/Gmail
+  // abren los enlaces solos y cancelarian citas).
+  let citaResp = null;
+  async function citaRespuestaLlamar(action){
+    const url = SUPABASE_URL.replace(/\/+$/, '') + '/functions/v1/' + NOTIFY_FUNCTION;
+    const res = await fetch(url, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=UTF-8' },
+      body: JSON.stringify({ event:'appointment_response', data:{ id: citaResp.id, t: citaResp.t, action: action } }) });
+    const out = await res.json().catch(function(){ return {}; });
+    return { ok: res.ok, out: out };
+  }
+  function citaRespPintar(out, nota){
+    const cuando = document.getElementById('cita-resp-cuando');
+    const estado = document.getElementById('cita-resp-estado');
+    const botones = document.getElementById('cita-resp-botones');
+    if(out && out.dateLabel) cuando.textContent = out.dateLabel + ' · ' + out.time + ' (Puerto Rico)';
+    let txt = nota || '', abierta = false;
+    if(out && out.status === 'cancelled') txt = txt || 'This appointment is cancelled. Your care team will reach out to find you a new time.';
+    else if(out && out.confirmed) txt = txt || 'Confirmed — thank you! Join from your dashboard at your appointment time.';
+    else if(out && out.status === 'scheduled') { abierta = true; txt = txt || 'Will you be able to make it?'; }
+    estado.textContent = txt;
+    estado.style.color = (out && out.status === 'cancelled') ? '#8C2F2F' : (out && out.confirmed ? '#2F5C46' : 'var(--ink-soft)');
+    botones.hidden = !abierta;
+  }
+  async function abrirCitaRespuesta(){
+    const q = new URLSearchParams(window.location.search);
+    const id = q.get('cita'), t = q.get('t');
+    if(!id || !t) return false;
+    citaResp = { id: id, t: t, r: q.get('r') };
+    document.getElementById('cita-resp').hidden = false;
+    try{
+      const { ok, out } = await citaRespuestaLlamar('view');
+      if(!ok){ document.getElementById('cita-resp-cuando').textContent = '—'; citaRespPintar(null, out.error || 'We could not load this appointment.'); return true; }
+      citaRespPintar(out);
+      // El boton que eligio en el email, resaltado (pero sin pulsarlo por el).
+      const elegido = document.getElementById(citaResp.r === 'cancel' ? 'cita-resp-no' : 'cita-resp-si');
+      if(elegido && out.status === 'scheduled' && !out.confirmed) elegido.focus();
+    }catch(e){ citaRespPintar(null, 'We could not reach Nuvi Clinic. Check your connection and open the link again.'); }
+    return true;
+  }
+  async function citaRespuesta(action){
+    if(!citaResp) return;
+    if(action === 'cancel' && !confirm('Cancel this appointment?\n\nYour care team will reach out to find you a new time.')) return;
+    const btns = document.querySelectorAll('#cita-resp-botones button');
+    btns.forEach(function(b){ b.disabled = true; });
+    document.getElementById('cita-resp-estado').textContent = action === 'cancel' ? 'Cancelling…' : 'Confirming…';
+    try{
+      const { ok, out } = await citaRespuestaLlamar(action);
+      if(!ok){ citaRespPintar(out, out.error || 'Something went wrong. Please try again.'); btns.forEach(function(b){ b.disabled = false; }); return; }
+      citaRespPintar(out, action === 'cancel'
+        ? 'Cancelled. We emailed you a confirmation, and your care team will reach out to find you a new time.'
+        : 'Confirmed — thank you! See you then. Join from your dashboard at your appointment time.');
+    }catch(e){
+      citaRespPintar(null, 'We could not reach Nuvi Clinic. Please try again.');
+      btns.forEach(function(b){ b.disabled = false; });
+    }
+  }
+  function cerrarCitaRespuesta(){
+    document.getElementById('cita-resp').hidden = true;
+    citaResp = null;
+    try{ history.replaceState({}, '', location.pathname); }catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    abrirCitaRespuesta().catch(function(e){ console.error('[cita-resp]', e); });
+  });
+
   // Frase corta, para la ficha, de lo que paso con el correo al paciente.
   //   r: lo que devolvio notify();  email: a quien se intento mandar.
   function fraseCorreo(r, email){
@@ -3324,7 +3437,7 @@ if(!window.supabase){
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 12oct-1';
+  const NUVI_BUILD = 'build 13oct-1';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -4252,13 +4365,30 @@ if(!window.supabase){
     try{
       window.CollectJS.configure({
         variant: 'inline',
-        styleSniffer: true,
+        // styleSniffer copiaba el estilo por defecto del navegador (borde
+        // hundido gris). Ahora el marco lo pone la pagina (.nmi-field) y el
+        // campo de adentro va limpio: sin borde, letra del sitio, 16px (con
+        // menos, el iPhone hace zoom al tocar el campo).
+        styleSniffer: false,
+        customCss: {
+          'border': 'none', 'outline': 'none', 'box-shadow': 'none', 'background': 'transparent',
+          'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+          'font-size': '16px', 'color': '#0F2336', 'height': '46px', 'padding': '0', 'margin': '0', 'width': '100%',
+          'letter-spacing': '0.02em'
+        },
+        focusCss:       { 'border': 'none', 'outline': 'none', 'box-shadow': 'none' },
+        invalidCss:     { 'color': '#B23A3A' },
+        validCss:       { 'color': '#0F2336' },
+        placeholderCss: { 'color': '#9AA7B4' },
         fields: {
-          ccnumber: { selector: '#nmi-ccnumber', placeholder: 'Card number' },
+          ccnumber: { selector: '#nmi-ccnumber', placeholder: '1234 5678 9012 3456' },
           ccexp:    { selector: '#nmi-ccexp',    placeholder: 'MM / YY' },
-          cvv:      { selector: '#nmi-cvv',      placeholder: 'CVC' }
+          cvv:      { selector: '#nmi-cvv',      placeholder: '123' }
         },
         validationCallback: function(field, status, message){
+          // Marco rojo en la caja que esta mal (y se quita al corregirla).
+          const caja = document.getElementById('nmi-' + field);
+          if(caja) caja.classList.toggle('nmi-invalido', !status);
           const m = document.getElementById('nmi-msg');
           if(m && !nmiCobrando){ m.style.color = status ? 'var(--ink-soft)' : '#8C2F2F'; m.textContent = status ? '' : message; }
         },
@@ -7891,7 +8021,7 @@ if(!window.supabase){
         + a.appointment_time + ' — ' + (a.type === 'physician_visit' ? 'Physician visit' : 'Evaluation')
         + '</div><div class="meta">Ticket ' + (a.ticket_number || '—')
         + (a.np_user_id ? ' · ' + providerName(a.np_user_id) : '')
-        + '</div></div><span class="rx-badge">' + (a.status || 'scheduled') + '</span></div>').join('');
+        + '</div></div><span class="rx-badge">' + ((a.status === 'scheduled' && a.confirmed_at) ? '✓ confirmed' : (a.status || 'scheduled')) + '</span></div>').join('');
       return '<div style="margin-bottom:12px;"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">'
         + label + ' <span style="font-weight:400;color:rgba(15,35,54,0.63);">('
         + byDate[date].length + ' booked)</span></div>' + items + '</div>';
@@ -8400,7 +8530,8 @@ if(!window.supabase){
       const label = patient ? (patient.full_name || patient.email) : 'Patient';
       return '<div class="np-row" onclick="abrirFichaPaciente(\''+(patient ? patient.id : '')+'\')">'
         + '<div><div class="name">' + label + '</div><div class="meta">Ticket ' + a.ticket_number + '</div></div>'
-        + '<div class="meta">' + a.appointment_date + ' · ' + a.appointment_time + '</div></div>';
+        + '<div class="meta">' + a.appointment_date + ' · ' + a.appointment_time
+        + (a.confirmed_at ? ' · <span style="color:#2F5C46;font-weight:600;">✓ confirmed</span>' : '') + '</div></div>';
     }).join('');
   }
 
@@ -8510,7 +8641,9 @@ if(!window.supabase){
           + '<div class="hora notranslate" translate="no">' + escapeHtml(a.appointment_time) + '</div>'
           + '<div class="quien"><div class="nom">' + escapeHtml(nombre) + '</div>'
           +   '<div class="det">Ticket ' + escapeHtml(a.ticket_number || '—') + ' · '
-          +   (hecha ? '<span style="color:#2F5C46;font-weight:600;">completed</span>' : 'scheduled') + '</div></div>'
+          +   (hecha ? '<span style="color:#2F5C46;font-weight:600;">completed</span>'
+               : a.confirmed_at ? '<span style="color:#2F5C46;font-weight:600;">✓ confirmed</span>'
+               : 'scheduled · <span style="color:#8A5A12;">not confirmed yet</span>') + '</div></div>'
           + (p ? '<button type="button" class="btn btn-outline" style="width:auto;padding:8px 14px;font-size:12.5px;" '
                + 'onclick="abrirFichaPaciente(\'' + p.id + '\')">Open chart →</button>' : '')
           + '</div>';
@@ -10247,7 +10380,11 @@ if(!window.supabase){
         // vivas y el paciente veria la vieja en su panel.
         ticket = npProximaCitaActual.ticket_number;
         const { data, error } = await supabaseClient.from('appointments')
-          .update({ appointment_date: fecha, appointment_time: hora, status: 'scheduled' })
+          // Fecha nueva = recordatorio y confirmacion nuevos. Sin esto, una cita
+          // movida despues del recordatorio no volvia a avisarse, y salia
+          // "confirmed" para una hora que el paciente nunca confirmo.
+          .update({ appointment_date: fecha, appointment_time: hora, status: 'scheduled',
+                    reminder_sent_at: null, confirmed_at: null, confirm_token: null })
           .eq('id', npProximaCitaActual.id).select();
         if(error) throw error;
         if(!data || data.length === 0){
@@ -12630,6 +12767,15 @@ if(!window.supabase){
     // dos entradas y no una. En espa\u00f1ol se cae la coma: "Manejo de peso /
     // personalizado" se lee de corrido, con coma no.
     'Weight loss medication': 'Manejo de peso',
+    'Secure payment': 'Pago seguro',
+    'Your appointment': 'Tu cita',
+    "Yes, I'll be there": 'S\u00ed, ah\u00ed estar\u00e9',
+    "I can't make it \u2014 cancel": 'No puedo \u2014 cancelar',
+    'Go to nuviclinic.com': 'Ir a nuviclinic.com',
+    'Will you be able to make it?': '\u00bfPodr\u00e1s llegar?',
+    'Card number': 'N\u00famero de tarjeta',
+    'Expiration': 'Vencimiento',
+    'Security code': 'C\u00f3digo de seguridad',
     'personalized for you': 'personalizado',
     'Puerto Rico \u00b7 100% online': 'Puerto Rico \u00b7 100% en l\u00ednea',
     'Start your evaluation': 'Comienza tu evaluaci\u00f3n',
