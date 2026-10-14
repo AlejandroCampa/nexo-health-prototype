@@ -23,14 +23,14 @@
      español. Si algún día quieres posicionar en español de verdad, hace
      falta servir HTML en español en su propia URL (/es/), no traducir con
      JavaScript. -->
-<meta name="description" content="Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $50 the first month, then $70/month. Care in Spanish and English.">
+<meta name="description" content="Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $50/month. Care in Spanish and English.">
 <link rel="canonical" href="https://nuviclinic.com/">
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Nuvi Clinic">
 <meta property="og:title" content="Nuvi Clinic — Weight loss medication, personalized for you">
-<meta property="og:description" content="Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $50 the first month, then $70/month. Care in Spanish and English.">
+<meta property="og:description" content="Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $50/month. Care in Spanish and English.">
 <meta property="og:url" content="https://nuviclinic.com/">
 <!-- SUBE ESTE ARCHIVO. 1200x630 px, JPG o PNG. Sin él, compartir el enlace
      por WhatsApp o Facebook no enseña tarjeta, sólo el texto pelado — y a
@@ -44,7 +44,7 @@
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Nuvi Clinic — Weight loss medication, personalized for you">
-<meta name="twitter:description" content="Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $50 the first month, then $70/month. Care in Spanish and English.">
+<meta name="twitter:description" content="Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $50/month. Care in Spanish and English.">
 <meta name="twitter:image" content="https://nuviclinic.com/og-image.jpg">
 
 <!-- Datos estructurados. A propósito NO lleva dirección, teléfono, horario
@@ -57,7 +57,7 @@
   "@type": "MedicalClinic",
   "name": "Nuvi Clinic",
   "url": "https://nuviclinic.com/",
-  "description": "Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $50 the first month, then $70/month. Care in Spanish and English.",
+  "description": "Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $50/month. Care in Spanish and English.",
   "medicalSpecialty": "Endocrine",
   "areaServed": { "@type": "AdministrativeArea", "name": "Puerto Rico" },
   "availableLanguage": ["es", "en"]
@@ -1136,7 +1136,12 @@ if(!window.supabase){
           <a class="btn btn-primary" href="javascript:void(0)" onclick="nuviOpenModal('intake')">Start your evaluation</a>
           <a class="btn btn-outline" href="#protocols">See treatments</a>
         </div>
-        <p class="hero-note">Membership is $50 your first month, then $70 a month. If you qualify for treatment, medication is an added cost, starting at $45 per weekly dose (tirzepatide 2.5 mg).</p>
+        <!-- PRECIO-ESTATICO: textos fijos con el precio de la membresia (meta,
+             JSON-LD, hero, tarjeta de precios, Terms, Refunds, ES_COPY/ES_LONG).
+             Si cambia MEMBERSHIP_MONTHLY en el script, cambiar tambien estos:
+             grep -n 'PRECIO-ESTATICO\|\$50' index.html. test-precio-50.js
+             avisa si no cuadran. -->
+        <p class="hero-note">Membership is $50 a month. If you qualify for treatment, medication is an added cost, starting at $45 per weekly dose (tirzepatide 2.5 mg).</p>
         <!-- Contacto directo, arriba del todo. Pedido del doctor: que quien
              tenga una duda pueda escribir YA, sin buscar el footer. -->
         <p class="hero-note" style="margin-top:6px;">Questions before you start? Email
@@ -1160,7 +1165,7 @@ if(!window.supabase){
     </div>
     <div class="hero-proof">
       <div><b>100%</b><span>Physician-reviewed</span></div>
-      <div><b>$50</b><span>First month</span></div>
+      <div><b>$50</b><span>Per month</span></div>
       <div><b>48h</b><span>Shipping</span></div>
       <div><b>ES / EN</b><span>Care in both</span></div>
     </div>
@@ -1266,7 +1271,7 @@ if(!window.supabase){
       <div class="tier featured" style="max-width:420px;">
         <div class="tier-name">Initial evaluation &amp; ongoing care</div>
         <div class="tier-price">$50<span>/mo</span></div>
-        <p style="font-size:12.5px;color:var(--ink-soft);margin:-6px 0 14px;">First month $50, then $70/month. Cancel anytime.</p>
+        <p style="font-size:12.5px;color:var(--ink-soft);margin:-6px 0 14px;">Billed monthly. Cancel anytime.</p>
         <ul>
           <li>Physician evaluations every 28 days</li>
           <li>Unlimited messaging with your care team</li>
@@ -1393,18 +1398,30 @@ if(!window.supabase){
             <p style="margin-bottom:16px;">Your physician reviews your history once you're enrolled. Continue to book your evaluation.</p>
             <div class="dash-card" style="padding:20px;max-width:420px;border-color:var(--amber);">
               <div class="tier-name" style="margin-bottom:8px;">Initial evaluation &amp; ongoing care</div>
-              <div class="tier-price" id="checkout-price" style="font-size:28px;">$70<span style="font-family:var(--sans);font-size:13px;opacity:0.6;">/mo</span></div>
+              <div class="tier-price" id="checkout-price" style="font-size:28px;">$50<span style="font-family:var(--sans);font-size:13px;opacity:0.6;">/mo</span></div>
               <p id="checkout-note" style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;">Cancel anytime.</p>
               <p style="margin:10px 0 16px;font-size:13px;">Physician evaluations every 28 days, prescription management, and messaging. Medication billed separately. No minimum commitment.</p>
 
-              <!-- El campo de cupón se quitó de aquí a propósito.
-                   Ahora el código se escribe EN LA PÁGINA DE STRIPE, no en
-                   la nuestra: Payment Links trae promotion codes de fábrica.
-                   Con eso el código nunca pasa por este sitio — ni por el
-                   HTML, ni por nuestra base, ni por una Edge Function. Y los
-                   topes, la caducidad y el conteo de canjes los lleva Stripe.
-                   Para activarlo: en cada Payment Link, "Allow promotion
-                   codes". Los códigos se crean en Stripe → Coupons. -->
+              <!-- 14oct-1: codigo de PRIMER MES GRATIS. El navegador solo
+                   pregunta; quien decide si vale (y que el cobro es $0) es la
+                   Edge Function nmi-charge con la service role. Ver
+                   sql-promo-primer-mes-gratis.sql y promo*() en el script. -->
+              <div id="promo-box" style="margin:0 0 14px;">
+                <button type="button" id="promo-toggle" onclick="promoMostrarCampo()" style="background:none;border:0;padding:0;font:inherit;font-size:13px;color:var(--ink-soft);text-decoration:underline;cursor:pointer;">Have a promo code?</button>
+                <div id="promo-field-wrap" style="display:none;margin-top:8px;">
+                  <div style="display:flex;gap:8px;">
+                    <input id="promo-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="Promo code" aria-label="Promo code"
+                           style="flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-family:var(--sans);font-size:16px;text-transform:uppercase;background:var(--white);"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();promoAplicarEscrito();}">
+                    <button type="button" class="btn btn-outline" id="promo-apply-btn" style="width:auto;padding:9px 16px;font-size:13.5px;" onclick="promoAplicarEscrito()">Apply</button>
+                  </div>
+                </div>
+                <div id="promo-applied" style="display:none;margin-top:4px;font-size:13px;color:#2F5C46;">
+                  <b id="promo-applied-code"></b> <span>applied</span> &middot;
+                  <button type="button" onclick="promoQuitar()" style="background:none;border:0;padding:0;font:inherit;color:var(--ink-soft);text-decoration:underline;cursor:pointer;">Remove code</button>
+                </div>
+                <div id="promo-msg" role="status" style="font-size:12.5px;margin-top:6px;line-height:1.55;"></div>
+              </div>
 
               <button class="btn btn-primary" style="width:100%;" onclick="goToCheckout('Basic')">Continue</button>
             </div>
@@ -2661,7 +2678,7 @@ if(!window.supabase){
     <h3>No guarantee of treatment</h3>
     <p>Completing an intake or paying a membership fee does not guarantee you will be prescribed any medication. If our provider determines a treatment isn't clinically appropriate for you, it will not be prescribed.</p>
     <h3>Membership, billing, and cancellation</h3>
-    <p>Membership is $70 per month, billed monthly. Medication is billed separately based on what your physician prescribes. There is no minimum commitment. You can cancel at any time from Settings, and cancelling stops all future charges. The month already paid is not prorated — your access runs to the end of the period you paid for.</p>
+    <p>Membership is $50 per month, billed monthly. Medication is billed separately based on what your physician prescribes. There is no minimum commitment. You can cancel at any time from Settings, and cancelling stops all future charges. The month already paid is not prorated — your access runs to the end of the period you paid for.</p>
     <p>Compounded medication is prepared individually for you and cannot be returned or reused, so medication charges are non-refundable once the prescription has been transmitted to the pharmacy. If a physician declines to treat you, your membership payment is refunded in full. Full details are in our <a href="#page-refunds">Refund Policy</a>.</p>
     <h3>Compounded medications</h3>
     <p>Some medications we prescribe are compounded by a licensed 503A compounding pharmacy operating under state and federal quality regulations. Each preparation is made individually against your physician's prescription.</p>
@@ -2741,7 +2758,7 @@ if(!window.supabase){
     what happens to each one if you want your money back.</p>
 
     <h3>Membership</h3>
-    <p>Membership is $70 per month and is billed monthly to the card you used at signup.
+    <p>Membership is $50 per month and is billed monthly to the card you used at signup.
     There is no minimum commitment.</p>
     <p>You can cancel at any time from Settings in your patient dashboard. Cancelling stops all
     future charges immediately. The month already paid for is not prorated or refunded — your
@@ -3437,7 +3454,7 @@ if(!window.supabase){
   // Identifica esta versión del archivo. Sale abajo del todo en la página y
   // en la consola. Si el sello no cambia después de subir un archivo nuevo,
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
-  const NUVI_BUILD = 'build 13oct-1';
+  const NUVI_BUILD = 'build 14oct-3';
   try{
     console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
@@ -3454,6 +3471,15 @@ if(!window.supabase){
   // tiene la lista, así que no hay nada que leer en el HTML ni nada que
   // adivinar mirando el código. Si la función no responde, se rechaza: es
   // preferible un cupón legítimo que no entra a una receta regalada.
+
+  // ---- PRECIO DE LA MEMBRESIA (14oct-2) -----------------------------------
+  // UNA sola constante. Todo lo que se cobra o se enseña de la membresia sale
+  // de aqui (checkout, boton de renovar, tarjeta del dashboard, mes gratis,
+  // MRR del panel). "Hay que dejarlo en $50 hasta tener mas pacientes."
+  // Los textos fijos del HTML (meta, hero, Terms...) van marcados con
+  // PRECIO-ESTATICO. Y el servidor tiene la suya: nmi-renew, nmi-charge y
+  // notify (MEMBERSHIP_MONTHLY en cada archivo).
+  const MEMBERSHIP_MONTHLY = 50;
 
   // ---- Launch promotion --------------------------------------------------
   // Primer mes a $50 para todo el mundo, sin codigo. La fecha la apaga sola y
@@ -3487,7 +3513,7 @@ if(!window.supabase){
   function currentCheckout(){
     if(activeCoupon) return { plan: activeCoupon.plan, price: activeCoupon.price, label: activeCoupon.label };
     if(promoIsLive()) return { plan: PROMO.plan, price: PROMO.price, label: 'First month' };
-    return { plan: 'Basic', price: 70, label: null };
+    return { plan: 'Basic', price: MEMBERSHIP_MONTHLY, label: null };
   }
 
   function normaliseCode(code){
@@ -3509,20 +3535,354 @@ if(!window.supabase){
     if(!el) return;
     const co = currentCheckout();
     const small = 'font-family:var(--sans);font-size:13px;opacity:0.6;';
+    // Codigo de primer mes gratis YA validado por el servidor (promoGratis).
+    if(typeof promoAplicado === 'function' && promoAplicado()){
+      el.innerHTML = '$0.00<span style="' + small + '"> today</span>';
+      const n = document.getElementById('checkout-note');
+      if(n) n.textContent = 'First month free — $0.00 today, then $' + PROMO_RENUEVA + '/month. Cancel anytime.';
+      return;
+    }
     // Sin el $70 tachado. Se dice el precio del primer mes y ya; lo que viene
     // despues va en la nota de abajo. Tachar el precio anterior es venderlo
     // como descuento, y eso es justo lo que se quito.
-    if(co.price === 70){
-      el.innerHTML = '$70<span style="' + small + '">/mo</span>';
+    // Promo50 (lanzamiento) cobra min($50, mensual): con la mensual en $50 es
+    // lo mismo que Basic, y se enseña igual: "$50/mo", sin "first month".
+    if(co.price >= MEMBERSHIP_MONTHLY){
+      el.innerHTML = '$' + MEMBERSHIP_MONTHLY + '<span style="' + small + '">/mo</span>';
     } else {
       el.innerHTML = '$' + co.price + '<span style="' + small + '"> first month</span>';
     }
     const note = document.getElementById('checkout-note');
     if(note){
-      note.textContent = co.price === 70
+      note.textContent = co.price >= MEMBERSHIP_MONTHLY
         ? 'Cancel anytime.'
-        : 'Then $70/month. Cancel anytime.';
+        : 'Then $' + MEMBERSHIP_MONTHLY + '/month. Cancel anytime.';
     }
+  }
+
+  // ==========================================================================
+  //  PRIMER MES GRATIS con codigo (14oct-1)
+  // ==========================================================================
+  // El codigo llega escrito en el checkout o por enlace ?promo=CODIGO, y se
+  // recuerda (sessionStorage + metadata de la cuenta al registrarse, porque el
+  // magic link puede abrir otra pestaña) hasta el checkout de la membresia.
+  //
+  // El navegador NO decide nada: pregunta a nmi-charge {promo_check} si vale
+  // y, al pagar, le manda promo_code. El servidor lo vuelve a validar con la
+  // service role, verifica la tarjeta SIN cobrar (NMI type=validate) y la
+  // guarda para que el dia 30 se cobre la mensual. Sin codigo, todo sigue igual.
+  const PROMO_CODE_RE = /^[A-Z0-9-]{3,40}$/;
+  const PROMO_KEY = 'nuviPromo';
+  const PROMO_RENUEVA = MEMBERSHIP_MONTHLY;
+  let promoGratis = null;   // { code, estado: pendiente|verificando|valido|invalido|error|sin-tarjeta, msg }
+  let promoCampoAbierto = false;
+
+  function promoNormalizar(v){
+    const c = String(v == null ? '' : v).trim().toUpperCase();
+    return PROMO_CODE_RE.test(c) ? c : '';
+  }
+  function promoGuardar(code){
+    try{ if(code) sessionStorage.setItem(PROMO_KEY, code); else sessionStorage.removeItem(PROMO_KEY); }catch(e){}
+  }
+  function promoLeerGuardado(){
+    try{ return promoNormalizar(sessionStorage.getItem(PROMO_KEY)); }catch(e){ return ''; }
+  }
+  function promoAplicado(){ return !!(promoGratis && promoGratis.estado === 'valido' && promoGratis.code); }
+
+  // ?promo=CODIGO al cargar: se guarda y se quita de la barra (el resto de la
+  // URL, incluido el #access_token de un magic link, se deja intacto).
+  (function promoDesdeUrl(){
+    try{
+      const q = new URLSearchParams(window.location.search);
+      if(!q.has('promo')){
+        const g = promoLeerGuardado();
+        if(g) promoGratis = { code: g, estado: 'pendiente' };
+        return;
+      }
+      const c = promoNormalizar(q.get('promo'));
+      q.delete('promo');
+      const resto = q.toString();
+      try{ history.replaceState({}, document.title, location.pathname + (resto ? '?' + resto : '') + location.hash); }catch(e){}
+      if(c){ promoGuardar(c); promoGratis = { code: c, estado: 'pendiente' }; console.log('[promo] codigo recordado:', c); }
+      else { console.warn('[promo] ?promo= con formato invalido, ignorado'); }
+    }catch(e){ console.warn('[promo]', e); }
+  })();
+
+  // Al entrar con sesion: si el codigo vino en la metadata del registro (el
+  // magic link abrio otra pestaña y sessionStorage estaba vacio), se recupera.
+  function promoRecuperarDeCuenta(meta){
+    try{
+      if(promoGratis) return;
+      const c = promoNormalizar(meta && meta.promo_code);
+      if(c){ promoGratis = { code: c, estado: 'pendiente' }; promoGuardar(c); }
+    }catch(e){}
+  }
+  function promoOlvidarEnCuenta(){
+    try{
+      const meta = (currentUser && currentUser.user_metadata) || {};
+      if(meta.promo_code && supabaseClient){
+        meta.promo_code = null;
+        Promise.resolve(supabaseClient.auth.updateUser({ data: { promo_code: null } })).catch(function(){});
+      }
+    }catch(e){}
+  }
+
+  function promoMostrarCampo(){
+    promoCampoAbierto = true;
+    promoPintar();
+    const i = document.getElementById('promo-input');
+    if(i) i.focus();
+  }
+
+  function promoPintar(){
+    const box = document.getElementById('promo-box');
+    if(!box) return;
+    if(PAYMENTS_PAUSED){ box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    const g = promoGratis;
+    const est = g ? g.estado : null;
+    const campo = document.getElementById('promo-field-wrap');
+    const toggle = document.getElementById('promo-toggle');
+    const aplicado = document.getElementById('promo-applied');
+    const msg = document.getElementById('promo-msg');
+    const input = document.getElementById('promo-input');
+    const btn = document.getElementById('promo-apply-btn');
+    const verCampo = est !== 'valido' && (promoCampoAbierto || !!est);
+    campo.style.display = verCampo ? 'block' : 'none';
+    toggle.style.display = (est === 'valido' || verCampo) ? 'none' : 'inline';
+    aplicado.style.display = est === 'valido' ? 'block' : 'none';
+    if(est === 'valido') document.getElementById('promo-applied-code').textContent = g.code;
+    if(input && g && g.code && est !== 'valido' && document.activeElement !== input) input.value = g.code;
+    if(btn) btn.disabled = est === 'verificando';
+    let txt = '', color = 'var(--ink-soft)';
+    if(est === 'verificando'){ txt = 'Checking code…'; }
+    else if(est === 'valido'){ txt = 'First month free — $0.00 today, then $' + PROMO_RENUEVA + '/month. A card is required; it is verified but not charged today.'; color = '#2F5C46'; }
+    else if(est === 'invalido' || est === 'error'){ txt = g.msg || 'That promo code isn\'t valid.'; color = '#8C2F2F'; }
+    else if(est === 'sin-tarjeta'){
+      txt = 'This code needs a card on file, and card payments aren\'t available right now. '
+          + 'Call us at (787) 299-8643, or continue at the regular price.';
+      color = '#8A5A12';
+    }
+    msg.textContent = txt;
+    msg.style.color = color;
+    try{ updateCheckoutPrice(); }catch(e){ console.error('[promo] precio:', e); }
+  }
+
+  // Le pregunta al servidor si el codigo vale (no reserva ni cobra nada).
+  async function promoVerificar(code){
+    promoGratis = { code: code, estado: 'verificando' };
+    promoPintar();
+    try{
+      const { data: sess } = await supabaseClient.auth.getSession();
+      const jwt = sess && sess.session && sess.session.access_token;
+      if(!jwt) throw new Error('no session');
+      const res = await fetch(SUPABASE_URL.replace(/\/+$/, '') + '/functions/v1/nmi-charge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ promo_check: code })
+      });
+      const out = await res.json().catch(function(){ return {}; });
+      if(res.ok && out.valid === true){
+        promoGratis = { code: promoNormalizar(out.code) || code, estado: 'valido' };
+        promoGuardar(promoGratis.code);
+      } else if(out && out.promo_invalid){
+        promoGratis = { code: code, estado: 'invalido', msg: out.error };
+        promoGuardar('');
+        promoOlvidarEnCuenta();
+      } else {
+        promoGratis = { code: code, estado: 'error', msg: out.error || 'We could not check the code right now. Try again in a moment.' };
+      }
+    }catch(e){
+      console.warn('[promo] verificar:', e);
+      promoGratis = { code: code, estado: 'error', msg: 'We could not check the code right now. Check your connection and try again.' };
+    }
+    promoPintar();
+  }
+
+  function promoAplicarEscrito(){
+    const input = document.getElementById('promo-input');
+    const raw = input ? input.value : '';
+    const c = promoNormalizar(raw);
+    if(!c){
+      promoGratis = { code: String(raw || '').trim().toUpperCase().slice(0, 40), estado: 'invalido',
+                      msg: 'Enter a valid code (letters, numbers and dashes).' };
+      promoPintar();
+      return;
+    }
+    if(!nmiConfigurado()){ promoGratis = { code: c, estado: 'sin-tarjeta' }; promoGuardar(c); promoPintar(); return; }
+    promoVerificar(c);
+  }
+
+  function promoQuitar(){
+    promoGratis = null;
+    promoCampoAbierto = false;
+    promoGuardar('');
+    promoOlvidarEnCuenta();
+    const input = document.getElementById('promo-input');
+    if(input) input.value = '';
+    if(athmOrden && athmOrden.promo) athmCancel();
+    promoPintar();
+  }
+
+  // Se llama cada vez que se enseña la etapa "Start your membership".
+  function promoAlCheckout(){
+    try{
+      promoPintar();
+      if(promoGratis && promoGratis.estado === 'pendiente'){
+        if(!nmiConfigurado()){ promoGratis.estado = 'sin-tarjeta'; promoPintar(); return; }
+        promoVerificar(promoGratis.code);
+      }
+    }catch(e){ console.error('[promo]', e); }
+  }
+
+  // ATH no sirve para un cobro de $0 que guarda la tarjeta: en modo promo se
+  // esconde todo lo de ATH. Al volver a un cobro normal, se restaura.
+  function promoModoCheckout(on){
+    const ocultar = function(id){ const el = document.getElementById(id); if(el) el.style.display = 'none'; };
+    const athBtn = document.getElementById('ATHMovil_Checkout_Button_payment');
+    if(!on){ if(athBtn) athBtn.style.display = ''; return; }
+    if(athBtn) athBtn.style.display = 'none';
+    ['athm-o-tarjeta', 'athm-manual-wrap', 'athm-codigo-wrap', 'solo-athm-aviso', 'nmi-save-wrap'].forEach(ocultar);
+    const save = document.getElementById('nmi-save');
+    if(save) save.checked = true;   // la tarjeta es obligatoria: el dia 30 se cobra
+  }
+
+  function promoFechaRenueva(){
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() + 30);
+    return d.toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
+  }
+
+  // "Continue" con un codigo valido: tarjeta obligatoria, $0 hoy, sin ATH.
+  async function promoIniciar(){
+    if(!supabaseClient || !currentUser){ alert('Please sign in again before continuing.'); return; }
+    if(!nmiConfigurado()){
+      promoGratis = { code: promoGratis.code, estado: 'sin-tarjeta' };
+      promoPintar();
+      return;
+    }
+    const code = promoGratis.code;
+    const plan = currentCheckout().plan;
+    const precio = MEMBERSHIP_PRICE[plan] || PROMO_RENUEVA;
+    const ref = athmRef();
+    // La orden lleva el precio normal (el CHECK de la tabla exige > 0). Con
+    // promo_code el servidor IGNORA ese monto y decide el $0 el mismo.
+    const { data: fila, error } = await supabaseClient.from('athm_orders').insert({
+      ref, user_id: currentUser.id, kind: 'membership', target_id: plan,
+      amount: precio, label: 'Nuvi membership — first month free', status: 'open'
+    }).select().maybeSingle();
+    if(error || !fila){
+      alert('We could not start checkout. Nothing was charged.\n\nPlease try again, or message your care team.');
+      console.error('[promo] no se pudo crear la orden:', error);
+      return;
+    }
+    athmDejarDeVigilar();
+    athmOrden = { ref, kind: 'membership', id: plan, total: 0, etiqueta: 'Nuvi membership — first month free', promo: code };
+    athmAvisoFinal = false;
+    document.getElementById('athm-detail').textContent = 'First month free — then $' + PROMO_RENUEVA + '/month';
+    document.getElementById('athm-amount').textContent = '$0.00 today';
+    document.getElementById('athm-status').textContent =
+      'Your card is verified now but not charged. Your membership renews automatically at $'
+      + PROMO_RENUEVA + '/month on ' + promoFechaRenueva() + ' unless you cancel before then.';
+    document.getElementById('athm-wrap').style.display = 'block';
+    nmiMostrar(athmOrden);
+    promoModoCheckout(true);
+    const titulo = document.getElementById('athm-title');
+    if(titulo) titulo.textContent = 'Start your free month';
+    if(typeof refreshPatientTabs === 'function') refreshPatientTabs();
+    document.getElementById('athm-wrap').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  // El servidor dijo que el codigo no vale (al pagar): se vuelve al precio normal.
+  function promoRechazado(msg){
+    promoGratis = { code: (athmOrden && athmOrden.promo) || (promoGratis && promoGratis.code) || '', estado: 'invalido', msg: msg };
+    promoGuardar('');
+    promoOlvidarEnCuenta();
+    athmCancel();
+    promoPintar();
+    const box = document.getElementById('promo-box');
+    if(box && box.scrollIntoView) box.scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+
+  // ==========================================================================
+  //  ?renovar=1[&metodo=ath|card] — el enlace del correo "vencio hoy" (14oct-3)
+  // ==========================================================================
+  // Quien paga con ATH recibe el correo el dia que vence. El enlace abre el
+  // MISMO cobro que el boton "Renew membership" ($50). Se recuerda hasta que
+  // el dashboard carga (sessionStorage, y una copia en localStorage por 24 h
+  // porque el magic link de login suele abrir otra pestaña).
+  // Comped o pagado hasta una fecha futura: no se abre nada.
+  const RENOVAR_KEY = 'nuviRenovar';
+  let renovarPendiente = null;   // 'ath' | 'card' | 'any'
+  function renovarOlvidar(){
+    renovarPendiente = null;
+    try{ sessionStorage.removeItem(RENOVAR_KEY); }catch(e){}
+    try{ localStorage.removeItem(RENOVAR_KEY); }catch(e){}
+  }
+  (function renovarDesdeUrl(){
+    const valido = function(m){ return m === 'ath' || m === 'card' || m === 'any' ? m : null; };
+    try{
+      const q = new URLSearchParams(window.location.search);
+      if(q.get('renovar') === '1'){
+        const metodo = valido(q.get('metodo')) || 'any';
+        renovarPendiente = metodo;
+        try{ sessionStorage.setItem(RENOVAR_KEY, metodo); }catch(e){}
+        try{ localStorage.setItem(RENOVAR_KEY, JSON.stringify({ m: metodo, t: Date.now() })); }catch(e){}
+        q.delete('renovar'); q.delete('metodo');
+        const resto = q.toString();
+        try{ history.replaceState({}, document.title, location.pathname + (resto ? '?' + resto : '') + location.hash); }catch(e){}
+        console.log('[renovar] enlace recordado, metodo:', metodo);
+        return;
+      }
+      let g = null;
+      try{ g = valido(sessionStorage.getItem(RENOVAR_KEY)); }catch(e){}
+      if(!g){
+        try{
+          const raw = JSON.parse(localStorage.getItem(RENOVAR_KEY) || 'null');
+          if(raw && valido(raw.m) && Date.now() - Number(raw.t) < 24 * 3600 * 1000) g = raw.m;
+          else localStorage.removeItem(RENOVAR_KEY);
+        }catch(e){}
+      }
+      if(g) renovarPendiente = g;
+    }catch(e){ console.warn('[renovar]', e); }
+  })();
+
+  // Se llama desde loadPatientState(), con el paciente ya cargado.
+  function renovarAlCargar(history){
+    const metodo = renovarPendiente;
+    if(!metodo || !history) return;     // sin historial todavia: se espera
+    renovarOlvidar();                    // una sola vez, pase lo que pase
+    try{
+      if(PAYMENTS_PAUSED) return;
+      if(history.plan === 'Comped') return;
+      const m = membershipStatus(history);
+      // Pagado hasta una fecha FUTURA (y no cancelado): nada que renovar.
+      if(history.paid && !history.membership_cancelled && m.activa && m.dias > 0){
+        console.log('[renovar] ya pagado hasta', m.hastaISO || '(sin fecha)', '— no se abre el cobro');
+        return;
+      }
+      if(athmOrden) return;              // ya hay un cobro abierto
+      Promise.resolve(goToCheckout('Basic')).then(function(){
+        if(!athmOrden) return;
+        if(metodo === 'card'){
+          const save = document.getElementById('nmi-save');
+          if(save) save.checked = true;
+          const w = document.getElementById('nmi-wrap');
+          if(w && w.style.display !== 'none'){
+            w.scrollIntoView({ behavior:'smooth', block:'center' });
+            const c = document.getElementById('nmi-ccnumber');
+            if(c){ c.setAttribute('tabindex', '-1'); try{ c.focus({ preventScroll:true }); }catch(e){} }
+          }
+        } else if(metodo === 'ath'){
+          const host = document.getElementById('ATHMovil_Checkout_Button_payment');
+          if(host){
+            host.scrollIntoView({ behavior:'smooth', block:'center' });
+            const b = host.querySelector('button, a, [role="button"]');
+            if(b){ try{ b.focus({ preventScroll:true }); }catch(e){} }
+            else { host.setAttribute('tabindex', '-1'); try{ host.focus({ preventScroll:true }); }catch(e){} }
+          }
+        }
+      }).catch(function(e){ console.error('[renovar]', e); });
+    }catch(e){ console.error('[renovar]', e); }
   }
 
   // ====== ESPERAR AL WEBHOOK ======
@@ -3699,6 +4059,7 @@ if(!window.supabase){
 
     athmOrden = { ref, kind, id, total, etiqueta };
     athmAvisoFinal = false;
+    promoModoCheckout(false);   // si antes se abrio un checkout de mes gratis
 
     document.getElementById('athm-detail').textContent = etiqueta || '';
     document.getElementById('athm-amount').textContent = athmDinero(total);
@@ -4416,7 +4777,8 @@ if(!window.supabase){
     const b = document.getElementById('nmi-pay-btn');
     if(!b) return;
     b.disabled = !!ocupado;
-    b.textContent = texto || ('Pay ' + (athmOrden ? athmDinero(athmOrden.total) : '') + ' with card');
+    b.textContent = texto || ((athmOrden && athmOrden.promo) ? 'Start my free month — $0.00 today'
+                                : ('Pay ' + (athmOrden ? athmDinero(athmOrden.total) : '') + ' with card'));
   }
 
   async function nmiCobrarConToken(token){
@@ -4427,18 +4789,35 @@ if(!window.supabase){
     try{
       const { data: sess } = await supabaseClient.auth.getSession();
       const jwt = sess && sess.session && sess.session.access_token;
-      const guardar = orden.kind === 'membership' && !!(document.getElementById('nmi-save') || {}).checked;
+      // Mes gratis: la tarjeta se guarda SIEMPRE (el dia 30 se cobra).
+      const guardar = orden.kind === 'membership' && (!!orden.promo || !!(document.getElementById('nmi-save') || {}).checked);
+      const cuerpo = { ref: orden.ref, payment_token: token, save_card: guardar };
+      if(orden.promo) cuerpo.promo_code = orden.promo;   // el servidor lo re-valida; el monto NUNCA viaja
       const res = await fetch(SUPABASE_URL.replace(/\/+$/, '') + '/functions/v1/nmi-charge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt, 'apikey': SUPABASE_ANON_KEY },
-        body: JSON.stringify({ ref: orden.ref, payment_token: token, save_card: guardar })
+        body: JSON.stringify(cuerpo)
       });
       const out = await res.json().catch(function(){ return {}; });
       if(res.ok && out.paid === true){
         athmAvisoFinal = true;
+        if(orden.promo){
+          promoGratis = null; promoGuardar(''); promoOlvidarEnCuenta();
+          if(m){ m.style.color='#2F5C46'; m.textContent='Card saved' + (out.last4 ? ' (ending ' + out.last4 + ')' : '')
+                 + '. Your first month is free — nothing was charged today. Your membership renews at $' + PROMO_RENUEVA + '/month unless you cancel.'; }
+          pagoConfirmado();
+          const est = document.getElementById('athm-status');
+          if(est) est.textContent = 'Your free first month has started. Thank you.';
+          return;
+        }
         if(m){ m.style.color='#2F5C46'; m.textContent='Paid' + (out.last4 ? ' with card ending ' + out.last4 : '') + '.'
                + (out.saved_card ? ' Your membership will renew automatically each month.' : ''); }
         pagoConfirmado();
+        return;
+      }
+      if(orden.promo && out && out.promo_invalid){
+        nmiCobrando = false; nmiBoton(false);
+        promoRechazado(out.error);
         return;
       }
       // Declinada o error: NADA se marco. Se dice claro y se deja ATH abajo.
@@ -4520,6 +4899,8 @@ if(!window.supabase){
     // Cobros en pausa: se corta ANTES de tocar nada. No se navega, no se
     // guarda nada en sessionStorage, no se marca nada como pagado.
     if(PAYMENTS_PAUSED){ alert(PAYMENTS_PAUSED_MSG); return; }
+    // Codigo de primer mes gratis validado: tarjeta, $0 hoy, sin ATH.
+    if(promoAplicado()){ promoIniciar(); return; }
     const planATH = currentCheckout().plan;
     const precioATH = MEMBERSHIP_PRICE[planATH];
     if(!Number.isFinite(precioATH) || precioATH <= 0){
@@ -4530,8 +4911,8 @@ if(!window.supabase){
     }
     // ATH no hace cobros recurrentes: cada mes es un pago que el paciente
     // inicia. Se le dice aqui, no despues.
-    athmStart('membership', planATH, precioATH, 'Nuvi membership — one month');
-    return;
+    // Se devuelve la promesa para que ?renovar= sepa cuando ya esta abierto.
+    return athmStart('membership', planATH, precioATH, 'Nuvi membership — one month');
     /* eslint-disable no-unreachable */
     // Coupon beats promo beats standard. The browser only picks a link —
     // Stripe decides what is actually charged.
@@ -4678,11 +5059,11 @@ if(!window.supabase){
             // usan Go templates, y ahí no hay función para partir un string.
             // Sin este campo el correo tendría que saludar con el nombre
             // completo ("Hola Ana Rivera") en vez de solo el nombre.
-            data: {
+            data: Object.assign({
               full_name: fullName,
               first_name: String(fullName || '').trim().split(/\s+/)[0] || '',
               goal: goal, plan: plan, pending_intake: true
-            }
+            }, (promoGratis && promoGratis.code) ? { promo_code: promoGratis.code } : {})
           }
         });
         if(error) throw error;
@@ -4707,16 +5088,21 @@ if(!window.supabase){
   // Promo50 TIENE que estar aqui: goToCheckout busca el precio por el nombre
   // del plan que devuelve currentCheckout(), y si no lo encuentra se niega a
   // cobrar — falla ruidoso, que es correcto, pero deja al paciente sin pagar.
-  const MEMBERSHIP_PRICE = { Basic: 70, Promo50: 50, Comped: 0 };
+  // FreeFirst = primer mes gratis con codigo (14oct-1); renueva a la mensual.
+  // Promo50 = el precio de lanzamiento (PROMO.price) pero nunca mas caro que
+  // la mensual: con MEMBERSHIP_MONTHLY = 50 los tres planes cobran $50.
+  const MEMBERSHIP_PRICE = { Basic: MEMBERSHIP_MONTHLY, Promo50: Math.min(PROMO.price, MEMBERSHIP_MONTHLY),
+                             FreeFirst: MEMBERSHIP_MONTHLY, Comped: 0 };
 
   // Lo que Stripe cobra REALMENTE según el Payment Link que se usó. El recibo
   // sale de aquí, no del cupón: al volver de Stripe la página recarga y
   // activeCoupon ya es null, así que un pago de $35 se reportaba como $70.
   // El plan sí sobrevive la recarga (va en sessionStorage), y es el que
   // determina qué link se abrió.
-  const PLAN_CHARGED = { Basic: 70, Promo50: 50, Comped: 0 };
+  const PLAN_CHARGED = { Basic: MEMBERSHIP_MONTHLY, Promo50: Math.min(PROMO.price, MEMBERSHIP_MONTHLY), Comped: 0 };
   const PLAN_LABEL   = { Basic: 'Basic membership',
                          Promo50: 'Basic membership — first month promo',
+                         FreeFirst: 'Basic membership — first month free',
                          Comped: 'Complimentary membership' };
 
   // Single source of truth for every medication — powers the NP approval
@@ -5114,6 +5500,7 @@ if(!window.supabase){
     document.getElementById('nav-cta').style.display = 'none';
 
     const meta = user.user_metadata || {};
+    promoRecuperarDeCuenta(meta);
     refreshWelcome();
 
     // If this user signed up with pending intake data attached, save it as their
@@ -5245,6 +5632,8 @@ if(!window.supabase){
     if(stage === 'need-schedule' && stageEl){
       stageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+    if(stage === 'need-payment') promoAlCheckout();
+    if(renovarPendiente) renovarAlCargar(history);
 
     if(stage === 'membership-cancelled'){
       document.getElementById('membership-cancelled-reason').textContent =
@@ -7824,7 +8213,7 @@ if(!window.supabase){
     const purchased = H.filter(p => p.purchased).length;
     const cancelled = H.filter(p => p.membership_cancelled).length;
     const pending   = R.filter(r => r.status === 'pending').length;
-    const mrr       = paid * 70;
+    const mrr       = paid * MEMBERSHIP_MONTHLY;
 
     const stat = (label, val, note) =>
       '<div style="background:var(--paper-warm);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">'
@@ -9027,7 +9416,7 @@ if(!window.supabase){
   // Lo que se bloquea al vencer: COORDINAR UNA ENTREVISTA NUEVA. Nada mas.
   // Sus records, sus labs, sus mensajes y la cita que ya tenia reservada
   // siguen ahi. Encerrar a alguien fuera de su propio expediente medico por
-  // $70 no es cobrar, es otra cosa.
+  // una mensualidad no es cobrar, es otra cosa.
   function membershipStatus(h){
     const hist = h || currentHealthHistory;
     if(!hist || !hist.paid){
@@ -9106,7 +9495,15 @@ if(!window.supabase){
       cancelada:   'background:rgba(15,35,54,0.06);border:1px solid var(--line);color:var(--ink-soft);'
     };
     let titulo, cuerpo, cobrar = false;
-    if(m.estado === 'activa'){
+    // Primer mes gratis (14oct-1) con tarjeta guardada: renueva solo a la mensual.
+    const hFree = currentHealthHistory;
+    const mesGratis = hFree && hFree.plan === 'FreeFirst' && hFree.card_vault_id;
+    if(mesGratis && (m.estado === 'activa' || m.estado === 'por-vencer')){
+      titulo = 'Free first month';
+      cuerpo = 'Free through ' + membershipFecha(m.hasta) + '. Then $' + (MEMBERSHIP_PRICE.FreeFirst || MEMBERSHIP_MONTHLY)
+             + '/month on the card you saved' + (hFree.card_last4 ? ' (ending ' + hFree.card_last4 + ')' : '')
+             + ' — cancel anytime from Settings before then if you don\'t want to continue.';
+    } else if(m.estado === 'activa'){
       titulo = 'Membership active';
       cuerpo = 'Paid through ' + membershipFecha(m.hasta) + '.';
     } else if(m.estado === 'cortesia'){
@@ -9135,7 +9532,7 @@ if(!window.supabase){
       + ((cobrar && !PAYMENTS_PAUSED)
           ? '<button class="btn btn-primary" style="width:auto;padding:9px 18px;font-size:13.5px;'
             + 'margin-top:12px;" onclick="goToCheckout(\'Basic\')">Renew membership · $'
-            + (MEMBERSHIP_PRICE['Basic'] || 70) + '</button>'
+            + (MEMBERSHIP_PRICE[currentCheckout().plan] || MEMBERSHIP_MONTHLY) + '</button>'
           : '');
   }
 
@@ -12250,14 +12647,14 @@ if(!window.supabase){
       setTimeout(function(){
         // El monto sale del PLAN que se cobró, no de activeCoupon: ese ya se
         // perdió en la recarga que hace Stripe al devolver al paciente.
-        const charged = (PLAN_CHARGED[plan] != null) ? PLAN_CHARGED[plan] : 70;
+        const charged = (PLAN_CHARGED[plan] != null) ? PLAN_CHARGED[plan] : MEMBERSHIP_MONTHLY;
         notify('payment', {
           name: currentHealthHistory && currentHealthHistory.full_name,
           email: (currentHealthHistory && currentHealthHistory.email) || (currentUser && currentUser.email)
         }, {
           amount: '$' + charged,
           plan: PLAN_LABEL[plan] || 'Basic membership',
-          coupon: plan === 'Promo50' ? 'Launch promo — first month'
+          coupon: (plan === 'Promo50' && charged < MEMBERSHIP_MONTHLY) ? 'Launch promo — first month'
                 : (plan === 'Comped' ? 'Complimentary access' : null),
           date: new Date().toISOString()
         });
@@ -12768,6 +13165,16 @@ if(!window.supabase){
     // personalizado" se lee de corrido, con coma no.
     'Weight loss medication': 'Manejo de peso',
     'Secure payment': 'Pago seguro',
+    // 14oct-1 — codigo de primer mes gratis
+    'Have a promo code?': '\u00bfTienes un c\u00f3digo de promoci\u00f3n?',
+    'Apply': 'Aplicar',
+    'applied': 'aplicado',
+    'Remove code': 'Quitar c\u00f3digo',
+    'Start your free month': 'Comienza tu mes gratis',
+    'Start my free month \u2014 $0.00 today': 'Comenzar mi mes gratis \u2014 $0.00 hoy',
+    '$0.00 today': '$0.00 hoy',
+    'Free first month': 'Primer mes gratis',
+    'Checking code\u2026': 'Verificando el c\u00f3digo\u2026',
     'Your appointment': 'Tu cita',
     "Yes, I'll be there": 'S\u00ed, ah\u00ed estar\u00e9',
     "I can't make it \u2014 cancel": 'No puedo \u2014 cancelar',
@@ -12814,7 +13221,8 @@ if(!window.supabase){
     'Evaluation scheduled': 'Evaluaci\u00f3n programada',
     'Evaluation complete': 'Evaluaci\u00f3n completada',
     'Evaluation completed': 'Evaluaci\u00f3n completada',
-    'First month $50, then $70/month. Cancel anytime.': 'Primer mes $50, luego $70 al mes. Cancela cuando quieras.',
+    'Billed monthly. Cancel anytime.': 'Se cobra cada mes. Cancela cuando quieras.',
+    'Per month': 'Al mes',
     // Google traducia estos como "Tirzepatida agravada" / "compuesto", en
     // masculino. A mano y en femenino, que es como se dice.
     'Tirzepatide \u2014 compounded': 'Tirzepatida \u2014 compuesta',
@@ -12872,8 +13280,8 @@ if(!window.supabase){
      'Puedes evaluarte con un médico en 1 día luego de suscribirte. El medicamento se puede pedir ese mismo día y llega en 3 días.'],
     ['Your physician decides which step you start on and when you move up. Membership is billed separately.',
      'Tu médico decide en qué escalón empiezas y cuándo subes. La membresía se cobra aparte.'],
-    ['Membership is $50 your first month, then $70 a month. If you qualify for treatment, medication is an added cost, starting at $45 per weekly dose (tirzepatide 2.5 mg).',
-     'El primer mes de membresía son $50 y luego $70 mensual. En caso de cualificar para tratamiento, el medicamento tiene costo adicional empezando en $45 la dosis semanal (tirzepatida 2.5 mg).'],
+    ['Membership is $50 a month. If you qualify for treatment, medication is an added cost, starting at $45 per weekly dose (tirzepatide 2.5 mg).',
+     'La membresía es $50 al mes. En caso de cualificar para tratamiento, el medicamento tiene costo adicional empezando en $45 la dosis semanal (tirzepatida 2.5 mg).'],
     ['Takes about 5 minutes. A licensed physician reviews your answers before your consultation.',
      'Toma unos 5 minutos. Un m\u00e9dico licenciado revisa tus respuestas antes de tu consulta.'],
   ];
