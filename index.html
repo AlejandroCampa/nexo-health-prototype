@@ -162,9 +162,9 @@ if(!window.supabase){
     --ink:#0F2336;            /* navy — texto y botones primarios */
     --ink-soft:#3A4A66;
     --ink-faint:rgba(15,35,54,0.68);
-    --paper:#F6F6F3;          /* hueso — fondo general */
-    --paper-warm:#F4EFEA;     /* banda cálida — cabeceras de tarjeta */
-    --paper-quiet:#FBFAF8;    /* lavado casi blanco */
+    --paper:#F5F8FD;          /* hueso — fondo general */
+    --paper-warm:#EEF3FD;     /* banda cálida — cabeceras de tarjeta */
+    --paper-quiet:#FAFCFF;    /* lavado casi blanco */
     /* ---- SIN NARANJA ----
        Los tres tokens naranjas apuntan ahora al azul del nautilus. Se cambian
        aquí y no en los ~30 sitios que los usan: para eso existen los tokens.
@@ -176,10 +176,10 @@ if(!window.supabase){
     --amber-deep:#0F37BE;
     --coral:#144CEE;
     --coral-soft:rgba(20,76,238,0.12);
-    --mint:#EAF3F0;
-    --teal:#3F9786;           /* teal — acento único */
-    --teal-deep:#2C6D61;
-    --sage:#3F9786;
+    --mint:#EEF3FD;
+    --teal:#144CEE;           /* teal — acento único */
+    --teal-deep:#0F37BE;
+    --sage:#144CEE;
 
     /* ---- AZUL DEL NAUTILUS ----
        Muestreados del PNG del logo, no elegidos a ojo. El #144CEE es el
@@ -307,8 +307,8 @@ if(!window.supabase){
   /* ---- HERO --------------------------------------------------------------- */
   .hero{padding:clamp(40px,7vw,96px) 0 clamp(48px,7vw,88px);position:relative;overflow:hidden;}
   .hero-bg{position:absolute;inset:0;z-index:0;pointer-events:none;}
-  .hero-bg img{width:100%;height:100%;object-fit:cover;object-position:center 62%;opacity:0.5;filter:saturate(0.9);}
-  .hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(63,151,134,0.55) 0%,rgba(63,151,134,0.30) 34%,rgba(234,251,255,0.72) 74%,var(--paper,#F6F6F3) 100%);}
+  .hero-bg img{width:100%;height:100%;object-fit:cover;object-position:center 62%;opacity:0.85;filter:saturate(1);}
+  .hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(30,160,240,0.34) 0%,rgba(30,160,240,0.16) 40%,rgba(234,251,255,0.72) 74%,var(--paper,#F5F8FD) 100%);}
   .hero .wrap{position:relative;z-index:2;}
   .hero::before{
     content:"℞";position:absolute;top:-8%;right:-4%;font-family:var(--display);
@@ -339,6 +339,11 @@ if(!window.supabase){
   .hero-ctas .btn{padding:16px 28px;font-size:16px;}
   .hero-note{margin-top:20px;font-size:13.5px;color:var(--ink);opacity:0.72;display:flex;align-items:flex-start;gap:10px;max-width:460px;line-height:1.55;}
   .hero-note::before{content:"";flex:none;width:20px;height:1.5px;background:var(--coral);margin-top:10px;}
+  /* Fase 2 (Diseño C): la nota del correo se partía en tres columnas porque
+     display:flex convertía el texto y el enlace en piezas separadas. Ahora es
+     un párrafo normal y la rayita va colgada a la izquierda. */
+  .hero-note{display:block;position:relative;padding-left:30px;}
+  .hero-note::before{position:absolute;left:0;top:0;}
 
   /* trust ticker under hero */
   .hero-proof{
@@ -448,7 +453,7 @@ if(!window.supabase){
      donde apoyarse; sobre blanco plano el cristal se pierde. */
   .vial-art{display:flex;align-items:flex-end;justify-content:center;height:118px;
     padding-bottom:8px;border-radius:12px;
-    background:linear-gradient(168deg,rgba(63,151,134,0.10) 0%,var(--paper-quiet) 68%);
+    background:linear-gradient(168deg,rgba(20,76,238,0.10) 0%,var(--paper-quiet) 68%);
     border:1px solid var(--line-soft);}
   .vial-card{
     background:var(--white);border-radius:var(--radius);border:1px solid var(--line-soft);
@@ -456,9 +461,9 @@ if(!window.supabase){
     display:flex;flex-direction:column;
   }
   .vial-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-md);border-color:var(--line);}
-  .vial-label{background:var(--ink);color:#F6F6F3;padding:22px 24px 20px;position:relative;}
+  .vial-label{background:var(--ink);color:#F5F8FD;padding:22px 24px 20px;position:relative;}
   .vial-label .cat{font-family:var(--sans);font-size:10.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--mint);}
-  .vial-label h3{font-family:var(--display);font-size:24px;font-weight:700;margin-top:6px;color:#F6F6F3;}
+  .vial-label h3{font-family:var(--display);font-size:24px;font-weight:700;margin-top:6px;color:#F5F8FD;}
   .vial-body{padding:22px 24px 24px;display:flex;flex-direction:column;flex:1;}
   .vial-spec{display:flex;justify-content:space-between;gap:12px;font-family:var(--sans);font-size:12px;padding:11px 0;border-bottom:1px solid var(--line-soft);color:var(--ink-soft);}
   .vial-spec:last-of-type{border-bottom:none;}
@@ -522,18 +527,18 @@ if(!window.supabase){
   .faq-a p{font-size:15px;color:var(--ink);opacity:0.8;line-height:1.75;padding:0 4px 24px 10px;max-width:760px;}
 
   /* ---- CLINICAL LEADERSHIP BAND ------------------------------------------ */
-  .lead-band{background:var(--ink);color:#F6F6F3;padding:clamp(48px,7vw,96px) 0;position:relative;overflow:hidden;}
+  .lead-band{background:var(--ink);color:#F5F8FD;padding:clamp(48px,7vw,96px) 0;position:relative;overflow:hidden;}
   .lead-band::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--mint),transparent);opacity:0.6;}
   .lead-grid{display:grid;grid-template-columns:1fr;gap:clamp(28px,4vw,56px);align-items:center;position:relative;z-index:1;}
   .lead-photo{border-radius:var(--radius);overflow:hidden;max-width:360px;border:1px solid rgba(255,255,255,0.16);box-shadow:var(--shadow-lg);}
   .lead-photo img{width:100%;height:100%;object-fit:cover;display:block;}
   .lead-eyebrow{font-family:var(--sans);font-size:11.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--mint);margin-bottom:14px;}
-  .lead-name{font-size:clamp(26px,4.6vw,42px);color:#F6F6F3;}
+  .lead-name{font-size:clamp(26px,4.6vw,42px);color:#F5F8FD;}
   .lead-name span{color:var(--mint);}
   .lead-role{font-size:15px;color:rgba(234,251,255,0.7);margin:8px 0 26px;}
   .lead-stats{display:flex;flex-direction:column;gap:10px;}
   .lead-stat{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:16px 18px;}
-  .lead-stat b{display:block;font-family:var(--display);font-size:26px;letter-spacing:-0.03em;color:#F6F6F3;}
+  .lead-stat b{display:block;font-family:var(--display);font-size:26px;letter-spacing:-0.03em;color:#F5F8FD;}
   .lead-stat span{font-size:13.5px;color:rgba(234,251,255,0.7);}
   .lead-claim{display:flex;align-items:center;gap:10px;font-size:14.5px;color:rgba(234,251,255,0.85);}
   .lead-claim::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--mint);}
@@ -542,7 +547,7 @@ if(!window.supabase){
   .tiers{display:grid;grid-template-columns:1fr;gap:20px;max-width:820px;margin:0 auto;}
   .tier{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:34px 26px;display:flex;flex-direction:column;transition:transform .35s var(--ease),box-shadow .35s var(--ease);}
   .tier:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
-  .tier.featured{background:var(--ink);color:#F6F6F3;border-color:var(--ink);position:relative;box-shadow:var(--shadow-lg);}
+  .tier.featured{background:var(--ink);color:#F5F8FD;border-color:var(--ink);position:relative;box-shadow:var(--shadow-lg);}
   .tier.featured .tier-name{color:var(--mint);}
   .tier.featured .tier-price span{color:rgba(234,251,255,0.65);}
   .tier.featured li{color:rgba(234,251,255,0.9);}
@@ -555,7 +560,7 @@ if(!window.supabase){
   .tier li{display:flex;gap:11px;padding:9px 0;font-size:15px;line-height:1.5;align-items:flex-start;}
   .tier li::before{content:"";flex:none;width:18px;height:18px;margin-top:2px;border-radius:50%;background:var(--coral-soft);
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23D63F2E' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;}
-  .tier.featured li::before{background-color:rgba(63,151,134,0.20);
+  .tier.featured li::before{background-color:rgba(20,76,238,0.20);
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2300F5D0' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");}
 
   /* ---- TRUST STRIP -------------------------------------------------------- */
@@ -566,13 +571,13 @@ if(!window.supabase){
   .trust-item p{margin:0;font-size:14px;color:var(--ink);opacity:0.75;line-height:1.6;}
 
   /* ---- FOOTER ------------------------------------------------------------- */
-  footer{padding:clamp(44px,6vw,72px) 0 32px;background:var(--ink);color:#F6F6F3;}
-  footer .logo{color:#F6F6F3;}
+  footer{padding:clamp(44px,6vw,72px) 0 32px;background:var(--ink);color:#F5F8FD;}
+  footer .logo{color:#F5F8FD;}
   .footer-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:32px;padding-bottom:32px;border-bottom:1px solid rgba(255,255,255,0.14);}
   .footer-cols{display:flex;gap:clamp(28px,6vw,64px);flex-wrap:wrap;}
   .footer-col h5{font-family:var(--sans);font-size:10.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--mint);margin:0 0 12px;}
   .footer-col a{display:block;font-size:14.5px;padding:6px 0;color:rgba(234,251,255,0.72);transition:color .2s var(--ease),transform .2s var(--ease);}
-  .footer-col a:hover{color:#F6F6F3;transform:translateX(3px);}
+  .footer-col a:hover{color:#F5F8FD;transform:translateX(3px);}
   .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:24px;flex-wrap:wrap;gap:12px;}
   .footer-bottom p{margin:0;font-size:12.5px;color:rgba(234,251,255,0.6);max-width:720px;line-height:1.65;}
   .footer-bottom a{color:rgba(246,246,243,0.62) !important;}
@@ -722,7 +727,7 @@ if(!window.supabase){
     font-family:var(--sans);font-size:11.5px;font-weight:700;letter-spacing:0.03em;
     padding:6px 12px;border-radius:100px;white-space:nowrap;
   }
-  .fh-pill.ok{background:rgba(79,122,100,0.14);color:#2F5C46;border:1px solid rgba(79,122,100,0.4);}
+  .fh-pill.ok{background:rgba(20,76,238,0.14);color:#0F37BE;border:1px solid rgba(20,76,238,0.4);}
   .fh-pill.warn{background:rgba(217,140,43,0.14);color:#8A5A12;border:1px solid rgba(217,140,43,0.45);}
   .fh-pill.bad{background:rgba(196,60,60,0.10);color:#8C2F2F;border:1px solid rgba(196,60,60,0.35);}
   .ficha-header .fh-datos{
@@ -798,7 +803,7 @@ if(!window.supabase){
     transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
   }
   .field input::placeholder,.field textarea::placeholder{color:rgba(15,35,54,0.52);}
-  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,151,134,0.28);}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(20,76,238,0.28);}
   .modal .btn{width:100%;margin-top:8px;}
   .modal-foot-link{display:block;text-align:center;margin-top:18px;font-size:13px;color:var(--ink-soft);}
   .modal-foot-link a{color:var(--amber-deep);font-weight:600;}
@@ -806,12 +811,12 @@ if(!window.supabase){
   .modal-icon-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
   .modal-plan-tag{
     display:inline-block;font-family:var(--sans);font-size:11.5px;letter-spacing:0.02em;
-    background:rgba(63,151,134,0.16);color:var(--amber-deep);padding:6px 13px;border-radius:100px;margin-bottom:20px;
+    background:rgba(20,76,238,0.16);color:var(--amber-deep);padding:6px 13px;border-radius:100px;margin-bottom:20px;
   }
   .modal-success{text-align:center;padding:12px 0;}
   .modal-success .check{
     width:52px;height:52px;border-radius:50%;background:var(--sage);color:var(--white);
-    display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 18px;box-shadow:0 0 0 6px rgba(79,122,100,0.16);
+    display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 18px;box-shadow:0 0 0 6px rgba(20,76,238,0.16);
   }
 
   /* ---- INFO PAGES / DASHBOARD -------------------------------------------- */
@@ -868,9 +873,9 @@ if(!window.supabase){
   .status-pill{
     display:inline-flex;align-items:center;gap:7px;font-family:var(--sans);
     font-size:11px;text-transform:uppercase;letter-spacing:0.08em;
-    background:rgba(63,151,134,0.15);color:var(--amber-deep);padding:7px 14px;border-radius:100px;margin-bottom:18px;
+    background:rgba(20,76,238,0.15);color:var(--amber-deep);padding:7px 14px;border-radius:100px;margin-bottom:18px;
   }
-  .status-pill.status-active{background:rgba(79,122,100,0.15);color:var(--sage);}
+  .status-pill.status-active{background:rgba(20,76,238,0.15);color:var(--sage);}
   .status-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
   .dash-protocol-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 0;border-bottom:1px dashed var(--line);}
   .dash-protocol-row:last-child{border-bottom:none;}
@@ -955,7 +960,7 @@ if(!window.supabase){
 
   /* ---- HEALTH HISTORY FORM ----------------------------------------------- */
   .consent-box{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;font-size:13.5px;line-height:1.7;transition:border-color .25s var(--ease),background .25s var(--ease);}
-  .consent-box:has(input:checked){border-color:var(--teal);background:rgba(63,151,134,0.08);}
+  .consent-box:has(input:checked){border-color:var(--teal);background:rgba(20,76,238,0.08);}
   .form-section-title{font-family:var(--sans);font-size:11.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--amber-deep);margin:32px 0 16px;display:flex;align-items:center;gap:12px;}
   .form-section-title::before{content:"";width:20px;height:1.5px;background:var(--amber);flex:none;}
   .form-section-title:first-of-type{margin-top:0;}
@@ -963,7 +968,7 @@ if(!window.supabase){
   .checkbox-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
   .checkbox-item{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;background:var(--white);border:1px solid var(--line);padding:13px 15px;border-radius:12px;cursor:pointer;line-height:1.45;transition:border-color .2s var(--ease),background .2s var(--ease);}
   .checkbox-item:hover{border-color:var(--teal);}
-  .checkbox-item:has(input:checked){border-color:var(--teal);background:rgba(63,151,134,0.08);}
+  .checkbox-item:has(input:checked){border-color:var(--teal);background:rgba(20,76,238,0.08);}
   .checkbox-item input{width:17px;height:17px;flex:none;margin-top:1px;accent-color:var(--teal-deep);}
   .flag-box{background:rgba(196,60,60,0.06);border:1px solid rgba(196,60,60,0.25);border-radius:14px;padding:18px 20px;margin-top:14px;}
   .flag-box p{font-size:12.5px;color:var(--ink-soft);margin:10px 0 0;line-height:1.55;}
@@ -973,7 +978,7 @@ if(!window.supabase){
   /* ---- SCHEDULER ---------------------------------------------------------- */
   .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;}
   .slot-btn{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:left;cursor:pointer;transition:all .2s var(--ease);font-family:var(--sans);}
-  .slot-btn:hover{border-color:var(--amber);background:rgba(63,151,134,0.08);transform:translateY(-2px);}
+  .slot-btn:hover{border-color:var(--amber);background:rgba(20,76,238,0.08);transform:translateY(-2px);}
   .slot-day{font-family:var(--sans);font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.04em;}
   .slot-time{font-family:var(--display);font-weight:700;font-size:19px;margin-top:4px;color:var(--ink);}
   @media(max-width:700px){ .slot-grid{grid-template-columns:1fr 1fr;} }
@@ -999,7 +1004,7 @@ if(!window.supabase){
   }
   .cal-day.empty{border:none;background:transparent;cursor:default;}
   .cal-day.disabled{opacity:0.28;cursor:default;background:var(--paper-warm);}
-  .cal-day.available:hover{border-color:var(--amber);background:rgba(63,151,134,0.1);transform:translateY(-2px);}
+  .cal-day.available:hover{border-color:var(--amber);background:rgba(20,76,238,0.1);transform:translateY(-2px);}
   .cal-day.selected{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);}
   .cal-day.today{border-color:var(--amber);font-weight:700;color:var(--amber-deep);}
 
@@ -1015,7 +1020,7 @@ if(!window.supabase){
   .staff-cal .cal-day.today .dnum{opacity:1;}
   .staff-cal .cal-day.past{background:var(--paper-warm);}
   .staff-cal .cal-day.past .cita-chip{opacity:0.55;}
-  .staff-cal .cal-day:not(.empty):hover{border-color:var(--amber);background:rgba(63,151,134,0.07);}
+  .staff-cal .cal-day:not(.empty):hover{border-color:var(--amber);background:rgba(20,76,238,0.07);}
   .staff-cal .cal-day.selected{background:var(--brand);border-color:var(--brand);}
   .staff-cal .cal-day.selected .dnum{color:var(--brand-ink);opacity:1;}
   .cita-chip{
@@ -1024,7 +1029,7 @@ if(!window.supabase){
     color:var(--ink);border-radius:6px;padding:2px 6px;max-width:100%;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;text-align:left;
   }
-  .cita-chip.done{background:rgba(79,122,100,0.12);border-color:rgba(79,122,100,0.4);color:#2F5C46;}
+  .cita-chip.done{background:rgba(20,76,238,0.12);border-color:rgba(20,76,238,0.4);color:#0F37BE;}
   .staff-cal .cal-day.selected .cita-chip{background:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.55);}
   .cita-mas{font-family:var(--sans);font-size:10px;color:var(--ink-soft);text-align:left;}
   .cita-cnt{display:none;}
@@ -1085,7 +1090,7 @@ if(!window.supabase){
   .cita-resp{position:fixed;inset:0;z-index:500;background:rgba(8,26,77,0.42);display:flex;align-items:center;justify-content:center;padding:16px;}
   .cita-resp[hidden]{display:none;}
   .cita-resp-caja{background:var(--white);border-radius:18px;max-width:420px;width:100%;padding:28px 24px 22px;box-shadow:0 24px 60px -24px rgba(8,26,77,0.45);}
-  .cita-resp-marca{font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#00A896;margin-bottom:8px;}
+  .cita-resp-marca{font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#144CEE;margin-bottom:8px;}
   .cita-resp-caja h2{font-size:24px;margin:0 0 12px;color:var(--ink);}
   .cita-resp-cuando{font-size:17px;font-weight:600;color:var(--ink);background:#F2FAFB;border-radius:12px;padding:14px 16px;margin-bottom:12px;}
   .cita-resp-estado{font-size:14.5px;line-height:1.6;color:var(--ink-soft);min-height:4px;margin-bottom:6px;}
@@ -1095,7 +1100,7 @@ if(!window.supabase){
   .cita-resp-botones .btn.cita-resp-no{color:#8C2F2F !important;border-color:#E2B4B4 !important;}
   .nmi-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;
     font-size:14px;font-weight:600;color:var(--ink);}
-  .nmi-seguro{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:#2F5C46;}
+  .nmi-seguro{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:#0F37BE;}
   .nmi-label{font-size:12.5px;font-weight:500;color:var(--ink-soft);margin:0 0 6px 2px;}
   .nmi-fila{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .nmi-field{height:50px;border:1px solid rgba(15,35,54,0.18);border-radius:10px;background:var(--white);
@@ -1106,6 +1111,29 @@ if(!window.supabase){
   .nmi-field:focus-within{border-color:#1E7BBF;box-shadow:0 0 0 3px rgba(30,123,191,0.16);}
   .nmi-field.nmi-invalido{border-color:#B23A3A;box-shadow:0 0 0 3px rgba(178,58,58,0.12);}
   .nmi-field iframe{height:48px !important;width:100% !important;border:0 !important;}
+  /* ---- Fase 2: Diseño C en la portada ------------------------------------
+     Letras: Lora solo en h1, h2 y citas; Manrope en todo lo demás de la
+     portada. Los paneles de paciente y staff no se tocan aquí. */
+  :is(header, .hero, .section, .lead-band, .trust, footer) :is(h3, h4, .logo, .price, .tier-price, .dose-price, .lead-stat b, .hero-proof b, .ladder-title){
+    font-family:var(--sans);
+    letter-spacing:-0.01em;
+  }
+  :is(header, .hero, .section, .lead-band, .trust, footer) :is(h3, h4){ font-weight:700; }
+  :is(header, footer) .logo{ font-weight:800; }
+  .person-body blockquote{ font-family:var(--display); }
+  /* Menú: en español los textos son más largos y se partían en dos líneas.
+     Cada enlace queda en una sola línea; si no cabe todo, el correo del menú
+     se oculta (sigue visible en la portada y en el pie). */
+  .logo, .navlinks a, .navcta .btn{ white-space:nowrap; }
+  @media(min-width:1000px) and (max-width:1479px){
+    .navlinks{ gap:20px; }
+    .navlinks a[href^="mailto:"]{ display:none; }
+  }
+  /* Entre 1000 y 1179 px no caben los enlaces sin salirse de la pantalla:
+     se comporta como en tableta (logo y botones). */
+  @media(min-width:1000px) and (max-width:1179px){
+    .navlinks{ display:none; }
+  }
 </style>
 </head>
 <body>
@@ -1361,8 +1389,8 @@ if(!window.supabase){
          encima de los tabs, asi que se ve este donde este. -->
     <div id="join-strip" style="display:none;align-items:center;justify-content:space-between;
          flex-wrap:wrap;gap:10px;margin:0 0 14px;padding:12px 16px;border-radius:12px;
-         background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.4);">
-      <div style="font-size:13.5px;color:#2F5C46;line-height:1.5;">
+         background:rgba(20,76,238,0.12);border:1px solid rgba(20,76,238,0.4);">
+      <div style="font-size:13.5px;color:#0F37BE;line-height:1.5;">
         <b>Your evaluation room is open.</b>
         <span id="join-strip-when"></span>
       </div>
@@ -1438,7 +1466,7 @@ if(!window.supabase){
                     <button type="button" class="btn btn-outline" id="promo-apply-btn" style="width:auto;padding:9px 16px;font-size:13.5px;" onclick="promoAplicarEscrito()">Apply</button>
                   </div>
                 </div>
-                <div id="promo-applied" style="display:none;margin-top:4px;font-size:13px;color:#2F5C46;">
+                <div id="promo-applied" style="display:none;margin-top:4px;font-size:13px;color:#0F37BE;">
                   <b id="promo-applied-code"></b> <span>applied</span> &middot;
                   <button type="button" onclick="promoQuitar()" style="background:none;border:0;padding:0;font:inherit;color:var(--ink-soft);text-decoration:underline;cursor:pointer;">Remove code</button>
                 </div>
@@ -1531,12 +1559,12 @@ if(!window.supabase){
                  evaluation per month and refills depend on it happening, so the
                  patient needs to see this before they see their protocol. -->
             <div id="order-confirmed" style="display:none;border-radius:12px;padding:18px 20px;margin-bottom:18px;
-                 background:rgba(79,122,100,0.13);border:1px solid rgba(79,122,100,0.4);color:#2F5C46;">
+                 background:rgba(20,76,238,0.13);border:1px solid rgba(20,76,238,0.4);color:#0F37BE;">
               <div style="font-size:16px;font-weight:600;margin-bottom:8px;">✓ Payment received</div>
               <div id="order-confirmed-body" style="font-size:14px;line-height:1.6;"></div>
               <button onclick="dismissOrderConfirmation()"
                       style="margin-top:12px;background:none;border:none;padding:0;cursor:pointer;
-                             font-family:var(--sans);font-size:12.5px;color:#2F5C46;
+                             font-family:var(--sans);font-size:12.5px;color:#0F37BE;
                              text-decoration:underline;opacity:0.8;">Dismiss</button>
             </div>
 
@@ -3383,7 +3411,7 @@ if(!window.supabase){
     else if(out && out.confirmed) txt = txt || 'Confirmed — thank you! Join from your dashboard at your appointment time.';
     else if(out && out.status === 'scheduled') { abierta = true; txt = txt || 'Will you be able to make it?'; }
     estado.textContent = txt;
-    estado.style.color = (out && out.status === 'cancelled') ? '#8C2F2F' : (out && out.confirmed ? '#2F5C46' : 'var(--ink-soft)');
+    estado.style.color = (out && out.status === 'cancelled') ? '#8C2F2F' : (out && out.confirmed ? '#0F37BE' : 'var(--ink-soft)');
     botones.hidden = !abierta;
   }
   async function abrirCitaRespuesta(){
@@ -3555,7 +3583,7 @@ if(!window.supabase){
   // el sitio está sirviendo una copia vieja (caché o deploy que no entró).
   const NUVI_BUILD = 'build 19oct-oferta25';
   try{
-    console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#00A896;font-weight:bold');
+    console.log('%c[nuvi] ' + NUVI_BUILD, 'color:#144CEE;font-weight:bold');
     window.NUVI_BUILD = NUVI_BUILD;
     document.addEventListener('DOMContentLoaded', function(){
       const el = document.getElementById('nuvi-build');
@@ -3770,7 +3798,7 @@ if(!window.supabase){
     if(btn) btn.disabled = est === 'verificando';
     let txt = '', color = 'var(--ink-soft)';
     if(est === 'verificando'){ txt = 'Checking code…'; }
-    else if(est === 'valido'){ txt = 'First month free — $0.00 today, then $' + PROMO_RENUEVA + '/month. A card is required; it is verified but not charged today.'; color = '#2F5C46'; }
+    else if(est === 'valido'){ txt = 'First month free — $0.00 today, then $' + PROMO_RENUEVA + '/month. A card is required; it is verified but not charged today.'; color = '#0F37BE'; }
     else if(est === 'invalido' || est === 'error'){ txt = g.msg || 'That promo code isn\'t valid.'; color = '#8C2F2F'; }
     else if(est === 'sin-tarjeta'){
       txt = 'This code needs a card on file, and card payments aren\'t available right now. '
@@ -4646,7 +4674,7 @@ if(!window.supabase){
       });
       const out = await r.json().catch(function(){ return {}; });
       if(out && out.paid){
-        msg.style.color = '#2F5C46';
+        msg.style.color = '#0F37BE';
         msg.textContent = 'Confirmado. Gracias.';
         athmOrden = null;
         setTimeout(function(){
@@ -4917,14 +4945,14 @@ if(!window.supabase){
         athmAvisoFinal = true;
         if(orden.promo){
           promoGratis = null; promoGuardar(''); promoOlvidarEnCuenta();
-          if(m){ m.style.color='#2F5C46'; m.textContent='Card saved' + (out.last4 ? ' (ending ' + out.last4 + ')' : '')
+          if(m){ m.style.color='#0F37BE'; m.textContent='Card saved' + (out.last4 ? ' (ending ' + out.last4 + ')' : '')
                  + '. Your first month is free — nothing was charged today. Your membership renews at $' + PROMO_RENUEVA + '/month unless you cancel.'; }
           pagoConfirmado();
           const est = document.getElementById('athm-status');
           if(est) est.textContent = 'Your free first month has started. Thank you.';
           return;
         }
-        if(m){ m.style.color='#2F5C46'; m.textContent='Paid' + (out.last4 ? ' with card ending ' + out.last4 : '') + '.'
+        if(m){ m.style.color='#0F37BE'; m.textContent='Paid' + (out.last4 ? ' with card ending ' + out.last4 : '') + '.'
                + (out.saved_card ? ' Your membership will renew automatically each month.' : ''); }
         pagoConfirmado();
         return;
@@ -5226,7 +5254,7 @@ if(!window.supabase){
     if(!texto) return;
     showFormError('code', texto);
     const el = document.getElementById('code-form-error');
-    if(el && !esError){ el.style.background = 'rgba(47,92,70,0.1)'; el.style.color = '#2F5C46'; }
+    if(el && !esError){ el.style.background = 'rgba(47,92,70,0.1)'; el.style.color = '#0F37BE'; }
   }
   function mostrarPasoCodigo(){
     const c = codigoPendiente();
@@ -6623,7 +6651,7 @@ if(!window.supabase){
     const msg = document.getElementById('me-msg');
     const decir = (texto, malo) => {
       if(!msg) return;
-      msg.style.color = malo ? '#8C2F2F' : '#2F5C46';
+      msg.style.color = malo ? '#8C2F2F' : '#0F37BE';
       msg.textContent = texto;
     };
     if(!supabaseClient || !currentHealthHistory){
@@ -6835,7 +6863,7 @@ if(!window.supabase){
         : /deliver/i.test(o.status) ? 'Delivered'
         : /error/i.test(o.status) ? 'Paid — your care team is sending it to the pharmacy'
         : 'At the pharmacy — preparing your order';
-      actionHtml = '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">' + estado + '</span>'
+      actionHtml = '<span class="rx-badge" style="background:rgba(20,76,238,0.14);color:var(--sage);">' + estado + '</span>'
         + '<br><a href="javascript:void(0)" onclick="' + item.onCancel + '" style="font-size:12px;color:rgba(15,35,54,0.68);">Cancel</a>';
     } else if(PAYMENTS_PAUSED){
       // Un boton que no cobra es peor que ningun boton: el paciente lo pulsa,
@@ -9080,8 +9108,8 @@ if(!window.supabase){
             + 'rgba(217,140,43,0.45);color:#8A5A12;margin-left:7px;font-size:10px;padding:1px 7px;'
             + 'vertical-align:middle;">Ends in ' + m.dias + 'd</span>'
         : (m.estado === 'cortesia')
-          ? '<span class="rx-badge" style="background:rgba(79,122,100,0.12);border-color:'
-            + 'rgba(79,122,100,0.35);color:#2F5C46;margin-left:7px;font-size:10px;padding:1px 7px;'
+          ? '<span class="rx-badge" style="background:rgba(20,76,238,0.12);border-color:'
+            + 'rgba(20,76,238,0.35);color:#0F37BE;margin-left:7px;font-size:10px;padding:1px 7px;'
             + 'vertical-align:middle;">Complimentary</span>'
           : '';
       const nombre = p.full_name || p.email || 'Unknown patient';
@@ -9160,8 +9188,8 @@ if(!window.supabase){
           pill = '<span class="rx-badge" style="background:rgba(196,60,60,0.10);'
                + 'border-color:rgba(196,60,60,0.40);color:#8C2F2F;">Cancelada</span>';
         } else if(f.comprada){
-          pill = '<span class="rx-badge" style="background:rgba(79,122,100,0.14);'
-               + 'border-color:rgba(79,122,100,0.40);color:#2F5C46;">Pagada</span>';
+          pill = '<span class="rx-badge" style="background:rgba(20,76,238,0.14);'
+               + 'border-color:rgba(20,76,238,0.40);color:#0F37BE;">Pagada</span>';
         } else {
           pill = '<span class="rx-badge" style="background:rgba(217,140,43,0.14);'
                + 'border-color:rgba(217,140,43,0.45);color:#8A5A12;">Sin pagar</span>';
@@ -9195,7 +9223,7 @@ if(!window.supabase){
       return '<div class="np-row" onclick="abrirFichaPaciente(\''+(patient ? patient.id : '')+'\')">'
         + '<div><div class="name">' + label + '</div><div class="meta">Ticket ' + a.ticket_number + '</div></div>'
         + '<div class="meta">' + a.appointment_date + ' · ' + a.appointment_time
-        + (a.confirmed_at ? ' · <span style="color:#2F5C46;font-weight:600;">✓ confirmed</span>' : '') + '</div></div>';
+        + (a.confirmed_at ? ' · <span style="color:#0F37BE;font-weight:600;">✓ confirmed</span>' : '') + '</div></div>';
     }).join('');
   }
 
@@ -9305,8 +9333,8 @@ if(!window.supabase){
           + '<div class="hora notranslate" translate="no">' + escapeHtml(a.appointment_time) + '</div>'
           + '<div class="quien"><div class="nom">' + escapeHtml(nombre) + '</div>'
           +   '<div class="det">Ticket ' + escapeHtml(a.ticket_number || '—') + ' · '
-          +   (hecha ? '<span style="color:#2F5C46;font-weight:600;">completed</span>'
-               : a.confirmed_at ? '<span style="color:#2F5C46;font-weight:600;">✓ confirmed</span>'
+          +   (hecha ? '<span style="color:#0F37BE;font-weight:600;">completed</span>'
+               : a.confirmed_at ? '<span style="color:#0F37BE;font-weight:600;">✓ confirmed</span>'
                : 'scheduled · <span style="color:#8A5A12;">not confirmed yet</span>') + '</div></div>'
           + (p ? '<button type="button" class="btn btn-outline" style="width:auto;padding:8px 14px;font-size:12.5px;" '
                + 'onclick="abrirFichaPaciente(\'' + p.id + '\')">Open chart →</button>' : '')
@@ -9518,7 +9546,7 @@ if(!window.supabase){
       }
 
       const styles = {
-        ok:   'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.35);color:#2F5C46;',
+        ok:   'background:rgba(20,76,238,0.12);border:1px solid rgba(20,76,238,0.35);color:#0F37BE;',
         soon: 'background:rgba(217,140,43,0.14);border:1px solid rgba(217,140,43,0.45);color:#8A5A12;',
         warn: 'background:rgba(196,60,60,0.10);border:1px solid rgba(196,60,60,0.40);color:#8C2F2F;'
       };
@@ -9763,8 +9791,8 @@ if(!window.supabase){
     if(m.estado === 'nunca' || m.estado === 'sin-fecha'){ el.style.display = 'none'; return; }
 
     const estilos = {
-      activa:      'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.35);color:#2F5C46;',
-      cortesia:    'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.35);color:#2F5C46;',
+      activa:      'background:rgba(20,76,238,0.12);border:1px solid rgba(20,76,238,0.35);color:#0F37BE;',
+      cortesia:    'background:rgba(20,76,238,0.12);border:1px solid rgba(20,76,238,0.35);color:#0F37BE;',
       'por-vencer':'background:rgba(217,140,43,0.14);border:1px solid rgba(217,140,43,0.45);color:#8A5A12;',
       vencida:     'background:rgba(196,60,60,0.10);border:1px solid rgba(196,60,60,0.40);color:#8C2F2F;',
       cancelada:   'background:rgba(15,35,54,0.06);border:1px solid var(--line);color:var(--ink-soft);'
@@ -9887,7 +9915,7 @@ if(!window.supabase){
       }
 
       const styles = {
-        ok:      'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.35);color:#2F5C46;',
+        ok:      'background:rgba(20,76,238,0.12);border:1px solid rgba(20,76,238,0.35);color:#0F37BE;',
         soon:    'background:rgba(217,140,43,0.14);border:1px solid rgba(217,140,43,0.4);color:#8A5A12;',
         warn:    'background:rgba(196,60,60,0.10);border:1px solid rgba(196,60,60,0.35);color:#8C2F2F;',
         neutral: 'background:var(--paper-warm);border:1px solid var(--line);'
@@ -10397,7 +10425,7 @@ if(!window.supabase){
           + escapeHtml(patient.approved_medication || 'Prescription') + ' — ' + escapeHtml(patient.approved_dose || '')
           + '<br><span style="font-size:12.5px;">The patient paid for a previous prescription. Do not submit this one until they pay for it.</span>';
       } else if(bought){
-        payEl.style.cssText='border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.4);color:#2F5C46;';
+        payEl.style.cssText='border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;background:rgba(20,76,238,0.12);border:1px solid rgba(20,76,238,0.4);color:#0F37BE;';
         payEl.innerHTML='<b>✓ Medication PAID.</b> '
           + escapeHtml(patient.approved_medication || 'Prescription') + ' — ' + escapeHtml(patient.approved_dose || '')
           + (when ? '<br><span style="font-size:12.5px;">Paid ' + when + ' — ready to submit to the pharmacy.</span>' : '');
@@ -10416,7 +10444,7 @@ if(!window.supabase){
       } else if(!patient.paid){
         memEl.textContent = 'Not started — patient has not paid for a membership yet.';
       } else if(patient.plan === 'Comped'){
-        memEl.innerHTML = '<b style="color:#2F5C46;">Complimentary membership</b> — this patient is never billed and it never expires.';
+        memEl.innerHTML = '<b style="color:#0F37BE;">Complimentary membership</b> — this patient is never billed and it never expires.';
       } else {
         const c = getCommitmentStatus(patient);
         memEl.innerHTML = 'Active (' + (patient.plan || 'plan not set') + '). '
@@ -10439,7 +10467,7 @@ if(!window.supabase){
       // El consentimiento GLP-1, en la ficha. Si un paciente no lo firmo, el
       // clinico tiene que verlo ANTES de recetar, no despues.
       'GLP-1 consent: ' + (patient.consent_glp1
-          ? '<b style="color:#2F5C46;">signed by ' + escapeHtml(patient.consent_glp1_signature || '—')
+          ? '<b style="color:#0F37BE;">signed by ' + escapeHtml(patient.consent_glp1_signature || '—')
             + '</b> on ' + (patient.consent_glp1_at
                 ? new Date(patient.consent_glp1_at).toLocaleString() : 'date not recorded')
             + ' (' + escapeHtml(patient.consent_glp1_version || 'version not recorded') + ')'
@@ -10526,13 +10554,13 @@ if(!window.supabase){
         + (/error|simulated/i.test(orden.status)
             ? '<button class="btn btn-outline" style="width:auto;padding:5px 12px;font-size:11.5px;margin-left:6px;" onclick="npEnviarAFarmacia(\'' + kind + '\',' + (id ? '\'' + id + '\'' : 'null') + ')">Retry</button>'
             : '');
-      if(sent) return '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Sent to pharmacy</span>';
-      if(!pagada) return '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);">Approved</span>';
+      if(sent) return '<span class="rx-badge" style="background:rgba(20,76,238,0.14);color:var(--sage);">Sent to pharmacy</span>';
+      if(!pagada) return '<span class="rx-badge" style="background:rgba(20,76,238,0.14);color:var(--sage);">Approved</span>';
       return '<button class="btn btn-primary" style="width:auto;padding:6px 14px;font-size:12px;" onclick="npEnviarAFarmacia(\'' + kind + '\',' + (id ? '\'' + id + '\'' : 'null') + ')">Send to pharmacy</button>'
         + '<br><a href="javascript:void(0)" onclick="markSentToPharmacy(\'' + kind + '\',' + (id ? '\'' + id + '\'' : 'null') + ')" style="font-size:11px;color:rgba(15,35,54,0.6);">Sent manually in the portal</a>';
     };
     const pagoPill = pagada => pagada
-      ? '<span class="rx-badge" style="background:rgba(79,122,100,0.14);color:var(--sage);margin-right:6px;">Paid</span>'
+      ? '<span class="rx-badge" style="background:rgba(20,76,238,0.14);color:var(--sage);margin-right:6px;">Paid</span>'
       : '<span class="rx-badge" style="background:rgba(217,140,43,0.14);border-color:rgba(217,140,43,0.45);color:#8A5A12;margin-right:6px;">Unpaid</span>';
 
     // The latest prescription lives on health_history, not the prescriptions
@@ -10746,7 +10774,7 @@ if(!window.supabase){
       aviso = document.createElement('div');
       aviso.id = 'np-approve-ok';
       aviso.style.cssText = 'border-radius:10px;padding:10px 14px;margin:8px 0 12px;font-size:13.5px;'
-        + 'background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.4);color:#2F5C46;';
+        + 'background:rgba(20,76,238,0.12);border:1px solid rgba(20,76,238,0.4);color:#0F37BE;';
       aviso.innerHTML = '<b>Approved.</b> ' + escapeHtml(rx.medication) + ' — ' + escapeHtml(rx.dose)
         + ' ($' + rx.price + '/mo). The patient can buy it from their dashboard. Sending email…';
       const titulo = lista.querySelector('.form-section-title');
@@ -10922,7 +10950,7 @@ if(!window.supabase){
     if(!o) return '';
     const st = String(o.status || '');
     const color = /error/i.test(st) ? 'background:rgba(196,60,60,0.10);color:#8C2F2F;'
-                : /ship|deliver/i.test(st) ? 'background:rgba(79,122,100,0.14);color:var(--sage);'
+                : /ship|deliver/i.test(st) ? 'background:rgba(20,76,238,0.14);color:var(--sage);'
                 : 'background:rgba(217,140,43,0.14);color:#8A5A12;';
     const txt = /simulated/i.test(st) ? 'Pharmacy: simulated'
               : /error/i.test(st) ? 'Pharmacy error'
@@ -11006,8 +11034,8 @@ if(!window.supabase){
     wrap.innerHTML =
         '<div class="form-section-title">Next appointment</div>'
       + (prox
-          ? '<div style="background:rgba(79,122,100,0.12);border:1px solid rgba(79,122,100,0.35);'
-            + 'border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#2F5C46;font-size:13.5px;">'
+          ? '<div style="background:rgba(20,76,238,0.12);border:1px solid rgba(20,76,238,0.35);'
+            + 'border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#0F37BE;font-size:13.5px;">'
             + '<b>' + fmt(prox.appointment_date) + ' at ' + prox.appointment_time + '</b>'
             + '<div style="font-size:12.5px;margin-top:3px;opacity:0.85;">Ticket '
             + prox.ticket_number + ' · ' + prox.status + '</div></div>'
@@ -11035,7 +11063,7 @@ if(!window.supabase){
 
   async function npGuardarProximaCita(patientUserId){
     const msg = document.getElementById('np-prox-msg');
-    const decir = (t, malo) => { if(msg){ msg.style.color = malo ? '#8C2F2F' : '#2F5C46';
+    const decir = (t, malo) => { if(msg){ msg.style.color = malo ? '#8C2F2F' : '#0F37BE';
                                           msg.textContent = t; } };
     const fecha = (document.getElementById('np-prox-fecha') || {}).value;
     const hora  = (document.getElementById('np-prox-hora')  || {}).value;
@@ -11110,7 +11138,7 @@ if(!window.supabase){
       await loadNPData();
       const pinta = (texto, malo) => {
         const m = document.getElementById('np-prox-msg');
-        if(m){ m.style.color = malo ? '#8C2F2F' : '#2F5C46'; m.textContent = texto; }
+        if(m){ m.style.color = malo ? '#8C2F2F' : '#0F37BE'; m.textContent = texto; }
       };
       pinta('Saved. Message left in the patient\'s dashboard. Sending email…', false);
       const r = correo ? await esperarCorreo(correo) : null;
@@ -11157,7 +11185,7 @@ if(!window.supabase){
       const r = correo ? await esperarCorreo(correo) : null;
       const okCorreo = !!(r && r.ok && r.sent.indexOf('patient') > -1);
       const msg2 = document.getElementById('np-prox-msg');
-      if(msg2){ msg2.style.color = okCorreo ? '#2F5C46' : '#8C2F2F';
+      if(msg2){ msg2.style.color = okCorreo ? '#0F37BE' : '#8C2F2F';
                 msg2.textContent = 'Cancelled. ' + fraseCorreo(r, quien.email)
                                  + ' Message left in the patient\'s dashboard.'; }
     }catch(err){
@@ -13268,7 +13296,7 @@ if(!window.supabase){
   }
   .field input:focus, .field select:focus, .field textarea:focus{
     border-color:var(--teal) !important;
-    box-shadow:0 0 0 3px rgba(63,151,134,0.16) !important;
+    box-shadow:0 0 0 3px rgba(20,76,238,0.16) !important;
   }
   .field label{ font-weight:500; }
 
@@ -13282,7 +13310,7 @@ if(!window.supabase){
   .checkbox-item:hover{ border-color:var(--ink-faint) !important; }
   .checkbox-item:has(input:checked){
     border-color:var(--teal) !important;
-    background:rgba(63,151,134,0.07) !important;
+    background:rgba(20,76,238,0.07) !important;
     box-shadow:inset 0 0 0 1px var(--teal);
   }
   .checkbox-item input{ accent-color:var(--teal) !important; }
@@ -13297,12 +13325,12 @@ if(!window.supabase){
   .dash-card h3{ font-size:21px !important; }
   .status-pill,
   .status-pill.status-active{
-    background:rgba(63,151,134,0.11) !important; color:var(--teal-deep) !important;
+    background:rgba(20,76,238,0.11) !important; color:var(--teal-deep) !important;
     letter-spacing:0.1em;
   }
   /* El teal claro no alcanza contraste sobre fondo hueso; en texto pequeño
      siempre va el tono profundo. El teal claro queda para bordes y rellenos. */
-  .rx-badge{ background:rgba(63,151,134,0.10); color:var(--teal-deep) !important;
+  .rx-badge{ background:rgba(20,76,238,0.10); color:var(--teal-deep) !important;
              border-color:var(--teal) !important; }
   .rx-badge[style*="--sage"], .rx-badge[style*="sage"]{ color:var(--teal-deep) !important; }
 
@@ -13312,7 +13340,7 @@ if(!window.supabase){
     text-align:center !important;
   }
   .slot-btn:hover{
-    border-color:var(--teal) !important; background:rgba(63,151,134,0.07) !important;
+    border-color:var(--teal) !important; background:rgba(20,76,238,0.07) !important;
     transform:none !important;
   }
   .slot-time{ font-family:var(--sans) !important; font-weight:600 !important; font-size:15px !important; }
