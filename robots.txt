@@ -1,2 +1,21 @@
+# NuVi Clinic — robots.txt
+# El contenido público (la portada y sus secciones) se puede indexar.
+# Los paneles de paciente y staff no tienen URL propia: solo existen tras
+# iniciar sesión, y los datos llegan de Supabase con permisos, no en el HTML.
+# Las líneas Disallow solo piden a los buscadores no rastrear direcciones con
+# parámetros de citas, expedientes, pagos o tokens. Esto NO es una medida de
+# seguridad: la protección real está en el inicio de sesión y en Supabase.
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /*?*ficha=
+Disallow: /*?*cita=
+Disallow: /*?t=
+Disallow: /*&t=
+Disallow: /*rx_id=
+Disallow: /*rx_kind=
+Disallow: /*paid=
+Disallow: /*renovar=
+Disallow: /*metodo=
+Disallow: /*debug=
+
+Sitemap: https://nuviclinic.com/sitemap.xml
