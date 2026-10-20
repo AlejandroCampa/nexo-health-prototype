@@ -27,6 +27,22 @@
 <meta name="description" content="Physician-led weight management in Puerto Rico. See a licensed physician online; if GLP-1 treatment is right for you, your medication ships to your home. Membership $50/month. Care in Spanish and English.">
 <link rel="canonical" href="https://nuviclinic.com/">
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<script>
+  // Direcciones con datos de una cita, un expediente, un pago o un token:
+  // que ningun buscador las indexe aunque alguien las comparta. Respaldo del
+  // robots.txt; la proteccion real es el login y los permisos de Supabase.
+  (function(){
+    try{
+      var q = new URLSearchParams(location.search);
+      var sensibles = ['ficha','cita','t','rx_id','rx_kind','paid','order_paid','renovar','metodo','debug'];
+      var hay = sensibles.some(function(k){ return q.has(k); }) || /access_token|refresh_token/.test(location.hash || '');
+      if(hay){
+        var m = document.querySelector('meta[name="robots"]');
+        if(m) m.setAttribute('content', 'noindex,nofollow');
+      }
+    }catch(e){}
+  })();
+</script>
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="NuVi Clinic">
@@ -5776,7 +5792,7 @@ if(!window.supabase){
   }
 
   // ---- El saludo del dashboard ---------------------------------------------
-  // Decía "Welcome, alejandro+test2@nuviclinic.com". El correo NO es un
+  // Decía "Welcome, <correo de una cuenta de prueba>". El correo NO es un
   // nombre: es feo, es largo, rompe la línea en el móvil, y en una pantalla
   // médica que el paciente puede estar enseñándole a alguien es exponer un
   // dato que no hace falta enseñar.
@@ -5795,7 +5811,7 @@ if(!window.supabase){
     }
     // 3. Último recurso: la parte del correo antes de la @, y sólo si de
     //    verdad parece un nombre. Se quita el +tag de las cuentas de prueba
-    //    ("alejandro+test2" → "alejandro"). Si lleva números o parece un id
+    //    ("nombre+prueba2" → "nombre"). Si lleva números o parece un id
     //    ("jdoe92", "u4f2a"), no se inventa nada: se saluda sin nombre.
     const correo = (currentUser && currentUser.email) || '';
     const local = correo.split('@')[0].split('+')[0].replace(/[._-].*$/, '');
