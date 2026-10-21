@@ -12257,10 +12257,13 @@ if(!window.supabase){
     return (data && data.length) ? FOLLOWUP_VISIT_MINUTES : INITIAL_VISIT_MINUTES;
   }
 
+  // Horas ocupadas del día. Se piden a la función np_interview_busy_slots,
+  // que devuelve SOLO hora, proveedor y duración: ni paciente, ni ticket
+  // (la sala de video) ni código de confirmación. Antes esto leía la tabla
+  // de citas directamente, y para eso hacía falta una regla que dejaba a
+  // cualquiera ver las citas de todos los pacientes.
   async function bookedRowsFor(dateValue){
-    const { data, error } = await supabaseClient.from('appointments')
-      .select('appointment_time, np_user_id, duration_minutes')
-      .eq('type', 'np_interview').eq('appointment_date', dateValue).neq('status', 'cancelled');
+    const { data, error } = await supabaseClient.rpc('np_interview_busy_slots', { p_date: dateValue });
     if(error) throw error;
     return data || [];
   }
