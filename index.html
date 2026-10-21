@@ -12332,9 +12332,18 @@ if(!window.supabase){
 
   // Roster del personal, para saber el rol y a quién avisarle de una cita.
   let staffRosterCache = null;
+  // 21 oct 2026: los pacientes ya NO leen la tabla staff (tenia NPI,
+  // licencias y correos). El personal la sigue leyendo entera; un paciente
+  // recibe 0 filas y entonces pide el directorio publico (staff_directorio):
+  // solo id, rol, nombre, titulo y foto. Ver
+  // migraciones/2026-10-21-staff-privado.sql.
   async function loadStaffRoster(){
     if(staffRosterCache) return staffRosterCache;
-    const { data } = await supabaseClient.from('staff').select('*');
+    let { data } = await supabaseClient.from('staff').select('*');
+    if(!data || data.length === 0){
+      const r = await supabaseClient.rpc('staff_directorio');
+      data = (r && r.data) || [];
+    }
     staffRosterCache = {};
     (data || []).forEach(s => { staffRosterCache[s.user_id] = s; });
     return staffRosterCache;
