@@ -7078,10 +7078,15 @@ if(!window.supabase){
     ventanaPDF = null;
     if(!w){ try{ w = window.open('', '_blank'); }catch(e){ w = null; } }
     if(!w){ alert(aviso || 'Please allow pop-ups to open the PDF.'); return; }
-    const barra = '<div class="barra-pdf" style="position:fixed;top:10px;right:10px;z-index:99;display:flex;gap:8px;font-family:Helvetica,Arial,sans-serif;">'
+    const barra = '<div class="barra-pdf" style="position:fixed;bottom:14px;right:14px;z-index:99;display:flex;gap:8px;font-family:Helvetica,Arial,sans-serif;">'
       + '<button onclick="window.print()" style="background:#0F2336;color:#fff;border:0;border-radius:100px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;">Print / Save as PDF</button>'
       + '<button onclick="window.close()" style="background:#fff;color:#0F2336;border:1px solid #B9C3CE;border-radius:100px;padding:10px 16px;font-size:14px;cursor:pointer;">Close</button></div>'
-      + '<style>@media print{.barra-pdf{display:none !important;}}</style>';
+      + '<style>@media print{.barra-pdf{display:none !important;}}</style>'
+      // En el celular la hoja (8.5 in) no cabe: se encoge para verla entera,
+      // y vuelve a su tamaño real al imprimir.
+      + '<script>(function(){function z(){var w=window.innerWidth||816;document.body.style.zoom=w<816?(w/816):"";}'
+      + 'window.addEventListener("load",z);window.addEventListener("resize",z);'
+      + 'window.addEventListener("beforeprint",function(){document.body.style.zoom="";});window.addEventListener("afterprint",z);})();<\/script>';
     html = html.replace(/<head>/i, '<head><meta name="viewport" content="width=device-width,initial-scale=1">')
                .replace(/<body([^>]*)>/i, function(m){ return m + barra; });
     w.document.open(); w.document.write(html); w.document.close();
@@ -7475,7 +7480,6 @@ if(!window.supabase){
     <div class="t-row"><h1>REFERRAL ORDER</h1>${campo('Date', new Date(r.signed_at || Date.now()).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }), 'margin:0;min-width:2.3in;')}</div>
     ${campo('Patient name', p.full_name)}
     <div class="fila">${campo('Date of birth', dob)}${campo('Sex', sexo, 'flex:.45')}${campo('Phone', p.phone)}</div>
-    <div class="fila">${campo('Insurance / Self-pay', 'Self-pay')}${campo('Member ID', '')}</div>
     <h2>REFER TO</h2>
     <div class="esp">${REF_ESPECIALIDADES.map(e => '<span>' + caja(r.specialty === e) + escapeHtml(e) + '</span>').join('')}<span>${caja(esOtra)}Other${esOtra ? ': <b>' + escapeHtml(r.specialty) + '</b>' : ''}</span></div>
     ${campo('Provider / facility', r.provider_name)}
@@ -7567,7 +7571,6 @@ if(!window.supabase){
     <div class="t-row"><h1>LABORATORY ORDER</h1><div class="campo" style="margin:0;min-width:2.3in;"><label>Date</label><div>${fecha(o.signed_at || new Date())}</div></div></div>
     <div class="campo"><label>Patient name</label><div>${escapeHtml(p.full_name || '')}</div></div>
     <div class="fila"><div class="campo"><label>Date of birth</label><div>${dob}</div></div><div class="campo" style="flex:.45"><label>Sex</label><div>${escapeHtml(sexo)}</div></div><div class="campo"><label>Phone</label><div>${escapeHtml(p.phone || '')}</div></div></div>
-    <div class="campo"><label>Insurance / Self-pay</label><div>Self-pay</div></div>
     <h2>TESTS ORDERED</h2>
     <table><tr><th>Test</th><th class="cpt">CPT</th></tr>${filas}</table>
     <h2>DIAGNOSIS (ICD-10)</h2>${icd}
