@@ -11803,8 +11803,9 @@ if(!window.supabase){
       + 'Potential adverse effects discussed include ' + (ea.length ? ea.join(', ') : '[adverse effects]') + '. '
       + 'Warning signs requiring urgent care were reviewed (severe or persistent abdominal pain, persistent vomiting, signs of dehydration). '
       + 'All questions were answered. Patient verbalized understanding and voluntarily agreed to the plan.');
-    t.push('Patient was informed that compounded ' + med.toLowerCase() + ' is prepared by a licensed 503A pharmacy, is not FDA-approved, and has not been reviewed by the FDA for safety, effectiveness, or quality. '
-      + 'Clinical reason for a compounded formulation: ' + ((c.compound_reason || '').trim() || '[reason]') + '. Patient understands and agrees.');
+    // 22 oct 2026: la Dra. Marrero quitó la "razón clínica del compuesto";
+    // se mantiene la divulgación de que no está aprobado por la FDA.
+    t.push('Patient was informed that compounded ' + med.toLowerCase() + ' is prepared by a licensed 503A pharmacy, is not FDA-approved, and has not been reviewed by the FDA for safety, effectiveness, or quality. Patient understands and agrees.');
     if(c.fda_criteria === 'Meets FDA-labeled criteria'){
       const b = parseFloat(autos.bmi);
       const com = (c.comorbidity || '').trim();
@@ -11812,7 +11813,10 @@ if(!window.supabase){
         + (isFinite(b) && b < 30 ? '; weight-related comorbidity: ' + (com || '[comorbidity]') : (com ? '; weight-related comorbidity: ' + com : '')) + ').');
     } else if(c.fda_criteria === 'Off-label'){
       t.push('Patient does not meet FDA-labeled criteria for chronic weight management (BMI ' + bmi + '). Off-label use was discussed, including that evidence for this indication is more limited. '
-        + 'Clinical rationale: ' + ((c.offlabel_rationale || '').trim() || '[rationale]') + '. Patient understands and elects to proceed.');
+        + 'Clinical rationale: ' + ((c.offlabel_rationale || '').trim()
+            // Si ya lo explicó en "Clinical reasoning", se usa eso (no se pide dos veces).
+            || ((c.reasoning || '').trim() ? 'as documented in Clinical reasoning (Assessment)' : '[rationale]'))
+        + '. Patient understands and elects to proceed.');
     } else {
       t.push('[Indication: meets FDA-labeled criteria or off-label]');
     }
@@ -11888,10 +11892,9 @@ if(!window.supabase){
           note:'These answers build the consent statement below. The note cannot be signed while anything in [brackets] is missing.',
           fields: [
           { k:'ae_discussed', l:'Adverse effects discussed', t:'checks', o:NOTA_EA, other:'Other' },
-          { k:'compound_reason', l:'Clinical reason for a compounded formulation', t:'text', hint:'e.g. individualized dose titration not available in branded pens; excipient intolerance.' },
           { k:'fda_criteria', l:'Indication', t:'radio', o:['Meets FDA-labeled criteria','Off-label'] },
           { k:'comorbidity', l:'Weight-related comorbidity (needed if BMI 27–29.9)', t:'text', half:true },
-          { k:'offlabel_rationale', l:'Off-label clinical rationale (only if off-label)', t:'area', rows:2 },
+          { k:'offlabel_rationale', l:'Off-label clinical rationale (only if off-label; optional if already in Clinical reasoning)', t:'area', rows:2 },
           { k:'preg_reviewed', l:'Pregnancy status reviewed (female patients)', t:'radio', o:['Not pregnant, not breastfeeding, no plans','Not applicable'] },
           { k:'oral_contraceptive', l:'Uses oral contraceptives (female patients)', t:'radio', o:['Yes','No'], half:true },
           { k:'consent_statement', l:'Consent statement (goes into the signed note)', t:'auto' }
