@@ -14347,14 +14347,16 @@ if(!window.supabase){
 
   // STUN para descubrir la IP publica, y TURN (relay) para cuando eso no
   // basta. Sin TURN, un telefono en datos moviles (CGNAT) o una oficina con
-  // NAT simetrico se queda en "connecting" para siempre. Openrelay es un
-  // TURN gratuito de Metered; si algun dia se cae, se cambia aqui.
+  // NAT simetrico se queda en "connecting" para siempre.
+  // TURN principal: ExpressTURN (plan gratis, cuenta de la clinica; 22 oct 2026).
+  // El video va cifrado de punta a punta (DTLS-SRTP): el relay no lo puede ver.
+  // Si cambian la clave en su panel ("Refresh Credentials"), se cambia aqui.
+  // Openrelay (Metered) queda de respaldo por el puerto 443.
   const RTC_ICE_SERVERS = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:openrelay.metered.ca:80' },
-    { urls: 'turn:openrelay.metered.ca:80',  username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: ['turn:free.expressturn.com:3478', 'turn:free.expressturn.com:3478?transport=tcp'],
+      username: '000000002107999431', credential: 'Tq+nqoAHyTsD5O1q7D49MxQcDbs=' },
     { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
   ];
 
