@@ -11614,9 +11614,63 @@ if(!window.supabase){
   // documentación. La receta se aprueba en "Medications & prescriptions".
 
   const NOTA_YNU = ['Yes', 'No', 'Unknown'];
+  const NOTA_EA = ['Nausea','Vomiting','Diarrhea','Constipation','Reflux','Pancreatitis','Gallbladder disease',
+    'Hypoglycemia with other glucose-lowering agents','Dehydration and kidney injury','Boxed warning: thyroid C-cell tumors'];
+
+  // Arma la declaración de consentimiento de la nota inicial. Lo que falta
+  // queda entre [corchetes] y no deja firmar.
+  function notaDeclaracion(c, p){
+    p = p || {};
+    const med = c.medication || '[medication]';
+    const mujer = /^f/i.test(p.gender || '');
+    const ea = (c.ae_discussed && c.ae_discussed.sel || []).map(x => (x === 'Other' && c.ae_discussed.other) ? c.ae_discussed.other : x)
+      .filter(x => x && x !== 'Other').map(x => x.charAt(0).toLowerCase() + x.slice(1).replace('Boxed warning: thyroid', 'the boxed warning for thyroid'));
+    const autos = notaAutos(c);
+    const bmi = autos.bmi || '[BMI]';
+    const t = [];
+    if(p.consented_at){
+      t.push('Patient electronically signed the NuVi Clinic GLP-1 informed consent (version ' + (p.consent_version || 'not recorded') + ') on '
+        + new Date(p.consented_at).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' })
+        + ', including disclosure of compounded medication. The consent was reviewed with the patient at this visit and all questions were answered.');
+    } else {
+      t.push('[No signed GLP-1 consent on file — the patient must sign it before this note can be signed]');
+    }
+    t.push('Risks, benefits, and alternatives of GLP-1 receptor agonist therapy were discussed, including lifestyle modification alone, FDA-approved branded products, and no pharmacologic treatment. '
+      + 'Potential adverse effects discussed include ' + (ea.length ? ea.join(', ') : '[adverse effects]') + '. '
+      + 'Warning signs requiring urgent care were reviewed (severe or persistent abdominal pain, persistent vomiting, signs of dehydration). '
+      + 'All questions were answered. Patient verbalized understanding and voluntarily agreed to the plan.');
+    t.push('Patient was informed that compounded ' + med.toLowerCase() + ' is prepared by a licensed 503A pharmacy, is not FDA-approved, and has not been reviewed by the FDA for safety, effectiveness, or quality. '
+      + 'Clinical reason for a compounded formulation: ' + ((c.compound_reason || '').trim() || '[reason]') + '. Patient understands and agrees.');
+    if(c.fda_criteria === 'Meets FDA-labeled criteria'){
+      const b = parseFloat(autos.bmi);
+      const com = (c.comorbidity || '').trim();
+      t.push('Patient meets FDA-labeled criteria for chronic weight management (BMI ' + bmi
+        + (isFinite(b) && b < 30 ? '; weight-related comorbidity: ' + (com || '[comorbidity]') : (com ? '; weight-related comorbidity: ' + com : '')) + ').');
+    } else if(c.fda_criteria === 'Off-label'){
+      t.push('Patient does not meet FDA-labeled criteria for chronic weight management (BMI ' + bmi + '). Off-label use was discussed, including that evidence for this indication is more limited. '
+        + 'Clinical rationale: ' + ((c.offlabel_rationale || '').trim() || '[rationale]') + '. Patient understands and elects to proceed.');
+    } else {
+      t.push('[Indication: meets FDA-labeled criteria or off-label]');
+    }
+    if(mujer){
+      if(c.preg_reviewed === 'Not pregnant, not breastfeeding, no plans'){
+        let x = 'Pregnancy status reviewed: patient denies current pregnancy, breastfeeding, or plans to become pregnant. Patient was counseled that GLP-1 therapy should not be used during pregnancy and must be stopped if pregnancy occurs'
+          + (med === 'Semaglutide' ? ', and that semaglutide should be discontinued at least 2 months before a planned pregnancy' : '')
+          + '. Effective contraception during treatment was recommended.';
+        if(med === 'Tirzepatide' && c.oral_contraceptive === 'Yes') x += ' Patient was advised that tirzepatide may reduce oral contraceptive effectiveness and to use a non-oral method or add a barrier method for 4 weeks after starting and after each dose increase.';
+        else if(med === 'Tirzepatide' && !c.oral_contraceptive) x += ' [Oral contraceptive use: yes or no]';
+        x += ' Breastfeeding is not recommended during treatment due to limited safety data.';
+        t.push(x);
+      } else if(c.preg_reviewed !== 'Not applicable'){
+        t.push('[Pregnancy status review]');
+      }
+    }
+    return t.join('\n\n');
+  }
+
   const PLANTILLAS = {
     initial: {
-      label: 'Initial Visit', short: 'Plantilla A', version: 1, encounter_type: 'Initial Visit',
+      label: 'Initial Visit', short: 'Plantilla A', version: 2, encounter_type: 'Initial Visit',
       firmaRequiere: [['diagnosis', 'Diagnosis']],
       sections: [
         { fields: [
@@ -11662,6 +11716,21 @@ if(!window.supabase){
           { k:'diagnosis', l:'Diagnosis', t:'area', rows:2 },
           { k:'candidacy', l:'GLP-1 candidacy', t:'area', rows:2 },
           { k:'reasoning', l:'Clinical reasoning', t:'area', rows:3 }
+        ]},
+        // Declaración de consentimiento (22 oct 2026). Redacción aprobada por
+        // la Dra. Marrero y revisada por legal. El texto lo arma el sistema con
+        // lo que marca el médico; el médico decide si cualifica u off-label.
+        { title:'Informed consent and counseling',
+          note:'These answers build the consent statement below. The note cannot be signed while anything in [brackets] is missing.',
+          fields: [
+          { k:'ae_discussed', l:'Adverse effects discussed', t:'checks', o:NOTA_EA, other:'Other' },
+          { k:'compound_reason', l:'Clinical reason for a compounded formulation', t:'text', hint:'e.g. individualized dose titration not available in branded pens; excipient intolerance.' },
+          { k:'fda_criteria', l:'Indication', t:'radio', o:['Meets FDA-labeled criteria','Off-label'] },
+          { k:'comorbidity', l:'Weight-related comorbidity (needed if BMI 27–29.9)', t:'text', half:true },
+          { k:'offlabel_rationale', l:'Off-label clinical rationale (only if off-label)', t:'area', rows:2 },
+          { k:'preg_reviewed', l:'Pregnancy status reviewed (female patients)', t:'radio', o:['Not pregnant, not breastfeeding, no plans','Not applicable'] },
+          { k:'oral_contraceptive', l:'Uses oral contraceptives (female patients)', t:'radio', o:['Yes','No'], half:true },
+          { k:'consent_statement', l:'Consent statement (goes into the signed note)', t:'auto' }
         ]},
         { title:'Plan',
           note:'Choosing a medication here does not approve or send a prescription. Approval stays in "Medications & prescriptions".',
@@ -11815,6 +11884,7 @@ if(!window.supabase){
     const pulg = notaAlturaPulgadas(c.height);
     const w = parseFloat(c.weight);
     if(pulg && w) out.bmi = ((w * 703) / (pulg * pulg)).toFixed(1);
+    if(c.consent_statement) out.consent_statement = c.consent_statement;
     const s = parseFloat(c.start_weight);
     if(s && w){
       const d = w - s;
@@ -11884,8 +11954,13 @@ if(!window.supabase){
 
   function notaPintarAutos(){
     if(!notaActual) return;
+    if(notaActual.template === 'initial' && !notaActual.soloLectura){
+      notaActual.content.consent_statement = notaDeclaracion(notaActual.content, notaActual.patient);
+    }
     const a = notaAutos(notaActual.content);
-    ['bmi', 'weight_change'].forEach(k => { const e = document.getElementById('nf-' + k); if(e) e.textContent = a[k] || '—'; });
+    ['bmi', 'weight_change', 'consent_statement'].forEach(k => { const e = document.getElementById('nf-' + k); if(e) e.textContent = a[k] || '—'; });
+    const dec = document.getElementById('nf-consent_statement');
+    if(dec){ dec.style.whiteSpace = 'pre-wrap'; dec.style.fontWeight = '400'; dec.style.lineHeight = '1.5'; }
   }
 
   function notaChip(btn, multi){
@@ -11912,6 +11987,7 @@ if(!window.supabase){
     if(c._hist) delete c._hist[k];
     const campo = btn.closest('[data-campo]');
     if(campo && f) campo.outerHTML = notaCampoHTML(f, c);
+    notaPintarAutos();
     notaCambio();
   }
 
@@ -11986,7 +12062,7 @@ if(!window.supabase){
     if(tpl === 'initial'){
       return Object.assign(base, {
         subjective: [t._, t.History, t['Contraindication and precaution screening']].filter(Boolean).join('\n\n') || null,
-        objective: t.Objective || null, assessment: t.Assessment || null, plan: t.Plan || null });
+        objective: t.Objective || null, assessment: [t.Assessment, t['Informed consent and counseling']].filter(Boolean).join('\n\n') || null, plan: t.Plan || null });
     }
     return Object.assign(base, {
       subjective: [t._, t.Subjective].filter(Boolean).join('\n\n') || null,
@@ -12095,6 +12171,11 @@ if(!window.supabase){
     const c = notaActual.content;
     const faltan = T.firmaRequiere.filter(([k]) => !c[k] || (typeof c[k] === 'string' && !c[k].trim())).map(x => x[1]);
     if(faltan.length){ alert('Before signing, complete: ' + faltan.join(', ') + '.'); return; }
+    if(notaActual.template === 'initial'){
+      notaPintarAutos();
+      const huecos = (c.consent_statement || '').match(/\[[^\]]+\]/g);
+      if(huecos){ alert('Before signing, complete the consent statement:\n• ' + huecos.map(h => h.slice(1, -1)).join('\n• ')); return; }
+    }
     const marcadas = [];
     T.sections.forEach(s => s.fields.forEach(f => { if(f.t === 'ynu' && (c[f.k] === 'Yes' || c[f.k] === 'Unknown')) marcadas.push(f.l + ': ' + c[f.k]); }));
     const sinContestar = [];
