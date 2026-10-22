@@ -6938,6 +6938,7 @@ if(!window.supabase){
   // Nunca una URL pública: un enlace firmado que caduca en 60 segundos.
   async function openLabDocument(id){
     if(!supabaseClient) return;
+    prepararVentanaPDF();
     try{
       const { data: row, error } = await supabaseClient.from('lab_documents')
         .select('file_path, user_id').eq('id', id).maybeSingle();
@@ -6946,8 +6947,11 @@ if(!window.supabase){
       const { data: signed, error: sErr } = await supabaseClient.storage
         .from(LAB_BUCKET).createSignedUrl(row.file_path, 60);
       if(sErr) throw sErr;
-      window.open(signed.signedUrl, '_blank', 'noopener');
+      const w = (ventanaPDF && !ventanaPDF.closed) ? ventanaPDF : null; ventanaPDF = null;
+      if(w){ try{ w.opener = null; }catch(e){} w.location.replace(signed.signedUrl); }
+      else window.open(signed.signedUrl, '_blank', 'noopener');
     }catch(err){
+      cerrarVentanaPDF();
       alert('Could not open that document: ' + (err.message || 'unknown error'));
     }
   }
@@ -6985,6 +6989,37 @@ if(!window.supabase){
     'Hair loss / iron': ['CBC with Differential', 'Ferritin', 'Iron, Serum', 'Total Iron Binding Capacity (TIBC)', 'Vitamin D, 25-Hydroxy', 'Vitamin B12', 'TSH']
   };
   const ICD_DEFECTO = 'Z79.899 Other long term (current) drug therapy';
+
+  // Ventanas de PDF. Safari (iPhone, iPad y Mac) bloquea o congela una
+  // ventana que se abre DESPUÉS de esperar a la base de datos, y también el
+  // print() automático. Por eso la ventana se abre en el mismo clic (antes
+  // de cualquier await), se llena cuando llegan los datos, y se imprime con
+  // un botón dentro del documento.
+  let ventanaPDF = null;
+  function prepararVentanaPDF(){
+    try{
+      ventanaPDF = window.open('', '_blank');
+      if(ventanaPDF) ventanaPDF.document.write('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><p style="font-family:Helvetica,Arial,sans-serif;padding:24px;color:#5B6B7A;">Loading…</p>');
+    }catch(e){ ventanaPDF = null; }
+  }
+  function cerrarVentanaPDF(){
+    try{ if(ventanaPDF && !ventanaPDF.closed) ventanaPDF.close(); }catch(e){}
+    ventanaPDF = null;
+  }
+  function mostrarPDF(html, aviso){
+    let w = (ventanaPDF && !ventanaPDF.closed) ? ventanaPDF : null;
+    ventanaPDF = null;
+    if(!w){ try{ w = window.open('', '_blank'); }catch(e){ w = null; } }
+    if(!w){ alert(aviso || 'Please allow pop-ups to open the PDF.'); return; }
+    const barra = '<div class="barra-pdf" style="position:fixed;top:10px;right:10px;z-index:99;display:flex;gap:8px;font-family:Helvetica,Arial,sans-serif;">'
+      + '<button onclick="window.print()" style="background:#0F2336;color:#fff;border:0;border-radius:100px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;">Print / Save as PDF</button>'
+      + '<button onclick="window.close()" style="background:#fff;color:#0F2336;border:1px solid #B9C3CE;border-radius:100px;padding:10px 16px;font-size:14px;cursor:pointer;">Close</button></div>'
+      + '<style>@media print{.barra-pdf{display:none !important;}}</style>';
+    html = html.replace(/<head>/i, '<head><meta name="viewport" content="width=device-width,initial-scale=1">')
+               .replace(/<body([^>]*)>/i, function(m){ return m + barra; });
+    w.document.open(); w.document.write(html); w.document.close();
+    try{ w.focus(); }catch(e){}
+  }
 
   // Registro de accesos. Si la función todavía no existe en la base, no pasa nada.
   function auditarAcceso(paciente, accion, registro){
@@ -7062,6 +7097,7 @@ if(!window.supabase){
 
   async function ordenLabsVistaPrevia(){
     if(!ordenLabs) return;
+    prepararVentanaPDF();
     const { data: staffRow } = await supabaseClient.from('staff').select('*').eq('user_id', currentUser.id).maybeSingle();
     const p = npPatients.find(x => x.user_id === npCurrentPatientUserId) || {};
     imprimirOrdenLabs(Object.assign(ordenLabsFila(), {
@@ -7130,8 +7166,9 @@ if(!window.supabase){
   }
 
   async function verOrdenLabs(id){
+    prepararVentanaPDF();
     const { data: o, error } = await supabaseClient.from('lab_orders').select('*').eq('id', id).maybeSingle();
-    if(error || !o){ alert('Could not open the order.'); return; }
+    if(error || !o){ cerrarVentanaPDF(); alert('Could not open the order.'); return; }
     let p = (typeof npPatients !== 'undefined' && npPatients.find(x => x.user_id === o.patient_user_id)) || null;
     if(!p){
       const r = await supabaseClient.from('health_history').select('full_name, date_of_birth, gender, phone').eq('user_id', o.patient_user_id).maybeSingle();
@@ -7226,6 +7263,7 @@ if(!window.supabase){
 
   async function referidoVistaPrevia(){
     if(!referido) return;
+    prepararVentanaPDF();
     const { data: staffRow } = await supabaseClient.from('staff').select('*').eq('user_id', currentUser.id).maybeSingle();
     const p = npPatients.find(x => x.user_id === npCurrentPatientUserId) || {};
     imprimirReferido(Object.assign(referidoFila(), {
@@ -7287,8 +7325,9 @@ if(!window.supabase){
   }
 
   async function verReferido(id){
+    prepararVentanaPDF();
     const { data: r, error } = await supabaseClient.from('referral_orders').select('*').eq('id', id).maybeSingle();
-    if(error || !r){ alert('Could not open the referral.'); return; }
+    if(error || !r){ cerrarVentanaPDF(); alert('Could not open the referral.'); return; }
     let p = (typeof npPatients !== 'undefined' && npPatients.find(x => x.user_id === r.patient_user_id)) || null;
     if(!p){
       const q = await supabaseClient.from('health_history').select('*').eq('user_id', r.patient_user_id).order('created_at', { ascending:false }).limit(1);
@@ -7360,10 +7399,7 @@ if(!window.supabase){
   </div>
   <div class="pie"><span>NuVi Clinic · Physician-led virtual care · Puerto Rico</span><span>nuviclinic.com</span></div>
 </div></body></html>`;
-    const w = window.open('', '_blank');
-    if(!w){ alert('Please allow pop-ups to open the referral.'); return; }
-    w.document.write(html); w.document.close(); w.focus();
-    setTimeout(function(){ try{ w.print(); }catch(e){} }, 450);
+    mostrarPDF(html, 'Please allow pop-ups to open the referral.');
   }
 
   async function pintarReferidosPaciente(){
@@ -7447,10 +7483,7 @@ if(!window.supabase){
   </div>
   <div class="pie"><span>NuVi Clinic · Physician-led virtual care · Puerto Rico</span><span>nuviclinic.com</span></div>
 </div></body></html>`;
-    const w = window.open('', '_blank');
-    if(!w){ alert('Please allow pop-ups to open the order.'); return; }
-    w.document.write(html); w.document.close(); w.focus();
-    setTimeout(function(){ try{ w.print(); }catch(e){} }, 450);
+    mostrarPDF(html, 'Please allow pop-ups to open the order.');
   }
 
   // ---- El médico sube un documento al expediente (oculto hasta liberarlo) ----
@@ -7677,6 +7710,7 @@ if(!window.supabase){
 
   async function apoyoVistaPrevia(){
     if(!apoyo) return;
+    prepararVentanaPDF();
     const { data: staffRow } = await supabaseClient.from('staff').select('*').eq('user_id', currentUser.id).maybeSingle();
     const p = npPatients.find(x => x.user_id === npCurrentPatientUserId) || {};
     imprimirRxApoyo({ items: apoyoItems(), pharmacy: apoyo.pharmacy, allergies: p.allergies || '',
@@ -7737,8 +7771,9 @@ if(!window.supabase){
   }
 
   async function verRxApoyo(id){
+    prepararVentanaPDF();
     const { data: r, error } = await supabaseClient.from('rx_apoyo').select('*').eq('id', id).maybeSingle();
-    if(error || !r){ alert('Could not open the prescription.'); return; }
+    if(error || !r){ cerrarVentanaPDF(); alert('Could not open the prescription.'); return; }
     let p = (typeof npPatients !== 'undefined' && npPatients.find(x => x.user_id === r.patient_user_id)) || null;
     if(!p){
       const q = await supabaseClient.from('health_history').select('*').eq('user_id', r.patient_user_id).order('created_at', { ascending:false }).limit(1);
@@ -7795,10 +7830,7 @@ if(!window.supabase){
   </div>
   <div class="pie"><span>NuVi Clinic · Physician-led virtual care · Puerto Rico</span><span>nuviclinic.com</span></div>
 </div></body></html>`;
-    const w = window.open('', '_blank');
-    if(!w){ alert('Please allow pop-ups to open the prescription.'); return; }
-    w.document.write(html); w.document.close(); w.focus();
-    setTimeout(function(){ try{ w.print(); }catch(e){} }, 450);
+    mostrarPDF(html, 'Please allow pop-ups to open the prescription.');
   }
 
   // Lado del paciente: "Mi plan de cuidado" — el resumen (no es receta) y el PDF.
@@ -12220,10 +12252,11 @@ if(!window.supabase){
   // Opens the record as a formatted clinical document in a new window and
   // triggers the browser print dialog — which also gives "Save as PDF".
   async function printMedicalRecord(recordId){
+    prepararVentanaPDF();
     try{
       const { data: r } = await supabaseClient.from('medical_records')
         .select('*').eq('id', recordId).maybeSingle();
-      if(!r){ alert('Record not found.'); return; }
+      if(!r){ cerrarVentanaPDF(); alert('Record not found.'); return; }
       auditarAcceso(r.patient_user_id, 'print_note', r.id);
 
       const { data: pt } = await supabaseClient.from('health_history')
@@ -12335,13 +12368,9 @@ if(!window.supabase){
 
 </body></html>`;
 
-      const w = window.open('', '_blank');
-      if(!w){ alert('Please allow pop-ups to print records.'); return; }
-      w.document.write(html);
-      w.document.close();
-      w.focus();
-      setTimeout(function(){ w.print(); }, 350);
+      mostrarPDF(html, 'Please allow pop-ups to print records.');
     } catch(err){
+      cerrarVentanaPDF();
       alert('Could not open record: ' + (err.message || 'unknown error'));
     }
   }
