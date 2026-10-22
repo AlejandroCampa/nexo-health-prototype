@@ -6446,6 +6446,15 @@ if(!window.supabase){
       stageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     if(stage === 'need-payment') promoAlCheckout();
+    // Enlace directo del correo "termina tu inscripción" (?pagar=1).
+    try{
+      if(sessionStorage.getItem('nuviIrAPagar')){
+        sessionStorage.removeItem('nuviIrAPagar');
+        if(stage === 'need-payment' && stageEl){
+          setTimeout(function(){ stageEl.scrollIntoView({ behavior:'smooth', block:'start' }); }, 300);
+        }
+      }
+    }catch(e){}
     if(renovarPendiente) renovarAlCargar(history);
 
     if(stage === 'membership-cancelled'){
@@ -15538,6 +15547,13 @@ if(!window.supabase){
       return;
     }
     const params = new URLSearchParams(window.location.search);
+    if(params.get('pagar') === '1'){
+      // Viene del correo "termina tu inscripción": si no ha entrado, se abre
+      // el login; al entrar, loadPatientState lo lleva a la tarjeta de pago.
+      try{ sessionStorage.setItem('nuviIrAPagar', '1'); }catch(e){}
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+      setTimeout(function(){ if(!currentUser){ try{ nuviOpenModal('login'); }catch(e){} } }, 2500);
+    }
     if(params.get('paid') === 'true'){
       // El plan que guardamos al salir gana sobre el de la URL. La URL depende
       // de cómo esté configurado el redirect en Stripe; lo guardado es lo que
