@@ -1370,6 +1370,7 @@ if(!window.supabase){
   // la página principal mientras entra, una pantalla de "abriendo tu cuenta".
   (function(){
     try{
+      window.__hashInicial = location.hash || '';
       if(!/[?&]pagar=1/.test(location.search)) return;
       var es = /googtrans=\/en\/es/.test(document.cookie) || /^es/i.test(navigator.language || '');
       var d = document.createElement('div');
@@ -6478,6 +6479,7 @@ if(!window.supabase){
     // Enlace directo del correo "termina tu inscripción" (?pagar=1).
     try{
       { const o = document.getElementById('abriendo-cuenta'); if(o) setTimeout(function(){ o.remove(); }, 350); }
+      try{ ['login','code'].forEach(function(n){ const m = document.getElementById('modal-' + n); if(m && m.classList.contains('open')) nuviCloseModal(n); }); }catch(e){}
       if(sessionStorage.getItem('nuviIrAPagar')){
         sessionStorage.removeItem('nuviIrAPagar');
         if(stage === 'need-payment' && stageEl){
@@ -15618,10 +15620,17 @@ if(!window.supabase){
       window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
       // Si el enlace de entrada caducó o no llegó sesión, se quita la pantalla
       // y se abre el login (código por correo). Lo de pagar se recuerda.
-      setTimeout(function(){
+      // Solo se pide entrar si de verdad no hay sesión: si el correo trajo el
+      // enlace de entrada (#access_token), se espera a que termine, aunque
+      // Supabase esté lento. Así nadie ve "entra otra vez" estando dentro.
+      const traeEntrada = /access_token/.test(window.__hashInicial || '');
+      setTimeout(async function(){
         const o = document.getElementById('abriendo-cuenta'); if(o) o.remove();
-        if(!currentUser){ try{ nuviOpenModal('login'); }catch(e){} }
-      }, 5000);
+        if(currentUser || traeEntrada) return;
+        let haySesion = false;
+        try{ const { data } = await supabaseClient.auth.getSession(); haySesion = !!(data && data.session); }catch(e){}
+        if(!haySesion && !currentUser){ try{ nuviOpenModal('login'); }catch(e){} }
+      }, 6000);
     }
     if(params.get('paid') === 'true'){
       // El plan que guardamos al salir gana sobre el de la URL. La URL depende
