@@ -66,12 +66,27 @@ const btn = (href: string, label: string) => `<a href="${href}" style="display:i
 
 const LINK = SITE + "/?pagar=1";
 
-function correo(first: string) {
+// Enlace que ya entra a su cuenta (magic link de Supabase, de un solo uso y
+// con caducidad) y aterriza en la tarjeta de pago. Si no se puede crear, el
+// botón usa LINK, que abre el login y luego el pago.
+async function enlaceEntrada(email: string): Promise<{ url: string; magic: boolean }> {
+  try {
+    const r = await fetch(`${SB_URL}/auth/v1/admin/generate_link`, { method: "POST",
+      headers: { apikey: SB_SERVICE, Authorization: `Bearer ${SB_SERVICE}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "magiclink", email, redirect_to: LINK }) });
+    const d = await r.json();
+    const url = d.action_link || (d.properties && d.properties.action_link);
+    if (r.ok && url) return { url, magic: true };
+  } catch (_) { /* cae al enlace normal */ }
+  return { url: LINK, magic: false };
+}
+
+function correo(first: string, href: string) {
   return shell("Finish your enrollment", `
       <p style="margin:0 0 14px;">Hi ${esc(first)} — thanks for completing your health history. Your last step is to activate your membership ($${PRECIO}/month) so you can book your video evaluation with a licensed physician.</p>
       <p style="margin:0 0 22px;">Hola ${esc(first)} — gracias por completar tu historial médico. Solo te falta activar tu membresía ($${PRECIO} al mes) para poder agendar tu evaluación por video con un médico licenciado.</p>
-      ${btn(LINK, "Activate my membership / Activar mi membresía")}
-      <p style="margin:22px 0 0;font-size:13.5px;color:#7A8FA3;">The button opens your account and takes you straight to payment. / El botón abre tu cuenta y te lleva directo al pago.</p>`);
+      ${btn(href, "Activate my membership / Activar mi membresía")}
+      <p style="margin:22px 0 0;font-size:13.5px;color:#7A8FA3;">The button signs you in and takes you straight to payment. If it has expired, just enter your email and we will send you a code. / El botón entra a tu cuenta y te lleva directo al pago. Si ya caducó, escribe tu correo y te enviamos un código.</p>`);
 }
 
 Deno.serve(async (req) => {
@@ -93,9 +108,10 @@ Deno.serve(async (req) => {
   } else {
     return json({ error: "send test_to or user_id" }, 400);
   }
+  const enl = await enlaceEntrada(to);
   const r = await fetch("https://api.resend.com/emails", { method: "POST",
     headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: FROM, to: [to], subject: "Finish your Nuvi Clinic enrollment / Termina tu inscripción", html: correo(first) }) });
+    body: JSON.stringify({ from: FROM, to: [to], subject: "Finish your Nuvi Clinic enrollment / Termina tu inscripción", html: correo(first, enl.url) }) });
   if (!r.ok) return json({ error: `Resend ${r.status}: ${(await r.text()).slice(0, 200)}` }, 502);
-  return json({ ok: true, sent: 1 });
+  return json({ ok: true, sent: 1, direct_login: enl.magic });
 });
