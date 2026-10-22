@@ -1103,6 +1103,7 @@ if(!window.supabase){
   .nota-chip:focus-visible{outline:2px solid var(--brand-blue);outline-offset:2px;}
   .nota-otro{margin-top:6px;}
   .nota-revisar{display:inline-block;margin-top:6px;font-size:11.5px;font-weight:700;color:#9E2B2B;background:#FBE7E7;border-radius:999px;padding:2px 9px;}
+  .nota-frases{margin:0 0 6px;} .nota-frases .nota-chip{font-size:12px;padding:5px 10px;}
   .nota-hint{display:block;font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
   .nota-legal{font-size:12px;color:var(--ink-soft);margin:6px 16px 14px;}
   .nota-item{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px;}
@@ -11713,6 +11714,70 @@ if(!window.supabase){
   // documentación. La receta se aprueba en "Medications & prescriptions".
 
   const NOTA_YNU = ['Yes', 'No', 'Unknown'];
+  // Frases para insertar con un toque (22 oct 2026, aprobadas por la
+  // Dra. Marrero). Se añaden al cuadro y se editan; lo que va entre
+  // [corchetes] hay que completarlo antes de firmar. {BMI} y {Z68} salen
+  // del BMI calculado en la nota.
+  const NOTA_FRASES = {
+    diagnosis: [
+      ['Obesity, class 1', 'E66.811 Obesity, class 1'],
+      ['Obesity, class 2', 'E66.812 Obesity, class 2'],
+      ['Obesity, class 3', 'E66.813 Obesity, class 3'],
+      ['Obesity, unspecified', 'E66.9 Obesity, unspecified'],
+      ['Overweight', 'E66.3 Overweight'],
+      ['BMI (Z68)', '{Z68} Body mass index {BMI}, adult'],
+      ['Prediabetes', 'R73.03 Prediabetes'],
+      ['Type 2 diabetes', 'E11.9 Type 2 diabetes mellitus without complications'],
+      ['Hyperlipidemia', 'E78.5 Hyperlipidemia, unspecified'],
+      ['Hypertension', 'I10 Essential (primary) hypertension'],
+      ['Fatty liver', 'K76.0 Fatty (change of) liver, not elsewhere classified'],
+      ['Sleep apnea', 'G47.33 Obstructive sleep apnea'],
+      ['PCOS', 'E28.2 Polycystic ovarian syndrome'],
+      ['On GLP-1 (injectable)', 'Z79.85 Long-term (current) use of injectable non-insulin antidiabetic drugs']
+    ],
+    candidacy: [
+      ['BMI ≥30', 'Candidate for GLP-1 therapy: BMI {BMI} kg/m² (≥30).'],
+      ['BMI ≥27 + comorbidity', 'Candidate for GLP-1 therapy: BMI {BMI} kg/m² (≥27) with weight-related comorbidity: [comorbidity].'],
+      ['Off-label', 'Candidate for off-label GLP-1 therapy: BMI {BMI} kg/m², below the FDA-labeled threshold. See consent statement.'],
+      ['Not a candidate', 'Not a candidate at this time due to [reason] (e.g., personal/family history of MTC/MEN2, pregnancy or breastfeeding, history of pancreatitis).'],
+      ['Deferred', 'Candidacy deferred pending [baseline labs / further evaluation].']
+    ],
+    reasoning: [
+      ['Prior lifestyle attempts', 'Prior lifestyle interventions (diet and exercise) without sustained weight loss.'],
+      ['No contraindications', 'No contraindications identified on screening.'],
+      ['Benefits > risks', 'Expected benefits outweigh risks given [comorbidities / metabolic risk].'],
+      ['Risks discussed', 'Risks, benefits and alternatives discussed (see consent statement).'],
+      ['Reassess at follow-up', 'Plan to reassess weight, tolerance and dose at follow-up in [3–4] weeks.']
+    ]
+  };
+  function notaZ68(b){
+    if(!isFinite(b)) return '[Z68.__]';
+    if(b < 20) return '[Z68.__]';
+    if(b < 30) return 'Z68.2' + Math.floor(b - 20);
+    if(b < 40) return 'Z68.3' + Math.floor(b - 30);
+    if(b < 45) return 'Z68.41';
+    if(b < 50) return 'Z68.42';
+    if(b < 60) return 'Z68.43';
+    if(b < 70) return 'Z68.44';
+    return 'Z68.45';
+  }
+  function notaFrase(k, i){
+    if(!notaActual) return;
+    const f = notaCampoDef(notaActual.template, k);
+    const fr = f && NOTA_FRASES[f.frases] && NOTA_FRASES[f.frases][i];
+    if(!fr) return;
+    const b = parseFloat(notaAutos(notaActual.content).bmi);
+    const txt = fr[1].replace('{BMI}', isFinite(b) ? b.toFixed(1) : '[BMI]').replace('{Z68}', notaZ68(b));
+    const c = notaActual.content;
+    const prev = (c[k] || '').replace(/\s+$/, '');
+    if(prev.split('\n').indexOf(txt) >= 0) return;     // ya está
+    c[k] = prev ? prev + '\n' + txt : txt;
+    if(c._hist) delete c._hist[k];
+    const campo = document.querySelector('#nota-form [data-campo="' + k + '"]');
+    if(campo) campo.outerHTML = notaCampoHTML(f, c);
+    notaCambio();
+  }
+
   const NOTA_EA = ['Nausea','Vomiting','Diarrhea','Constipation','Reflux','Pancreatitis','Gallbladder disease',
     'Hypoglycemia with other glucose-lowering agents','Dehydration and kidney injury','Boxed warning: thyroid C-cell tumors'];
 
@@ -11738,8 +11803,9 @@ if(!window.supabase){
       + 'Potential adverse effects discussed include ' + (ea.length ? ea.join(', ') : '[adverse effects]') + '. '
       + 'Warning signs requiring urgent care were reviewed (severe or persistent abdominal pain, persistent vomiting, signs of dehydration). '
       + 'All questions were answered. Patient verbalized understanding and voluntarily agreed to the plan.');
-    t.push('Patient was informed that compounded ' + med.toLowerCase() + ' is prepared by a licensed 503A pharmacy, is not FDA-approved, and has not been reviewed by the FDA for safety, effectiveness, or quality. '
-      + 'Clinical reason for a compounded formulation: ' + ((c.compound_reason || '').trim() || '[reason]') + '. Patient understands and agrees.');
+    // 22 oct 2026: la Dra. Marrero quitó la "razón clínica del compuesto";
+    // se mantiene la divulgación de que no está aprobado por la FDA.
+    t.push('Patient was informed that compounded ' + med.toLowerCase() + ' is prepared by a licensed 503A pharmacy, is not FDA-approved, and has not been reviewed by the FDA for safety, effectiveness, or quality. Patient understands and agrees.');
     if(c.fda_criteria === 'Meets FDA-labeled criteria'){
       const b = parseFloat(autos.bmi);
       const com = (c.comorbidity || '').trim();
@@ -11747,7 +11813,10 @@ if(!window.supabase){
         + (isFinite(b) && b < 30 ? '; weight-related comorbidity: ' + (com || '[comorbidity]') : (com ? '; weight-related comorbidity: ' + com : '')) + ').');
     } else if(c.fda_criteria === 'Off-label'){
       t.push('Patient does not meet FDA-labeled criteria for chronic weight management (BMI ' + bmi + '). Off-label use was discussed, including that evidence for this indication is more limited. '
-        + 'Clinical rationale: ' + ((c.offlabel_rationale || '').trim() || '[rationale]') + '. Patient understands and elects to proceed.');
+        + 'Clinical rationale: ' + ((c.offlabel_rationale || '').trim()
+            // Si ya lo explicó en "Clinical reasoning", se usa eso (no se pide dos veces).
+            || ((c.reasoning || '').trim() ? 'as documented in Clinical reasoning (Assessment)' : '[rationale]'))
+        + '. Patient understands and elects to proceed.');
     } else {
       t.push('[Indication: meets FDA-labeled criteria or off-label]');
     }
@@ -11812,9 +11881,9 @@ if(!window.supabase){
           { k:'labs_status', l:'Baseline lab status', t:'area', rows:2 }
         ]},
         { title:'Assessment', fields: [
-          { k:'diagnosis', l:'Diagnosis', t:'area', rows:2 },
-          { k:'candidacy', l:'GLP-1 candidacy', t:'area', rows:2 },
-          { k:'reasoning', l:'Clinical reasoning', t:'area', rows:3 }
+          { k:'diagnosis', l:'Diagnosis', t:'area', rows:3, frases:'diagnosis' },
+          { k:'candidacy', l:'GLP-1 candidacy', t:'area', rows:2, frases:'candidacy' },
+          { k:'reasoning', l:'Clinical reasoning', t:'area', rows:3, frases:'reasoning' }
         ]},
         // Declaración de consentimiento (22 oct 2026). Redacción aprobada por
         // la Dra. Marrero y revisada por legal. El texto lo arma el sistema con
@@ -11823,10 +11892,9 @@ if(!window.supabase){
           note:'These answers build the consent statement below. The note cannot be signed while anything in [brackets] is missing.',
           fields: [
           { k:'ae_discussed', l:'Adverse effects discussed', t:'checks', o:NOTA_EA, other:'Other' },
-          { k:'compound_reason', l:'Clinical reason for a compounded formulation', t:'text', hint:'e.g. individualized dose titration not available in branded pens; excipient intolerance.' },
           { k:'fda_criteria', l:'Indication', t:'radio', o:['Meets FDA-labeled criteria','Off-label'] },
           { k:'comorbidity', l:'Weight-related comorbidity (needed if BMI 27–29.9)', t:'text', half:true },
-          { k:'offlabel_rationale', l:'Off-label clinical rationale (only if off-label)', t:'area', rows:2 },
+          { k:'offlabel_rationale', l:'Off-label clinical rationale (only if off-label; optional if already in Clinical reasoning)', t:'area', rows:2 },
           { k:'preg_reviewed', l:'Pregnancy status reviewed (female patients)', t:'radio', o:['Not pregnant, not breastfeeding, no plans','Not applicable'] },
           { k:'oral_contraceptive', l:'Uses oral contraceptives (female patients)', t:'radio', o:['Yes','No'], half:true },
           { k:'consent_statement', l:'Consent statement (goes into the signed note)', t:'auto' }
@@ -12006,6 +12074,10 @@ if(!window.supabase){
         + (f.t === 'num' ? ' step="any" inputmode="decimal"' : '') + ' value="' + escapeHtml(v == null ? '' : v).replace(/"/g, '&quot;') + '"' + dis + '>';
     } else if(f.t === 'area'){
       body = '<textarea id="' + id + '" data-k="' + f.k + '" rows="' + (f.rows || 3) + '"' + dis + '>' + escapeHtml(v || '') + '</textarea>';
+      if(f.frases && NOTA_FRASES[f.frases] && !soloLectura){
+        body = '<div class="nota-chips nota-frases" data-i18n-skip>' + NOTA_FRASES[f.frases].map((fr, i) =>
+          '<button type="button" class="nota-chip" title="' + escapeHtml(fr[1]).replace(/"/g, '&quot;') + '" onclick="notaFrase(\'' + f.k + '\',' + i + ')">+ ' + escapeHtml(fr[0]) + '</button>').join('') + '</div>' + body;
+      }
     } else if(f.t === 'select'){
       body = '<select id="' + id + '" data-k="' + f.k + '"' + dis + '><option value=""></option>'
         + f.o.map(o => '<option' + (v === o ? ' selected' : '') + '>' + escapeHtml(o) + '</option>').join('') + '</select>';
@@ -12270,6 +12342,11 @@ if(!window.supabase){
     const c = notaActual.content;
     const faltan = T.firmaRequiere.filter(([k]) => !c[k] || (typeof c[k] === 'string' && !c[k].trim())).map(x => x[1]);
     if(faltan.length){ alert('Before signing, complete: ' + faltan.join(', ') + '.'); return; }
+    {
+      const conHuecos = [];
+      T.sections.forEach(s => s.fields.forEach(f => { if(f.frases && /\[[^\]]*\]/.test(c[f.k] || '')) conHuecos.push(f.l); }));
+      if(conHuecos.length){ alert('Before signing, fill in the [brackets] in: ' + conHuecos.join(', ') + '.'); return; }
+    }
     if(notaActual.template === 'initial'){
       notaPintarAutos();
       const huecos = (c.consent_statement || '').match(/\[[^\]]+\]/g);
