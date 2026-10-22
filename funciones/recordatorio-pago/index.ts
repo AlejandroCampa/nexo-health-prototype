@@ -81,10 +81,18 @@ async function enlaceEntrada(email: string): Promise<{ url: string; magic: boole
   return { url: LINK, magic: false };
 }
 
+// Campaña "primer mes $25" hasta el 31 oct 2026 (hora de PR), igual que PROMO en index.html.
+function precioTexto(): { en: string; es: string } {
+  const hoyPR = new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10);
+  if (hoyPR <= "2026-10-31") return { en: "$25 for your first month (offer ends October 31), then $" + PRECIO + "/month",
+                                      es: "$25 el primer mes (oferta hasta el 31 de octubre), luego $" + PRECIO + " al mes" };
+  return { en: "$" + PRECIO + "/month", es: "$" + PRECIO + " al mes" };
+}
 function correo(first: string, href: string) {
+  const pr = precioTexto();
   return shell("Finish your enrollment", `
-      <p style="margin:0 0 14px;">Hi ${esc(first)} — thanks for completing your health history. Your last step is to activate your membership ($${PRECIO}/month) so you can book your video evaluation with a licensed physician.</p>
-      <p style="margin:0 0 22px;">Hola ${esc(first)} — gracias por completar tu historial médico. Solo te falta activar tu membresía ($${PRECIO} al mes) para poder agendar tu evaluación por video con un médico licenciado.</p>
+      <p style="margin:0 0 14px;">Hi ${esc(first)} — thanks for completing your health history. Your last step is to activate your membership — ${pr.en} — so you can book your video evaluation with a licensed physician.</p>
+      <p style="margin:0 0 22px;">Hola ${esc(first)} — gracias por completar tu historial médico. Solo te falta activar tu membresía — ${pr.es} — para poder agendar tu evaluación por video con un médico licenciado.</p>
       ${btn(href, "Activate my membership / Activar mi membresía")}
       <p style="margin:22px 0 0;font-size:13.5px;color:#7A8FA3;">The button signs you in and takes you straight to payment. If it has expired, just enter your email and we will send you a code. / El botón entra a tu cuenta y te lleva directo al pago. Si ya caducó, escribe tu correo y te enviamos un código.</p>`);
 }
