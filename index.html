@@ -6957,11 +6957,19 @@ if(!window.supabase){
     ['Iron, Serum', '83540'],
     ['Total Iron Binding Capacity (TIBC)', '83550'],
     ['Amylase', '82150'],
-    ['Lipase', '83690']
+    ['Lipase', '83690'],
+    ['hs-CRP (high-sensitivity C-reactive protein)', '86141'],
+    ['Apolipoprotein B (ApoB)', '82172'],
+    ['Lipoprotein(a) [Lp(a)]', '83695'],
+    ['Cystatin C', '82610'],
+    ['Urine Albumin/Creatinine Ratio (UACR)', '82043, 82570']
   ];
   // Atajos para no marcar uno por uno. Se pueden cambiar antes de firmar.
   const LAB_PRESETS = {
     'GLP-1 basics': ['Comprehensive Metabolic Panel (CMP)', 'Hemoglobin A1c (HbA1c)', 'Lipid Panel', 'CBC with Differential'],
+    // Aprobado por la Dra. Marrero (22 oct 2026). Lp(a) basta una vez en la vida.
+    'Metabolic + longevity': ['Comprehensive Metabolic Panel (CMP)', 'Hemoglobin A1c (HbA1c)', 'Lipid Panel', 'CBC with Differential',
+      'Apolipoprotein B (ApoB)', 'hs-CRP (high-sensitivity C-reactive protein)', 'Lipoprotein(a) [Lp(a)]', 'Cystatin C', 'Urine Albumin/Creatinine Ratio (UACR)'],
     'Hair loss / iron': ['CBC with Differential', 'Ferritin', 'Iron, Serum', 'Total Iron Binding Capacity (TIBC)', 'Vitamin D, 25-Hydroxy', 'Vitamin B12', 'TSH']
   };
   const ICD_DEFECTO = 'Z79.899 Other long term (current) drug therapy';
@@ -7149,14 +7157,14 @@ if(!window.supabase){
   .campo{display:flex;gap:8px;align-items:flex-end;margin:7px 0;} .campo label{font-size:8.5pt;color:#5B6B7A;white-space:nowrap;} .campo div{flex:1;border-bottom:1px solid #B9C3CE;min-height:16px;font-weight:600;padding:0 4px 1px;}
   .fila{display:flex;gap:16px;} .fila .campo{flex:1;}
   h2{font-size:8.5pt;letter-spacing:.14em;color:#0A8FA3;margin:16px 0 6px;font-weight:800;}
-  table{width:100%;border-collapse:collapse;} th{font-size:7.5pt;color:#5B6B7A;font-weight:600;text-align:left;border-bottom:1px solid #DCE3EA;padding:3px 4px;} th.cpt,td.cpt{text-align:right;width:70px;color:#5B6B7A;}
-  td{padding:4.5px 4px;border-bottom:1px solid #EEF2F6;}
+  table{width:100%;border-collapse:collapse;} th{font-size:7.5pt;color:#5B6B7A;font-weight:600;text-align:left;border-bottom:1px solid #DCE3EA;padding:3px 4px;} th.cpt,td.cpt{text-align:right;width:100px;white-space:nowrap;color:#5B6B7A;}
+  td{padding:2.5px 4px;border-bottom:1px solid #EEF2F6;font-size:10pt;}
   .box{display:inline-block;width:12px;height:12px;border:1.3px solid #0F2336;border-radius:2px;margin-right:9px;text-align:center;line-height:10px;font-size:9px;vertical-align:-1px;}
   .box.on{background:#0F2336;color:#fff;}
   .linea{border-bottom:1px solid #B9C3CE;padding:4px 2px;margin:4px 0;min-height:20px;} .linea span{color:#5B6B7A;margin-right:6px;}
   .ayuno{display:flex;gap:30px;margin-top:6px;}
   .nota{margin-top:10px;font-size:9pt;color:#334;}
-  .firma{display:flex;gap:30px;margin-top:34px;align-items:flex-end;} .firma > div{flex:1;} .firma .l{border-bottom:1px solid #0F2336;min-height:26px;font-weight:600;padding:0 2px 2px;font-size:9.5pt;} .firma small{color:#5B6B7A;font-size:8pt;}
+  .firma{display:flex;gap:30px;margin-top:24px;align-items:flex-end;} .firma > div{flex:1;} .firma .l{border-bottom:1px solid #0F2336;min-height:26px;font-weight:600;padding:0 2px 2px;font-size:9.5pt;} .firma small{color:#5B6B7A;font-size:8pt;}
   .pie{position:absolute;left:.55in;right:.55in;bottom:.3in;display:flex;justify-content:space-between;font-size:7.5pt;color:#5B6B7A;}
   .borrador{position:absolute;top:3.3in;left:0;right:0;text-align:center;font-size:54pt;font-weight:800;color:rgba(178,58,58,.13);transform:rotate(-24deg);letter-spacing:.1em;}
 </style></head><body><div class="hoja">
