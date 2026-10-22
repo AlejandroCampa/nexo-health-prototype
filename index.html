@@ -7504,7 +7504,8 @@ if(!window.supabase){
     <h2>ATTACHED</h2>
     <div class="ops">${REF_ADJUNTOS.map(a => '<span>' + caja((r.attachments || []).indexOf(a) >= 0) + escapeHtml(a) + '</span>').join('')}</div>
     <div class="firma"><div><div class="l">${r.signed_at ? escapeHtml(nombreMed) + ' · electronically signed ' + new Date(r.signed_at).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' }) : ''}</div><small>Physician signature</small></div>
-      <div style="flex:.6"><div class="l">${escapeHtml(r.author_npi || '')}</div><small>NPI</small></div></div>
+      <div style="flex:.6"><div class="l">${escapeHtml(r.author_npi || '')}</div><small>NPI</small></div>
+      <div style="flex:.6"><div class="l">${escapeHtml(r.author_license || '')}</div><small>Medical license</small></div></div>
   </div>
   <div class="pie"><span>NuVi Clinic · Physician-led virtual care · Puerto Rico</span><span>nuviclinic.com</span></div>
 </div></body></html>`;
@@ -7587,7 +7588,8 @@ if(!window.supabase){
     <div class="ayuno"><span>${caja(o.fasting === 'fasting')}Fasting 8–12 hours</span><span>${caja(o.fasting === 'non_fasting')}Non-fasting OK</span></div>
     ${o.patient_note ? '<div class="nota"><b>Note:</b> ' + escapeHtml(o.patient_note) + '</div>' : ''}
     <div class="firma"><div><div class="l">${o.signed_at ? escapeHtml(nombreMed) + ' · electronically signed ' + new Date(o.signed_at).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' }) : ''}</div><small>Physician signature</small></div>
-      <div style="flex:.6"><div class="l">${escapeHtml(o.author_npi || '')}</div><small>NPI</small></div></div>
+      <div style="flex:.6"><div class="l">${escapeHtml(o.author_npi || '')}</div><small>NPI</small></div>
+      <div style="flex:.6"><div class="l">${escapeHtml(o.author_license || '')}</div><small>Medical license</small></div></div>
   </div>
   <div class="pie"><span>NuVi Clinic · Physician-led virtual care · Puerto Rico</span><span>nuviclinic.com</span></div>
 </div></body></html>`;
@@ -7933,7 +7935,8 @@ if(!window.supabase){
     <div class="rxsym">℞</div>
     ${items}
     <div class="firma"><div><div class="l">${r.signed_at ? escapeHtml(nombreMed) + ' · electronically signed ' + new Date(r.signed_at).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' }) : ''}</div><small>Physician signature</small></div>
-      <div style="flex:.6"><div class="l">${escapeHtml(r.author_npi || '')}</div><small>NPI</small></div></div>
+      <div style="flex:.6"><div class="l">${escapeHtml(r.author_npi || '')}</div><small>NPI</small></div>
+      <div style="flex:.6"><div class="l">${escapeHtml(r.author_license || '')}</div><small>Medical license</small></div></div>
     <div class="valida">Valid only with the prescriber's signature. Verification: ${CLINICA_TEL}.${anulada ? ' <b style="color:#B23A3A;">This prescription was voided and is not valid.</b>' : ''}</div>
   </div>
   <div class="pie"><span>NuVi Clinic · Physician-led virtual care · Puerto Rico</span><span>nuviclinic.com</span></div>
