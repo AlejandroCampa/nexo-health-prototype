@@ -81,12 +81,34 @@ async function enlaceEntrada(email: string): Promise<{ url: string; magic: boole
   return { url: LINK, magic: false };
 }
 
+// Campaña "primer mes $25" hasta el 31 oct 2026 (hora de PR), igual que PROMO en index.html.
+function precioTexto(): { en: string; es: string } {
+  const hoyPR = new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10);
+  if (hoyPR <= "2026-10-31") return { en: "$25 for your first month (offer ends October 31), then $" + PRECIO + "/month",
+                                      es: "$25 el primer mes (oferta hasta el 31 de octubre), luego $" + PRECIO + " al mes" };
+  return { en: "$" + PRECIO + "/month", es: "$" + PRECIO + " al mes" };
+}
 function correo(first: string, href: string) {
+  const pr = precioTexto();
   return shell("Finish your enrollment", `
-      <p style="margin:0 0 14px;">Hi ${esc(first)} — thanks for completing your health history. Your last step is to activate your membership ($${PRECIO}/month) so you can book your video evaluation with a licensed physician.</p>
-      <p style="margin:0 0 22px;">Hola ${esc(first)} — gracias por completar tu historial médico. Solo te falta activar tu membresía ($${PRECIO} al mes) para poder agendar tu evaluación por video con un médico licenciado.</p>
+      <p style="margin:0 0 14px;">Hi ${esc(first)} — thanks for completing your health history. Your last step is to activate your membership — ${pr.en} — so you can book your video evaluation with a licensed physician.</p>
+      <p style="margin:0 0 22px;">Hola ${esc(first)} — gracias por completar tu historial médico. Solo te falta activar tu membresía — ${pr.es} — para poder agendar tu evaluación por video con un médico licenciado.</p>
       ${btn(href, "Activate my membership / Activar mi membresía")}
       <p style="margin:22px 0 0;font-size:13.5px;color:#7A8FA3;">The button signs you in and takes you straight to payment. If it has expired, just enter your email and we will send you a code. / El botón entra a tu cuenta y te lleva directo al pago. Si ya caducó, escribe tu correo y te enviamos un código.</p>`);
+}
+
+function correoHistorial(first: string, href: string) {
+  return shell("Finish your health history", `
+      <p style="margin:0 0 14px;">Hi ${esc(first)} — you created your Nuvi Clinic account but haven't finished your health history yet. It takes about 5 minutes, and your physician reads every answer before your visit.</p>
+      <p style="margin:0 0 22px;">Hola ${esc(first)} — creaste tu cuenta en Nuvi Clinic pero todavía no terminas tu historial médico. Toma unos 5 minutos, y tu médico lee cada respuesta antes de tu cita.</p>
+      ${btn(href, "Finish my health history / Terminar mi historial")}
+      <p style="margin:22px 0 0;font-size:13.5px;color:#7A8FA3;">The button signs you in and takes you straight to your account. If it has expired, just enter your email and we will send you a code. / El botón entra a tu cuenta directamente. Si ya caducó, escribe tu correo y te enviamos un código.</p>`);
+}
+
+async function usuarioAuth(id: string): Promise<any> {
+  const r = await fetch(`${SB_URL}/auth/v1/admin/users/${encodeURIComponent(id)}`, {
+    headers: { apikey: SB_SERVICE, Authorization: `Bearer ${SB_SERVICE}` } });
+  return r.ok ? await r.json() : null;
 }
 
 Deno.serve(async (req) => {
@@ -96,7 +118,17 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch (_) { /* sin cuerpo */ }
   if (!RESEND_KEY) return json({ error: "RESEND_API_KEY is not set" }, 500);
   let to = "", first = "there";
-  if (body.test_to) {
+  const historial = body.tipo === "historial";
+  if (historial && body.user_id) {
+    // Creó la cuenta pero no llenó el historial: el correo sale de auth.
+    const yaTiene: any[] = await rest(`health_history?select=id&user_id=eq.${encodeURIComponent(body.user_id)}&limit=1`) || [];
+    if (yaTiene.length) return json({ ok: false, skipped: "already has health history" });
+    const u = await usuarioAuth(String(body.user_id));
+    if (!u || !u.email) return json({ error: "user not found" }, 404);
+    to = u.email;
+    const nombre = (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || "";
+    first = String(nombre).split(" ")[0] || "there";
+  } else if (body.test_to) {
     to = String(body.test_to); first = String(body.name || "there");
   } else if (body.user_id) {
     const filas: any[] = await rest(`health_history?select=email,full_name,paid,membership_cancelled&user_id=eq.${encodeURIComponent(body.user_id)}&order=created_at.desc&limit=1`) || [];
@@ -111,7 +143,9 @@ Deno.serve(async (req) => {
   const enl = await enlaceEntrada(to);
   const r = await fetch("https://api.resend.com/emails", { method: "POST",
     headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: FROM, to: [to], subject: "Finish your Nuvi Clinic enrollment / Termina tu inscripción", html: correo(first, enl.url) }) });
+    body: JSON.stringify({ from: FROM, to: [to],
+      subject: historial ? "Finish your health history / Termina tu historial médico" : "Finish your Nuvi Clinic enrollment / Termina tu inscripción",
+      html: historial ? correoHistorial(first, enl.url) : correo(first, enl.url) }) });
   if (!r.ok) return json({ error: `Resend ${r.status}: ${(await r.text()).slice(0, 200)}` }, 502);
   return json({ ok: true, sent: 1, direct_login: enl.magic });
 });
