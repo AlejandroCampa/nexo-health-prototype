@@ -2908,6 +2908,11 @@ if(!window.supabase){
     <div id="np-apoyo-list" style="margin-bottom:20px;"></div>
     </div><!-- /fsec-apoyo -->
 
+    <div class="fsec" id="fsec-mantenimiento" data-ftab="meds">
+    <div class="form-section-title">Maintenance dose</div>
+    <div id="np-mantenimiento" style="margin-bottom:20px;"></div>
+    </div><!-- /fsec-mantenimiento -->
+
     <div class="fsec" id="fsec-labs" data-ftab="labs">
     <div class="form-section-title">Lab orders</div>
     <div class="nota-nueva">
@@ -7214,6 +7219,35 @@ if(!window.supabase){
     }
     auditarAcceso(o.patient_user_id, 'print_order', o.id);   // la base ignora esto si no es personal
     imprimirOrdenLabs(o, p, false);
+  }
+
+  // ====== DOSIS DE MANTENIMIENTO (22 oct 2026) ======
+  // Con esto marcado y la membresía pagada, el paciente puede pedir recetas
+  // nuevas ("Request a new prescription"). Solo el personal lo cambia.
+  function pintarMantenimiento(p){
+    const el = document.getElementById('np-mantenimiento');
+    if(!el || !p) return;
+    const on = p.maintenance_established === true;
+    el.innerHTML = '<p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 10px;">'
+      + (on ? '<span class="np-pill ok">Established</span> since '
+            + escapeHtml(p.maintenance_set_at ? new Date(p.maintenance_set_at).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) : '—')
+            + '. The patient can request new prescriptions (only while the membership is paid).'
+          : '<span class="np-pill">Not established</span> The patient cannot request new prescriptions.') + '</p>'
+      + '<button type="button" class="btn btn-outline nota-btn" onclick="marcarMantenimiento(' + (!on) + ')">'
+      + (on ? 'Remove maintenance status' : 'Mark maintenance dose established') + '</button>';
+  }
+  async function marcarMantenimiento(valor){
+    const p = npPatients.find(x => x.user_id === npCurrentPatientUserId);
+    if(!p) return;
+    if(!confirm(valor
+      ? 'Mark maintenance dose as established for ' + (p.full_name || 'this patient') + '?\n\nWith a paid membership, they will be able to request new prescriptions. Each request is still reviewed by a physician.'
+      : 'Remove maintenance status? The patient will no longer be able to request new prescriptions.')) return;
+    const { data, error } = await supabaseClient.from('health_history').update({ maintenance_established: valor })
+      .eq('user_id', p.user_id).select('maintenance_established, maintenance_set_at');
+    if(error || !data || !data.length){ alert('Could not update: ' + ((error && error.message) || 'not allowed')); return; }
+    p.maintenance_established = data[0].maintenance_established;
+    p.maintenance_set_at = data[0].maintenance_set_at;
+    pintarMantenimiento(p);
   }
 
   // ====== ÓRDENES DE REFERIDO (22 oct 2026) ======
@@ -12691,6 +12725,7 @@ if(!window.supabase){
     ordenLabsCerrar();
     cargarRxApoyoStaff(patient.user_id);
     apoyoCerrar();
+    pintarMantenimiento(patient);
     cargarReferidosStaff(patient.user_id);
     referidoCerrar();
     if(!mismaFicha) auditarAcceso(patient.user_id, 'open_chart');
