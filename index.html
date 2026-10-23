@@ -7249,6 +7249,7 @@ if(!window.supabase){
           + '<div class="nota-item-acc">' + est
           + '<button class="btn btn-outline nota-btn" onclick="verOrdenLabs(\'' + o.id + '\')">PDF</button>'
           + (o.status === 'sent' ? '<button class="btn btn-outline nota-btn" onclick="ordenLabsEstado(\'' + o.id + '\',\'results_received\')">Mark results received</button>' : '')
+          + (o.status === 'sent' ? '<button class="btn btn-outline nota-btn" onclick="ordenLabsEstado(\'' + o.id + '\',\'cancelled\')">Cancel order</button>' : '')
           + '</div></div><div class="nota-res" data-i18n-skip>' + escapeHtml(nombres.join(' · ')) + '</div></div>';
       }).join('');
     }catch(err){
@@ -7257,6 +7258,7 @@ if(!window.supabase){
   }
 
   async function ordenLabsEstado(id, estado){
+    if(estado === 'cancelled' && !confirm('Cancel this lab order? The patient will no longer see it. Use this if it was created by mistake.')) return;
     const { error } = await supabaseClient.from('lab_orders').update({ status: estado }).eq('id', id);
     if(error){ alert('Could not update: ' + error.message); return; }
     cargarOrdenesLabsStaff(npCurrentPatientUserId);
