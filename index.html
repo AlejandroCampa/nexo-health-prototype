@@ -13582,6 +13582,15 @@ if(!window.supabase){
   // ---- Proxima cita: agendar, mover, cancelar ----
   // Todo desde la ficha, mientras el paciente sigue en la llamada.
   let npProximaCitaActual = null;
+  let npCitaHoyActual = null;   // la cita de HOY que sigue sin completarse: se puede mover o cancelar
+  // La hora puede venir como "2:00 PM" (la reserva el paciente) o "14:00" (la pone el
+  // clinico); el campo de hora necesita siempre "HH:MM" en 24 horas.
+  function npHoraParaInput(t){
+    const m = String(t || '').match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if(!m) return String(t || '').slice(0, 5);
+    let h = parseInt(m[1], 10) % 12; if(m[3].toUpperCase() === 'PM') h += 12;
+    return String(h).padStart(2, '0') + ':' + m[2];
+  }
 
   async function npRenderProximaCita(patientUserId){
     const wrap = document.getElementById('np-proxima-cita');
@@ -13598,6 +13607,15 @@ if(!window.supabase){
     const prox = (data && data[0]) || null;
     npProximaCitaActual = prox;
 
+    // La cita de HOY (o de un dia que ya paso) que no se ha completado ni cancelado.
+    // Antes esta caja solo miraba fechas FUTURAS, asi que la cita de hoy no aparecia
+    // y no se podia mover ni cancelar desde la ficha.
+    const { data: hoyRows } = await supabaseClient.from('appointments').select('*')
+      .eq('user_id', patientUserId).neq('status', 'cancelled').neq('status', 'completed')
+      .lte('appointment_date', hoyISO).order('appointment_date', { ascending: false }).limit(1);
+    const citaHoy = (hoyRows && hoyRows[0]) || null;
+    npCitaHoyActual = citaHoy;
+
     // Por defecto se propone la fecha del proximo ciclo. El clinico la puede
     // cambiar, pero teclear una fecha a mano en cada consulta es como se
     // acaban agendando seguimientos a 40 dias sin que nadie se de cuenta.
@@ -13608,7 +13626,23 @@ if(!window.supabase){
     const fmt = iso => new Date(iso + 'T00:00:00')
       .toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
 
-    wrap.innerHTML =
+    const bloqueHoy = !citaHoy ? '' :
+        '<div class="form-section-title">' + (citaHoy.appointment_date === hoyISO ? 'Today\'s appointment' : 'Appointment not completed') + '</div>'
+      + '<div style="background:rgba(20,76,238,0.12);border:1px solid rgba(20,76,238,0.35);'
+      +   'border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#0F37BE;font-size:13.5px;">'
+      +   '<b>' + fmt(citaHoy.appointment_date) + ' at ' + citaHoy.appointment_time + '</b>'
+      +   '<div style="font-size:12.5px;margin-top:3px;opacity:0.85;">Ticket ' + citaHoy.ticket_number + ' · ' + citaHoy.status + '</div></div>'
+      + '<div class="two-col" style="align-items:flex-end;">'
+      +   '<div class="field"><label>Date</label><input id="np-hoy-fecha" type="date" min="' + hoyISO + '" value="' + (citaHoy.appointment_date < hoyISO ? hoyISO : citaHoy.appointment_date) + '"></div>'
+      +   '<div class="field"><label>Time</label><input id="np-hoy-hora" type="time" value="' + npHoraParaInput(citaHoy.appointment_time) + '"></div>'
+      + '</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 18px;">'
+      +   '<button class="btn btn-primary notranslate" translate="no" style="width:auto;padding:9px 18px;font-size:13.5px;" onclick="npGuardarProximaCita(\'' + patientUserId + '\', true)">Move appointment</button>'
+      +   '<button class="btn btn-outline" style="width:auto;padding:9px 18px;font-size:13.5px;" onclick="npCancelarProximaCita(true)">Cancel it</button>'
+      + '</div>'
+      + '<div id="np-hoy-msg" style="font-size:12.5px;margin:-10px 0 14px;line-height:1.55;"></div>';
+
+    wrap.innerHTML = bloqueHoy +
         '<div class="form-section-title">Next appointment</div>'
       + (prox
           ? '<div style="background:rgba(20,76,238,0.12);border:1px solid rgba(20,76,238,0.35);'
@@ -13638,31 +13672,33 @@ if(!window.supabase){
       + '<div id="np-prox-msg" style="font-size:12.5px;margin-top:9px;line-height:1.55;"></div>';
   }
 
-  async function npGuardarProximaCita(patientUserId){
-    const msg = document.getElementById('np-prox-msg');
+  async function npGuardarProximaCita(patientUserId, esHoy){
+    const pre = esHoy ? 'np-hoy-' : 'np-prox-';
+    const actual = esHoy ? npCitaHoyActual : npProximaCitaActual;
+    const msg = document.getElementById(pre + 'msg');
     const decir = (t, malo) => { if(msg){ msg.style.color = malo ? '#8C2F2F' : '#0F37BE';
                                           msg.textContent = t; } };
-    const fecha = (document.getElementById('np-prox-fecha') || {}).value;
-    const hora  = (document.getElementById('np-prox-hora')  || {}).value;
+    const fecha = (document.getElementById(pre + 'fecha') || {}).value;
+    const hora  = (document.getElementById(pre + 'hora')  || {}).value;
     if(!fecha || !hora){ decir('Pick a date and a time.', true); return; }
     if(fecha < hoyLocalISO()){
       decir('That date is in the past.', true); return; }
 
     decir('Saving…', false);
     try{
-      const movida = !!npProximaCitaActual;
+      const movida = !!actual;
       let ticket;
       if(movida){
         // Mover = cambiar la fila que ya existe. Crear otra dejaria dos citas
         // vivas y el paciente veria la vieja en su panel.
-        ticket = npProximaCitaActual.ticket_number;
+        ticket = actual.ticket_number;
         const { data, error } = await supabaseClient.from('appointments')
           // Fecha nueva = recordatorio y confirmacion nuevos. Sin esto, una cita
           // movida despues del recordatorio no volvia a avisarse, y salia
           // "confirmed" para una hora que el paciente nunca confirmo.
           .update({ appointment_date: fecha, appointment_time: hora, status: 'scheduled',
                     reminder_sent_at: null, confirmed_at: null, confirm_token: null })
-          .eq('id', npProximaCitaActual.id).select();
+          .eq('id', actual.id).select();
         if(error) throw error;
         if(!data || data.length === 0){
           throw new Error('The database changed nothing — almost always an RLS policy.');
@@ -13715,7 +13751,7 @@ if(!window.supabase){
       await npRepintarEntrevista(patientUserId);   // que aparezca el Join ya
       await loadNPData();
       const pinta = (texto, malo) => {
-        const m = document.getElementById('np-prox-msg');
+        const m = document.getElementById(pre + 'msg') || document.getElementById('np-prox-msg');
         if(m){ m.style.color = malo ? '#8C2F2F' : '#0F37BE'; m.textContent = texto; }
       };
       pinta('Saved. Message left in the patient\'s dashboard. Sending email…', false);
@@ -13728,12 +13764,14 @@ if(!window.supabase){
     }
   }
 
-  async function npCancelarProximaCita(){
-    if(!npProximaCitaActual) return;
+  async function npCancelarProximaCita(esHoy){
+    const actual = esHoy ? npCitaHoyActual : npProximaCitaActual;
+    const pre = esHoy ? 'np-hoy-' : 'np-prox-';
+    if(!actual) return;
     if(!confirm('Cancel this appointment? The patient will be told it was cancelled.')) return;
-    const msg = document.getElementById('np-prox-msg');
-    const pid = npProximaCitaActual.user_id;
-    const cita = npProximaCitaActual;
+    const msg = document.getElementById(pre + 'msg');
+    const pid = actual.user_id;
+    const cita = actual;
     try{
       const { data, error } = await supabaseClient.from('appointments')
         .update({ status: 'cancelled' }).eq('id', cita.id).select();
@@ -13762,7 +13800,7 @@ if(!window.supabase){
       await loadNPData();
       const r = correo ? await esperarCorreo(correo) : null;
       const okCorreo = !!(r && r.ok && r.sent.indexOf('patient') > -1);
-      const msg2 = document.getElementById('np-prox-msg');
+      const msg2 = document.getElementById(pre + 'msg') || document.getElementById('np-prox-msg');
       if(msg2){ msg2.style.color = okCorreo ? '#0F37BE' : '#8C2F2F';
                 msg2.textContent = 'Cancelled. ' + fraseCorreo(r, quien.email)
                                  + ' Message left in the patient\'s dashboard.'; }
