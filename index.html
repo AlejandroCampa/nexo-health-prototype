@@ -13739,8 +13739,11 @@ if(!window.supabase){
       try{
         await supabaseClient.from('messages').insert({
           user_id: patientUserId, sender: 'doctor',
-          body: (movida ? 'Your appointment was moved to ' : 'Your next appointment is set for ')
-              + cuando + ' at ' + hora + '. You can join from your dashboard.'
+          body: movida
+              ? 'Your appointment was moved to ' + cuando + ' at ' + hora + '. Please reply here to confirm the date and time. '
+                + 'If that time doesn\'t work for you, reply with the date and time you prefer and your physician will confirm it.'
+              : 'Your next appointment is set for ' + cuando + ' at ' + hora + '. Please reply here to confirm the date and time. '
+                + 'If that time doesn\'t work for you, reply with the date and time you prefer and your physician will confirm it.'
         });
       }catch(e){ console.warn('[appt] no se pudo avisar por mensaje:', e); }
 
