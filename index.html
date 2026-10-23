@@ -15709,7 +15709,7 @@ if(!window.supabase){
       + '<div class="res-grid">'
       +   v('Weight', p.weight_lbs ? esc(p.weight_lbs) + ' lb' : null, 'from intake')
       +   v('Height', p.height_ft != null ? esc(p.height_ft) + '′ ' + esc(p.height_in || 0) + '″' : null)
-      +   v('BMI', bmi, 'calculated')
+      +   v('BMI', bmi, bmi ? categoriaBMI(parseFloat(bmi)) : 'calculated')
       +   v('Blood pressure', p.blood_pressure ? esc(p.blood_pressure) : null)
       +   v('Target', p.target_weight_lbs ? esc(p.target_weight_lbs) + ' lb' : null)
       + '</div>'
