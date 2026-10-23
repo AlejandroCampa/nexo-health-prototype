@@ -1110,6 +1110,10 @@ if(!window.supabase){
   .nota-fmt-b{appearance:none;border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:8px;min-width:32px;height:30px;padding:0 9px;
     font-family:var(--sans);font-size:14px;cursor:pointer;}
   .nota-fmt-b:hover{border-color:var(--teal);color:var(--teal-deep);}
+  .nota-fmt-sep{width:1px;height:20px;background:var(--line);margin:0 4px;}
+  .nota-rt{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--white);color:#000;font-size:14px;line-height:1.5;overflow-wrap:anywhere;resize:vertical;overflow:auto;}
+  .nota-rt:focus{outline:2px solid var(--brand-blue);outline-offset:-1px;}
+  .nota-rt[contenteditable="false"]{background:var(--paper);}
   .nota-fmt-ayuda{font-size:11.5px;color:var(--ink-soft);margin-left:6px;opacity:.8;}
   .nota-chip{appearance:none;border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:999px;
     padding:7px 13px;font-family:inherit;font-size:13px;cursor:pointer;min-height:36px;}
@@ -12096,33 +12100,101 @@ if(!window.supabase){
   // que limpiar. Se ve en negrita en el PDF y en los resumenes.
   function notaFmt(txt){
     return escapeHtml(txt == null ? '' : String(txt))
+      .replace(/\{\{(serif|mono|wide):([^{}]*?)\}\}/g, function(m, f, t){ return '<span style="font-family:' + NOTA_FUENTES[f] + '">' + t + '</span>'; })
+      .replace(/\*\*\*([^*\n]+?)\*\*\*/g, '<b><i>$1</i></b>')
       .replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>')
       .replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<i>$2</i>')
       .replace(/(^|\n)- /g, '$1• ')
       .replace(/\n/g, '<br>');
   }
+  const NOTA_FUENTES = { serif:'Georgia,\'Times New Roman\',serif', mono:'\'Courier New\',Courier,monospace', wide:'Verdana,Geneva,sans-serif' };
+  const NOTA_CARAS = { serif:'Georgia', mono:'Courier New', wide:'Verdana' };
   function notaSinMarcas(txt){
-    return String(txt == null ? '' : txt).replace(/\*\*([^*\n]+?)\*\*/g, '$1').replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1$2').replace(/(^|\n)- /g, '$1• ');
+    return String(txt == null ? '' : txt).replace(/\{\{(?:serif|mono|wide):([^{}]*?)\}\}/g, '$1').replace(/\*\*\*([^*\n]+?)\*\*\*/g, '$1').replace(/\*\*([^*\n]+?)\*\*/g, '$1').replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1$2').replace(/(^|\n)- /g, '$1• ');
+  }
+  // Editor con formato visible: lo que escribes se ve en negrita/cursiva/fuente
+  // mientras escribes. Al guardar se convierte a las mismas marcas de texto plano
+  // de siempre (**negrita**, *cursiva*, {{serif:...}}), asi que la nota firmada
+  // sigue siendo texto y no HTML.
+  function notaRtHTML(txt){
+    let h = escapeHtml(txt == null ? '' : String(txt));
+    h = h.replace(/\{\{(serif|mono|wide):([^{}]*?)\}\}/g, function(m, f, t){ return '<font face="' + NOTA_CARAS[f] + '">' + t + '</font>'; })
+      .replace(/\*\*\*([^*\n]+?)\*\*\*/g, '<b><i>$1</i></b>')
+      .replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>')
+      .replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<i>$2</i>')
+      .replace(/(^|\n)- /g, '$1• ')
+      .replace(/\n/g, '<br>');
+    return h;
+  }
+  function notaRtTexto(el){
+    const toks = [];
+    function estilo(n){
+      let b = false, i = false, f = null;
+      for(let x = n.parentNode; x && x !== el; x = x.parentNode){
+        if(x.nodeType !== 1) continue;
+        const t = x.tagName, st = x.style || {};
+        if(t === 'B' || t === 'STRONG' || st.fontWeight === 'bold' || parseInt(st.fontWeight, 10) >= 600) b = true;
+        if(t === 'I' || t === 'EM' || st.fontStyle === 'italic') i = true;
+        if(f === null){
+          const face = ((t === 'FONT' && x.getAttribute('face')) || st.fontFamily || '').toLowerCase();
+          if(face){ f = /courier|mono/.test(face) ? 'mono' : /verdana/.test(face) ? 'wide' : /georgia|times/.test(face) ? 'serif' : ''; }
+        }
+      }
+      return { b: b, i: i, f: f || '' };
+    }
+    function nl(){ if(toks.length && toks[toks.length - 1].nl !== true) toks.push({ nl: true }); else if(!toks.length) {} }
+    function walk(n, primero){
+      n.childNodes.forEach(function(c, idx){
+        if(c.nodeType === 3){
+          if(c.nodeValue) toks.push(Object.assign({ t: c.nodeValue.replace(/ /g, ' ') }, estilo(c)));
+        } else if(c.nodeType === 1){
+          const t = c.tagName;
+          if(t === 'BR'){ toks.push({ nl: true }); return; }
+          const bloque = (t === 'DIV' || t === 'P' || t === 'LI' || t === 'UL' || t === 'OL');
+          if(bloque && toks.length && !toks[toks.length - 1].nl) toks.push({ nl: true });
+          walk(c);
+          if(bloque && c.nextSibling && toks.length && !toks[toks.length - 1].nl) toks.push({ nl: true });
+        }
+      });
+    }
+    walk(el);
+    // une tramos contiguos con el mismo estilo
+    const runs = [];
+    toks.forEach(function(k){
+      const u = runs[runs.length - 1];
+      if(!k.nl && u && !u.nl && u.b === k.b && u.i === k.i && u.f === k.f) u.t += k.t; else runs.push(Object.assign({}, k));
+    });
+    let out = runs.map(function(r){
+      if(r.nl) return '\n';
+      let t = r.t;
+      if(!t.trim()) return t;
+      const lead = t.match(/^\s*/)[0], trail = t.match(/\s*$/)[0];
+      let core = t.slice(lead.length, t.length - trail.length);
+      if(r.b && r.i) core = '***' + core + '***'; else if(r.b) core = '**' + core + '**'; else if(r.i) core = '*' + core + '*';
+      if(r.f) core = '{{' + r.f + ':' + core + '}}';
+      return lead + core + trail;
+    }).join('');
+    return out.replace(/\s+$/, '');
   }
   function notaFmtAplicar(id, tipo){
-    const ta = document.getElementById(id);
-    if(!ta || ta.disabled) return;
-    const a = ta.selectionStart, b = ta.selectionEnd, v = ta.value;
-    let nuevo, ini, fin;
-    if(tipo === 'li'){
-      const desde = v.lastIndexOf('\n', a - 1) + 1;
-      let hasta = v.indexOf('\n', b); if(hasta < 0) hasta = v.length;
-      const bloque = v.slice(desde, hasta).split('\n').map(l => /^- /.test(l) ? l.slice(2) : '- ' + l).join('\n');
-      nuevo = v.slice(0, desde) + bloque + v.slice(hasta); ini = desde; fin = desde + bloque.length;
-    } else {
-      const m = tipo === 'b' ? '**' : '*';
-      const sel = v.slice(a, b);
-      nuevo = v.slice(0, a) + m + sel + m + v.slice(b);
-      ini = a + m.length; fin = ini + sel.length;
+    const el = document.getElementById(id);
+    if(!el || el.getAttribute('contenteditable') !== 'true') return;
+    el.focus();
+    if(tipo === 'b') document.execCommand('bold');
+    else if(tipo === 'i') document.execCommand('italic');
+    else if(tipo === 'li') document.execCommand('insertText', false, '• ');
+    else if(tipo.indexOf('f:') === 0){
+      const f = tipo.slice(2);
+      document.execCommand('fontName', false, NOTA_CARAS[f] || 'Manrope');
     }
-    ta.value = nuevo; ta.focus(); ta.setSelectionRange(ini, fin);
-    ta.dispatchEvent(new Event('input', { bubbles: true }));
   }
+  document.addEventListener('paste', function(e){
+    const el = e.target;
+    if(!el || !el.closest || !el.closest('.nota-rt')) return;
+    e.preventDefault();
+    const t = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, t);
+  });
   document.addEventListener('keydown', function(e){
     const ta = e.target;
     if(!ta || ta.tagName !== 'TEXTAREA' || !ta.closest || !ta.closest('#nota-form')) return;
@@ -12143,12 +12215,15 @@ if(!window.supabase){
       body = '<input id="' + id + '" data-k="' + f.k + '" type="' + (f.t === 'num' ? 'number' : f.t) + '"'
         + (f.t === 'num' ? ' step="any" inputmode="decimal"' : '') + ' value="' + escapeHtml(v == null ? '' : v).replace(/"/g, '&quot;') + '"' + dis + '>';
     } else if(f.t === 'area'){
+      const btn = function(t, titulo, fn, estilo){ return '<button type="button" class="nota-fmt-b" title="' + titulo + '" onmousedown="event.preventDefault()" onclick="notaFmtAplicar(\'' + id + '\',\'' + fn + '\')"' + (estilo ? ' style="' + estilo + '"' : '') + '>' + t + '</button>'; };
       body = (soloLectura ? '' : '<div class="nota-fmt" data-i18n-skip>'
-          + '<button type="button" class="nota-fmt-b" title="Bold (Ctrl+B)" onclick="notaFmtAplicar(\'' + id + '\',\'b\')"><b>B</b></button>'
-          + '<button type="button" class="nota-fmt-b" title="Italic (Ctrl+I)" onclick="notaFmtAplicar(\'' + id + '\',\'i\')"><i>I</i></button>'
-          + '<button type="button" class="nota-fmt-b" title="Bullet list" onclick="notaFmtAplicar(\'' + id + '\',\'li\')">•</button>'
-          + '<span class="nota-fmt-ayuda">**bold** · *italic* · - bullet</span></div>')
-        + '<textarea id="' + id + '" data-k="' + f.k + '" rows="' + (f.rows || 3) + '"' + dis + '>' + escapeHtml(v || '') + '</textarea>';
+          + btn('<b>B</b>', 'Bold (Ctrl+B)', 'b') + btn('<i>I</i>', 'Italic (Ctrl+I)', 'i') + btn('•', 'Bullet', 'li')
+          + '<span class="nota-fmt-sep"></span>'
+          + btn('Sans', 'Clean font', 'f:sans') + btn('Serif', 'Serif font', 'f:serif', 'font-family:' + NOTA_FUENTES.serif)
+          + btn('Mono', 'Typewriter font', 'f:mono', 'font-family:' + NOTA_FUENTES.mono) + btn('Wide', 'Wide font', 'f:wide', 'font-family:' + NOTA_FUENTES.wide)
+          + '</div>')
+        + '<div id="' + id + '" class="nota-rt" data-k="' + f.k + '" data-rt="1" role="textbox" aria-multiline="true" aria-label="' + escapeHtml(f.l) + '"'
+        + ' contenteditable="' + (soloLectura ? 'false' : 'true') + '" style="min-height:' + ((f.rows || 3) * 1.5 + 1.2) + 'em">' + notaRtHTML(v || '') + '</div>';
       if(f.frases && NOTA_FRASES[f.frases] && !soloLectura){
         body = '<div class="nota-chips nota-frases" data-i18n-skip>' + NOTA_FRASES[f.frases].map((fr, i) =>
           '<button type="button" class="nota-chip" title="' + escapeHtml(fr[1]).replace(/"/g, '&quot;') + '" onclick="notaFrase(\'' + f.k + '\',' + i + ')">+ ' + escapeHtml(fr[0]) + '</button>').join('') + '</div>' + body;
@@ -12251,6 +12326,8 @@ if(!window.supabase){
     if(el.getAttribute('data-otro')){
       const prev = c[k] && typeof c[k] === 'object' ? c[k] : { sel: [], other: '' };
       c[k] = Object.assign({}, prev, { other: el.value });
+    } else if(el.getAttribute('data-rt')){
+      c[k] = notaRtTexto(el);
     } else {
       c[k] = el.value;
     }
