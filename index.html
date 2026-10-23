@@ -12909,7 +12909,7 @@ if(!window.supabase){
     dato('DOB', p.date_of_birth ? escapeHtml(p.date_of_birth) + (edad != null ? ' · ' + edad + 'y' : '') : null);
     dato('Height', p.height_ft != null ? p.height_ft + '′' + (p.height_in || 0) + '″' : null);
     dato('Weight', p.weight_lbs ? p.weight_lbs + ' lbs' : null);
-    dato('BMI', bmi);
+    dato('BMI', bmi ? bmi + '<span style="display:block;font-size:11.5px;font-weight:500;opacity:.8;">' + categoriaBMI(parseFloat(bmi)) + '</span>' : null);
     dato('Goal', p.target_weight_lbs ? p.target_weight_lbs + ' lbs' : null);
     dato('Plan', p.plan ? escapeHtml(p.plan) : null);
 
