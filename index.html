@@ -1337,9 +1337,12 @@ if(!window.supabase){
   .pre-q label{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;padding:9px 12px;margin:0 0 6px;border:1px solid var(--line);border-radius:10px;cursor:pointer;}
   .pre-q label:has(input:checked){border-color:var(--teal);background:var(--mint);}
   .pre-q input{width:auto;margin:0;accent-color:var(--teal);}
-  .pre-row{display:flex;align-items:center;gap:6px;}
-  .pre-row input{width:72px !important;flex:none;}
-  .pre-row span{font-size:13px;color:var(--ink-soft);margin-right:8px;}
+  .pre-row{display:flex;align-items:center;gap:4px;}
+  /* Las cajas se encogen para caber en el celular; las etiquetas (pies, pulg, lb)
+     nunca se parten letra por letra. La de libras es mas ancha para 3 digitos. */
+  .pre-row input{flex:1 1 0;min-width:0;width:auto !important;max-width:72px;padding-left:6px !important;padding-right:6px !important;text-align:center;}
+  .pre-row #pre-lb{flex-grow:1.7;max-width:96px;}
+  .pre-row span{flex:none;white-space:nowrap;font-size:13px;color:var(--ink-soft);margin-right:6px;}
   .pre-bmi{margin-top:8px;font-size:13px;line-height:1.5;color:var(--ink-soft);}
   .pre-bmi b{color:var(--ink);}
   .pre-error{background:rgba(196,60,60,0.1);color:#B23A3A;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:14px;}
