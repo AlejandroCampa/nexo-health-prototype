@@ -7078,7 +7078,21 @@ if(!window.supabase){
     ['Apolipoprotein B (ApoB)', '82172'],
     ['Lipoprotein(a) [Lp(a)]', '83695'],
     ['Cystatin C', '82610'],
-    ['Urine Albumin/Creatinine Ratio (UACR)', '82043, 82570']
+    ['Urine Albumin/Creatinine Ratio (UACR)', '82043, 82570'],
+    // 28 oct 2026: pruebas de hormonas. El tercer valor (true) = "extra": en
+    // la orden en papel solo salen si se marcan, para que la hoja de la
+    // clinica siga cabiendo en una pagina.
+    ['FSH (Follicle-Stimulating Hormone)', '83001', true],
+    ['LH (Luteinizing Hormone)', '83002', true],
+    ['Estradiol', '82670', true],
+    ['Progesterone', '84144', true],
+    ['Testosterone, Total', '84403', true],
+    ['Testosterone, Free', '84402', true],
+    ['SHBG (Sex Hormone-Binding Globulin)', '84270', true],
+    ['DHEA-Sulfate (DHEA-S)', '82627', true],
+    ['Prolactin', '84146', true],
+    ['PSA, Total', '84153', true],
+    ['Free T4', '84439', true]
   ];
   // Atajos para no marcar uno por uno. Se pueden cambiar antes de firmar.
   const LAB_PRESETS = {
@@ -7086,7 +7100,17 @@ if(!window.supabase){
     // Aprobado por la Dra. Marrero (22 oct 2026). Lp(a) basta una vez en la vida.
     'Metabolic + longevity': ['Comprehensive Metabolic Panel (CMP)', 'Hemoglobin A1c (HbA1c)', 'Lipid Panel', 'CBC with Differential',
       'Apolipoprotein B (ApoB)', 'hs-CRP (high-sensitivity C-reactive protein)', 'Lipoprotein(a) [Lp(a)]', 'Cystatin C', 'Urine Albumin/Creatinine Ratio (UACR)'],
-    'Hair loss / iron': ['CBC with Differential', 'Ferritin', 'Iron, Serum', 'Total Iron Binding Capacity (TIBC)', 'Vitamin D, 25-Hydroxy', 'Vitamin B12', 'TSH']
+    'Hair loss / iron': ['CBC with Differential', 'Ferritin', 'Iron, Serum', 'Total Iron Binding Capacity (TIBC)', 'Vitamin D, 25-Hydroxy', 'Vitamin B12', 'TSH'],
+    // 28 oct 2026 — PENDIENTE de aprobacion de la Dra. Marrero.
+    'Menopause / HRT (women)': ['Comprehensive Metabolic Panel (CMP)', 'Lipid Panel', 'Hemoglobin A1c (HbA1c)', 'CBC with Differential', 'TSH',
+      'FSH (Follicle-Stimulating Hormone)', 'Estradiol'],
+    'Testosterone / TRT (men)': ['Testosterone, Total', 'Testosterone, Free', 'SHBG (Sex Hormone-Binding Globulin)', 'LH (Luteinizing Hormone)',
+      'FSH (Follicle-Stimulating Hormone)', 'Prolactin', 'Estradiol', 'PSA, Total', 'CBC with Differential',
+      'Comprehensive Metabolic Panel (CMP)', 'Lipid Panel', 'Hemoglobin A1c (HbA1c)']
+  };
+  // Nota que un atajo pone para el paciente si la nota esta vacia.
+  const LAB_PRESET_NOTAS = {
+    'Testosterone / TRT (men)': 'Please have your blood drawn in the morning, between 7 and 10 AM. Testosterone is highest in the morning.'
   };
   const ICD_DEFECTO = 'Z79.899 Other long term (current) drug therapy';
 
@@ -7158,6 +7182,7 @@ if(!window.supabase){
   function ordenLabsPreset(k){
     if(!ordenLabs) return;
     LAB_PRESETS[k].forEach(n => { if(ordenLabs.tests.indexOf(n) < 0) ordenLabs.tests.push(n); });
+    if(LAB_PRESET_NOTAS[k] && !(ordenLabs.note || '').trim()) ordenLabs.note = LAB_PRESET_NOTAS[k];
     ordenLabsPintar();
   }
   function ordenLabsCampo(k, v){ if(ordenLabs){ ordenLabs[k] = v; if(k === 'fasting') ordenLabsPintar(); } }
@@ -7571,7 +7596,7 @@ if(!window.supabase){
     const sexo = (p.gender || '').charAt(0).toUpperCase();
     const caja = on => '<span class="box' + (on ? ' on' : '') + '">' + (on ? '✓' : '') + '</span>';
     const nombreMed = (o.author_name || '') + (o.author_title ? ', ' + o.author_title : ', MD');
-    const filas = LAB_TESTS.map(t => '<tr><td>' + caja(elegidas.indexOf(t[0]) >= 0) + escapeHtml(t[0]) + '</td><td class="cpt">' + t[1] + '</td></tr>').join('')
+    const filas = LAB_TESTS.filter(t => !t[2] || elegidas.indexOf(t[0]) >= 0).map(t => '<tr><td>' + caja(elegidas.indexOf(t[0]) >= 0) + escapeHtml(t[0]) + '</td><td class="cpt">' + t[1] + '</td></tr>').join('')
       + '<tr><td>' + caja(!!o.other_test) + 'Other' + (o.other_test ? ': <b>' + escapeHtml(o.other_test) + '</b>' : '') + '</td><td></td></tr>';
     const icd = [0, 1].map(i => '<div class="linea"><span>' + (i + 1) + '.</span> ' + escapeHtml((o.icd10 || [])[i] || '') + '</div>').join('');
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>Laboratory Order — ${escapeHtml(p.full_name || 'Patient')}</title>
@@ -7618,7 +7643,11 @@ if(!window.supabase){
   </div>
   <div class="pie"><span>NuVi Clinic · Physician-led virtual care · Puerto Rico</span><span>nuviclinic.com</span></div>
 </div></body></html>`;
-    mostrarPDF(html, 'Please allow pop-ups to open the order.');
+    // Con muchas pruebas extra (p. ej. el panel de hombres) la tabla se
+    // compacta para que la orden siga en UNA pagina.
+    const nFilas = LAB_TESTS.filter(t => !t[2] || elegidas.indexOf(t[0]) >= 0).length;
+    const htmlFinal = nFilas > 20 ? html.replace('</style>', 'td{padding:1px 4px;font-size:9.5pt;} .box{width:11px;height:11px;line-height:9px;}</style>') : html;
+    mostrarPDF(htmlFinal, 'Please allow pop-ups to open the order.');
   }
 
   // ---- El médico sube un documento al expediente (oculto hasta liberarlo) ----
