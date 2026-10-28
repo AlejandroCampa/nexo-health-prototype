@@ -7385,11 +7385,25 @@ if(!window.supabase){
     'Registered dietitian','Behavioral health','Sleep medicine','OB/GYN','Dermatology'];
   const REF_SERVICIOS = { consult:'Consult only', consult_treat:'Consult & treat', testing:'Testing / procedure', comanage:'Co-management' };
   const REF_ADJUNTOS = ['Clinical notes','Lab results','Medication list','Imaging'];
+  // Atajos de estudios (28 oct 2026). Llenan el formulario; todo se puede
+  // cambiar antes de firmar. Los ICD-10 sugeridos salen como botones.
+  const REF_ATAJOS = {
+    'DEXA scan': {
+      other: 'DEXA scan — Bone densitometry, hip & lumbar spine (CPT 77080)',
+      service: 'testing',
+      reason: 'Bone mineral density by DXA (hip and lumbar spine). Please send the report with T-scores and Z-scores.',
+      icds: ['Z13.820 Encounter for screening for osteoporosis',
+             'M85.80 Osteopenia (other specified disorder of bone density and structure, unspecified site)',
+             'M81.0 Age-related osteoporosis without current pathological fracture',
+             'Z78.0 Asymptomatic menopausal state',
+             'Z79.890 Hormone replacement therapy']
+    }
+  };
   let referido = null;
 
   function referidoAbrir(){
     referido = { specialty:'', other:'', provider:'', phone:'', fax:'', urgency:'routine', service:'consult',
-      reason:'', icd1:'', icd2:'', attachments:[], note:'' };
+      reason:'', icd1:'', icd2:'', attachments:[], note:'', atajo:'' };
     referidoPintar();
     const f = document.getElementById('referido-form');
     f.hidden = false;
@@ -7405,6 +7419,22 @@ if(!window.supabase){
     referido[k] = v;
     if(['specialty','urgency','service'].indexOf(k) >= 0) referidoPintar();
   }
+  function referidoAtajo(k){
+    const a = REF_ATAJOS[k];
+    if(!referido || !a) return;
+    Object.assign(referido, { atajo: k, specialty: 'Other', other: a.other, service: a.service, reason: a.reason });
+    referidoPintar();
+  }
+  // Pone el ICD en la primera casilla libre; si ya estaba, lo quita.
+  function referidoIcd(codigo){
+    if(!referido) return;
+    if(referido.icd1 === codigo){ referido.icd1 = referido.icd2; referido.icd2 = ''; }
+    else if(referido.icd2 === codigo){ referido.icd2 = ''; }
+    else if(!referido.icd1){ referido.icd1 = codigo; }
+    else if(!referido.icd2){ referido.icd2 = codigo; }
+    else { alert('There are only two diagnosis lines. Remove one first.'); return; }
+    referidoPintar();
+  }
   function referidoAdjunto(n){
     if(!referido) return;
     const i = referido.attachments.indexOf(n);
@@ -7419,7 +7449,9 @@ if(!window.supabase){
     const val = v => escapeHtml(v || '').replace(/"/g, '&quot;');
     const chip = (on, js, txt) => '<button type="button" class="nota-chip' + (on ? ' on' : '') + '" onclick="' + js + '">' + escapeHtml(txt) + '</button>';
     const inp = (id, k, l, cls) => '<div class="nota-f' + (cls ? ' ' + cls : '') + '"><label class="nota-l" for="' + id + '">' + l + '</label><input id="' + id + '" value="' + val(r[k]) + '" oninput="referidoCampo(\'' + k + '\', this.value)"></div>';
-    f.innerHTML = '<div class="ol-top"><b>Referral order</b></div>'
+    const atajo = REF_ATAJOS[r.atajo];
+    f.innerHTML = '<div class="ol-top"><b>Referral order</b><span>Quick:</span>'
+      + Object.keys(REF_ATAJOS).map(k => chip(r.atajo === k, 'referidoAtajo(\'' + k + '\')', k)).join('') + '</div>'
       + '<div class="nota-grid" data-i18n-skip>'
       + '<div class="nota-f"><span class="nota-l">Refer to</span><div class="nota-chips">'
       +   REF_ESPECIALIDADES.concat(['Other']).map(e => chip(r.specialty === e, 'referidoCampo(\'specialty\',\'' + e.replace(/'/g, "\\'") + '\')', e)).join('')
@@ -7434,6 +7466,8 @@ if(!window.supabase){
       + '<div class="nota-f half"><span class="nota-l">Service requested</span><div class="nota-chips">'
       +   Object.keys(REF_SERVICIOS).map(k => chip(r.service === k, 'referidoCampo(\'service\',\'' + k + '\')', REF_SERVICIOS[k])).join('') + '</div></div>'
       + '<div class="nota-f"><label class="nota-l" for="rf-reason">Reason for referral</label><textarea id="rf-reason" rows="3" oninput="referidoCampo(\'reason\', this.value)">' + escapeHtml(r.reason) + '</textarea></div>'
+      + (atajo ? '<div class="nota-f"><span class="nota-l">Suggested diagnoses (tap to add)</span><div class="nota-chips">'
+          + atajo.icds.map(c => chip(r.icd1 === c || r.icd2 === c, 'referidoIcd(\'' + c.replace(/'/g, "\\'") + '\')', c)).join('') + '</div></div>' : '')
       + inp('rf-icd1', 'icd1', 'Diagnosis (ICD-10) 1', 'half')
       + inp('rf-icd2', 'icd2', 'Diagnosis (ICD-10) 2', 'half')
       + '<div class="nota-f"><span class="nota-l">Attached</span><div class="nota-chips">'
