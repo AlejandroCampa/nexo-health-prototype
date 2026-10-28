@@ -7092,7 +7092,37 @@ if(!window.supabase){
     ['DHEA-Sulfate (DHEA-S)', '82627', true],
     ['Prolactin', '84146', true],
     ['PSA, Total', '84153', true],
-    ['Free T4', '84439', true]
+    ['Free T4', '84439', true],
+    // Protocolo de optimizacion hormonal de la Dra. Marrero (28 oct 2026).
+    ['Free T3', '84481', true],
+    ['Reverse T3', '84482', true],
+    ['Thyroid Peroxidase Antibodies (TPOAb)', '86376', true],
+    ['Thyroglobulin Antibodies (TgAb)', '86800', true],
+    ['Cortisol, AM (7–9 AM)', '82533', true],
+    ['Cortisol, PM (4–6 PM)', '82533', true],
+    ['ACTH', '82024', true],
+    ['Folate, Serum', '82746', true],
+    ['Magnesium, RBC', '83735', true],
+    ['Zinc', '84630', true],
+    ['Insulin, Fasting (for HOMA-IR)', '83525', true],
+    ['Homocysteine', '83090', true],
+    ['ESR (Sedimentation Rate)', '85652', true],
+    ['Glutathione', '82978', true],
+    ['Coenzyme Q10', '82542', true],
+    ['IGF-1', '84305', true],
+    ['PTH, Intact', '83970', true],
+    ['Bone-Specific Alkaline Phosphatase', '84080', true]
+  ];
+  // Pruebas que comparten los dos paneles de optimizacion hormonal.
+  const HORMONAS_COMUN = [
+    'TSH', 'Free T3', 'Free T4', 'Reverse T3', 'Thyroid Peroxidase Antibodies (TPOAb)', 'Thyroglobulin Antibodies (TgAb)',
+    'Estradiol', 'Testosterone, Total', 'Testosterone, Free', 'SHBG (Sex Hormone-Binding Globulin)', 'DHEA-Sulfate (DHEA-S)',
+    'FSH (Follicle-Stimulating Hormone)', 'LH (Luteinizing Hormone)',
+    'Cortisol, AM (7–9 AM)', 'Cortisol, PM (4–6 PM)', 'ACTH',
+    'Vitamin D, 25-Hydroxy', 'Vitamin B12', 'Folate, Serum', 'Magnesium, RBC', 'Zinc', 'Iron, Serum', 'Total Iron Binding Capacity (TIBC)', 'Ferritin',
+    'Comprehensive Metabolic Panel (CMP)', 'Hemoglobin A1c (HbA1c)', 'Insulin, Fasting (for HOMA-IR)', 'Lipid Panel',
+    'hs-CRP (high-sensitivity C-reactive protein)', 'Homocysteine', 'ESR (Sedimentation Rate)',
+    'Glutathione', 'Coenzyme Q10', 'IGF-1', 'PTH, Intact', 'Bone-Specific Alkaline Phosphatase'
   ];
   // Atajos para no marcar uno por uno. Se pueden cambiar antes de firmar.
   const LAB_PRESETS = {
@@ -7101,16 +7131,19 @@ if(!window.supabase){
     'Metabolic + longevity': ['Comprehensive Metabolic Panel (CMP)', 'Hemoglobin A1c (HbA1c)', 'Lipid Panel', 'CBC with Differential',
       'Apolipoprotein B (ApoB)', 'hs-CRP (high-sensitivity C-reactive protein)', 'Lipoprotein(a) [Lp(a)]', 'Cystatin C', 'Urine Albumin/Creatinine Ratio (UACR)'],
     'Hair loss / iron': ['CBC with Differential', 'Ferritin', 'Iron, Serum', 'Total Iron Binding Capacity (TIBC)', 'Vitamin D, 25-Hydroxy', 'Vitamin B12', 'TSH'],
-    // 28 oct 2026 — PENDIENTE de aprobacion de la Dra. Marrero.
-    'Menopause / HRT (women)': ['Comprehensive Metabolic Panel (CMP)', 'Lipid Panel', 'Hemoglobin A1c (HbA1c)', 'CBC with Differential', 'TSH',
-      'FSH (Follicle-Stimulating Hormone)', 'Estradiol'],
-    'Testosterone / TRT (men)': ['Testosterone, Total', 'Testosterone, Free', 'SHBG (Sex Hormone-Binding Globulin)', 'LH (Luteinizing Hormone)',
-      'FSH (Follicle-Stimulating Hormone)', 'Prolactin', 'Estradiol', 'PSA, Total', 'CBC with Differential',
-      'Comprehensive Metabolic Panel (CMP)', 'Lipid Panel', 'Hemoglobin A1c (HbA1c)']
+    // Protocolo de la Dra. Marrero (28 oct 2026): panel completo de la
+    // consulta inicial. Glucosa en ayunas y calcio van dentro del CMP.
+    'Hormone optimization (women)': HORMONAS_COMUN.concat(['Progesterone']),
+    // + PSA y CBC: base de seguridad antes de testosterona (hematocrito y prostata).
+    'Hormone optimization (men)': HORMONAS_COMUN.concat(['PSA, Total', 'CBC with Differential'])
   };
   // Nota que un atajo pone para el paciente si la nota esta vacia.
+  const NOTA_HORMONAS = 'Fast 8–12 hours (water is OK) and have your blood drawn in the morning, between 7 and 9 AM. '
+    + 'Do not take vitamins or supplements for 24 hours before, especially biotin, which can change hormone and thyroid results. '
+    + 'The PM cortisol is a second draw between 4 and 6 PM the same day.';
   const LAB_PRESET_NOTAS = {
-    'Testosterone / TRT (men)': 'Please have your blood drawn in the morning, between 7 and 10 AM. Testosterone is highest in the morning.'
+    'Hormone optimization (women)': NOTA_HORMONAS + ' If you still have periods, we will tell you which day of your cycle to do the test.',
+    'Hormone optimization (men)': NOTA_HORMONAS
   };
   const ICD_DEFECTO = 'Z79.899 Other long term (current) drug therapy';
 
@@ -7596,7 +7629,18 @@ if(!window.supabase){
     const sexo = (p.gender || '').charAt(0).toUpperCase();
     const caja = on => '<span class="box' + (on ? ' on' : '') + '">' + (on ? '✓' : '') + '</span>';
     const nombreMed = (o.author_name || '') + (o.author_title ? ', ' + o.author_title : ', MD');
-    const filas = LAB_TESTS.filter(t => !t[2] || elegidas.indexOf(t[0]) >= 0).map(t => '<tr><td>' + caja(elegidas.indexOf(t[0]) >= 0) + escapeHtml(t[0]) + '</td><td class="cpt">' + t[1] + '</td></tr>').join('')
+    // Orden normal: la hoja de la clinica (las 17 de siempre + extras marcadas).
+    // Orden larga (>26 filas, p. ej. panel hormonal): solo las marcadas, en dos
+    // columnas, para que quepa en una pagina.
+    const filasHoja = LAB_TESTS.filter(t => !t[2] || elegidas.indexOf(t[0]) >= 0);
+    const larga = filasHoja.length > 26;
+    const fila = t => '<tr><td>' + caja(elegidas.indexOf(t[0]) >= 0) + escapeHtml(t[0]) + '</td><td class="cpt">' + t[1] + '</td></tr>';
+    const soloMarcadas = LAB_TESTS.filter(t => elegidas.indexOf(t[0]) >= 0);
+    const mitad = Math.ceil(soloMarcadas.length / 2);
+    const tablaDos = '<div style="display:flex;gap:18px;">'
+      + [soloMarcadas.slice(0, mitad), soloMarcadas.slice(mitad)].map(g => '<table style="flex:1;"><tr><th>Test</th><th class="cpt">CPT</th></tr>' + g.map(fila).join('') + '</table>').join('')
+      + '</div>';
+    const filas = (larga ? '' : filasHoja.map(fila).join(''))
       + '<tr><td>' + caja(!!o.other_test) + 'Other' + (o.other_test ? ': <b>' + escapeHtml(o.other_test) + '</b>' : '') + '</td><td></td></tr>';
     const icd = [0, 1].map(i => '<div class="linea"><span>' + (i + 1) + '.</span> ' + escapeHtml((o.icd10 || [])[i] || '') + '</div>').join('');
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>Laboratory Order — ${escapeHtml(p.full_name || 'Patient')}</title>
@@ -7633,7 +7677,7 @@ if(!window.supabase){
     <div class="campo"><label>Patient name</label><div>${escapeHtml(p.full_name || '')}</div></div>
     <div class="fila"><div class="campo"><label>Date of birth</label><div>${dob}</div></div><div class="campo" style="flex:.45"><label>Sex</label><div>${escapeHtml(sexo)}</div></div><div class="campo"><label>Phone</label><div>${escapeHtml(p.phone || '')}</div></div></div>
     <h2>TESTS ORDERED</h2>
-    <table><tr><th>Test</th><th class="cpt">CPT</th></tr>${filas}</table>
+    ${larga ? tablaDos + '<table>' + filas + '</table>' : '<table><tr><th>Test</th><th class="cpt">CPT</th></tr>' + filas + '</table>'}
     <h2>DIAGNOSIS (ICD-10)</h2>${icd}
     <h2>SPECIMEN INSTRUCTIONS</h2>
     <div class="ayuno"><span>${caja(o.fasting === 'fasting')}Fasting 8–12 hours</span><span>${caja(o.fasting === 'non_fasting')}Non-fasting OK</span></div>
@@ -7645,8 +7689,8 @@ if(!window.supabase){
 </div></body></html>`;
     // Con muchas pruebas extra (p. ej. el panel de hombres) la tabla se
     // compacta para que la orden siga en UNA pagina.
-    const nFilas = LAB_TESTS.filter(t => !t[2] || elegidas.indexOf(t[0]) >= 0).length;
-    const htmlFinal = nFilas > 20 ? html.replace('</style>', 'td{padding:1px 4px;font-size:9.5pt;} .box{width:11px;height:11px;line-height:9px;}</style>') : html;
+    const nFilas = larga ? mitad : filasHoja.length;
+    const htmlFinal = (nFilas > 20 || larga) ? html.replace('</style>', 'td{padding:1px 4px;font-size:9.5pt;}' + (larga ? ' td{font-size:8.5pt;} th.cpt,td.cpt{width:62px;}' : '') + ' .box{width:11px;height:11px;line-height:9px;}</style>') : html;
     mostrarPDF(htmlFinal, 'Please allow pop-ups to open the order.');
   }
 
