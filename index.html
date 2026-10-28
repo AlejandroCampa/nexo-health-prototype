@@ -7122,7 +7122,7 @@ if(!window.supabase){
     'Vitamin D, 25-Hydroxy', 'Vitamin B12', 'Folate, Serum', 'Magnesium, RBC', 'Zinc', 'Iron, Serum', 'Total Iron Binding Capacity (TIBC)', 'Ferritin',
     'Comprehensive Metabolic Panel (CMP)', 'Hemoglobin A1c (HbA1c)', 'Insulin, Fasting (for HOMA-IR)', 'Lipid Panel',
     'hs-CRP (high-sensitivity C-reactive protein)', 'Homocysteine', 'ESR (Sedimentation Rate)',
-    'Glutathione', 'Coenzyme Q10', 'IGF-1', 'PTH, Intact', 'Bone-Specific Alkaline Phosphatase'
+    'PTH, Intact', 'Bone-Specific Alkaline Phosphatase'
   ];
   // Atajos para no marcar uno por uno. Se pueden cambiar antes de firmar.
   const LAB_PRESETS = {
@@ -7135,7 +7135,10 @@ if(!window.supabase){
     // consulta inicial. Glucosa en ayunas y calcio van dentro del CMP.
     'Hormone optimization (women)': HORMONAS_COMUN.concat(['Progesterone']),
     // + PSA y CBC: base de seguridad antes de testosterona (hematocrito y prostata).
-    'Hormone optimization (men)': HORMONAS_COMUN.concat(['PSA, Total', 'CBC with Differential'])
+    'Hormone optimization (men)': HORMONAS_COMUN.concat(['PSA, Total', 'CBC with Differential']),
+    // Seccion "Anti-Aging Biomarkers" del protocolo, aparte (28 oct 2026).
+    // Telomeros no se ordena aqui: va en "Other" si se quiere.
+    'Anti-aging labs': ['Glutathione', 'Coenzyme Q10', 'IGF-1']
   };
   // Nota que un atajo pone para el paciente si la nota esta vacia.
   const NOTA_HORMONAS = 'Fast 8–12 hours (water is OK) and have your blood drawn in the morning, between 7 and 9 AM. '
