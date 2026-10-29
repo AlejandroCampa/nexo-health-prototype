@@ -1058,7 +1058,8 @@ if(!window.supabase){
   .ol-test.on .ol-box{background:var(--ink);box-shadow:inset 0 0 0 3px #F2F5FA;}
   .ol-acc{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:6px;}
   /* 29 oct 2026: pruebas por categoria (pestanas) + resumen de lo marcado */
-  .ol-cats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:10px;}
+  .ol-cats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .ol-grupo{border-top:1px solid var(--line);padding-top:10px;margin-bottom:4px;}
   .ol-cat{appearance:none;border:1px solid var(--line);background:var(--white);border-radius:100px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink);}
   .ol-cat.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600;}
   .ol-cat em{font-style:normal;font-size:11px;margin-left:6px;background:rgba(1,224,254,0.25);border-radius:100px;padding:1px 7px;}
@@ -7225,6 +7226,33 @@ if(!window.supabase){
     'Hormone optimization (men)': NOTA_HORMONAS
   };
   const ICD_DEFECTO = 'Z79.899 Other long term (current) drug therapy';
+  // 29 oct 2026: diagnosticos frecuentes para las ordenes de labs. Un toque
+  // los pone en la primera casilla libre; otro toque los quita.
+  const LAB_ICDS = [
+    ['Long-term drug therapy', 'Z79.899 Other long term (current) drug therapy'],
+    ['On GLP-1 (injectable)', 'Z79.85 Long-term (current) use of injectable non-insulin antidiabetic drugs'],
+    ['Hormone replacement therapy', 'Z79.890 Hormone replacement therapy'],
+    ['Annual exam', 'Z00.00 Encounter for general adult medical examination without abnormal findings'],
+    ['Screening: lipids', 'Z13.220 Encounter for screening for lipoid disorders'],
+    ['Screening: diabetes', 'Z13.1 Encounter for screening for diabetes mellitus'],
+    ['Overweight', 'E66.3 Overweight'],
+    ['Obesity, class 1', 'E66.811 Obesity, class 1'],
+    ['Obesity, class 2', 'E66.812 Obesity, class 2'],
+    ['Obesity, class 3', 'E66.813 Obesity, class 3'],
+    ['Prediabetes', 'R73.03 Prediabetes'],
+    ['Type 2 diabetes', 'E11.9 Type 2 diabetes mellitus without complications'],
+    ['Metabolic syndrome', 'E88.810 Metabolic syndrome'],
+    ['Hyperlipidemia', 'E78.5 Hyperlipidemia, unspecified'],
+    ['Fatty liver', 'K76.0 Fatty (change of) liver, not elsewhere classified'],
+    ['Hypothyroidism', 'E03.9 Hypothyroidism, unspecified'],
+    ['Menopause symptoms', 'N95.1 Menopausal and female climacteric states'],
+    ['Low testosterone', 'E29.1 Testicular hypofunction'],
+    ['PCOS', 'E28.2 Polycystic ovarian syndrome'],
+    ['Fatigue', 'R53.83 Other fatigue'],
+    ['Vitamin D deficiency', 'E55.9 Vitamin D deficiency, unspecified'],
+    ['Iron deficiency', 'E61.1 Iron deficiency'],
+    ['Hair loss', 'L65.9 Nonscarring hair loss, unspecified']
+  ];
 
   // Ventanas de PDF. Safari (iPhone, iPad y Mac) bloquea o congela una
   // ventana que se abre DESPUÉS de esperar a la base de datos, y también el
@@ -7274,7 +7302,7 @@ if(!window.supabase){
   let ordenLabs = null;   // lo que se está llenando en el formulario
 
   function ordenLabsAbrir(){
-    ordenLabs = { tests: [], other: '', icd1: ICD_DEFECTO, icd2: '', fasting: 'fasting', note: '', cat: labGrupos()[0][0] };
+    ordenLabs = { tests: [], other: '', icd1: ICD_DEFECTO, icd2: '', fasting: 'fasting', note: '', cats: [] };
     ordenLabsPintar();
     const f = document.getElementById('orden-labs-form');
     f.hidden = false;
@@ -7298,13 +7326,31 @@ if(!window.supabase){
     ordenLabsPintar();
   }
   function ordenLabsCampo(k, v){ if(ordenLabs){ ordenLabs[k] = v; if(k === 'fasting') ordenLabsPintar(); } }
-  function ordenLabsCat(i){ const g = labGrupos()[i]; if(ordenLabs && g){ ordenLabs.cat = g[0]; ordenLabsPintar(); } }
-  // Marcar o desmarcar todas las pruebas de la pestana abierta.
-  function ordenLabsCatTodas(marcar){
+  // Abrir o cerrar una categoria; se pueden tener varias abiertas a la vez.
+  function ordenLabsCat(i){
+    const g = labGrupos()[i];
+    if(!ordenLabs || !g) return;
+    const k = ordenLabs.cats.indexOf(g[0]);
+    if(k >= 0) ordenLabs.cats.splice(k, 1); else ordenLabs.cats.push(g[0]);
+    ordenLabsPintar();
+  }
+  // Marcar o desmarcar todas las pruebas de una categoria.
+  function ordenLabsCatTodas(i, marcar){
     if(!ordenLabs) return;
-    const g = labGrupos().find(x => x[0] === ordenLabs.cat);
+    const g = labGrupos()[i];
     if(!g) return;
     g[1].forEach(n => { const i = ordenLabs.tests.indexOf(n); if(marcar && i < 0) ordenLabs.tests.push(n); if(!marcar && i >= 0) ordenLabs.tests.splice(i, 1); });
+    ordenLabsPintar();
+  }
+  function ordenLabsIcd(i){
+    const c = (LAB_ICDS[i] || [])[1];
+    if(!ordenLabs || !c) return;
+    const o = ordenLabs;
+    if(o.icd1 === c){ o.icd1 = o.icd2; o.icd2 = ''; }
+    else if(o.icd2 === c){ o.icd2 = ''; }
+    else if(!(o.icd1 || '').trim()){ o.icd1 = c; }
+    else if(!(o.icd2 || '').trim()){ o.icd2 = c; }
+    else { alert('There are only two diagnosis lines. Remove one first (tap it again or clear the box).'); return; }
     ordenLabsPintar();
   }
   function ordenLabsLimpiar(){ if(ordenLabs){ ordenLabs.tests = []; ordenLabsPintar(); } }
@@ -7322,6 +7368,9 @@ if(!window.supabase){
       + '<div class="nota-f"><label class="nota-l" for="ol-other">Other</label><input id="ol-other" value="' + val(o.other) + '" oninput="ordenLabsCampo(\'other\', this.value)"></div>'
       + '<div class="nota-f half"><label class="nota-l" for="ol-icd1">Diagnosis (ICD-10) 1</label><input id="ol-icd1" value="' + val(o.icd1) + '" oninput="ordenLabsCampo(\'icd1\', this.value)"></div>'
       + '<div class="nota-f half"><label class="nota-l" for="ol-icd2">Diagnosis (ICD-10) 2</label><input id="ol-icd2" value="' + val(o.icd2) + '" oninput="ordenLabsCampo(\'icd2\', this.value)"></div>'
+      + '<div class="nota-f"><span class="nota-l">Common diagnoses (tap to add or remove)</span><div class="nota-chips">'
+      +   LAB_ICDS.map((x, i) => '<button type="button" class="nota-chip' + (o.icd1 === x[1] || o.icd2 === x[1] ? ' on' : '') + '" title="' + val(x[1]) + '" onclick="ordenLabsIcd(' + i + ')">'
+            + escapeHtml(x[1].split(' ')[0]) + ' · ' + escapeHtml(x[0]) + '</button>').join('') + '</div></div>'
       + '<div class="nota-f"><span class="nota-l">Specimen instructions</span><div class="nota-chips">'
       +   '<button type="button" class="nota-chip' + (o.fasting === 'fasting' ? ' on' : '') + '" onclick="ordenLabsCampo(\'fasting\',\'fasting\')">Fasting 8–12 hours</button>'
       +   '<button type="button" class="nota-chip' + (o.fasting === 'non_fasting' ? ' on' : '') + '" onclick="ordenLabsCampo(\'fasting\',\'non_fasting\')">Non-fasting OK</button></div></div>'
@@ -7336,29 +7385,35 @@ if(!window.supabase){
   // Pestanas de categoria + las pruebas de la pestana abierta + lo marcado.
   function ordenLabsPruebasHtml(o){
     const grupos = labGrupos();
-    if(!grupos.some(g => g[0] === o.cat)) o.cat = grupos[0][0];
-    const abierta = grupos.find(g => g[0] === o.cat);
+    o.cats = (o.cats || []).filter(c => grupos.some(g => g[0] === c));
     const q = n => n.replace(/'/g, "\\'");
     const cpt = n => (LAB_TESTS.find(t => t[0] === n) || [])[1] || '';
     const marcadas = LAB_TESTS.map(t => t[0]).filter(n => o.tests.indexOf(n) >= 0);
-    const enAbierta = abierta[1].filter(n => o.tests.indexOf(n) >= 0).length;
-    return '<div class="ol-cats" role="tablist" data-i18n-skip>' + grupos.map((g, i) => {
-          const n = g[1].filter(x => o.tests.indexOf(x) >= 0).length;
-          return '<button type="button" role="tab" aria-selected="' + (g[0] === o.cat) + '" class="ol-cat' + (g[0] === o.cat ? ' on' : '') + '" onclick="ordenLabsCat(' + i + ')">'
+    const abiertas = grupos.map((g, i) => [g, i]).filter(x => o.cats.indexOf(x[0][0]) >= 0);
+    return '<div class="ol-catbar" data-i18n-skip style="margin-bottom:6px;"><span>Categories — tap one or more to see their tests</span></div>'
+      + '<div class="ol-cats" data-i18n-skip>' + grupos.map((g, i) => {
+          const n = g[1].filter(x => o.tests.indexOf(x) >= 0).length, on = o.cats.indexOf(g[0]) >= 0;
+          return '<button type="button" aria-pressed="' + on + '" class="ol-cat' + (on ? ' on' : '') + '" onclick="ordenLabsCat(' + i + ')">'
             + escapeHtml(g[0]) + (n ? '<em>' + n + '</em>' : '') + '</button>';
         }).join('') + '</div>'
-      + '<div class="ol-catbar" data-i18n-skip><span>' + enAbierta + ' of ' + abierta[1].length + ' selected</span>'
-      +   (enAbierta < abierta[1].length ? '<button type="button" class="ol-link" onclick="ordenLabsCatTodas(true)">Select all</button>' : '')
-      +   (enAbierta ? '<button type="button" class="ol-link" onclick="ordenLabsCatTodas(false)">Deselect all</button>' : '') + '</div>'
-      + '<div class="ol-tests" data-i18n-skip>' + abierta[1].map(n =>
-          '<button type="button" class="ol-test' + (o.tests.indexOf(n) >= 0 ? ' on' : '') + '" aria-pressed="' + (o.tests.indexOf(n) >= 0) + '"'
-          + ' onclick="ordenLabsToggle(\'' + q(n) + '\')"><span class="ol-box"></span><span>' + escapeHtml(n) + '</span><small>CPT ' + cpt(n) + '</small></button>').join('')
-      + '</div>'
+      + abiertas.map(x => {
+          const g = x[0], i = x[1];
+          const n = g[1].filter(y => o.tests.indexOf(y) >= 0).length;
+          return '<div class="ol-grupo" data-i18n-skip><div class="ol-catbar"><b style="color:var(--ink);font-size:13.5px;">' + escapeHtml(g[0]) + '</b>'
+            + '<span>' + n + ' of ' + g[1].length + ' selected</span>'
+            + (n < g[1].length ? '<button type="button" class="ol-link" onclick="ordenLabsCatTodas(' + i + ', true)">Select all</button>' : '')
+            + (n ? '<button type="button" class="ol-link" onclick="ordenLabsCatTodas(' + i + ', false)">Deselect all</button>' : '')
+            + '<button type="button" class="ol-link" style="margin-left:auto;" onclick="ordenLabsCat(' + i + ')">Close</button></div>'
+            + '<div class="ol-tests">' + g[1].map(t =>
+                '<button type="button" class="ol-test' + (o.tests.indexOf(t) >= 0 ? ' on' : '') + '" aria-pressed="' + (o.tests.indexOf(t) >= 0) + '"'
+                + ' onclick="ordenLabsToggle(\'' + q(t) + '\')"><span class="ol-box"></span><span>' + escapeHtml(t) + '</span><small>CPT ' + cpt(t) + '</small></button>').join('')
+            + '</div></div>';
+        }).join('')
       + '<div class="ol-sel" data-i18n-skip><div class="ol-sel-top"><b>Selected (' + marcadas.length + ')</b>'
       +   (marcadas.length ? '<button type="button" class="ol-link" onclick="ordenLabsLimpiar()">Clear all</button>' : '') + '</div>'
       +   (marcadas.length
             ? '<div class="ol-sel-list">' + marcadas.map(n => '<button type="button" class="ol-pill" title="Remove" onclick="ordenLabsToggle(\'' + q(n) + '\')">' + escapeHtml(n) + '<span aria-hidden="true">\u00d7</span></button>').join('') + '</div>'
-            : '<span style="color:var(--ink-soft);">No tests yet. Use a quick panel or pick tests by category.</span>')
+            : '<span style="color:var(--ink-soft);">No tests yet. Tap a quick panel above, or open a category.</span>')
       + '</div>';
   }
 
