@@ -2671,7 +2671,26 @@ if(!window.supabase){
     <div class="dash-panel" id="nppanel-patients" role="tabpanel" aria-labelledby="nptab-patients" hidden>
       <div class="dash-grid" style="grid-template-columns:1fr;">
         <div class="dash-card">
-          <h3 style="margin-bottom:14px;">All patients</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+            <h3 style="margin:0;">All patients</h3>
+            <!-- 29 oct 2026: solo medicos. El paciente no se registra ni paga. -->
+            <button type="button" id="np-add-patient-btn" class="btn btn-primary nota-btn" hidden onclick="nuevoPacienteAbrir()">Add patient</button>
+          </div>
+          <div id="np-add-patient" class="nota-editor ol-form" hidden style="margin-bottom:14px;" data-i18n-skip>
+            <div class="ol-top"><b>Add a patient</b><span>Complimentary membership. They don't sign up or pay.</span></div>
+            <div class="nota-grid">
+              <div class="nota-f half"><label class="nota-l" for="ap-name">Full name</label><input id="ap-name" autocomplete="off"></div>
+              <div class="nota-f half"><label class="nota-l" for="ap-email">Email (they sign in with it)</label><input id="ap-email" type="email" autocomplete="off"></div>
+              <div class="nota-f half"><label class="nota-l" for="ap-phone">Mobile phone</label><input id="ap-phone" type="tel" autocomplete="off"></div>
+              <div class="nota-f half"><label class="nota-l" for="ap-dob">Date of birth</label><input id="ap-dob" type="date"></div>
+              <div class="nota-f half"><label class="nota-l" for="ap-sex">Sex</label><select id="ap-sex"><option value="">—</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></div>
+              <div class="nota-f half"><label class="nota-l" for="ap-state">State</label><select id="ap-state"><option value="PR">Puerto Rico</option><option value="MD">Maryland</option></select></div>
+            </div>
+            <div id="ap-msg" style="font-size:13px;margin:4px 0 8px;"></div>
+            <div class="ol-acc"><button type="button" class="btn btn-outline nota-btn" onclick="nuevoPacienteCerrar()">Cancel</button>
+              <button type="button" id="ap-save" class="btn btn-primary nota-btn" onclick="nuevoPacienteGuardar()">Add patient</button></div>
+            <p class="nota-legal" style="margin:8px 0 0;">They sign in at nuviclinic.com with this email (we send them a code) and complete their health history and consent. They never see a payment screen.</p>
+          </div>
           <div style="margin-bottom:12px;">
             <input id="np-patient-search" type="search" placeholder="Search patients by name or email…"
                    oninput="filterPatientList()"
@@ -6516,7 +6535,8 @@ if(!window.supabase){
     currentAppointment = appt;
 
     let stage = 'need-history';
-    if(!history){
+    if(!history || history.intake_pending){
+      // intake_pending: lo anadio el medico; falta su historial y consentimiento.
       stage = 'need-history';
     } else if(history.membership_cancelled){
       stage = 'membership-cancelled';
@@ -10742,6 +10762,48 @@ if(!window.supabase){
   let npCurrentPatientUserId = null;
   let npDetailCurrentTicket = null;
   let currentStaffName = null;
+  let currentStaffRole = null;
+
+  // ====== AÑADIR PACIENTE (29 oct 2026) ======
+  // Lo hace la Edge Function staff-add-patient (solo medicos): cortesia por
+  // email + cuenta sin contrasena + expediente con intake_pending.
+  function nuevoPacienteAbrir(){
+    const f = document.getElementById('np-add-patient');
+    ['ap-name','ap-email','ap-phone','ap-dob'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    const m = document.getElementById('ap-msg'); if(m){ m.textContent = ''; m.style.color = ''; }
+    f.hidden = false;
+    document.getElementById('ap-name').focus();
+  }
+  function nuevoPacienteCerrar(){ document.getElementById('np-add-patient').hidden = true; }
+  async function nuevoPacienteGuardar(){
+    const v = id => (document.getElementById(id).value || '').trim();
+    const m = document.getElementById('ap-msg'), btn = document.getElementById('ap-save');
+    const datos = { full_name: v('ap-name'), email: v('ap-email').toLowerCase(), phone: v('ap-phone'),
+      date_of_birth: v('ap-dob'), gender: v('ap-sex'), state: v('ap-state') };
+    const err = t => { m.style.color = '#8C2F2F'; m.textContent = t; };
+    if(!datos.full_name) return err('Enter the full name.');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(datos.email)) return err('Enter a valid email.');
+    if(npPatients.some(p => (p.email || '').toLowerCase() === datos.email)
+       && !confirm('A patient with this email is already in the list. Make their membership complimentary?')) return;
+    btn.disabled = true; m.style.color = 'var(--ink-soft)'; m.textContent = 'Adding…';
+    try{
+      const { data: sess } = await supabaseClient.auth.getSession();
+      const jwt = sess && sess.session && sess.session.access_token;
+      if(!jwt) throw new Error('Please sign in again.');
+      const res = await fetch(SUPABASE_URL.replace(/\/+$/, '') + '/functions/v1/staff-add-patient', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify(datos)
+      });
+      const out = await res.json().catch(() => ({}));
+      if(!res.ok || !out.ok) throw new Error(out.error || 'Could not add the patient.');
+      m.style.color = '#0B6B3A';
+      m.textContent = out.existed
+        ? 'Done. This patient already had a chart; their membership is now complimentary.'
+        : 'Patient added. Tell them to sign in at nuviclinic.com with ' + datos.email + ' to complete their health history.';
+      await loadNPData();
+    }catch(e){ err(e.message || 'Could not add the patient.'); }
+    finally{ btn.disabled = false; }
+  }
 
   async function showNPDashboard(user, staffRow){
     currentUser = user;
@@ -10765,6 +10827,8 @@ if(!window.supabase){
       const sub = document.querySelector('#np-dashboard .dash-head p');
       if(sub) sub.textContent = 'Patients, prescriptions, and oversight of the whole care team.';
     }
+    currentStaffRole = staffRow.role || null;
+    { const b = document.getElementById('np-add-patient-btn'); if(b) b.hidden = currentStaffRole !== 'physician'; }
     await loadNPData();
     await initPhysicianOversight(staffRow);
     await initAdminConsole(staffRow);
@@ -10876,12 +10940,15 @@ if(!window.supabase){
             + 'rgba(20,76,238,0.35);color:#0F37BE;margin-left:7px;font-size:10px;padding:1px 7px;'
             + 'vertical-align:middle;">Complimentary</span>'
           : '';
+      const pendiente = p.intake_pending
+        ? '<span class="rx-badge" style="background:rgba(217,140,43,0.14);border-color:rgba(217,140,43,0.45);color:#8A5A12;margin-left:7px;font-size:10px;padding:1px 7px;vertical-align:middle;">History pending</span>'
+        : '';
       const nombre = p.full_name || p.email || 'Unknown patient';
       const iniciales = nombre.trim().split(/\s+/).slice(0,2).map(w => w.charAt(0)).join('').toUpperCase() || '?';
       return '<div class="np-row" onclick="abrirFichaPaciente(\''+p.id+'\')">'
         + '<div style="display:flex;align-items:center;gap:12px;min-width:0;">'
         + '<div class="np-avatar notranslate" translate="no">' + iniciales + '</div>'
-        + '<div style="min-width:0;"><div class="name">' + nombre + chip + '</div>'
+        + '<div style="min-width:0;"><div class="name">' + nombre + chip + pendiente + '</div>'
         // "Plan" fuera: solo hay un plan, asi que decirlo en cada fila no
         // informaba de nada y encima salia vacio.
         + '<div class="meta">' + (p.email || '') + ' · Objetivo: ' + (p.goal || '—') + '</div></div></div>'
@@ -14550,6 +14617,7 @@ if(!window.supabase){
       // create a duplicate record and the care team wouldn't know which is current.
       let error;
       if(currentHealthHistory && currentHealthHistory.id){
+        if(currentHealthHistory.intake_pending) payload.intake_pending = false;
         ({ error } = await supabaseClient.from('health_history')
           .update(payload).eq('id', currentHealthHistory.id));
       } else {
