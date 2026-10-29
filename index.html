@@ -1057,6 +1057,19 @@ if(!window.supabase){
   .ol-test.on{border-color:var(--ink);background:#F2F5FA;font-weight:600;}
   .ol-test.on .ol-box{background:var(--ink);box-shadow:inset 0 0 0 3px #F2F5FA;}
   .ol-acc{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:6px;}
+  /* 29 oct 2026: pruebas por categoria (pestanas) + resumen de lo marcado */
+  .ol-cats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:10px;}
+  .ol-cat{appearance:none;border:1px solid var(--line);background:var(--white);border-radius:100px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink);}
+  .ol-cat.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600;}
+  .ol-cat em{font-style:normal;font-size:11px;margin-left:6px;background:rgba(1,224,254,0.25);border-radius:100px;padding:1px 7px;}
+  .ol-cat.on em{background:rgba(255,255,255,0.25);}
+  .ol-catbar{display:flex;gap:12px;align-items:center;margin:0 0 8px;font-size:12.5px;color:var(--ink-soft);}
+  .ol-link{appearance:none;background:none;border:0;padding:0;font:inherit;font-size:12.5px;color:var(--ink);text-decoration:underline;cursor:pointer;}
+  .ol-sel{background:#F2F5FA;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px;}
+  .ol-sel-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;}
+  .ol-sel-list{display:flex;flex-wrap:wrap;gap:6px;}
+  .ol-pill{appearance:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--white);border-radius:100px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink);}
+  .ol-pill span{color:var(--ink-soft);font-size:14px;line-height:1;}
   .lab-nota-med{font-style:italic;color:var(--ink) !important;}
   .ap-lista{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
   .ap-item.on{border:1px solid var(--line);border-radius:12px;padding:6px;background:#FAFCFF;}
@@ -2834,7 +2847,7 @@ if(!window.supabase){
       <button type="button" role="tab" data-ftab="resumen" onclick="showFichaTab('resumen')">Overview</button>
       <button type="button" role="tab" data-ftab="historial" onclick="showFichaTab('historial')">Medical history</button>
       <button type="button" role="tab" data-ftab="encuentros" onclick="showFichaTab('encuentros')">Clinical encounters</button>
-      <button type="button" role="tab" data-ftab="labs" onclick="showFichaTab('labs')">Labs &amp; documents</button>
+      <button type="button" role="tab" data-ftab="labs" onclick="showFichaTab('labs')">Labs, referrals &amp; documents</button>
       <button type="button" role="tab" data-ftab="meds" onclick="showFichaTab('meds')">Medications &amp; prescriptions</button>
     </div>
 
@@ -2902,14 +2915,6 @@ if(!window.supabase){
     <button class="btn btn-outline" style="width:auto;padding:9px 18px;margin-bottom:20px;" onclick="npAddClinicalNote()">Add note</button>
     </div><!-- /fsec-notes -->
 
-    <div class="fsec" id="fsec-referidos" data-ftab="encuentros">
-    <div class="form-section-title">Referrals</div>
-    <div class="nota-nueva">
-      <button type="button" class="btn btn-primary nota-btn" onclick="referidoAbrir()">New referral</button>
-    </div>
-    <div id="referido-form" class="nota-editor ol-form" hidden></div>
-    <div id="np-referidos-list" style="margin-bottom:20px;"></div>
-    </div><!-- /fsec-referidos -->
 
     <div class="fsec" id="fsec-approve" data-ftab="meds">
     <div class="form-section-title">Approve prescription</div>
@@ -2946,6 +2951,20 @@ if(!window.supabase){
     <div id="np-apoyo-list" style="margin-bottom:20px;"></div>
     </div><!-- /fsec-apoyo -->
 
+    <!-- 29 oct 2026: archivos de receta (PDF o foto) que sube el medico. Se
+         guardan como documento del paciente en staff/<paciente>/rx/, ocultos
+         hasta que se compartan. -->
+    <div class="fsec" id="fsec-recetas" data-ftab="meds">
+    <div class="form-section-title">Prescription files</div>
+    <div class="nota-nueva">
+      <input id="np-rx-file" type="file" hidden accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp" onchange="subirRecetaParaPaciente(this)">
+      <button type="button" class="btn btn-outline nota-btn" onclick="document.getElementById('np-rx-file').click()">Attach prescription file</button>
+      <span style="font-weight:400;font-size:12.5px;color:var(--ink-soft);">PDF or photo. The patient does not see it until you share it.</span>
+    </div>
+    <div id="np-rx-msg" style="font-size:12.5px;color:var(--ink-soft);margin:-8px 0 10px;"></div>
+    <div id="np-rx-files-list" style="margin-bottom:20px;"></div>
+    </div><!-- /fsec-recetas -->
+
     <div class="fsec" id="fsec-mantenimiento" data-ftab="meds">
     <div class="form-section-title">Maintenance dose</div>
     <div id="np-mantenimiento" style="margin-bottom:20px;"></div>
@@ -2967,6 +2986,15 @@ if(!window.supabase){
     <div id="np-labs-msg" style="font-size:12.5px;color:var(--ink-soft);margin:-8px 0 10px;"></div>
     <div id="np-labs-list" style="margin-bottom:20px;"></div>
     </div><!-- /fsec-labs -->
+
+    <div class="fsec" id="fsec-referidos" data-ftab="labs">
+    <div class="form-section-title">Referrals &amp; imaging <span style="font-weight:400;color:rgba(15,35,54,0.63);">(specialists, DEXA scan)</span></div>
+    <div class="nota-nueva">
+      <button type="button" class="btn btn-primary nota-btn" onclick="referidoAbrir()">New referral</button>
+    </div>
+    <div id="referido-form" class="nota-editor ol-form" hidden></div>
+    <div id="np-referidos-list" style="margin-bottom:20px;"></div>
+    </div><!-- /fsec-referidos -->
 
     </div><!-- /ficha-main -->
     <aside class="ficha-side">
@@ -7113,6 +7141,31 @@ if(!window.supabase){
     ['PTH, Intact', '83970', true],
     ['Bone-Specific Alkaline Phosphatase', '84080', true]
   ];
+  // 29 oct 2026: las pruebas se muestran por categoria (una pestana a la vez).
+  // Cada prueba de LAB_TESTS va en UNA categoria; si se anade una prueba y no
+  // se pone aqui, sale en "Other tests" para que nunca desaparezca.
+  const LAB_GRUPOS = [
+    ['Metabolic & lipids', ['Comprehensive Metabolic Panel (CMP)', 'Hemoglobin A1c (HbA1c)', 'Insulin, Fasting (for HOMA-IR)', 'Lipid Panel',
+      'Apolipoprotein B (ApoB)', 'Lipoprotein(a) [Lp(a)]']],
+    ['Blood & iron', ['CBC with Differential', 'Ferritin', 'Iron, Serum', 'Total Iron Binding Capacity (TIBC)']],
+    ['Vitamins & minerals', ['Vitamin D, 25-Hydroxy', 'Vitamin B12', 'Folate, Serum', 'Magnesium, RBC', 'Zinc']],
+    ['Thyroid', ['TSH', 'Free T4', 'Free T3', 'Reverse T3', 'Thyroid Peroxidase Antibodies (TPOAb)', 'Thyroglobulin Antibodies (TgAb)']],
+    ['Sex hormones', ['Estradiol', 'Progesterone', 'Testosterone, Total', 'Testosterone, Free', 'SHBG (Sex Hormone-Binding Globulin)',
+      'DHEA-Sulfate (DHEA-S)', 'FSH (Follicle-Stimulating Hormone)', 'LH (Luteinizing Hormone)', 'Prolactin', 'PSA, Total']],
+    ['Adrenal', ['Cortisol, AM (7–9 AM)', 'Cortisol, PM (4–6 PM)', 'ACTH']],
+    ['Inflammation', ['hs-CRP (high-sensitivity C-reactive protein)', 'Homocysteine', 'ESR (Sedimentation Rate)']],
+    ['Kidney & pancreas', ['Cystatin C', 'Urine Albumin/Creatinine Ratio (UACR)', 'Amylase', 'Lipase']],
+    ['Bone', ['PTH, Intact', 'Bone-Specific Alkaline Phosphatase']],
+    ['Anti-aging', ['Glutathione', 'Coenzyme Q10', 'IGF-1']]
+  ];
+  function labGrupos(){
+    const usados = new Set();
+    const grupos = LAB_GRUPOS.map(g => { const ts = g[1].filter(n => LAB_TESTS.some(t => t[0] === n)); ts.forEach(n => usados.add(n)); return [g[0], ts]; });
+    const resto = LAB_TESTS.map(t => t[0]).filter(n => !usados.has(n));
+    if(resto.length) grupos.push(['Other tests', resto]);
+    return grupos.filter(g => g[1].length);
+  }
+
   // Pruebas que comparten los dos paneles de optimizacion hormonal.
   const HORMONAS_COMUN = [
     'TSH', 'Free T3', 'Free T4', 'Reverse T3', 'Thyroid Peroxidase Antibodies (TPOAb)', 'Thyroglobulin Antibodies (TgAb)',
@@ -7201,7 +7254,7 @@ if(!window.supabase){
   let ordenLabs = null;   // lo que se está llenando en el formulario
 
   function ordenLabsAbrir(){
-    ordenLabs = { tests: [], other: '', icd1: ICD_DEFECTO, icd2: '', fasting: 'fasting', note: '' };
+    ordenLabs = { tests: [], other: '', icd1: ICD_DEFECTO, icd2: '', fasting: 'fasting', note: '', cat: labGrupos()[0][0] };
     ordenLabsPintar();
     const f = document.getElementById('orden-labs-form');
     f.hidden = false;
@@ -7225,6 +7278,16 @@ if(!window.supabase){
     ordenLabsPintar();
   }
   function ordenLabsCampo(k, v){ if(ordenLabs){ ordenLabs[k] = v; if(k === 'fasting') ordenLabsPintar(); } }
+  function ordenLabsCat(i){ const g = labGrupos()[i]; if(ordenLabs && g){ ordenLabs.cat = g[0]; ordenLabsPintar(); } }
+  // Marcar o desmarcar todas las pruebas de la pestana abierta.
+  function ordenLabsCatTodas(marcar){
+    if(!ordenLabs) return;
+    const g = labGrupos().find(x => x[0] === ordenLabs.cat);
+    if(!g) return;
+    g[1].forEach(n => { const i = ordenLabs.tests.indexOf(n); if(marcar && i < 0) ordenLabs.tests.push(n); if(!marcar && i >= 0) ordenLabs.tests.splice(i, 1); });
+    ordenLabsPintar();
+  }
+  function ordenLabsLimpiar(){ if(ordenLabs){ ordenLabs.tests = []; ordenLabsPintar(); } }
 
   function ordenLabsPintar(){
     const f = document.getElementById('orden-labs-form');
@@ -7234,10 +7297,7 @@ if(!window.supabase){
     f.innerHTML = '<div class="ol-top"><b>Order labs</b><span>Quick:</span>'
       + Object.keys(LAB_PRESETS).map(k => '<button type="button" class="nota-chip" onclick="ordenLabsPreset(\'' + k + '\')">' + escapeHtml(k) + '</button>').join('')
       + '</div>'
-      + '<div class="ol-tests" data-i18n-skip>' + LAB_TESTS.map(t =>
-          '<button type="button" class="ol-test' + (o.tests.indexOf(t[0]) >= 0 ? ' on' : '') + '" aria-pressed="' + (o.tests.indexOf(t[0]) >= 0) + '"'
-          + ' onclick="ordenLabsToggle(\'' + t[0].replace(/'/g, "\\'") + '\')"><span class="ol-box"></span><span>' + escapeHtml(t[0]) + '</span><small>CPT ' + t[1] + '</small></button>').join('')
-      + '</div>'
+      + ordenLabsPruebasHtml(o)
       + '<div class="nota-grid" data-i18n-skip>'
       + '<div class="nota-f"><label class="nota-l" for="ol-other">Other</label><input id="ol-other" value="' + val(o.other) + '" oninput="ordenLabsCampo(\'other\', this.value)"></div>'
       + '<div class="nota-f half"><label class="nota-l" for="ol-icd1">Diagnosis (ICD-10) 1</label><input id="ol-icd1" value="' + val(o.icd1) + '" oninput="ordenLabsCampo(\'icd1\', this.value)"></div>'
@@ -7251,6 +7311,35 @@ if(!window.supabase){
       + '<button type="button" class="btn btn-outline nota-btn" onclick="ordenLabsVistaPrevia()">Preview PDF</button>'
       + '<button type="button" class="btn btn-primary nota-btn" onclick="ordenLabsFirmar()">Sign &amp; send to patient</button></div>'
       + '<p class="nota-legal" style="margin:8px 0 0;">When sent, the patient sees "Labs requested — upload your results" with these tests and can download the order as a PDF.</p>';
+  }
+
+  // Pestanas de categoria + las pruebas de la pestana abierta + lo marcado.
+  function ordenLabsPruebasHtml(o){
+    const grupos = labGrupos();
+    if(!grupos.some(g => g[0] === o.cat)) o.cat = grupos[0][0];
+    const abierta = grupos.find(g => g[0] === o.cat);
+    const q = n => n.replace(/'/g, "\\'");
+    const cpt = n => (LAB_TESTS.find(t => t[0] === n) || [])[1] || '';
+    const marcadas = LAB_TESTS.map(t => t[0]).filter(n => o.tests.indexOf(n) >= 0);
+    const enAbierta = abierta[1].filter(n => o.tests.indexOf(n) >= 0).length;
+    return '<div class="ol-cats" role="tablist" data-i18n-skip>' + grupos.map((g, i) => {
+          const n = g[1].filter(x => o.tests.indexOf(x) >= 0).length;
+          return '<button type="button" role="tab" aria-selected="' + (g[0] === o.cat) + '" class="ol-cat' + (g[0] === o.cat ? ' on' : '') + '" onclick="ordenLabsCat(' + i + ')">'
+            + escapeHtml(g[0]) + (n ? '<em>' + n + '</em>' : '') + '</button>';
+        }).join('') + '</div>'
+      + '<div class="ol-catbar" data-i18n-skip><span>' + enAbierta + ' of ' + abierta[1].length + ' selected</span>'
+      +   (enAbierta < abierta[1].length ? '<button type="button" class="ol-link" onclick="ordenLabsCatTodas(true)">Select all</button>' : '')
+      +   (enAbierta ? '<button type="button" class="ol-link" onclick="ordenLabsCatTodas(false)">Deselect all</button>' : '') + '</div>'
+      + '<div class="ol-tests" data-i18n-skip>' + abierta[1].map(n =>
+          '<button type="button" class="ol-test' + (o.tests.indexOf(n) >= 0 ? ' on' : '') + '" aria-pressed="' + (o.tests.indexOf(n) >= 0) + '"'
+          + ' onclick="ordenLabsToggle(\'' + q(n) + '\')"><span class="ol-box"></span><span>' + escapeHtml(n) + '</span><small>CPT ' + cpt(n) + '</small></button>').join('')
+      + '</div>'
+      + '<div class="ol-sel" data-i18n-skip><div class="ol-sel-top"><b>Selected (' + marcadas.length + ')</b>'
+      +   (marcadas.length ? '<button type="button" class="ol-link" onclick="ordenLabsLimpiar()">Clear all</button>' : '') + '</div>'
+      +   (marcadas.length
+            ? '<div class="ol-sel-list">' + marcadas.map(n => '<button type="button" class="ol-pill" title="Remove" onclick="ordenLabsToggle(\'' + q(n) + '\')">' + escapeHtml(n) + '<span aria-hidden="true">\u00d7</span></button>').join('') + '</div>'
+            : '<span style="color:var(--ink-soft);">No tests yet. Use a quick panel or pick tests by category.</span>')
+      + '</div>';
   }
 
   function ordenLabsFila(){
@@ -7735,7 +7824,12 @@ if(!window.supabase){
   }
 
   // ---- El médico sube un documento al expediente (oculto hasta liberarlo) ----
-  async function subirLabParaPaciente(input){
+  // Archivo de receta: mismo bucket y tabla que los documentos, en la
+  // subcarpeta rx/ para listarlo en Medications y no en Labs.
+  function esReceta(r){ return /^staff\/[^/]+\/rx\//.test(String((r && r.file_path) || '')); }
+  function subirRecetaParaPaciente(input){ return subirLabParaPaciente(input, true); }
+
+  async function subirLabParaPaciente(input, receta){
     const file = input.files && input.files[0];
     input.value = '';
     if(!file || !npCurrentPatientUserId) return;
@@ -7743,8 +7837,8 @@ if(!window.supabase){
     if(!ext){ alert('Use PDF, JPG or PNG.'); return; }
     if(file.size > LAB_MAX_BYTES){ alert('The limit is 15 MB.'); return; }
     const safe = String(file.name || 'document').replace(/[^\w.\- ]+/g, '_').slice(0, 80);
-    const path = 'staff/' + npCurrentPatientUserId + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-    const msg = document.getElementById('np-labs-msg');
+    const path = 'staff/' + npCurrentPatientUserId + '/' + (receta ? 'rx/' : '') + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+    const msg = document.getElementById(receta ? 'np-rx-msg' : 'np-labs-msg');
     if(msg) msg.textContent = 'Uploading ' + safe + '…';
     try{
       const { error: upErr } = await supabaseClient.storage.from(LAB_BUCKET).upload(path, file, { contentType: file.type, upsert:false });
@@ -9804,6 +9898,7 @@ if(!window.supabase){
       // tabla de notificaciones que mantener en sincronía. El "leído" sale
       // de notifications_seen_at, así que uno viejo deja de molestar solo.
       L.forEach(function(d){
+        if(esReceta(d)) return;   // archivos de receta: los sube el medico, no son labs
         const hh = H.find(x => x.user_id === d.user_id);
         items.push({
           type: 'lab',
@@ -10931,9 +11026,9 @@ if(!window.supabase){
     try{
       const desde = new Date(Date.now() - 7 * 864e5).toISOString();
       const { data } = await supabaseClient.from('lab_documents')
-        .select('id, user_id, file_name, uploaded_at').is('deleted_at', null)
+        .select('id, user_id, file_name, file_path, uploaded_at').is('deleted_at', null)
         .gte('uploaded_at', desde).order('uploaded_at', { ascending: false }).limit(20);
-      labs = data || [];
+      labs = (data || []).filter(l => !esReceta(l));
     }catch(e){ console.warn('[inicio] labs', e); }
 
     const kpis = document.getElementById('np-home-kpis');
@@ -11787,8 +11882,10 @@ if(!window.supabase){
   // lado del paciente: nada de URLs públicas, se firma cada apertura.
   async function loadPatientLabsForStaff(patientUserId){
     const wrap = document.getElementById('np-labs-list');
+    const wrapRx = document.getElementById('np-rx-files-list');
     if(!wrap || !patientUserId || !supabaseClient) return;
     wrap.innerHTML = '<p class="np-empty">Loading…</p>';
+    if(wrapRx) wrapRx.innerHTML = '<p class="np-empty">Loading…</p>';
     try{
       // Sin filtrar por deleted_at: el clínico TIENE que ver que existió un
       // documento y que el paciente lo quitó. Si un lab desapareciera del
@@ -11798,12 +11895,10 @@ if(!window.supabase){
         .select('*').eq('user_id', patientUserId)
         .order('uploaded_at', { ascending:false });
       if(error) throw error;
-      const rows = data || [];
-      if(rows.length === 0){
-        wrap.innerHTML = '<p class="np-empty">No documents yet.</p>';
-        return;
-      }
-      wrap.innerHTML = rows.map(function(r){
+      const todos = data || [];
+      const rows = todos.filter(r => !esReceta(r));
+      const recetas = todos.filter(esReceta);
+      const pinta = function(r){
         const kb = r.file_size ? Math.max(1, Math.round(r.file_size/1024)) : null;
         const when = r.uploaded_at
           ? new Date(r.uploaded_at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})
@@ -11831,14 +11926,17 @@ if(!window.supabase){
               ? '<span class="meta" style="flex:none;">file deleted</span>'
               : '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex:none;">'
                 + '<button type="button" class="btn btn-outline nota-btn" onclick="openLabDocument(\'' + r.id + '\')">Open</button>'
-                + (r.reviewed_at ? '' : '<button type="button" class="btn btn-outline nota-btn" onclick="revisarLab(\'' + r.id + '\')">Mark reviewed</button>')
+                + (r.reviewed_at || esReceta(r) ? '' : '<button type="button" class="btn btn-outline nota-btn" onclick="revisarLab(\'' + r.id + '\')">Mark reviewed</button>')
                 + (delMedico && !r.released_at ? '<button type="button" class="btn btn-primary nota-btn" onclick="compartirLab(\'' + r.id + '\')">Share with patient</button>' : '')
                 + '</div>')
           + '</div>';
-      }).join('');
+      };
+      wrap.innerHTML = rows.length ? rows.map(pinta).join('') : '<p class="np-empty">No documents yet.</p>';
+      if(wrapRx) wrapRx.innerHTML = recetas.length ? recetas.map(pinta).join('') : '<p class="np-empty">No prescription files yet.</p>';
     }catch(err){
       console.error('[labs] staff no pudo leer lab_documents:', err);
       wrap.innerHTML = '<p class="np-empty">Could not load this patient\'s documents.</p>';
+      if(wrapRx) wrapRx.innerHTML = '<p class="np-empty">Could not load prescription files.</p>';
     }
   }
 
