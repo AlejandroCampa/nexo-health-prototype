@@ -16292,6 +16292,27 @@ if(!window.supabase){
     catch(e){ console.error('[checkout] no se pudo pintar el precio:', e); }
   });
 
+  // 29 oct 2026: enlaces de la landing /evaluacion. ?evaluar=1 abre la
+  // preevaluacion y ?entrar=1 el login, solo si NO hay sesion (un paciente
+  // que ya entro ve su panel). Los utm_* se quedan en la barra.
+  document.addEventListener('DOMContentLoaded', function(){
+    try{
+      const q = new URLSearchParams(window.location.search);
+      const quiere = q.get('evaluar') === '1' ? 'intake' : (q.get('entrar') === '1' ? 'login' : '');
+      if(!quiere) return;
+      q.delete('evaluar'); q.delete('entrar');
+      const resto = q.toString();
+      window.history.replaceState({}, document.title, window.location.pathname + (resto ? '?' + resto : '') + window.location.hash);
+      setTimeout(async function(){
+        try{
+          const s = (typeof supabaseClient !== 'undefined' && supabaseClient) ? await supabaseClient.auth.getSession() : null;
+          if(s && s.data && s.data.session) return;
+        }catch(e){}
+        nuviOpenModal(quiere);
+      }, 600);
+    }catch(e){ console.warn('[landing]', e); }
+  });
+
   (function checkForPaymentReturn(){
     // Con los cobros en pausa no hay vuelta de Stripe posible. Cualquier
     // ?paid=true que llegue es una URL vieja pegada, un enlace guardado o
