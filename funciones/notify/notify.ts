@@ -271,9 +271,9 @@ async function correrRecordatorios(dry: boolean) {
     }
     const enlace = (r: string) => `${SITE}/?cita=${encodeURIComponent(c.id)}&t=${encodeURIComponent(token)}&r=${r}`;
     const botones = token
-      ? `<p style="margin:0 0 12px;font-weight:600;color:#081A4D;">Please confirm you'll be there:</p>
+      ? `<p style="margin:0 0 12px;font-weight:600;color:#081A4D;">Please confirm your video visit:</p>
          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;"><tr>
-           <td style="padding:0 10px 10px 0;">${btn(enlace("confirm"), "Yes, I'll be there")}</td>
+           <td style="padding:0 10px 10px 0;">${btn(enlace("confirm"), "Confirm my appointment")}</td>
            <td style="padding:0 0 10px 0;"><a href="${enlace("reschedule")}" style="display:inline-block;color:#081A4D;text-decoration:none;font-size:15px;font-weight:600;padding:13px 22px;border:1.5px solid #081A4D;border-radius:100px;">I need to reschedule</a></td>
          </tr></table>`
       : btn(SITE, "Open your dashboard");
