@@ -1,5 +1,7 @@
 // notify — Supabase Edge Function (build 30oct-1)
 // 30oct-1: evento appointment_welcome (bienvenida + confirmacion de cita, ES/EN).
+// 30oct-2: botones Confirmar / Reprogramar (no cancelar). El medico recibe un
+//   correo cuando el paciente confirma o pide reprogramar.
 // 22oct-1: el correo de bienvenida (signup) lleva un enlace que entra solo a la
 //   cuenta (magic link, 24 h) y cae en la tarjeta de pago. Ver enlaceEntrada().
 // Historial completo de cambios: funciones/notify/notify.ts en el repo y v24.
@@ -116,6 +118,7 @@ function horaBonita(t: unknown): string {
   let h = parseInt(m[1], 10); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12;
   return `${h}:${m[2]} ${ap}`;
 }
+const preview0 = (data: any) => !!String((data && data.preview_to) || "").trim();
 const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function autorizadoPorNonce(req: Request): Promise<boolean> {
@@ -128,11 +131,24 @@ async function autorizadoPorNonce(req: Request): Promise<boolean> {
   } catch (_) { return false; }
 }
 
+// Destino de avisos al medico cuando la cita no tiene medico con email.
+const STAFF_AVISOS = NOTIFY_TO.filter((e) => !/^alejandro@/i.test(e));
+// Enlace del correo a la pagina de respuesta (?cita&t&r). Crea el token si falta.
+async function enlacesCita(c: any): Promise<((r: string) => string) | null> {
+  let token: string = c.confirm_token || "";
+  if (!token) {
+    token = crypto.randomUUID();
+    try { await rest(`appointments?id=eq.${c.id}`, { method: "PATCH", body: JSON.stringify({ confirm_token: token }) }); }
+    catch (_) { return null; }
+  }
+  return (r: string) => `${SITE}/?cita=${encodeURIComponent(c.id)}&t=${encodeURIComponent(token)}&r=${r}`;
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function responderCita(d: any): Promise<[Record<string, unknown>, number]> {
   const id = String(d.id ?? ""), t = String(d.t ?? ""), action = String(d.action ?? "view");
-  if (!UUID_RE.test(t) || !/^[0-9a-zA-Z-]{1,64}$/.test(id) || !["view", "confirm", "cancel"].includes(action))
+  if (!UUID_RE.test(t) || !/^[0-9a-zA-Z-]{1,64}$/.test(id) || !["view", "confirm", "cancel", "reschedule"].includes(action))
     return [{ error: "This link is not valid." }, 400];
   let rows: any[];
   try { rows = await rest(`appointments?select=*&id=eq.${encodeURIComponent(id)}&confirm_token=eq.${t}`) || []; }
@@ -140,7 +156,7 @@ async function responderCita(d: any): Promise<[Record<string, unknown>, number]>
   const c = rows[0];
   if (!c) return [{ error: "This link is no longer valid. Your care team may have moved the appointment — check your dashboard." }, 404];
   const info = { date: c.appointment_date, dateLabel: fechaBonita(String(c.appointment_date)), time: horaBonita(c.appointment_time),
-                 status: c.status, confirmed: !!c.confirmed_at };
+                 status: c.status, confirmed: !!c.confirmed_at, rescheduleRequested: !!c.reschedule_requested_at };
   if (action === "view") return [{ ok: true, ...info }, 200];
   if (String(c.appointment_date) < fechaPR(0)) return [{ error: "This appointment has already passed.", ...info }, 409];
   if (c.status === "cancelled") return [{ ok: true, ...info, already: "cancelled" }, 200];
@@ -150,14 +166,38 @@ async function responderCita(d: any): Promise<[Record<string, unknown>, number]>
   try { const h = await rest(`health_history?select=full_name,email&user_id=eq.${c.user_id}&order=created_at.desc&limit=1`); hh = (h && h[0]) || {}; } catch (_) { /* sigue */ }
   const name = hh.full_name || hh.email || "A patient";
   const first = String(name).split(" ")[0];
-  let staffTo: string[] = NOTIFY_TO;
+  let staffTo: string[] = STAFF_AVISOS;
   try { const st = await rest(`staff?select=*&user_id=eq.${c.np_user_id}`); if (st && st[0] && st[0].email) staffTo = [st[0].email]; } catch (_) { /* bandeja */ }
 
   if (action === "confirm") {
     if (c.confirmed_at) return [{ ok: true, ...info, confirmed: true, already: "confirmed" }, 200];
-    try { await rest(`appointments?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ confirmed_at: new Date().toISOString() }) }); }
+    try { await rest(`appointments?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ confirmed_at: new Date().toISOString(), reschedule_requested_at: null }) }); }
     catch (e) { return [{ error: "We could not save your confirmation. Please try again." }, 500]; }
+    try {
+      await send(staffTo, `✅ ${name} confirmó su cita — ${info.dateLabel} a las ${info.time}`,
+        shell("El paciente confirmó su cita", `
+          ${card(row("Paciente", name) + row("Fecha", info.dateLabel) + row("Hora", info.time + " (Puerto Rico)") +
+                 row("Email", hh.email || "—"))}
+          <p style="margin:0 0 24px;">Confirmó desde el correo. No hay nada que hacer.</p>
+          ${btn(SITE, "Abrir calendario")}`, INTERNAL));
+    } catch (e) { console.error("confirm staff email failed:", e); }
     return [{ ok: true, ...info, confirmed: true }, 200];
+  }
+
+  if (action === "reschedule") {
+    const nota = String(d.note ?? "").replace(/\s+/g, " ").trim().slice(0, 500);
+    try { await rest(`appointments?id=eq.${encodeURIComponent(id)}`, { method: "PATCH",
+            body: JSON.stringify({ reschedule_requested_at: new Date().toISOString(), reschedule_note: nota || null, confirmed_at: null }) }); }
+    catch (e) { return [{ error: "We could not send your request. Please try again or message your care team." }, 500]; }
+    try {
+      await send(staffTo, `🔁 ${name} quiere reprogramar su cita — ${info.dateLabel} a las ${info.time}`,
+        shell("El paciente pidió reprogramar", `
+          ${card(row("Paciente", name) + row("Cita actual", info.dateLabel + " · " + info.time + " (Puerto Rico)") +
+                 row("Le funciona mejor", nota || "(no escribió preferencia)") + row("Email", hh.email || "—"))}
+          <p style="margin:0 0 24px;">La cita <b>sigue en el calendario</b> hasta que la muevas. Ábrela en el expediente y escoge la nueva hora; el paciente recibe un correo con el cambio.</p>
+          ${btn(SITE, "Abrir expediente")}`, INTERNAL));
+    } catch (e) { console.error("reschedule staff email failed:", e); }
+    return [{ ok: true, ...info, confirmed: false, rescheduleRequested: true }, 200];
   }
 
   try { await rest(`appointments?id=eq.${encodeURIComponent(id)}`, { method: "PATCH",
@@ -234,7 +274,7 @@ async function correrRecordatorios(dry: boolean) {
       ? `<p style="margin:0 0 12px;font-weight:600;color:#081A4D;">Please confirm you'll be there:</p>
          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;"><tr>
            <td style="padding:0 10px 10px 0;">${btn(enlace("confirm"), "Yes, I'll be there")}</td>
-           <td style="padding:0 0 10px 0;"><a href="${enlace("cancel")}" style="display:inline-block;color:#8C2F2F;text-decoration:none;font-size:15px;font-weight:600;padding:13px 22px;border:1.5px solid #E2B4B4;border-radius:100px;">I can't make it</a></td>
+           <td style="padding:0 0 10px 0;"><a href="${enlace("reschedule")}" style="display:inline-block;color:#081A4D;text-decoration:none;font-size:15px;font-weight:600;padding:13px 22px;border:1.5px solid #081A4D;border-radius:100px;">I need to reschedule</a></td>
          </tr></table>`
       : btn(SITE, "Open your dashboard");
     const ok = await mandar(hh.email, `Please confirm: your Nuvi Clinic evaluation is tomorrow at ${hora}`,
@@ -246,7 +286,7 @@ async function correrRecordatorios(dry: boolean) {
         ${botones}
         <p style="margin:0 0 6px;">At your appointment time, join from your dashboard at nuviclinic.com — from a quiet
         place with good signal. Your phone works, no app to install.</p>
-        <p style="margin:16px 0 0;font-size:14px;color:#7A8FA3;">If you cancel, your care team will reach out to find you a new time.</p>`), "appointment:" + c.id);
+        <p style="margin:16px 0 0;font-size:14px;color:#7A8FA3;">If you need another time, tap “I need to reschedule” and your care team will reach out.</p>`), "appointment:" + c.id);
     if (ok) avisadas.push(c.id);
   }
   const porDestino = new Map<string, typeof lista>();
@@ -634,12 +674,14 @@ Deno.serve(async (req: Request) => {
         // No manda copia al staff.
         const apId = String((data && data.appointment_id) || "");
         if (!/^[0-9a-f-]{36}$/i.test(apId)) return json({ error: "appointment_id required" }, 400);
-        const aps = await rest(`appointments?select=id,user_id,appointment_date,appointment_time,status,duration_minutes,np_user_id&id=eq.${apId}&limit=1`);
+        const aps = await rest(`appointments?select=id,user_id,appointment_date,appointment_time,status,duration_minutes,np_user_id,confirm_token&id=eq.${apId}&limit=1`);
         const ap = Array.isArray(aps) ? aps[0] : null;
         if (!ap || ap.status !== "scheduled") return json({ error: "Appointment not found or not scheduled" }, 404);
         const hhs = await rest(`health_history?select=full_name,email&user_id=eq.${ap.user_id}&order=created_at.desc&limit=1`);
         const pac = (Array.isArray(hhs) && hhs[0]) || {};
         const sts = ap.np_user_id ? await rest(`staff?select=full_name,title&user_id=eq.${ap.np_user_id}&limit=1`) : [];
+        // Botones: en la demo no hacen nada (actuarian sobre la cita real).
+        const enlace = preview0(data) ? null : await enlacesCita({ ...ap, confirm_token: ap.confirm_token });
         const doc = (Array.isArray(sts) && sts[0]) || null;
         let to = String(pac.email || "").trim();
         const preview = String((data && data.preview_to) || "").trim().toLowerCase();
@@ -666,13 +708,17 @@ Deno.serve(async (req: Request) => {
                    row("Duración", mins + " minutos") + (medico ? row("Con", medico) : ""))}
             <p style="margin:0 0 20px;">Es una videollamada: entra a nuviclinic.com con tu email unos minutos antes de la hora.
             No tienes que instalar nada. Ten a mano tus preguntas; tu médico revisará tu historial contigo.</p>
-            ${btn(SITE, "Entrar a mi cita")}
-            <p style="margin:22px 0 0;font-size:14px;">¿Necesitas cambiar la hora? Escríbele a tu equipo médico desde tu panel o a info@nuviclinic.com.</p>
+            <p style="margin:0 0 12px;font-weight:600;color:#081A4D;">¿Nos confirmas tu cita?</p>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;"><tr>
+              <td style="padding:0 10px 10px 0;">${btn(enlace ? enlace("confirm") : SITE, "Confirmar mi cita")}</td>
+              <td style="padding:0 0 10px 0;"><a href="${enlace ? enlace("reschedule") : SITE}" style="display:inline-block;color:#081A4D;text-decoration:none;font-size:15px;font-weight:600;padding:13px 22px;border:1.5px solid #081A4D;border-radius:100px;">Reprogramar mi cita</a></td>
+            </tr></table>
+            <p style="margin:0 0 20px;font-size:14px;">A la hora de tu cita, entra a <a href="${SITE}" style="color:#081A4D;">nuviclinic.com</a> con tu email.</p>
             <hr style="border:0;border-top:1px solid #E6EDF2;margin:26px 0 18px;">
             <p style="margin:0 0 8px;font-size:14px;"><b>Welcome${primero ? ", " + esc(primero) : ""}!</b> Your medical evaluation is confirmed for
             <b>${esc(fechaEn)} at ${esc(hora)}</b> (Puerto Rico time), ${mins} minutes${medico ? " with " + esc(medico) : ""}.
-            It's a video visit: sign in at nuviclinic.com with your email a few minutes before.</p>`,
-            preview ? "Demo — this is a preview sent to staff, not to the patient." : ""), "patient");
+            It's a video visit: sign in at nuviclinic.com with your email a few minutes before. Use the buttons above to confirm or reschedule.</p>`,
+            preview ? "Demo — enviado al staff, no al paciente. En la demo los botones no confirman ni reprograman la cita real." : ""), "patient");
         return json({ ok, event, to: preview ? "preview" : "patient", sent, failed: failed.length ? failed : undefined });
       }
 
