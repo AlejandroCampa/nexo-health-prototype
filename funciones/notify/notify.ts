@@ -1,4 +1,5 @@
-// notify — Supabase Edge Function (build 22oct-1)
+// notify — Supabase Edge Function (build 30oct-1)
+// 30oct-1: evento appointment_welcome (bienvenida + confirmacion de cita, ES/EN).
 // 22oct-1: el correo de bienvenida (signup) lleva un enlace que entra solo a la
 //   cuenta (magic link, 24 h) y cae en la tarjeta de pago. Ver enlaceEntrada().
 // Historial completo de cambios: funciones/notify/notify.ts en el repo y v24.
@@ -624,6 +625,55 @@ Deno.serve(async (req: Request) => {
                    row("Patient email", email || "—"))}
             ${btn(SITE, "Open patient chart")}`, INTERNAL), "staff");
         break;
+      }
+
+      case "appointment_welcome": {
+        // 30 oct 2026: bienvenida + confirmacion de UNA cita, en espanol e ingles.
+        // Todo sale de la base por appointment_id (nada del body llega al correo
+        // salvo el id). preview_to manda una muestra, y solo a un email de staff.
+        // No manda copia al staff.
+        const apId = String((data && data.appointment_id) || "");
+        if (!/^[0-9a-f-]{36}$/i.test(apId)) return json({ error: "appointment_id required" }, 400);
+        const aps = await rest(`appointments?select=id,user_id,appointment_date,appointment_time,status,duration_minutes,np_user_id&id=eq.${apId}&limit=1`);
+        const ap = Array.isArray(aps) ? aps[0] : null;
+        if (!ap || ap.status !== "scheduled") return json({ error: "Appointment not found or not scheduled" }, 404);
+        const hhs = await rest(`health_history?select=full_name,email&user_id=eq.${ap.user_id}&order=created_at.desc&limit=1`);
+        const pac = (Array.isArray(hhs) && hhs[0]) || {};
+        const sts = ap.np_user_id ? await rest(`staff?select=full_name,title&user_id=eq.${ap.np_user_id}&limit=1`) : [];
+        const doc = (Array.isArray(sts) && sts[0]) || null;
+        let to = String(pac.email || "").trim();
+        const preview = String((data && data.preview_to) || "").trim().toLowerCase();
+        if (preview) {
+          const ok = await rest(`staff?select=user_id&email=eq.${encodeURIComponent(preview)}&limit=1`);
+          if (!Array.isArray(ok) || !ok.length) return json({ error: "preview_to must be a staff email" }, 403);
+          to = preview;
+        }
+        if (!to) return json({ error: "Patient has no email" }, 400);
+        const nombre = String(pac.full_name || "").trim();
+        const primero = nombre.split(/\s+/)[0] || "";
+        const d = new Date(String(ap.appointment_date) + "T12:00:00Z");
+        const fechaEs = isNaN(d.getTime()) ? String(ap.appointment_date)
+          : d.toLocaleDateString("es-PR", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+        const fechaEn = fechaBonita(String(ap.appointment_date));
+        const hora = horaBonita(ap.appointment_time);
+        const mins = Number(ap.duration_minutes) || 30;
+        const medico = doc ? `${doc.full_name}${doc.title ? ", " + doc.title : ""}` : "";
+        const ok = await trySend(to,
+          (preview ? "[DEMO] " : "") + `Bienvenida a Nuvi Clinic — tu cita es el ${fechaEs} a las ${hora}`,
+          shell(`¡Bienvenida${primero ? ", " + esc(primero) : ""}!`, `
+            <p style="margin:0 0 14px;">Gracias por elegir Nuvi Clinic. Te confirmamos tu evaluación médica:</p>
+            ${card(row("Fecha", fechaEs) + row("Hora", hora + " (hora de Puerto Rico)") +
+                   row("Duración", mins + " minutos") + (medico ? row("Con", medico) : ""))}
+            <p style="margin:0 0 20px;">Es una videollamada: entra a nuviclinic.com con tu email unos minutos antes de la hora.
+            No tienes que instalar nada. Ten a mano tus preguntas; tu médico revisará tu historial contigo.</p>
+            ${btn(SITE, "Entrar a mi cita")}
+            <p style="margin:22px 0 0;font-size:14px;">¿Necesitas cambiar la hora? Escríbele a tu equipo médico desde tu panel o a info@nuviclinic.com.</p>
+            <hr style="border:0;border-top:1px solid #E6EDF2;margin:26px 0 18px;">
+            <p style="margin:0 0 8px;font-size:14px;"><b>Welcome${primero ? ", " + esc(primero) : ""}!</b> Your medical evaluation is confirmed for
+            <b>${esc(fechaEn)} at ${esc(hora)}</b> (Puerto Rico time), ${mins} minutes${medico ? " with " + esc(medico) : ""}.
+            It's a video visit: sign in at nuviclinic.com with your email a few minutes before.</p>`,
+            preview ? "Demo — this is a preview sent to staff, not to the patient." : ""), "patient");
+        return json({ ok, event, to: preview ? "preview" : "patient", sent, failed: failed.length ? failed : undefined });
       }
 
       case "appointment_cancelled": {
