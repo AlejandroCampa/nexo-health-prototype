@@ -1,4 +1,7 @@
-// notify — Supabase Edge Function (build 30oct-1)
+// notify — Supabase Edge Function (build 31oct-1)
+// 31oct-1: membresia cada 28 dias en los textos; los avisos de pagos al staff
+//   (pago, medicamento, renovacion declinada, receta aprobada) van a STAFF_AVISOS
+//   (sin alejandro@).
 // 30oct-1: evento appointment_welcome (bienvenida + confirmacion de cita, ES/EN).
 // 30oct-2: botones Confirmar / Reprogramar (no cancelar). El medico recibe un
 //   correo cuando el paciente confirma o pide reprogramar.
@@ -358,8 +361,8 @@ async function correrRecordatorios(dry: boolean) {
           To keep your care and your medication refills going, renew for ${MEMBERSHIP_STR}:</p>
         <p style="margin:0 0 12px;">${btn(RENOVAR + "&metodo=ath", "Renew with ATH Móvil")}</p>
         <p style="margin:0 0 8px;">${btn2(RENOVAR + "&metodo=card", "Add a card — renews automatically")}</p>
-        <p style="margin:0 0 18px;font-size:13.5px;color:#7A8FA3;line-height:1.6;">With a card, your membership renews automatically each month
-          (${MEMBERSHIP_STR}/month), so you won't need to do this again. You can cancel anytime from your dashboard.</p>
+        <p style="margin:0 0 18px;font-size:13.5px;color:#7A8FA3;line-height:1.6;">With a card, your membership renews automatically every 28 days
+          (${MEMBERSHIP_STR} every 28 days), so you won't need to do this again. You can cancel anytime from your dashboard.</p>
         <p style="margin:0 0 14px;">An active membership and an up-to-date follow-up evaluation are what let your physician renew your medication.</p>
         <p style="margin:0;font-size:13.5px;color:#7A8FA3;">If you already renewed, ignore this email.</p>`),
       "expired:" + hh.user_id);
@@ -560,10 +563,10 @@ Deno.serve(async (req: Request) => {
         const free = data.free_trial === true;
         const renewsOn = free && data.renews_on ? fechaBonita(String(data.renews_on).slice(0, 10)) : "";
         const renewAmt = money(data.renew_amount ?? ("$" + MEMBERSHIP_MONTHLY.toFixed(2)));
-        await trySend(NOTIFY_TO, free ? `Free first month started — ${name}` : `Payment — ${name}`,
+        await trySend(STAFF_AVISOS, free ? `Free first month started — ${name}` : `Payment — ${name}`,
           shell(free ? "Free first month started" : "Membership payment received", `
             <p style="margin:0 0 14px;"><b>${esc(name)}</b> ${free
-              ? `started a free first month with a promo code. Card verified and saved, <b>$0.00 charged</b>; renews at ${esc(renewAmt)}/month${renewsOn ? ` on ${esc(renewsOn)}` : ""}.`
+              ? `started a free first month with a promo code. Card verified and saved, <b>$0.00 charged</b>; renews at ${esc(renewAmt)} every 28 days${renewsOn ? ` on ${esc(renewsOn)}` : ""}.`
               : "paid for membership."}</p>
             ${card(row("Email", email || "—") + row("Amount", data.amount ?? MEMBERSHIP_STR) +
                    (data.coupon ? row("Code", data.coupon) : ""))}
@@ -585,16 +588,16 @@ Deno.serve(async (req: Request) => {
           }
           const pagadoHasta = data.renewal && data.paid_until ? fechaBonita(String(data.paid_until).slice(0, 10)) : "";
           items.push(["Billing period", free
-            ? ("First month free, then " + renewAmt + "/month" + (renewsOn ? " from " + renewsOn : ""))
-            : data.renewal ? ("Monthly" + (pagadoHasta ? " — paid through " + pagadoHasta : ""))
-            : "Monthly, starting today"]);
+            ? ("First month free, then " + renewAmt + " every 28 days" + (renewsOn ? " from " + renewsOn : ""))
+            : data.renewal ? ("Every 28 days" + (pagadoHasta ? " — paid through " + pagadoHasta : ""))
+            : "Every 28 days, starting today"]);
 
           await trySend(email, data.renewal ? "Your Nuvi Clinic membership renewed — receipt"
                              : free ? "Your free first month has started — Nuvi Clinic"
                              : "Thanks for subscribing — your Nuvi Clinic receipt",
             shell(data.renewal ? `Your membership renewed, ${esc(first)}` : `Thanks for joining, ${esc(first)}`, `
               <p style="margin:0 0 18px;">${data.renewal
-                ? "Your monthly membership renewed automatically on the card you saved."
+                ? "Your membership renewed automatically on the card you saved."
                 : free ? "Your free first month is active and your care team can see your file."
                 : "Your membership is active and your care team can see your file."}
               Here's your receipt — keep it for your records.</p>
@@ -627,8 +630,8 @@ Deno.serve(async (req: Request) => {
 
               <p style="margin:24px 0 0;font-size:13.5px;color:#7A8FA3;line-height:1.6;">
                 ${free
-                  ? `Your card${data.last4 ? ` ending ${esc(String(data.last4))}` : ""} was verified, not charged. Your membership renews automatically at ${esc(renewAmt)}/month${renewsOn ? ` on <b>${esc(renewsOn)}</b>` : " after your free month"} unless you cancel before then from your dashboard.`
-                  : `Your membership renews at ${MEMBERSHIP_STR}/month and you can cancel anytime from your dashboard.`}
+                  ? `Your card${data.last4 ? ` ending ${esc(String(data.last4))}` : ""} was verified, not charged. Your membership renews automatically at ${esc(renewAmt)} every 28 days${renewsOn ? ` on <b>${esc(renewsOn)}</b>` : " after your free month"} unless you cancel before then from your dashboard.`
+                  : `Your membership renews at ${MEMBERSHIP_STR} every 28 days and you can cancel anytime from your dashboard.`}
                 <b>Medication is billed separately</b> — the membership covers your care, not the prescription.
               </p>`), "patient");
         }
@@ -770,7 +773,7 @@ Deno.serve(async (req: Request) => {
               </p>`), "patient");
         }
 
-        await trySend(NOTIFY_TO, `Prescription approved — ${name} — ${med}`,
+        await trySend(STAFF_AVISOS, `Prescription approved — ${name} — ${med}`,
           shell("Prescription approved", `
             ${card(row("Patient", name) + row("Medication", med) +
                    (cost ? row("Price", cost) : "") +
@@ -859,12 +862,12 @@ Deno.serve(async (req: Request) => {
               </table>
 
               <p style="margin:22px 0 0;font-size:13.5px;color:#7A8FA3;line-height:1.6;">
-                This charge is separate from your ${MEMBERSHIP_STR}/month membership.
+                This charge is separate from your ${MEMBERSHIP_STR} membership (every 28 days).
                 Questions about the charge? Reply to this email.
               </p>`), "patient");
         }
 
-        await trySend(NOTIFY_TO, `Medication paid — ${name}`,
+        await trySend(STAFF_AVISOS, `Medication paid — ${name}`,
           shell("Medication payment received", `
             <p style="margin:0 0 14px;"><b>${esc(name)}</b> paid for medication.</p>
             ${card(row("Medication", med || "—") + row("Amount", data.amount ?? "—") +
@@ -927,7 +930,7 @@ Deno.serve(async (req: Request) => {
                 ? `Your current period ends ${esc(data.until)}. ` : ""}Please pay with another card or ATH Móvil from your dashboard so your care continues without a gap. We'll retry the saved card tomorrow.</p>
               ${btn(SITE, "Update payment")}`), "patient");
         }
-        await trySend(NOTIFY_TO, `Renewal declined — ${name}`,
+        await trySend(STAFF_AVISOS, `Renewal declined — ${name}`,
           shell("A membership renewal was declined", `
             ${card(row("Patient", name) + row("Amount", amount) + row("Patient email", email || "—") +
                    (data.until ? row("Paid until", data.until) : ""))}
