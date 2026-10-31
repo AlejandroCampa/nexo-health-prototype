@@ -2720,9 +2720,16 @@ if(!window.supabase){
         </div>
         <div class="np-home-kpis" id="np-home-kpis"></div>
         <div class="np-home-grid">
-          <div class="dash-card np-home-citas">
-            <h3>Today's appointments</h3>
-            <div id="np-home-hoy"></div>
+          <!-- 31 oct 2026: "Upcoming consultations" sube junto a las de hoy (antes al final). -->
+          <div class="np-home-lado">
+            <div class="dash-card np-home-citas">
+              <h3>Today's appointments</h3>
+              <div id="np-home-hoy"></div>
+            </div>
+            <div class="dash-card">
+              <h3>Upcoming consultations (7 days)</h3>
+              <div id="np-home-proximas"></div>
+            </div>
           </div>
           <div class="np-home-lado">
             <div class="dash-card">
@@ -2734,10 +2741,6 @@ if(!window.supabase){
               <div id="np-home-labs"></div>
             </div>
           </div>
-        </div>
-        <div class="dash-card">
-          <h3>Upcoming consultations (7 days)</h3>
-          <div id="np-home-proximas"></div>
         </div>
       </div>
     </div>
