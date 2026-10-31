@@ -1,6 +1,6 @@
 // mensaje-aviso — Supabase Edge Function (31 oct 2026). DEPLOY: --no-verify-jwt.
 // Cuando un paciente escribe en el chat (o pide cambiar su cita), avisa por
-// correo al medico de su proxima cita, o a los dos medicos si no hay. En
+// correo a los dos medicos (Dra. Marrero y Dr. Campa). En
 // espanol y con asunto claro. NO incluye el texto (es informacion de salud):
 // el correo lleva al chat. Alejandro no recibe estos avisos.
 // Seguridad: exige la sesion del paciente (jwt en el body) y que ese paciente
@@ -36,15 +36,8 @@ Deno.serve(async (req) => {
     if (!Array.isArray(msgs) || !msgs.length) return json({ ok: true, skipped: "no recent message" });
     const hh = (await rest(`health_history?select=full_name,email&user_id=eq.${uid}&order=created_at.desc&limit=1`))[0] || {};
     const nombre = String(hh.full_name || hh.email || "Un paciente").trim();
-    const hoy = new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10);
-    let para = MEDICOS;
-    try {
-      const ap = (await rest(`appointments?select=np_user_id&user_id=eq.${uid}&status=eq.scheduled&appointment_date=gte.${hoy}&order=appointment_date.asc&limit=1`))[0];
-      if (ap?.np_user_id) {
-        const st = (await rest(`staff?select=email&user_id=eq.${ap.np_user_id}&limit=1`))[0];
-        if (st?.email && !/^alejandro@/i.test(st.email)) para = [st.email];
-      }
-    } catch (_) { /* a los dos */ }
+    // 31 oct (Dra. Marrero): el aviso va SIEMPRE a los dos medicos.
+    const para = MEDICOS;
     const titulo = pideCita ? `${esc(nombre)} quiere cambiar su cita` : `${esc(nombre)} te escribió`;
     const html = `<!doctype html><html><body style="margin:0;background:#EAFBFF;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EAFBFF;padding:40px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#fff;border-radius:18px;overflow:hidden;">
