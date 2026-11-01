@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
     const b = await req.json().catch(() => ({}));
     const jwt = String(b.jwt || "");
     const pideCita = b.kind === "appointment_request";
+    const movio = b.kind === "appointment_moved";
     if (!jwt) return json({ error: "Unauthorized" }, 401);
     const ur = await fetch(`${SB_URL}/auth/v1/user`, { headers: { apikey: SB, Authorization: `Bearer ${jwt}` } });
     if (!ur.ok) return json({ error: "Unauthorized" }, 401);
@@ -38,14 +39,14 @@ Deno.serve(async (req) => {
     const nombre = String(hh.full_name || hh.email || "Un paciente").trim();
     // 31 oct (Dra. Marrero): el aviso va SIEMPRE a los dos medicos.
     const para = MEDICOS;
-    const titulo = pideCita ? `${esc(nombre)} quiere cambiar su cita` : `${esc(nombre)} te escribió`;
+    const titulo = movio ? `${esc(nombre)} movió su cita` : pideCita ? `${esc(nombre)} quiere cambiar su cita` : `${esc(nombre)} te escribió`;
     const html = `<!doctype html><html><body style="margin:0;background:#EAFBFF;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EAFBFF;padding:40px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#fff;border-radius:18px;overflow:hidden;">
 <tr><td style="height:5px;background:#FF6B6B;font-size:0;">&nbsp;</td></tr>
 <tr><td style="padding:34px 38px 0;"><div style="font-size:13px;font-weight:700;letter-spacing:.14em;color:#00A896;text-transform:uppercase;">Nuvi Clinic</div>
-<h1 style="margin:14px 0 16px;font-size:24px;line-height:1.3;color:#081A4D;font-weight:600;">${pideCita ? "📅" : "💬"} ${titulo}</h1></td></tr>
+<h1 style="margin:14px 0 16px;font-size:24px;line-height:1.3;color:#081A4D;font-weight:600;">${pideCita || movio ? "📅" : "💬"} ${titulo}</h1></td></tr>
 <tr><td style="padding:0 38px 30px;color:#3A4A66;font-size:15.5px;line-height:1.65;">
-<p style="margin:0 0 14px;">${pideCita ? "Pidió por el chat que le muevan la cita." : "Tiene un mensaje nuevo en el chat."} Por privacidad el texto no va en el correo.</p>
+<p style="margin:0 0 14px;">${movio ? "Cambió su cita desde su portal, en una hora libre de tu horario. La fecha nueva ya está en el calendario y en el chat." : pideCita ? "Pidió por el chat que le muevan la cita." : "Tiene un mensaje nuevo en el chat."} Por privacidad el texto no va en el correo.</p>
 <p style="margin:0 0 22px;">Entra al portal: en <b>Inicio</b> está arriba, en <b>“Mensajes por contestar”</b>, con el botón para responder.</p>
 <a href="${SITE}" style="display:inline-block;background:#081A4D;color:#fff;text-decoration:none;font-size:16px;font-weight:600;padding:14px 32px;border-radius:100px;">Abrir el portal</a>
 </td></tr>
@@ -54,7 +55,7 @@ Deno.serve(async (req) => {
     const r = await fetch("https://api.resend.com/emails", { method: "POST",
       headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({ from: "Nuvi Clinic <info@nuviclinic.com>", to: para,
-        subject: (pideCita ? "📅 " : "💬 ") + (pideCita ? `${nombre} quiere cambiar su cita` : `Mensaje nuevo de ${nombre}`), html }) });
+        subject: (pideCita || movio ? "📅 " : "💬 ") + (movio ? `${nombre} movió su cita` : pideCita ? `${nombre} quiere cambiar su cita` : `Mensaje nuevo de ${nombre}`), html }) });
     if (!r.ok) return json({ error: "Resend " + r.status }, 502);
     return json({ ok: true, to: para.length });
   } catch (e) { console.error(e); return json({ error: String(e) }, 500); }
